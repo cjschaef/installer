@@ -32,8 +32,10 @@ type API interface {
 	GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.ResourceGroup, error)
 	GetResourceGroup(ctx context.Context, nameOrID string) (*resourcemanagerv2.ResourceGroup, error)
 	GetSubnet(ctx context.Context, subnetID string) (*vpcv1.Subnet, error)
+	GetSubnetByName(ctx context.Context, subnetName string) (*vpcv1.Subnet, error)
 	GetVSIProfiles(ctx context.Context) ([]vpcv1.InstanceProfile, error)
 	GetVPC(ctx context.Context, vpcID string) (*vpcv1.VPC, error)
+	GetVPCs(ctx context.Context) ([]vpcv1.VPC, error)
 	GetVPCZonesForRegion(ctx context.Context, region string) ([]string, error)
 }
 
@@ -339,6 +341,24 @@ func (c *Client) GetSubnet(ctx context.Context, subnetID string) (*vpcv1.Subnet,
 	return subnet, err
 }
 
+// GetSubnetByName gets a subnet by its Name.
+func (c *Client) GetSubnetByName(ctx context.Context, subnetName string) (*vpcv1.Subnet, error) {
+	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	listSubnetsOptions := c.vpcAPI.NewListSubnetsOptions()
+	subnetCollection, detailedResponse, err := c.vpcAPI.ListSubnetsWithContext(ctx, listSubnetsOptions)
+	if detailedResponse.GetStatusCode() == http.StatusNotFound {
+		return nil, err
+	}
+	for _, subnet := range subnetCollection.Subnets {
+		if subnetName == *subnet.Name {
+			return &subnet, nil
+		}
+	}
+	return nil, &VPCResourceNotFoundError{}
+}
+
 // GetVSIProfiles gets a list of all VSI profiles.
 func (c *Client) GetVSIProfiles(ctx context.Context) ([]vpcv1.InstanceProfile, error) {
 	listInstanceProfilesOptions := c.vpcAPI.NewListInstanceProfilesOptions()
@@ -375,6 +395,34 @@ func (c *Client) GetVPC(ctx context.Context, vpcID string) (*vpcv1.VPC, error) {
 	}
 
 	return nil, &VPCResourceNotFoundError{}
+}
+
+// Gets a set of VPCs
+func (c *Client) GetVPCs(ctx context.Context) ([]vpcv1.VPC, error) {
+	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	regions, err := c.getVPCRegions(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	allVPCs := []vpcv1.VPC{}
+	for _, region := range regions {
+		err := c.setVPCServiceURLForRegion(ctx, *region.Name)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to set vpc api service url")
+		}
+
+		if vpcs, detailedResponse, err := c.vpcAPI.ListVpcs(c.vpcAPI.NewListVpcsOptions()); err != nil {
+			if detailedResponse.GetStatusCode() != http.StatusNotFound {
+				return nil, err
+			}
+		} else if vpcs != nil {
+			allVPCs = append(allVPCs, vpcs.Vpcs...)
+		}
+	}
+	return allVPCs, nil
 }
 
 // GetVPCZonesForRegion gets the supported zones for a VPC region.
