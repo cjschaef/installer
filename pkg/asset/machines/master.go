@@ -288,6 +288,16 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 		gcp.ConfigMasters(machines, clusterID.InfraID, ic.Publish)
 	case ibmcloudtypes.Name:
+		subnets := map[string]string{}
+		if len(ic.Platform.IBMCloud.ControlPlaneSubnets) > 0 {
+			subnetMetas, err := installConfig.IBMCloud.ControlPlaneSubnets(ctx)
+			if err != nil {
+				return err
+			}
+			for _, subnet := range subnetMetas {
+				subnets[subnet.Zone] = subnet.Name
+			}
+		}
 		mpool := defaultIBMCloudMachinePoolPlatform()
 		mpool.Set(ic.Platform.IBMCloud.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.IBMCloud)
@@ -299,7 +309,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			mpool.Zones = azs
 		}
 		pool.Platform.IBMCloud = &mpool
-		machines, err = ibmcloud.Machines(clusterID.InfraID, ic, &pool, "master", masterUserDataSecretName)
+		machines, err = ibmcloud.Machines(clusterID.InfraID, ic, subnets, &pool, "master", masterUserDataSecretName)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}

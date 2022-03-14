@@ -13,12 +13,16 @@ import (
 // does not need to be user-supplied (e.g. because it can be retrieved
 // from external APIs).
 type Metadata struct {
-	BaseDomain string
+	BaseDomain              string
+	ComputeSubnetNames      []string
+	ControlPlaneSubnetNames []string
 
-	accountID      string
-	cisInstanceCRN string
-	client         *Client
-	dnsInstance    *DNSInstance
+	accountID            string
+	cisInstanceCRN       string
+	client               *Client
+	computeSubnets       map[string]Subnet
+	controlPlaneSubnets  map[string]Subnet
+	dnsInstance          *DNSInstance
 
 	mutex sync.Mutex
 }
@@ -30,8 +34,12 @@ type DNSInstance struct {
 }
 
 // NewMetadata initializes a new Metadata object.
-func NewMetadata(baseDomain string) *Metadata {
-	return &Metadata{BaseDomain: baseDomain}
+func NewMetadata(baseDomain string, controlPlaneSubnets []string, computeSubnets []string) *Metadata {
+	return &Metadata{
+		BaseDomain:              baseDomain,
+		ComputeSubnetNames:      computeSubnets,
+		ControlPlaneSubnetNames: controlPlaneSubnets,
+	}
 }
 
 // AccountID returns the IBM Cloud account ID associated with the authentication
@@ -121,6 +129,44 @@ func (m *Metadata) DNSInstance(ctx context.Context) (*DNSInstance, error) {
 		return nil, fmt.Errorf("dnsInstance unknown due to DNS zone %q not found", m.BaseDomain)
 	}
 	return m.dnsInstance, nil
+}
+
+// ComputeSubnets gets the Subnet details for compute subnets
+func (m *Metadata) ComputeSubnets(ctx context.Context) (map[string]Subnet, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	if len(m.ComputeSubnetNames) > 0 && len(m.computeSubnets) == 0 {
+		client, err := m.Client()
+		if err != nil {
+			return nil, err
+		}
+		m.computeSubnets, err = getSubnets(ctx, client, m.ComputeSubnetNames)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return m.computeSubnets, nil
+}
+
+// ControlPlaneSubnets gets the Subnet details for control plane subnets
+func (m *Metadata) ControlPlaneSubnets(ctx context.Context) (map[string]Subnet, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	if len(m.ControlPlaneSubnetNames) > 0 && len(m.controlPlaneSubnets) == 0 {
+		client, err := m.Client()
+		if err != nil {
+			return nil, err
+		}
+		m.controlPlaneSubnets, err = getSubnets(ctx, client, m.ControlPlaneSubnetNames)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return m.controlPlaneSubnets, nil
 }
 
 // Client returns a client used for making API calls to IBM Cloud services.

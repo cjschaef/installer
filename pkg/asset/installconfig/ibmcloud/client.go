@@ -417,6 +417,24 @@ func (c *Client) GetSubnet(ctx context.Context, subnetID string) (*vpcv1.Subnet,
 	return subnet, err
 }
 
+// GetSubnetByName gets a subnet by its Name.
+func (c *Client) GetSubnetByName(ctx context.Context, subnetName string) (*vpcv1.Subnet, error) {
+	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	listSubnetsOptions := c.vpcAPI.NewListSubnetsOptions()
+	subnetCollection, detailedResponse, err := c.vpcAPI.ListSubnetsWithContext(ctx, listSubnetsOptions)
+	if detailedResponse.GetStatusCode() == http.StatusNotFound {
+		return nil, err
+	}
+	for _, subnet := range subnetCollection.Subnets {
+		if subnetName == *subnet.Name {
+			return &subnet, nil
+		}
+	}
+	return nil, &VPCResourceNotFoundError{}
+}
+
 // GetVSIProfiles gets a list of all VSI profiles.
 func (c *Client) GetVSIProfiles(ctx context.Context) ([]vpcv1.InstanceProfile, error) {
 	listInstanceProfilesOptions := c.vpcAPI.NewListInstanceProfilesOptions()

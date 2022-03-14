@@ -464,6 +464,9 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			workerConfigs[i] = w.Spec.Template.Spec.ProviderSpec.Value.Object.(*ibmcloudprovider.IBMCloudMachineProviderSpec)
 		}
 
+		// Set existing network
+		preexistingVPC := installConfig.Config.Platform.IBMCloud.VPCName != ""
+
 		// Set machine pool info
 		var masterMachinePool ibmcloud.MachinePool
 		var workerMachinePool ibmcloud.MachinePool
@@ -535,6 +538,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				ImageURL:             string(*rhcosImage),
 				MasterConfigs:        masterConfigs,
 				MasterDedicatedHosts: masterDedicatedHosts,
+				PreexistingVPC:       preexistingVPC,
 				PublishStrategy:      installConfig.Config.Publish,
 				ResourceGroupName:    installConfig.Config.Platform.IBMCloud.ResourceGroupName,
 				WorkerConfigs:        workerConfigs,
