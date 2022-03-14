@@ -434,6 +434,35 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case ibmcloud.Name:
+		var vpc string
+		var privateSubnets []string
+		var publicSubnets []string
+
+		if len(installConfig.Config.IBMCloud.Subnets) > 0 {
+			subnets, err := installConfig.IBMCloud.PrivateSubnets(ctx)
+			if err != nil {
+				return err
+			}
+
+			for id := range subnets {
+				privateSubnets = append(privateSubnets, id)
+			}
+
+			subnets, err = installConfig.IBMCloud.PublicSubnets(ctx)
+			if err != nil {
+				return err
+			}
+
+			for id = range subnets {
+				publicSubnets = append(publicSubnets, id)
+			}
+
+			vpc, err := installConfig.IBMCloud.VPC(ctx)
+			if err != nil {
+				return err
+			}
+		}
+
 		client, err := installConfig.IBMCloud.Client()
 		if err != nil {
 			return err
@@ -523,10 +552,13 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				ImageURL:             string(*rhcosImage),
 				MasterConfigs:        masterConfigs,
 				MasterDedicatedHosts: masterDedicatedHosts,
+				PrivateSubnets:       privateSubnets,
+				PublicSubnets:        publicSubnets,
 				PublishStrategy:      installConfig.Config.Publish,
 				ResourceGroupName:    installConfig.Config.Platform.IBMCloud.ResourceGroupName,
 				WorkerConfigs:        workerConfigs,
 				WorkerDedicatedHosts: workerDedicatedHosts,
+				VPC:                  vpc,
 			},
 		)
 		if err != nil {

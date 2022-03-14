@@ -61,6 +61,35 @@ func TestValidatePlatform(t *testing.T) {
 			}(),
 			valid: true,
 		},
+		{
+			name: "valid subnets and vpc",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+
+				p.VPC     = "valid-vpc"
+				p.Subsets = []string{"valid-subnet"}
+				return p
+			}(),
+			valid: true,
+		},
+		{
+			name: "vpc without subnets",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+
+				p.VPC = "missing-subnets"
+			}(),
+			valid: false,
+		},
+		{
+			name: "subnets without vpc",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+
+				p.Subnets = []string{"missing-vpc"}
+			}(),
+			valid: false,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

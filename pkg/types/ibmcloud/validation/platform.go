@@ -42,6 +42,14 @@ func ValidatePlatform(p *ibmcloud.Platform, fldPath *field.Path) field.ErrorList
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("region"), p.Region, regionShortNames))
 	}
 
+	if p.VPC != "" && len(p.Subnets) == 0) {
+		allErrs = append(allErrs, field.Required(fldPath.Child("subnets"), "at least one subnet must be provided when a VPC is specified"))
+	}
+
+	if (p.Subnets) > 0 && p.VPC == "" {
+		allErrs = append(allErrs, field.Required(fldPath.Child("vpc"), "a VPC must be provided when subnets are specified"))
+	}
+
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}

@@ -35,6 +35,9 @@ type config struct {
 	PublishStrategy         string          `json:"ibmcloud_publish_strategy,omitempty"`
 	ResourceGroupName       string          `json:"ibmcloud_resource_group_name,omitempty"`
 	ImageFilePath           string          `json:"ibmcloud_image_filepath,omitempty"`
+	PrivateSubnets          []string        `json:"ibmcloud_private_subnets,omitempty"`
+	PublicSubnets           []string        `json:"ibmcloud_public_subnets,omitempty"`
+	VPC                     string          `json:"ibmcloud_vpc,omitempty"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -44,10 +47,13 @@ type TFVarsSources struct {
 	ImageURL             string
 	MasterConfigs        []*ibmcloudprovider.IBMCloudMachineProviderSpec
 	MasterDedicatedHosts []DedicatedHost
+	PrivateSubnets       []string
+	PublicSubnets        []string
 	PublishStrategy      types.PublishingStrategy
 	ResourceGroupName    string
 	WorkerConfigs        []*ibmcloudprovider.IBMCloudMachineProviderSpec
 	WorkerDedicatedHosts []DedicatedHost
+	VPC                  string
 }
 
 // TFVars generates ibmcloud-specific Terraform variables launching the cluster.
@@ -75,11 +81,14 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		MasterAvailabilityZones: masterAvailabilityZones,
 		MasterDedicatedHosts:    sources.MasterDedicatedHosts,
 		MasterInstanceType:      masterConfig.Profile,
+		PrivateSubnets:          sources.PrivateSubnets,
+		PublicSubnets:           sources.PublicSubnets,
 		PublishStrategy:         string(sources.PublishStrategy),
 		Region:                  masterConfig.Region,
 		ResourceGroupName:       sources.ResourceGroupName,
 		WorkerAvailabilityZones: workerAvailabilityZones,
 		WorkerDedicatedHosts:    sources.WorkerDedicatedHosts,
+		VPC:                     sources.VPC,
 
 		// TODO: IBM: Future support
 		// ExtraTags:               masterConfig.Tags,

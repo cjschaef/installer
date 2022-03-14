@@ -159,7 +159,7 @@ func (a *InstallConfig) finish(filename string) error {
 		a.Azure = icazure.NewMetadata(a.Config.Azure.CloudName, a.Config.Azure.ARMEndpoint)
 	}
 	if a.Config.IBMCloud != nil {
-		a.IBMCloud = icibmcloud.NewMetadata(a.Config.BaseDomain)
+		a.IBMCloud = icibmcloud.NewMetadata(a.Config.BaseDomain, a.Config.Platform.IBMCloud.Region, a.Config.Platform.IBMCloud.Subnets)
 	}
 	if err := validation.ValidateInstallConfig(a.Config).ToAggregate(); err != nil {
 		if filename == "" {

@@ -14,10 +14,10 @@ import (
 )
 
 // Validate executes platform-specific validation.
-func Validate(client API, ic *types.InstallConfig) error {
+func Validate(ctx, context.Context, client API, ic *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
 	platformPath := field.NewPath("platform").Child("ibmcloud")
-	allErrs = append(allErrs, validatePlatform(client, ic, platformPath)...)
+	allErrs = append(allErrs, validatePlatform(ctx, client, ic, platformPath)...)
 
 	if ic.ControlPlane != nil && ic.ControlPlane.Platform.IBMCloud != nil {
 		machinePool := ic.ControlPlane.Platform.IBMCloud
@@ -35,15 +35,111 @@ func Validate(client API, ic *types.InstallConfig) error {
 	return allErrs.ToAggregate()
 }
 
-func validatePlatform(client API, ic *types.InstallConfig, path *field.Path) field.ErrorList {
+func validatePlatform(ctx context.Contex, client API, ic *types.InstallConfig, path *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if ic.Platform.IBMCloud.ResourceGroupName != "" {
 		allErrs = append(allErrs, validateResourceGroup(client, ic, path)...)
 	}
 
+	if len(ic.Platform.IBMCloud.ControlPlaneSubnets) > 0 {
+		allErrs = append(allErrs, validateControlPlaneSubnets(ctx, client, ic.Platform.IBMCloud.ControlPlaneSubnets, ic.Networking, ic.Publish, path)...)
+	}
+	if len(ic.Platform.IBMCloud.ComputeSubnets) > 0 {
+		allErrs = append(allErrs, validateComputeSubnets(ctx, client, ic.Platform.IBMCloud.ComputeSubnets, ic.Networking, ic.Publish, path)...)
+	}
+
 	if ic.Platform.IBMCloud.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, validateMachinePool(client, ic.IBMCloud, ic.Platform.IBMCloud.DefaultMachinePlatform, path)...)
+	}
+	return allErrs
+}
+
+func validateSubnets(ctx context.Context, client API, subnets []string, networking *types.Networking, publish types.PublishingStrategy, path *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	privateSubnets, err := meta.PrivateSubnets(ctx)
+	if err != nil {
+		return append(allErrs, field.Invalid(path, subnets, err.Error()))
+	}
+	privateSubnetsIndex := map[string]int{}
+	for index, id := range subnets {
+		if _, ok := privateSubnets[id]; ok {
+			privateSubnetsIndex[id] = index
+		}
+	}
+	if len(privateSubnets) == 0 {
+		allErrs = append(allErrs, field.Invalid(path, subnets, "No private subnets found"))
+	}
+
+	publicSubnets, err := meta.PublicSubnets(ctx)
+	if err != nil {
+		return append(allErrs, field.Invalid(path, subnets, err.Error()))
+	}
+	publicSubnetsIndex := map[string]int{}
+	for index, id := range subnets {
+		if _, ok := publicSubnets[id]; ok {
+			publicSubnetsIndex[id] = index
+		}
+	}
+
+	allErrs = append(allErrs, validateSubnetCIDR(privateSubnets, privateSubnetsIndex, networking.MachineNetwork, path)...)
+	allErrs = append(allErrs, validateSubnetCIDR(publicSubnets, publicSubnetsIndex, networking.MachineNetwork, path)...)
+	allErrs = append(allErrs, validateDuplicateSubnetZones(privateSubnets, privateSubnetsIndex, "private", path)...)
+	allErrs = append(allErrs, validateDuplicateSubnetZones(publicSubnets, publicSubnetsIndex, "public", path)...)
+
+	privateZones := sets.NewString()
+	publicZones := sets.NewString()
+	for _, subnet := range privateSubnets {
+		privateZones.Insert(subnet.Zone)
+	}
+	for _, subnet := range publicSubnets {
+		publicZones.Insert(subnet.Zone)
+	}
+	if publish == types.ExternalPublishingStrategy && !publicZones.IsSuperset(privateZones) {
+		errMsg := fmt.Sprintf("no public subnet provided for zones %s", privateZones.Difference(publicZones).List())
+		allErrs = append(allErrs, field.Invalid(path, subnets, errMsg))
+	}
+
+	return allErrs
+}
+
+func validateSubnetCIDR(subnets map[string]Subnet, indexMap map[string]int, networks []types.MachineNetworkEntry, path *field.path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	for id, value := range subnets {
+		fPath := path.Index(indexMap[id])
+		cidr, _, err := netParseCIDR(value.CIDR)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(fPath, id, err.Error()))
+			continue
+		}
+		for _, network := range networks {
+			if network.CIDR.Contains(cidr) {
+				continue
+			}
+			allErrs = append(allErrs, field.Invalid(path, id, fmt.Sprintf("subnet's CIDR range start %s is outside the specified machine networks", cidr)))
+		}
+	}
+	return allErrs
+}
+
+func validateDuplicateSubnetZones(subnets map[sring]Subnet, indexMap map[string]int, subnet_type string, path *field.path) field.ErrorList {
+	var keys []string
+	for id := range subnets {
+		keys = append(keys, id)
+	}
+	sort.Strings(keys)
+
+	allErrs := field.ErrorList{}
+	zones := map[string]string{}
+	for _, id := range keys {
+		subnet := subnets[id]
+		if conflictingSubnet, ok := zones[subnet.Zone]; ok {
+			errMsg := fmt.Sprintf("%s subnet %s is also in zone %s", subnet_type, conflictingSubnet, subnet.Zone)
+			allErrs = append(allErrs, field.Invalid(path.Index(indexMap[id]), id, errMsg))
+		} else {
+			zones[Subnet.Zone] = id
+		}
 	}
 	return allErrs
 }
