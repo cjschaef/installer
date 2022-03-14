@@ -2,10 +2,13 @@ package ibmcloud
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"sort"
 	"strings"
 	"text/template"
+
+	"github.com/openshift/installer/pkg/asset/installconfig"
 )
 
 // https://github.com/kubernetes/kubernetes/blob/368ee4bb8ee7a0c18431cd87ee49f0c890aa53e5/staging/src/k8s.io/legacy-cloud-providers/gce/gce.go#L188
@@ -36,7 +39,36 @@ type provider struct {
 }
 
 // CloudProviderConfig generates the cloud provider config for the IBMCloud platform.
-func CloudProviderConfig(infraID string, accountID string, region string, resourceGroupName string, controlPlaneZones []string, computeZones []string) (string, error) {
+func CloudProviderConfig(infraID string, accountID string, installConfig installconfig.InstallConfig, controlPlaneZones []string, computeZones []string) (string, error) {
+	vpcName := installConfig.Config.Platform.IBMCloud.GetVPCName()
+	if vpcName == "" {
+		vpcName = fmt.Sprintf("%s-vpc", infraID)
+	}
+	existingControlPlaneSubnets, err := installConfig.IBMCloud.ControlPlaneSubnets(context.TODO())
+	if err != nil {
+		return "", err
+	}
+	existingComputeSubnets, err := installConfig.IBMCloud.ComputeSubnets(context.TODO())
+	if err != nil {
+		return "", err
+	}
+
+	var compiledSubnetNames string
+	if len(existingControlPlaneSubnets) > 0 && len(existingComputeSubnets) > 0 {
+		var subnetNames []string
+		for _, cpSubnet := range existingControlPlaneSubnets {
+			subnetNames = append(subnetNames, cpSubnet.Name)
+		}
+		for _, compSubnet := range existingComputeSubnets {
+			subnetNames = append(subnetNames, compSubnet.Name)
+		}
+		compiledSubnetNames = strings.Join(subnetNames, ",")
+	} else if len(existingControlPlaneSubnets) == 0 && len(existingComputeSubnets) == 0 {
+		compiledSubnetNames = getVpcSubnetNames(infraID, controlPlaneZones, computeZones)
+	} else {
+		return "", fmt.Errorf("existing subnets must both be zero or both be > 0. %d ControlPlaneSubnets, %d ComputeSubnets", len(existingControlPlaneSubnets), len(existingComputeSubnets))
+	}
+
 	config := &config{
 		Global: global{
 			Version: "1.1.0",
@@ -48,12 +80,12 @@ func CloudProviderConfig(infraID string, accountID string, region string, resour
 			AccountID:                accountID,
 			ClusterID:                infraID,
 			ClusterDefaultProvider:   "g2",
-			Region:                   region,
+			Region:                   installConfig.Config.Platform.IBMCloud.Region,
 			G2CredentialsFilePath:    "/etc/vpc/ibmcloud_api_key",
-			G2ResourceGroupName:      resourceGroupName,
-			G2VPCName:                fmt.Sprintf("%s-vpc", infraID),
+			G2ResourceGroupName:      installConfig.Config.Platform.IBMCloud.ClusterResourceGroupName(infraID),
+			G2VPCName:                vpcName,
 			G2WorkerServiceAccountID: accountID,
-			G2VPCSubnetNames:         getVpcSubnetNames(infraID, controlPlaneZones, computeZones),
+			G2VPCSubnetNames:         compiledSubnetNames,
 		},
 	}
 	buf := &bytes.Buffer{}
