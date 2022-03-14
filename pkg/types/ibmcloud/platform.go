@@ -18,6 +18,21 @@ type Platform struct {
 	// +optional
 	ResourceGroupName string `json:"resourceGroupName,omitempty"`
 
+	// VPCName is the name of an already existing VPC where the cluster should be
+	// installed.
+	// +optional
+	VPCName string `json:"vpcName,omitempty"`
+
+	// ControlPlaneSubnets are the Id's of already existing subnets where the
+	// cluster control plane nodes should be created
+	// +optional
+	ControlPlaneSubnets []string `json:"controlPlaneSubnets,omitempty"`
+
+	// ComputeSubnets are the Id's of already existing subnets where the cluster
+	// compute nodes should be created
+	// +optional
+	ComputeSubnets []string `json:"computeSubnets,omitempty"`
+
 	// DefaultMachinePlatform is the default configuration used when installing
 	// on IBM Cloud for machine pools which do not define their own platform
 	// configuration.
@@ -31,4 +46,12 @@ func (p *Platform) ClusterResourceGroupName(infraID string) string {
 		return p.ResourceGroupName
 	}
 	return infraID
+}
+
+// GetVPCName returns the user provided name of the VPC for the cluster.
+func (p *Platform) GetVPCName() string {
+	if len(p.VPCName) > 0 {
+		return p.VPCName
+	}
+	return ""
 }
