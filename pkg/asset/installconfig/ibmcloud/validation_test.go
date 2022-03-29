@@ -141,7 +141,7 @@ func TestValidate(t *testing.T) {
 	}
 }
 
-func TestValidatePreExitingPublicDNS(t *testing.T) {
+func TestValidatePreExistingPublicDNS(t *testing.T) {
 	cases := []struct {
 		name     string
 		edits    editFunctions
@@ -193,7 +193,7 @@ func TestValidatePreExitingPublicDNS(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			validInstallConfig := validInstallConfig()
-			aggregatedErrors := ibmcloud.ValidatePreExitingPublicDNS(ibmcloudClient, validInstallConfig, metadata)
+			aggregatedErrors := ibmcloud.ValidatePreExistingPublicDNS(ibmcloudClient, validInstallConfig, metadata)
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {

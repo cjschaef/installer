@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/IBM/go-sdk-core/v5/core"
+	"github.com/openshift/installer/pkg/types"
 )
 
 // Metadata holds additional metadata for InstallConfig resources that
@@ -17,8 +18,15 @@ type Metadata struct {
 	accountID      string
 	cisInstanceCRN string
 	client         *Client
+	dnsInstance    *DNSInstance
 
 	mutex sync.Mutex
+}
+
+// DNSInstance holds information for a DNS Services instance
+type DNSInstance struct {
+	ID  string
+	CRN string
 }
 
 // NewMetadata initializes a new Metadata object.
@@ -60,14 +68,14 @@ func (m *Metadata) CISInstanceCRN(ctx context.Context) (string, error) {
 			return "", err
 		}
 
-		zones, err := client.GetDNSZones(ctx)
+		zones, err := client.GetDNSZones(ctx, types.ExternalPublishingStrategy)
 		if err != nil {
 			return "", err
 		}
 
 		for _, z := range zones {
 			if z.Name == m.BaseDomain {
-				m.SetCISInstanceCRN(z.CISInstanceCRN)
+				m.SetCISInstanceCRN(z.InstanceCRN)
 				return m.cisInstanceCRN, nil
 			}
 		}
@@ -79,6 +87,40 @@ func (m *Metadata) CISInstanceCRN(ctx context.Context) (string, error) {
 // SetCISInstanceCRN sets Cloud Internet Services instance CRN to a string value.
 func (m *Metadata) SetCISInstanceCRN(crn string) {
 	m.cisInstanceCRN = crn
+}
+
+// DNSInstance returns a DNSInstance holding information about the DNS Services instance
+// managing the DNS zone for the base domain.
+func (m *Metadata) DNSInstance(ctx context.Context) (*DNSInstance, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	if m.dnsInstance == nil {
+		client, err := m.Client()
+		if err != nil {
+			return nil, err
+		}
+
+		zones, err := client.GetDNSZones(ctx, types.InternalPublishingStrategy)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, z := range zones {
+			if z.Name == m.BaseDomain {
+				if z.InstanceID == "" || z.InstanceCRN == "" {
+					return nil, fmt.Errorf("dnsInstance has unknown ID/CRN: %q - %q", z.InstanceID, z.InstanceCRN)
+				}
+				m.dnsInstance = &DNSInstance{
+					ID:  z.InstanceID,
+					CRN: z.InstanceCRN,
+				}
+				return m.dnsInstance, nil
+			}
+		}
+		return nil, fmt.Errorf("dnsInstance unknown due to DNS zone %q not found", m.BaseDomain)
+	}
+	return m.dnsInstance, nil
 }
 
 // Client returns a client used for making API calls to IBM Cloud services.

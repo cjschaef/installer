@@ -5,15 +5,18 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/networking-go-sdk/dnsrecordsv1"
+	"github.com/IBM/networking-go-sdk/dnszonesv1"
 	"github.com/IBM/networking-go-sdk/zonesv1"
 	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/pkg/errors"
 )
 
@@ -23,11 +26,12 @@ import (
 type API interface {
 	GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error)
 	GetCISInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error)
+	GetDNSInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error)
 	GetDedicatedHostByName(ctx context.Context, name string, region string) (*vpcv1.DedicatedHost, error)
 	GetDedicatedHostProfiles(ctx context.Context, region string) ([]vpcv1.DedicatedHostProfile, error)
 	GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID string, recordName string) ([]dnsrecordsv1.DnsrecordDetails, error)
-	GetDNSZoneIDByName(ctx context.Context, name string) (string, error)
-	GetDNSZones(ctx context.Context) ([]DNSZoneResponse, error)
+	GetDNSZoneIDByName(ctx context.Context, name string, publish types.PublishingStrategy) (string, error)
+	GetDNSZones(ctx context.Context, publish types.PublishingStrategy) ([]DNSZoneResponse, error)
 	GetEncryptionKey(ctx context.Context, keyCRN string) (*EncryptionKeyResponse, error)
 	GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.ResourceGroup, error)
 	GetResourceGroup(ctx context.Context, nameOrID string) (*resourcemanagerv2.ResourceGroup, error)
@@ -46,8 +50,12 @@ type Client struct {
 	vpcAPI        *vpcv1.VpcV1
 }
 
-// cisServiceID is the Cloud Internet Services' catalog service ID.
-const cisServiceID = "75874a60-cb12-11e7-948e-37ac098eb1b9"
+const (
+	// cisServiceID is the Cloud Internet Services' catalog service ID.
+	cisServiceID = "75874a60-cb12-11e7-948e-37ac098eb1b9"
+	// dnsServiceID is the DNS Services' catalog service ID.
+	dnsServiceID = "b4ed8a30-936f-11e9-b289-1d079699cbe5"
+)
 
 // VPCResourceNotFoundError represents an error for a VPC resoruce that is not found.
 type VPCResourceNotFoundError struct{}
@@ -65,15 +73,19 @@ type DNSZoneResponse struct {
 	// ID is the zone's ID.
 	ID string
 
-	// CISInstanceCRN is the IBM Cloud Resource Name for the CIS instance where
+	// InstanceID is the IBM Cloud Resource ID for the service instance where
 	// the DNS zone is managed.
-	CISInstanceCRN string
+	InstanceID string
 
-	// CISInstanceName is the display name of the CIS instance where the DNS zone
+	// InstanceCRN is the IBM Cloud Resource Name for the service instance where
+	// the DNS zone is managed.
+	InstanceCRN string
+
+	// InstanceName is the display name of the service instance where the DNS zone
 	// is managed.
-	CISInstanceName string
+	InstanceName string
 
-	// ResourceGroupID is the resource group ID of the CIS instance.
+	// ResourceGroupID is the resource group ID of the service instance.
 	ResourceGroupID string
 }
 
@@ -135,18 +147,28 @@ func (c *Client) GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentit
 	return details, nil
 }
 
-// GetCISInstance gets a specific Cloud Internet Services instance by its CRN.
-func (c *Client) GetCISInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error) {
+// getInstance gets a specific DNS or CIS instance by its CRN.
+func (c *Client) getInstance(ctx context.Context, crnstr string, instanceType string) (*resourcecontrollerv2.ResourceInstance, error) {
 	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
 	options := c.controllerAPI.NewGetResourceInstanceOptions(crnstr)
 	resourceInstance, _, err := c.controllerAPI.GetResourceInstance(options)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get cis instances")
+		return nil, errors.Wrapf(err, "failed to get %s instances", instanceType)
 	}
 
 	return resourceInstance, nil
+}
+
+// GetCISInstance gets a specific Cloud Internet Services by its CRN.
+func (c *Client) GetCISInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error) {
+	return c.getInstance(ctx, crnstr, "CIS")
+}
+
+// GetDNSInstance gets a specific DNS Services instance by its CRN.
+func (c *Client) GetDNSInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error) {
+	return c.getInstance(ctx, crnstr, "DNS")
 }
 
 // GetDedicatedHostByName gets dedicated host by name.
@@ -215,10 +237,9 @@ func (c *Client) GetDNSRecordsByName(ctx context.Context, crnstr string, zoneID 
 	return records.Result, nil
 }
 
-// GetDNSZoneIDByName gets the CIS zone ID from its domain name.
-func (c *Client) GetDNSZoneIDByName(ctx context.Context, name string) (string, error) {
-
-	zones, err := c.GetDNSZones(ctx)
+// GetDNSZoneIDByName gets the DNS (Internal) or CIS zone ID from its domain name.
+func (c *Client) GetDNSZoneIDByName(ctx context.Context, name string, publish types.PublishingStrategy) (string, error) {
+	zones, err := c.GetDNSZones(ctx, publish)
 	if err != nil {
 		return "", err
 	}
@@ -232,11 +253,67 @@ func (c *Client) GetDNSZoneIDByName(ctx context.Context, name string) (string, e
 	return "", fmt.Errorf("DNS zone %q not found", name)
 }
 
-// GetDNSZones returns all of the active DNS zones managed by CIS.
-func (c *Client) GetDNSZones(ctx context.Context) ([]DNSZoneResponse, error) {
+// GetDNSZones returns all of the active DNS zones managed by DNS or CIS.
+func (c *Client) GetDNSZones(ctx context.Context, publish types.PublishingStrategy) ([]DNSZoneResponse, error) {
 	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
+	if publish == types.InternalPublishingStrategy {
+		return c.getDnsDnsZones(ctx)
+	} else {
+		return c.getCisDnsZones(ctx)
+	}
+}
+
+func (c *Client) getDnsDnsZones(ctx context.Context) ([]DNSZoneResponse, error) {
+	options := c.controllerAPI.NewListResourceInstancesOptions()
+	options.SetResourceID(dnsServiceID)
+
+	listResourceInstancesResponse, _, err := c.controllerAPI.ListResourceInstances(options)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get dns instance")
+	}
+
+	var allZones []DNSZoneResponse
+	for _, instance := range listResourceInstancesResponse.Resources {
+		authenticator, err := NewIamAuthenticator(c.APIKey)
+		if err != nil {
+			return nil, err
+		}
+		dnsZoneService, err := dnszonesv1.NewDnsZonesV1(&dnszonesv1.DnsZonesV1Options{
+			Authenticator: authenticator,
+		})
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to list DNS zones")
+		}
+
+		options := dnsZoneService.NewListDnszonesOptions(*instance.GUID)
+		result, _, err := dnsZoneService.ListDnszones(options)
+		if result == nil {
+			return nil, err
+		}
+
+		for _, zone := range result.Dnszones {
+			stateLower := strings.ToLower(*zone.State)
+			// DNS Zones can be 'pending_network_add' (without a permitted network, added during TF)
+			if stateLower == dnszonesv1.Dnszone_State_Active || stateLower == dnszonesv1.Dnszone_State_PendingNetworkAdd {
+				zoneStruct := DNSZoneResponse{
+					Name:            *zone.Name,
+					ID:              *zone.ID,
+					InstanceID:      *instance.GUID,
+					InstanceCRN:     *instance.CRN,
+					InstanceName:    *instance.Name,
+					ResourceGroupID: *instance.ResourceGroupID,
+				}
+				allZones = append(allZones, zoneStruct)
+			}
+		}
+	}
+
+	return allZones, nil
+}
+
+func (c *Client) getCisDnsZones(ctx context.Context) ([]DNSZoneResponse, error) {
 	options := c.controllerAPI.NewListResourceInstancesOptions()
 	options.SetResourceID(cisServiceID)
 
@@ -272,8 +349,9 @@ func (c *Client) GetDNSZones(ctx context.Context) ([]DNSZoneResponse, error) {
 				zoneStruct := DNSZoneResponse{
 					Name:            *zone.Name,
 					ID:              *zone.ID,
-					CISInstanceCRN:  *instance.CRN,
-					CISInstanceName: *instance.Name,
+					InstanceID:      *instance.GUID,
+					InstanceCRN:     *instance.CRN,
+					InstanceName:    *instance.Name,
 					ResourceGroupID: *instance.ResourceGroupID,
 				}
 				allZones = append(allZones, zoneStruct)

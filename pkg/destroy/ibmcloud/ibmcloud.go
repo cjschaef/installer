@@ -11,6 +11,8 @@ import (
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/networking-go-sdk/dnsrecordsv1"
+	"github.com/IBM/networking-go-sdk/dnssvcsv1"
+	"github.com/IBM/networking-go-sdk/dnszonesv1"
 	"github.com/IBM/networking-go-sdk/zonesv1"
 	"github.com/IBM/platform-services-go-sdk/iampolicymanagementv1"
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
@@ -40,6 +42,7 @@ type ClusterUninstaller struct {
 	AccountID           string
 	BaseDomain          string
 	CISInstanceCRN      string
+	DNSInstanceID       string
 	Region              string
 	ResourceGroupName   string
 	UserProvidedSubnets []string
@@ -50,10 +53,13 @@ type ClusterUninstaller struct {
 	vpcSvc                 *vpcv1.VpcV1
 	iamPolicyManagementSvc *iampolicymanagementv1.IamPolicyManagementV1
 	zonesSvc               *zonesv1.ZonesV1
+	dnsZonesSvc            *dnszonesv1.DnsZonesV1
+	dnsServicesSvc         *dnssvcsv1.DnsSvcsV1
 	dnsRecordsSvc          *dnsrecordsv1.DnsRecordsV1
 
 	resourceGroupID string
 	cosInstanceID   string
+	zoneID          string
 
 	errorTracker
 	pendingItemTracker
@@ -69,6 +75,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		AccountID:           metadata.ClusterPlatformMetadata.IBMCloud.AccountID,
 		BaseDomain:          metadata.ClusterPlatformMetadata.IBMCloud.BaseDomain,
 		CISInstanceCRN:      metadata.ClusterPlatformMetadata.IBMCloud.CISInstanceCRN,
+		DNSInstanceID:       metadata.ClusterPlatformMetadata.IBMCloud.DNSInstanceID,
 		Region:              metadata.ClusterPlatformMetadata.IBMCloud.Region,
 		ResourceGroupName:   metadata.ClusterPlatformMetadata.IBMCloud.ResourceGroupName,
 		UserProvidedSubnets: metadata.ClusterPlatformMetadata.IBMCloud.Subnets,
@@ -216,51 +223,94 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 	}
 	o.iamPolicyManagementSvc.Service.SetUserAgent(userAgentString)
 
-	// ZonesV1
-	zAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
-	if err != nil {
-		return err
-	}
-	o.zonesSvc, err = zonesv1.NewZonesV1(&zonesv1.ZonesV1Options{
-		Authenticator: zAuthenticator,
-		Crn:           core.StringPtr(o.CISInstanceCRN),
-	})
-	if err != nil {
-		return err
-	}
-	o.zonesSvc.Service.SetUserAgent(userAgentString)
-
-	// Get the Zone ID
-	options := o.zonesSvc.NewListZonesOptions()
-	resources, _, err := o.zonesSvc.ListZonesWithContext(o.Context, options)
-	if err != nil {
-		return err
-	}
-
-	zoneID := ""
-	for _, zone := range resources.Result {
-		if strings.Contains(o.BaseDomain, *zone.Name) {
-			zoneID = *zone.ID
+	if len(o.CISInstanceCRN) > 0 {
+		// ZonesV1
+		zAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
+		if err != nil {
+			return err
 		}
-	}
-	if zoneID == "" || err != nil {
-		return errors.Errorf("Could not determine DNS zone ID from base domain %q", o.BaseDomain)
-	}
+		o.zonesSvc, err = zonesv1.NewZonesV1(&zonesv1.ZonesV1Options{
+			Authenticator: zAuthenticator,
+			Crn:           core.StringPtr(o.CISInstanceCRN),
+		})
+		if err != nil {
+			return err
+		}
+		o.zonesSvc.Service.SetUserAgent(userAgentString)
 
-	// DnsRecordsV1
-	dnsAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
-	if err != nil {
-		return err
+		// Get the Zone ID
+		options := o.zonesSvc.NewListZonesOptions()
+		resources, _, err := o.zonesSvc.ListZonesWithContext(o.Context, options)
+		if err != nil {
+			return err
+		}
+
+		zoneID := ""
+		for _, zone := range resources.Result {
+			if strings.Contains(o.BaseDomain, *zone.Name) {
+				zoneID = *zone.ID
+			}
+		}
+		if zoneID == "" || err != nil {
+			return errors.Errorf("Could not determine CIS DNS zone ID from base domain %q", o.BaseDomain)
+		}
+
+		// DnsRecordsV1
+		dnsAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
+		if err != nil {
+			return err
+		}
+		o.dnsRecordsSvc, err = dnsrecordsv1.NewDnsRecordsV1(&dnsrecordsv1.DnsRecordsV1Options{
+			Authenticator:  dnsAuthenticator,
+			Crn:            core.StringPtr(o.CISInstanceCRN),
+			ZoneIdentifier: core.StringPtr(zoneID),
+		})
+		if err != nil {
+			return err
+		}
+		o.dnsRecordsSvc.Service.SetUserAgent(userAgentString)
+	} else if len(o.DNSInstanceID) > 0 {
+		// Get the DNS Services instance CRN
+		//options := o.controllerSvc.NewGetResourceInstanceOptions(o.DNSInstanceID)
+		//result, _, err := o.controllerSvc.GetResourceInstance(options)
+		//if err != nil {
+		//	return err
+		//}
+		//dnsInstanceCRN := *result.CRN
+		//o.Logger.Debugf("DNS Services ID: %s", o.DNSInstanceID)
+		//o.Logger.Debugf("DNS Services Instance CRN: %s", dnsInstanceCRN)
+
+		// DnsSvcsV1
+		dnsAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
+		if err != nil {
+			return err
+		}
+		o.dnsServicesSvc, err = dnssvcsv1.NewDnsSvcsV1(&dnssvcsv1.DnsSvcsV1Options{
+			Authenticator: dnsAuthenticator,
+		})
+		if err != nil {
+			return err
+		}
+		o.dnsServicesSvc.Service.SetUserAgent(userAgentString)
+
+		// Get the Zone ID
+		dzOptions := o.dnsServicesSvc.NewListDnszonesOptions(o.DNSInstanceID)
+		dzResult, _, err := o.dnsServicesSvc.ListDnszonesWithContext(o.Context, dzOptions)
+		if err != nil {
+			return err
+		}
+
+		zoneID := ""
+		for _, zone := range dzResult.Dnszones {
+			if strings.Contains(o.BaseDomain, *zone.Name) {
+				zoneID = *zone.ID
+			}
+		}
+		if zoneID == "" || err != nil {
+			return errors.Errorf("Could not determine DNS Services DNS zone ID from base domain %q", o.BaseDomain)
+		}
+		o.zoneID = zoneID
 	}
-	o.dnsRecordsSvc, err = dnsrecordsv1.NewDnsRecordsV1(&dnsrecordsv1.DnsRecordsV1Options{
-		Authenticator:  dnsAuthenticator,
-		Crn:            core.StringPtr(o.CISInstanceCRN),
-		ZoneIdentifier: core.StringPtr(zoneID),
-	})
-	if err != nil {
-		return err
-	}
-	o.dnsRecordsSvc.Service.SetUserAgent(userAgentString)
 
 	// VpcV1
 	vpcAuthenticator, err := icibmcloud.NewIamAuthenticator(apiKey)
