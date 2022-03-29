@@ -59,3 +59,7 @@ output "lb_pool_machine_config_id" {
 output "vpc_id" {
   value = ibm_is_vpc.vpc.id
 }
+
+output "vpc_crn" {
+  value = ibm_is_vpc.vpc.crn
+}

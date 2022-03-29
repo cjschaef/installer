@@ -514,16 +514,24 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			}
 		}
 
-		// Get CISInstanceCRN from InstallConfig metadata
-		crn, err := installConfig.IBMCloud.CISInstanceCRN(ctx)
-		if err != nil {
-			return err
+		var cisCRN, dnsID string
+
+		if installConfig.Config.Publish == types.InternalPublishingStrategy {
+			// Get DNSInstanceCRN from InstallConfig metadata
+			dnsInstance, _ := installConfig.IBMCloud.DNSInstance(ctx)
+			if dnsInstance != nil {
+				dnsID = dnsInstance.ID
+			}
+		} else {
+			// Get CISInstanceCRN from InstallConfig metadata
+			cisCRN, _ = installConfig.IBMCloud.CISInstanceCRN(ctx)
 		}
 
 		data, err = ibmcloudtfvars.TFVars(
 			ibmcloudtfvars.TFVarsSources{
 				Auth:                 auth,
-				CISInstanceCRN:       crn,
+				CISInstanceCRN:       cisCRN,
+				DNSInstanceID:        dnsID,
 				ImageURL:             string(*rhcosImage),
 				MasterConfigs:        masterConfigs,
 				MasterDedicatedHosts: masterDedicatedHosts,

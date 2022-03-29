@@ -1,8 +1,12 @@
 ############################################
-# CIS module variables
+# DNS module variables
 ############################################
 
-variable "cis_id" {
+variable "dns_id" {
+  type = string
+}
+
+variable "vpc_crn" {
   type = string
 }
 

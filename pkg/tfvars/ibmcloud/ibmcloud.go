@@ -25,7 +25,8 @@ type config struct {
 	Auth                    `json:",inline"`
 	Region                  string          `json:"ibmcloud_region,omitempty"`
 	BootstrapInstanceType   string          `json:"ibmcloud_bootstrap_instance_type,omitempty"`
-	CISInstanceCRN          string          `json:"ibmcloud_cis_crn,omitempty"`
+	CISInstanceCRN          string          `json:"ibmcloud_cis_crn"`
+	DNSInstanceID           string          `json:"ibmcloud_dns_id"`
 	ExtraTags               []string        `json:"ibmcloud_extra_tags,omitempty"`
 	MasterAvailabilityZones []string        `json:"ibmcloud_master_availability_zones"`
 	WorkerAvailabilityZones []string        `json:"ibmcloud_worker_availability_zones"`
@@ -41,6 +42,7 @@ type config struct {
 type TFVarsSources struct {
 	Auth                 Auth
 	CISInstanceCRN       string
+	DNSInstanceID        string
 	ImageURL             string
 	MasterConfigs        []*ibmcloudprovider.IBMCloudMachineProviderSpec
 	MasterDedicatedHosts []DedicatedHost
@@ -71,6 +73,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		Auth:                    sources.Auth,
 		BootstrapInstanceType:   masterConfig.Profile,
 		CISInstanceCRN:          sources.CISInstanceCRN,
+		DNSInstanceID:           sources.DNSInstanceID,
 		ImageFilePath:           cachedImage,
 		MasterAvailabilityZones: masterAvailabilityZones,
 		MasterDedicatedHosts:    sources.MasterDedicatedHosts,

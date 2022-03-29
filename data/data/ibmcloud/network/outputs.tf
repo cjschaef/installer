@@ -22,6 +22,10 @@ output "cos_resource_instance_crn" {
   value = ibm_resource_instance.cos.crn
 }
 
+output "dns_zone_id" {
+  value = module.dns.dns_zone_id
+}
+
 output "lb_kubernetes_api_public_id" {
   value = module.vpc.lb_kubernetes_api_public_id
 }

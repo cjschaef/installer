@@ -13,11 +13,18 @@ import (
 func Metadata(infraID string, config *types.InstallConfig, meta *icibmcloud.Metadata) *ibmcloud.Metadata {
 	accountID, _ := meta.AccountID(context.TODO())
 	cisCrn, _ := meta.CISInstanceCRN(context.TODO())
+	dnsInstance, _ := meta.DNSInstance(context.TODO())
+
+	var dnsInstanceID string
+	if dnsInstance != nil {
+		dnsInstanceID = dnsInstance.ID
+	}
 
 	return &ibmcloud.Metadata{
 		AccountID:         accountID,
 		BaseDomain:        config.BaseDomain,
 		CISInstanceCRN:    cisCrn,
+		DNSInstanceID:     dnsInstanceID,
 		Region:            config.Platform.IBMCloud.Region,
 		ResourceGroupName: config.Platform.IBMCloud.ClusterResourceGroupName(infraID),
 	}

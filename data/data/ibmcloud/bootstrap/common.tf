@@ -1,5 +1,6 @@
 locals {
   description      = "Created By OpenShift Installer"
+  cluster_domain   = var.cluster_domain
   public_endpoints = var.ibmcloud_publish_strategy == "External" ? true : false
   tags = concat(
     ["kubernetes.io_cluster_${var.cluster_id}:owned"],

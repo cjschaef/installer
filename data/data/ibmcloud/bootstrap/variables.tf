@@ -23,6 +23,10 @@ variable "cos_resource_instance_crn" {
   type = string
 }
 
+variable "dns_zone_id" {
+  type = string
+}
+
 variable "lb_kubernetes_api_public_id" {
   type = string
 }
