@@ -210,3 +210,6 @@ replace k8s.io/client-go => k8s.io/client-go v0.23.0
 replace sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
 
 replace github.com/terraform-providers/terraform-provider-nutanix => github.com/nutanix/terraform-provider-nutanix v1.2.2-0.20211029075448-e21f85ac2cf7
+
+// TODO(cjschaef): Remove, used for testing BYON, waiting for api change to merge and be pulled in
+replace github.com/openshift/api => github.com/cjschaef/api v0.0.0-20220329165035-fc703b5232b7
