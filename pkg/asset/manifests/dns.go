@@ -142,7 +142,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 		}
 		config.Spec.PrivateZone = &configv1.DNSZone{ID: fmt.Sprintf("%s-private-zone", clusterID.InfraID)}
 	case ibmcloudtypes.Name, powervstypes.Name:
-		client, err := icibmcloud.NewClient()
+		client, err := icibmcloud.NewClient(installConfig.Config.Platform.IBMCloud.Region)
 		if err != nil {
 			return errors.Wrap(err, "failed to get IBM Cloud client")
 		}

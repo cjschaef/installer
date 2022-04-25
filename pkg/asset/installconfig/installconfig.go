@@ -164,7 +164,7 @@ func (a *InstallConfig) finish(filename string) error {
 		a.Azure = icazure.NewMetadata(a.Config.Azure.CloudName, a.Config.Azure.ARMEndpoint)
 	}
 	if a.Config.IBMCloud != nil {
-		a.IBMCloud = icibmcloud.NewMetadata(a.Config.BaseDomain, a.Config.IBMCloud.ControlPlaneSubnets, a.Config.IBMCloud.ComputeSubnets)
+		a.IBMCloud = icibmcloud.NewMetadata(a.Config.BaseDomain, a.Config.IBMCloud.Region, a.Config.IBMCloud.ControlPlaneSubnets, a.Config.IBMCloud.ComputeSubnets)
 	}
 	if a.Config.PowerVS != nil {
 		a.PowerVS = icpowervs.NewMetadata(a.Config.BaseDomain)
@@ -215,7 +215,7 @@ func (a *InstallConfig) platformValidation() error {
 		return icgcp.Validate(client, a.Config)
 	}
 	if a.Config.Platform.IBMCloud != nil {
-		client, err := icibmcloud.NewClient()
+		client, err := icibmcloud.NewClient(a.Config.Platform.IBMCloud.Region)
 		if err != nil {
 			return err
 		}

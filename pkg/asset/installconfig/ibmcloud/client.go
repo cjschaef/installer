@@ -40,6 +40,7 @@ type API interface {
 // Client makes calls to the IBM Cloud API.
 type Client struct {
 	APIKey string
+	Region string
 
 	managementAPI *resourcemanagerv2.ResourceManagerV2
 	controllerAPI *resourcecontrollerv2.ResourceControllerV2
@@ -81,11 +82,12 @@ type DNSZoneResponse struct {
 type EncryptionKeyResponse struct{}
 
 // NewClient initializes a client with a session.
-func NewClient() (*Client, error) {
+func NewClient(region string) (*Client, error) {
 	apiKey := os.Getenv("IC_API_KEY")
 
 	client := &Client{
 		APIKey: apiKey,
+		Region: region,
 	}
 
 	if err := client.loadSDKServices(); err != nil {
@@ -332,34 +334,9 @@ func (c *Client) GetSubnet(ctx context.Context, subnetID string) (*vpcv1.Subnet,
 	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
-	authenticator, err := NewIamAuthenticator(c.APIKey)
-	if err != nil {
-		return nil, err
-	}
-	vpcService, err := vpcv1.NewVpcV1(&vpcv1.VpcV1Options{
-		Authenticator: authenticator,
-	})
-	if err != nil {
-		return nil, err
-	}
-	listOptions := &vpcv1.ListSubnetsOptions{}
-	subnets, dResp, err := vpcService.ListSubnetsWithContext(ctx, listOptions)
-	if dResp.GetStatusCode() == http.StatusNotFound {
-		return nil, errors.Wrap(err, "No subnets found")
-	} else {
-		for _, sN := range subnets.Subnets {
-			if subnetID == *sN.ID {
-				return &sN, err
-			}
-		}
-		return nil, fmt.Errorf("No subnets were returned: %s", dResp)
-	}
-	options := &vpcv1.GetSubnetOptions{}
-	options.SetID(subnetID)
-	subnet, detailedResponse, err := vpcService.GetSubnetWithContext(ctx, options)
+	subnet, detailedResponse, err := c.vpcAPI.GetSubnetWithContext(ctx, &vpcv1.GetSubnetOptions{ID: &subnetID})
 	if detailedResponse.GetStatusCode() == http.StatusNotFound {
-		return nil, errors.Wrapf(err, "Subnet not found: %v ; %v ; %v", detailedResponse.GetHeaders(), detailedResponse.GetResult(), detailedResponse.GetRawResult())
-		// return nil, &VPCResourceNotFoundError{}
+		return nil, &VPCResourceNotFoundError{}
 	}
 	return subnet, err
 }
@@ -470,6 +447,15 @@ func (c *Client) loadVPCV1API() error {
 	vpcService, err := vpcv1.NewVpcV1(&vpcv1.VpcV1Options{
 		Authenticator: authenticator,
 	})
+	if err != nil {
+		return err
+	}
+	// Set Regional Service URL for VPC Service
+	region, _, err := vpcService.GetRegion(vpcService.NewGetRegionOptions(c.Region))
+	if err != nil {
+		return err
+	}
+	err = vpcService.SetServiceURL(fmt.Sprintf("%s/v1", *region.Endpoint))
 	if err != nil {
 		return err
 	}
