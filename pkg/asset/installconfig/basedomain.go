@@ -74,7 +74,7 @@ func (a *baseDomain) Generate(parents asset.Parents) error {
 			return err
 		}
 	case ibmcloud.Name:
-		zone, err := ibmcloudconfig.GetDNSZone()
+		zone, err := ibmcloudconfig.GetDNSZone(platform.IBMCloud.Region)
 		if err != nil {
 			return err
 		}

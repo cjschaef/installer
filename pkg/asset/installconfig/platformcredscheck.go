@@ -67,7 +67,7 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "creating GCP session")
 		}
 	case ibmcloud.Name:
-		_, err = ibmcloudconfig.NewClient()
+		_, err = ibmcloudconfig.NewClient(ic.Config.Platform.IBMCloud.Region)
 		if err != nil {
 			return errors.Wrap(err, "creating IBM Cloud session")
 		}
