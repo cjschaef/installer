@@ -332,9 +332,34 @@ func (c *Client) GetSubnet(ctx context.Context, subnetID string) (*vpcv1.Subnet,
 	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
-	subnet, detailedResponse, err := c.vpcAPI.GetSubnet(&vpcv1.GetSubnetOptions{ID: &subnetID})
+	authenticator, err := NewIamAuthenticator(c.APIKey)
+	if err != nil {
+		return nil, err
+	}
+	vpcService, err := vpcv1.NewVpcV1(&vpcv1.VpcV1Options{
+		Authenticator: authenticator,
+	})
+	if err != nil {
+		return nil, err
+	}
+	listOptions := &vpcv1.ListSubnetsOptions{}
+	subnets, dResp, err := vpcService.ListSubnetsWithContext(ctx, listOptions)
+	if dResp.GetStatusCode() == http.StatusNotFound {
+		return nil, errors.Wrap(err, "No subnets found")
+	} else {
+		for _, sN := range subnets.Subnets {
+			if subnetID == *sN.ID {
+				return &sN, err
+			}
+		}
+		return nil, fmt.Errorf("No subnets were returned: %s", dResp)
+	}
+	options := &vpcv1.GetSubnetOptions{}
+	options.SetID(subnetID)
+	subnet, detailedResponse, err := vpcService.GetSubnetWithContext(ctx, options)
 	if detailedResponse.GetStatusCode() == http.StatusNotFound {
-		return nil, &VPCResourceNotFoundError{}
+		return nil, errors.Wrapf(err, "Subnet not found: %v ; %v ; %v", detailedResponse.GetHeaders(), detailedResponse.GetResult(), detailedResponse.GetRawResult())
+		// return nil, &VPCResourceNotFoundError{}
 	}
 	return subnet, err
 }
