@@ -19,8 +19,8 @@ type Zone struct {
 }
 
 // GetDNSZone returns a DNS Zone chosen by survey.
-func GetDNSZone() (*Zone, error) {
-	client, err := NewClient()
+func GetDNSZone(region string) (*Zone, error) {
+	client, err := NewClient(region)
 	if err != nil {
 		return nil, err
 	}

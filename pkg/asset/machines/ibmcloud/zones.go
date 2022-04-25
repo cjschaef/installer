@@ -10,7 +10,7 @@ import (
 func AvailabilityZones(region string) ([]string, error) {
 	ctx := context.TODO()
 
-	client, err := ibmcloud.NewClient()
+	client, err := ibmcloud.NewClient(region)
 	if err != nil {
 		return nil, err
 	}
