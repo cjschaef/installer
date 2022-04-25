@@ -40,6 +40,7 @@ type API interface {
 // Client makes calls to the IBM Cloud API.
 type Client struct {
 	APIKey string
+	Region string
 
 	managementAPI *resourcemanagerv2.ResourceManagerV2
 	controllerAPI *resourcecontrollerv2.ResourceControllerV2
@@ -81,11 +82,12 @@ type DNSZoneResponse struct {
 type EncryptionKeyResponse struct{}
 
 // NewClient initializes a client with a session.
-func NewClient() (*Client, error) {
+func NewClient(region string) (*Client, error) {
 	apiKey := os.Getenv("IC_API_KEY")
 
 	client := &Client{
 		APIKey: apiKey,
+		Region: region,
 	}
 
 	if err := client.loadSDKServices(); err != nil {
@@ -463,6 +465,15 @@ func (c *Client) loadVPCV1API() error {
 	vpcService, err := vpcv1.NewVpcV1(&vpcv1.VpcV1Options{
 		Authenticator: authenticator,
 	})
+	if err != nil {
+		return err
+	}
+	// Set Regional Service URL for VPC Service
+	region, _, err := vpcService.GetRegion(vpcService.NewGetRegionOptions(c.Region))
+	if err != nil {
+		return err
+	}
+	err = vpcService.SetServiceURL(fmt.Sprintf("%s/v1", *region.Endpoint))
 	if err != nil {
 		return err
 	}

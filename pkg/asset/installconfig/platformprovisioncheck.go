@@ -88,7 +88,7 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 			return err
 		}
 	case ibmcloud.Name:
-		client, err := ibmcloudconfig.NewClient()
+		client, err := ibmcloudconfig.NewClient(ic.Config.Platform.IBMCloud.Region)
 		if err != nil {
 			return err
 		}

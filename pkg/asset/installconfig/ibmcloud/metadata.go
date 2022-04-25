@@ -15,6 +15,7 @@ type Metadata struct {
 	BaseDomain              string
 	ComputeSubnetNames      []string
 	ControlPlaneSubnetNames []string
+	Region                  string
 
 	accountID            string
 	cisInstanceCRN       string
@@ -26,11 +27,12 @@ type Metadata struct {
 }
 
 // NewMetadata initializes a new Metadata object.
-func NewMetadata(baseDomain string, controlPlaneSubnets []string, computeSubnets []string) *Metadata {
+func NewMetadata(baseDomain string, region string, controlPlaneSubnets []string, computeSubnets []string) *Metadata {
 	return &Metadata{
 		BaseDomain:              baseDomain,
 		ComputeSubnetNames:      computeSubnets,
 		ControlPlaneSubnetNames: controlPlaneSubnets,
+		Region:                  region,
 	}
 }
 
@@ -130,7 +132,7 @@ func (m *Metadata) ControlPlaneSubnets(ctx context.Context) (map[string]Subnet, 
 // Client returns a client used for making API calls to IBM Cloud services.
 func (m *Metadata) Client() (*Client, error) {
 	if m.client == nil {
-		client, err := NewClient()
+		client, err := NewClient(m.Region)
 		if err != nil {
 			return nil, err
 		}
