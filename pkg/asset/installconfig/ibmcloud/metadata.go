@@ -16,6 +16,7 @@ type Metadata struct {
 	BaseDomain              string
 	ComputeSubnetNames      []string
 	ControlPlaneSubnetNames []string
+	Region                  string
 
 	accountID            string
 	cisInstanceCRN       string
@@ -34,11 +35,12 @@ type DNSInstance struct {
 }
 
 // NewMetadata initializes a new Metadata object.
-func NewMetadata(baseDomain string, controlPlaneSubnets []string, computeSubnets []string) *Metadata {
+func NewMetadata(baseDomain string, region string, controlPlaneSubnets []string, computeSubnets []string) *Metadata {
 	return &Metadata{
 		BaseDomain:              baseDomain,
 		ComputeSubnetNames:      computeSubnets,
 		ControlPlaneSubnetNames: controlPlaneSubnets,
+		Region:                  region,
 	}
 }
 
@@ -173,6 +175,7 @@ func (m *Metadata) ControlPlaneSubnets(ctx context.Context) (map[string]Subnet, 
 func (m *Metadata) Client() (*Client, error) {
 	if m.client == nil {
 		client, err := NewClient()
+		client.SetVPCServiceURLForRegion(context.TODO(), m.Region)
 		if err != nil {
 			return nil, err
 		}
