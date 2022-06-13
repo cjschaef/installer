@@ -69,5 +69,5 @@ output "vpc_id" {
 }
 
 output "vpc_crn" {
-  value = ibm_is_vpc.vpc.crn
+  value = local.vpc_crn
 }
