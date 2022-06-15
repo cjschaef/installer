@@ -308,7 +308,9 @@ func (o *ClusterUninstaller) ResourceGroupID() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if len(resources.Resources) > 1 {
+	if len(resources.Resources) < 1 {
+		return "", errors.Errorf("No resource groups matched name %q", o.ResourceGroupName)
+	} else if len(resources.Resources) > 1 {
 		return "", errors.Errorf("Too many resource groups matched name %q", o.ResourceGroupName)
 	}
 
