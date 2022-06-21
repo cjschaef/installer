@@ -37,6 +37,7 @@ type API interface {
 	GetVPC(ctx context.Context, vpcID string) (*vpcv1.VPC, error)
 	GetVPCs(ctx context.Context) ([]vpcv1.VPC, error)
 	GetVPCZonesForRegion(ctx context.Context, region string) ([]string, error)
+	SetVPCServiceURLForRegion(ctx context.Context, region string) error
 }
 
 // Client makes calls to the IBM Cloud API.
@@ -409,7 +410,7 @@ func (c *Client) GetVPCs(ctx context.Context) ([]vpcv1.VPC, error) {
 
 	allVPCs := []vpcv1.VPC{}
 	for _, region := range regions {
-		err := c.setVPCServiceURLForRegion(ctx, *region.Name)
+		err := c.SetVPCServiceURLForRegion(ctx, *region.Name)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to set vpc api service url")
 		}

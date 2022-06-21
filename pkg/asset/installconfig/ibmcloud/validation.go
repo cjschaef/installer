@@ -254,6 +254,7 @@ func validateExistingSubnets(client API, ic *types.InstallConfig, path *field.Pa
 	if ic.IBMCloud.ControlPlaneSubnets == nil || len(ic.IBMCloud.ControlPlaneSubnets) == 0 {
 		allErrs = append(allErrs, field.Invalid(path.Child("controlPlaneSubnets"), ic.IBMCloud.ControlPlaneSubnets, fmt.Sprintf("controlPlaneSubnets cannot be empty when providing a vpcName: %s", ic.IBMCloud.VPCName)))
 	} else {
+		client.SetVPCServiceURLForRegion(context.TODO(), ic.IBMCloud.Region)
 		for _, controlPlaneSubnet := range ic.IBMCloud.ControlPlaneSubnets {
 			subnet, err := client.GetSubnetByName(context.TODO(), controlPlaneSubnet)
 			if err != nil {
@@ -276,6 +277,7 @@ func validateExistingSubnets(client API, ic *types.InstallConfig, path *field.Pa
 	if ic.IBMCloud.ComputeSubnets == nil || len(ic.IBMCloud.ComputeSubnets) == 0 {
 		allErrs = append(allErrs, field.Invalid(path.Child("computeSubnets"), ic.IBMCloud.ComputeSubnets, fmt.Sprintf("computeSubnets cannot be empty when providing a vpcName: %s", ic.IBMCloud.VPCName)))
 	} else {
+		client.SetVPCServiceURLForRegion(context.TODO(), ic.IBMCloud.Region)
 		for _, computeSubnet := range ic.IBMCloud.ComputeSubnets {
 			subnet, err := client.GetSubnetByName(context.TODO(), computeSubnet)
 			if err != nil {
