@@ -8,6 +8,7 @@ import (
 
 	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/core"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/types"
