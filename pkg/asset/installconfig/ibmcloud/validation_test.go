@@ -172,6 +172,10 @@ func validResourceGroupName(ic *types.InstallConfig) {
 	ic.Platform.IBMCloud.ResourceGroupName = "valid-resource-group"
 }
 
+func validNetworkResourceGroupName(ic *types.InstallConfig) {
+	ic.Platform.IBMCloud.NetworkResourceGroupName = "valid-resource-group"
+}
+
 func validVPCName(ic *types.InstallConfig) {
 	ic.Platform.IBMCloud.VPCName = "valid-vpc"
 }
@@ -188,11 +192,11 @@ func TestValidate(t *testing.T) {
 			errorMsg: "",
 		},
 		{
-			name: "VPC with no ResourceGroup supplied",
+			name: "VPC with no network ResourceGroup supplied",
 			edits: editFunctions{
 				validVPCName,
 			},
-			errorMsg: `resourceGroupName: Not found: ""$`,
+			errorMsg: `networkResourceGroupName: Not found: ""$`,
 		},
 		{
 			name: "VPC not found",
@@ -205,14 +209,14 @@ func TestValidate(t *testing.T) {
 			errorMsg: `vpcName: Not found: "missing-vpc"$`,
 		},
 		{
-			name: "VPC not in ResourceGroup",
+			name: "VPC not in network ResourceGroup",
 			edits: editFunctions{
 				func(ic *types.InstallConfig) {
-					ic.Platform.IBMCloud.ResourceGroupName = "wrong-resource-group"
+					ic.Platform.IBMCloud.NetworkResourceGroupName = "wrong-resource-group"
 				},
 				validVPCName,
 			},
-			errorMsg: `platform.ibmcloud.vpcName: Invalid value: "valid-vpc": vpc is not in provided ResourceGroup: wrong-resource-group`,
+			errorMsg: `platform.ibmcloud.vpcName: Invalid value: "valid-vpc": vpc is not in provided Network ResourceGroup: wrong-resource-group`,
 		},
 		{
 			name: "VPC with no control plane subnets",
@@ -261,14 +265,14 @@ func TestValidate(t *testing.T) {
 			name: "control plane subnet invalid ResourceGroup",
 			edits: editFunctions{
 				func(ic *types.InstallConfig) {
-					ic.Platform.IBMCloud.ResourceGroupName = "wrong-resource-group"
+					ic.Platform.IBMCloud.NetworkResourceGroupName = "wrong-resource-group"
 				},
 				validVPCName,
 				func(ic *types.InstallConfig) {
 					ic.Platform.IBMCloud.ControlPlaneSubnets = []string{"valid-subnet"}
 				},
 			},
-			errorMsg: `platform.ibmcloud.controlPlaneSubnets: Invalid value: "valid-subnet": controlPlaneSubnets contains subnet: valid-subnet, not found in expected resourceGroupName: wrong-resource-group`,
+			errorMsg: `platform.ibmcloud.controlPlaneSubnets: Invalid value: "valid-subnet": controlPlaneSubnets contains subnet: valid-subnet, not found in expected networkResourceGroupName: wrong-resource-group`,
 		},
 		{
 			name: "VPC with no compute subnets",
@@ -317,14 +321,14 @@ func TestValidate(t *testing.T) {
 			name: "compute subnet invalid ResourceGroup",
 			edits: editFunctions{
 				func(ic *types.InstallConfig) {
-					ic.Platform.IBMCloud.ResourceGroupName = "wrong-resource-group"
+					ic.Platform.IBMCloud.NetworkResourceGroupName = "wrong-resource-group"
 				},
 				validVPCName,
 				func(ic *types.InstallConfig) {
 					ic.Platform.IBMCloud.ComputeSubnets = []string{"valid-subnet"}
 				},
 			},
-			errorMsg: `platform.ibmcloud.computeSubnets: Invalid value: "valid-subnet": computeSubnets contains subnet: valid-subnet, not found in expected resourceGroupName: wrong-resource-group`,
+			errorMsg: `platform.ibmcloud.computeSubnets: Invalid value: "valid-subnet": computeSubnets contains subnet: valid-subnet, not found in expected networkResourceGroupName: wrong-resource-group`,
 		},
 	}
 

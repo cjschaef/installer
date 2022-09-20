@@ -229,8 +229,8 @@ func validateExistingVPC(client API, ic *types.InstallConfig, path *field.Path) 
 		return allErrs
 	}
 
-	if ic.IBMCloud.ResourceGroupName == "" {
-		return append(allErrs, field.NotFound(path.Child("resourceGroupName"), ic.IBMCloud.ResourceGroupName))
+	if ic.IBMCloud.NetworkResourceGroupName == "" {
+		return append(allErrs, field.NotFound(path.Child("networkResourceGroupName"), ic.IBMCloud.NetworkResourceGroupName))
 	}
 
 	vpcs, err := client.GetVPCs(context.TODO(), ic.IBMCloud.Region)
@@ -241,8 +241,8 @@ func validateExistingVPC(client API, ic *types.InstallConfig, path *field.Path) 
 	found := false
 	for _, vpc := range vpcs {
 		if *vpc.Name == ic.IBMCloud.VPCName {
-			if *vpc.ResourceGroup.ID != ic.IBMCloud.ResourceGroupName && *vpc.ResourceGroup.Name != ic.IBMCloud.ResourceGroupName {
-				return append(allErrs, field.Invalid(path.Child("vpcName"), ic.IBMCloud.VPCName, fmt.Sprintf("vpc is not in provided ResourceGroup: %s", ic.IBMCloud.ResourceGroupName)))
+			if *vpc.ResourceGroup.ID != ic.IBMCloud.NetworkResourceGroupName && *vpc.ResourceGroup.Name != ic.IBMCloud.NetworkResourceGroupName {
+				return append(allErrs, field.Invalid(path.Child("vpcName"), ic.IBMCloud.VPCName, fmt.Sprintf("vpc is not in provided Network ResourceGroup: %s", ic.IBMCloud.NetworkResourceGroupName)))
 			}
 			found = true
 			allErrs = append(allErrs, validateExistingSubnets(client, ic, path, *vpc.ID)...)
@@ -274,8 +274,8 @@ func validateExistingSubnets(client API, ic *types.InstallConfig, path *field.Pa
 				if *subnet.VPC.ID != vpcID {
 					allErrs = append(allErrs, field.Invalid(path.Child("controlPlaneSubnets"), controlPlaneSubnet, fmt.Sprintf("controlPlaneSubnets contains subnet: %s, not found in expected vpcID: %s", controlPlaneSubnet, vpcID)))
 				}
-				if *subnet.ResourceGroup.ID != ic.IBMCloud.ResourceGroupName && *subnet.ResourceGroup.Name != ic.IBMCloud.ResourceGroupName {
-					allErrs = append(allErrs, field.Invalid(path.Child("controlPlaneSubnets"), controlPlaneSubnet, fmt.Sprintf("controlPlaneSubnets contains subnet: %s, not found in expected resourceGroupName: %s", controlPlaneSubnet, ic.IBMCloud.ResourceGroupName)))
+				if *subnet.ResourceGroup.ID != ic.IBMCloud.NetworkResourceGroupName && *subnet.ResourceGroup.Name != ic.IBMCloud.NetworkResourceGroupName {
+					allErrs = append(allErrs, field.Invalid(path.Child("controlPlaneSubnets"), controlPlaneSubnet, fmt.Sprintf("controlPlaneSubnets contains subnet: %s, not found in expected networkResourceGroupName: %s", controlPlaneSubnet, ic.IBMCloud.NetworkResourceGroupName)))
 				}
 			}
 		}
@@ -296,8 +296,8 @@ func validateExistingSubnets(client API, ic *types.InstallConfig, path *field.Pa
 				if *subnet.VPC.ID != vpcID {
 					allErrs = append(allErrs, field.Invalid(path.Child("computeSubnets"), computeSubnet, fmt.Sprintf("computeSubnets contains subnet: %s, not found in expected vpcID: %s", computeSubnet, vpcID)))
 				}
-				if *subnet.ResourceGroup.ID != ic.IBMCloud.ResourceGroupName && *subnet.ResourceGroup.Name != ic.IBMCloud.ResourceGroupName {
-					allErrs = append(allErrs, field.Invalid(path.Child("computeSubnets"), computeSubnet, fmt.Sprintf("computeSubnets contains subnet: %s, not found in expected resourceGroupName: %s", computeSubnet, ic.IBMCloud.ResourceGroupName)))
+				if *subnet.ResourceGroup.ID != ic.IBMCloud.NetworkResourceGroupName && *subnet.ResourceGroup.Name != ic.IBMCloud.NetworkResourceGroupName {
+					allErrs = append(allErrs, field.Invalid(path.Child("computeSubnets"), computeSubnet, fmt.Sprintf("computeSubnets contains subnet: %s, not found in expected networkResourceGroupName: %s", computeSubnet, ic.IBMCloud.NetworkResourceGroupName)))
 				}
 			}
 		}
