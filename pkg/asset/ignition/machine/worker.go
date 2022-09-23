@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"os"
 
-	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_3/types"
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/tls"
+	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 )
 
 const (
@@ -40,6 +41,15 @@ func (a *Worker) Generate(dependencies asset.Parents) error {
 	dependencies.Get(installConfig, rootCA)
 
 	a.Config = pointerIgnitionConfig(installConfig.Config, rootCA.Cert(), "worker")
+
+	switch installConfig.Config.Platform.Name() {
+	case ibmcloudtypes.Name:
+		a.Config.KernelArguments = igntypes.KernelArguments{
+			ShouldExist: []igntypes.KernelArgument{
+				"rd.neednet=1",
+			},
+		}
+	}
 
 	data, err := ignition.Marshal(a.Config)
 	if err != nil {
