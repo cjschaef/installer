@@ -179,43 +179,13 @@ resource "ibm_is_security_group_rule" "kubernetes_api_lb_inbound" {
   group     = ibm_is_security_group.kubernetes_api_lb.id
   direction = "inbound"
   remote    = "0.0.0.0/0"
-  tcp {
-    port_min = 6443
-    port_max = 6443
-  }
-}
-
-# Kubernetes API LB - outbound
-resource "ibm_is_security_group_rule" "kubernetes_api_lb_outbound" {
-  group     = ibm_is_security_group.kubernetes_api_lb.id
-  direction = "outbound"
-  remote    = ibm_is_security_group.control_plane.id
-  tcp {
-    port_min = 6443
-    port_max = 6443
-  }
-}
-
-# Machine config server LB - inbound
-resource "ibm_is_security_group_rule" "kubernetes_api_lb_machine_config_inbound" {
-  group     = ibm_is_security_group.kubernetes_api_lb.id
-  direction = "inbound"
-  remote    = ibm_is_security_group.cluster_wide.id
-  tcp {
-    port_min = 22623
-    port_max = 22623
-  }
 }
 
 # Machine config server LB - outbound
 resource "ibm_is_security_group_rule" "kubernetes_api_lb_machine_config_outbound" {
   group     = ibm_is_security_group.kubernetes_api_lb.id
   direction = "outbound"
-  remote    = ibm_is_security_group.control_plane.id
-  tcp {
-    port_min = 22623
-    port_max = 22623
-  }
+  remote    = "0.0.0.0/0"
 }
 
 ############################################
