@@ -93,10 +93,3 @@ resource "ibm_is_lb_pool_member" "kubernetes_api_private" {
   port           = local.port_kubernetes_api
   target_address = ibm_is_instance.bootstrap_node.primary_network_interface.0.primary_ipv4_address
 }
-
-resource "ibm_is_lb_pool_member" "machine_config" {
-  lb             = var.lb_kubernetes_api_private_id
-  pool           = var.lb_pool_machine_config_id
-  port           = local.port_machine_config
-  target_address = ibm_is_instance.bootstrap_node.primary_network_interface.0.primary_ipv4_address
-}
