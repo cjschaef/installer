@@ -1,23 +1,22 @@
 locals {
   prefix              = var.cluster_id
-  port_kubernetes_api = 6443
   port_machine_config = 22623
   subnet_count        = length(var.control_plane_subnet_id_list)
   zone_count          = length(var.control_plane_subnet_zone_list)
 }
 
 ############################################
-# Master nodes
+# Control Plane nodes
 ############################################
 
-resource "ibm_is_instance" "master_node" {
-  count = var.master_count
+resource "ibm_is_instance" "control_plane_node" {
+  count = var.control_plane_count
 
   name           = "${local.prefix}-master-${count.index}"
   image          = var.vsi_image_id
-  profile        = var.ibmcloud_master_instance_type
+  profile        = var.control_plane_instance_type
   resource_group = var.resource_group_id
-  tags           = local.tags
+  tags           = var.tags
 
   primary_network_interface {
     name            = "eth0"
@@ -31,36 +30,18 @@ resource "ibm_is_instance" "master_node" {
   zone = var.control_plane_subnet_zone_list[count.index % local.zone_count]
   keys = []
 
-  user_data = var.ignition_master
+  user_data = var.control_plane_ignition
 }
 
 ############################################
-# Load balancer backend pool members
+# Machine Config LB Backend Pool Member
 ############################################
-
-resource "ibm_is_lb_pool_member" "kubernetes_api_public" {
-  count = local.public_endpoints ? var.master_count : 0
-
-  lb             = var.lb_kubernetes_api_public_id
-  pool           = var.lb_pool_kubernetes_api_public_id
-  port           = local.port_kubernetes_api
-  target_address = ibm_is_instance.master_node[count.index].primary_network_interface.0.primary_ipv4_address
-}
-
-resource "ibm_is_lb_pool_member" "kubernetes_api_private" {
-  count = var.master_count
-
-  lb             = var.lb_kubernetes_api_private_id
-  pool           = var.lb_pool_kubernetes_api_private_id
-  port           = local.port_kubernetes_api
-  target_address = ibm_is_instance.master_node[count.index].primary_network_interface.0.primary_ipv4_address
-}
 
 resource "ibm_is_lb_pool_member" "machine_config" {
-  count = var.master_count
+  count = var.control_plane_count
 
   lb             = var.lb_kubernetes_api_private_id
   pool           = var.lb_pool_machine_config_id
   port           = local.port_machine_config
-  target_address = ibm_is_instance.master_node[count.index].primary_network_interface.0.primary_ipv4_address
+  target_address = ibm_is_instance.control_plane_node[count.index].primary_network_interface.0.primary_ipv4_address
 }
