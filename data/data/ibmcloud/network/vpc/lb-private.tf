@@ -3,6 +3,7 @@
 ############################################
 
 resource "ibm_is_lb" "kubernetes_api_private" {
+  logging         = true
   name            = "${local.prefix}-kubernetes-api-private"
   resource_group  = var.resource_group_id
   security_groups = [ibm_is_security_group.kubernetes_api_lb.id]
