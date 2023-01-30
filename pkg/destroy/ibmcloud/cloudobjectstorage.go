@@ -77,6 +77,7 @@ func (o *ClusterUninstaller) findReclaimedCOSInstance(item cloudResource) (*reso
 			o.Logger.Debugf("Found reclamation for COS Instance %s - %s", item.name, *reclamation.ID)
 			return cosInstance, &reclamation
 		}
+		o.Logger.Debugf("Reclamation does not match COS Instance %s != %s - %s", item.name, *cosInstance.Name, *reclamation.ID)
 	}
 
 	return nil, nil
@@ -89,7 +90,7 @@ func (o *ClusterUninstaller) deleteCOSInstance(item cloudResource) error {
 	if cosInstance != nil {
 		// The resource is gone
 		o.deletePendingItems(item.typeName, []cloudResource{item})
-		o.Logger.Infof("Deleted COS Instance %s", item.name)
+		o.Logger.Infof("Deleted COS Instance with no reclamations %s", item.name)
 		return nil
 	}
 
@@ -106,7 +107,7 @@ func (o *ClusterUninstaller) deleteCOSInstance(item cloudResource) error {
 			return nil
 		}
 
-		return errors.Wrapf(err, "Failed to delete COS Instance %s", item.name)
+		return errors.Wrapf(err, "Failed confirming deletion of COS Instance %s", item.name)
 	}
 
 	deleteOptions := o.controllerSvc.NewDeleteResourceInstanceOptions(item.id)
