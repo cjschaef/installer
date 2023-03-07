@@ -67,6 +67,7 @@ func (o *ClusterUninstaller) listDNSSvcDNSRecords() (cloudResources, error) {
 	resourceRecordsRemaining := true
 	viewedResourceRecords := int64(0)
 	for resourceRecordsRemaining {
+		o.Logger.Debugf("DNS Record list offset: %d", viewedResourceRecords)
 		options := o.dnsServicesSvc.NewListResourceRecordsOptions(o.DNSInstanceID, o.zoneID)
 		options = options.SetOffset(viewedResourceRecords)
 		resources, _, err := o.dnsServicesSvc.ListResourceRecordsWithContext(ctx, options)
@@ -76,6 +77,7 @@ func (o *ClusterUninstaller) listDNSSvcDNSRecords() (cloudResources, error) {
 		}
 
 		for _, record := range resources.ResourceRecords {
+			o.Logger.Debugf("Check record for match: %s", *record.Name)
 			// Match all of the cluster's DNS records
 			exp := fmt.Sprintf(`.*\Q.%s.%s\E$`, o.ClusterName, o.BaseDomain)
 			if nameMatches, _ := regexp.Match(exp, []byte(*record.Name)); nameMatches {
