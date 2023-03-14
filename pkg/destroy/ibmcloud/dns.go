@@ -63,13 +63,22 @@ func (o *ClusterUninstaller) listDNSSvcDNSRecords() (cloudResources, error) {
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 
+	// Collect how many DNS ResourceRecords we need to go through
+	options := o.dnsServicesSvc.NewListResourceRecordsOptions(o.DNSInstanceID, o.zoneID)
+	resources, _, err := o.dnsServicesSvc.ListResourceRecordsWithContext(ctx, options)
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to list DNS records")
+	}
+	totalRecords := *resources.TotalCount
+	o.Logger.Debugf("Checking %d DNS Records for %s...", totalRecords, o.ClusterName)
+
 	result := []cloudResource{}
 	resourceRecordsRemaining := true
 	viewedResourceRecords := int64(0)
 	for resourceRecordsRemaining {
-		options := o.dnsServicesSvc.NewListResourceRecordsOptions(o.DNSInstanceID, o.zoneID)
+		o.Logger.Debugf("Processing DNS records %d and on...", viewedResourceRecords)
 		options = options.SetOffset(viewedResourceRecords)
-		resources, _, err := o.dnsServicesSvc.ListResourceRecordsWithContext(ctx, options)
+		resources, _, err = o.dnsServicesSvc.ListResourceRecordsWithContext(ctx, options)
 
 		if err != nil {
 			return nil, errors.Wrap(err, "Failed to list DNS records")
@@ -92,6 +101,7 @@ func (o *ClusterUninstaller) listDNSSvcDNSRecords() (cloudResources, error) {
 		viewedResourceRecords += *resources.Limit
 		resourceRecordsRemaining = viewedResourceRecords < *resources.TotalCount
 	}
+	o.Logger.Debugf("Processed up to %d of %d DNS ResourceRecords (last pagination may contain fewer than page limit).", viewedResourceRecords, totalRecords)
 
 	return cloudResources{}.insert(result...), nil
 }
