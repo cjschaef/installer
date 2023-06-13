@@ -18,6 +18,7 @@ import (
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/types"
 )
@@ -540,22 +541,27 @@ func (c *Client) GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, 
 	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
+	logrus.Debug("Collecting VPC regions")
 	regions, err := c.getVPCRegions(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, region := range regions {
+		logrus.Debugf("Checking region - %s", *region.Name)
 		err := c.vpcAPI.SetServiceURL(fmt.Sprintf("%s/v1", *region.Endpoint))
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to set vpc api service url")
 		}
 
+		logrus.Debugf("Listing VPCs in %s", *region.Name)
 		vpcs, detailedResponse, err := c.vpcAPI.ListVpcsWithContext(ctx, c.vpcAPI.NewListVpcsOptions())
 		if err != nil {
 			if detailedResponse.GetStatusCode() != http.StatusNotFound {
+				logrus.Errorf("Error collecting VPCs in %s", *region.Name)
 				return nil, err
 			}
+			logrus.Errorf("Error StatusNotFound for collecting VPCs in %s", *region.Name)
 		} else {
 			for _, vpc := range vpcs.Vpcs {
 				if *vpc.Name == vpcName {
