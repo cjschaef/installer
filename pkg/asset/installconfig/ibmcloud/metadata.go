@@ -7,6 +7,7 @@ import (
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/types"
 )
@@ -151,17 +152,20 @@ func (m *Metadata) IsVPCPermittedNetwork(ctx context.Context, vpcName string) (b
 	}
 	// Collect DNSInstance details if not already collected
 	if m.dnsInstance == nil {
+		logrus.Debug("Collecting DNSInstance details")
 		_, err := m.DNSInstance(ctx)
 		if err != nil {
 			return false, errors.Wrap(err, "cannot collect DNS permitted networks without DNS Instance")
 		}
 	}
 
+	logrus.Debug("Generating IBM Cloud Client")
 	client, err := m.Client()
 	if err != nil {
 		return false, err
 	}
 
+	logrus.Debug("Collecting DNSInstance PermittedNetworks")
 	networks, err := client.GetDNSInstancePermittedNetworks(ctx, m.dnsInstance.ID, m.dnsInstance.Zone)
 	if err != nil {
 		return false, err
@@ -170,9 +174,11 @@ func (m *Metadata) IsVPCPermittedNetwork(ctx context.Context, vpcName string) (b
 		return false, nil
 	}
 
+	logrus.Debug("Collecint VPC details")
 	vpc, err := client.GetVPCByName(ctx, vpcName)
 	for _, network := range networks {
 		if network == *vpc.CRN {
+			logrus.Debug("Found VPC already is PermittedNetwork")
 			return true, nil
 		}
 	}
