@@ -18,6 +18,7 @@ import (
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/types"
 )
@@ -504,8 +505,9 @@ func (c *Client) GetVPC(ctx context.Context, vpcID string) (*vpcv1.VPC, error) {
 
 		if vpc, detailedResponse, err := c.vpcAPI.GetVPC(c.vpcAPI.NewGetVPCOptions(vpcID)); err != nil {
 			if detailedResponse.GetStatusCode() != http.StatusNotFound {
-				return nil, err
+				logrus.Warnf("Failure collecting VPC %s in %s - %q", vpcID, *region.Name, err)
 			}
+			logrus.Warnf("Response status unknown while checking VPC %s in %s region", vpcID, *region.Name)
 		} else if vpc != nil {
 			return vpc, nil
 		}
@@ -553,9 +555,12 @@ func (c *Client) GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, 
 
 		vpcs, detailedResponse, err := c.vpcAPI.ListVpcsWithContext(ctx, c.vpcAPI.NewListVpcsOptions())
 		if err != nil {
+			// If we fail checking one region, log the failure and attempt to continue checking others
 			if detailedResponse.GetStatusCode() != http.StatusNotFound {
-				return nil, err
+				logrus.Warnf("Failure collecting VPCs in %s - %q", *region.Name, err)
+				continue
 			}
+			logrus.Warnf("Response status unknown while checking %s region", *region.Name)
 		} else {
 			for _, vpc := range vpcs.Vpcs {
 				if *vpc.Name == vpcName {
