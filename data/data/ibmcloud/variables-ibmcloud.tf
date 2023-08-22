@@ -4,8 +4,7 @@
 
 variable "ibmcloud_api_key" {
   type = string
-  # TODO: Supported on tf 0.14
-  # sensitive   = true
+  sensitive   = true
   description = "The IAM API key for authenticating with IBM Cloud APIs."
 }
 
@@ -54,6 +53,12 @@ variable "ibmcloud_image_filepath" {
 #######################################
 # Top-level module variables (optional)
 #######################################
+
+variable "ibmcloud_service_endpoints_json" {
+  type        = string
+  description = "JSON file containing IBM Cloud service endpoints"
+  default     = null
+}
 
 variable "ibmcloud_preexisting_vpc" {
   type        = bool
@@ -110,11 +115,10 @@ variable "ibmcloud_publish_strategy" {
   type = string
   description = "The cluster publishing strategy, either Internal or External"
   default = "External"
-  # TODO: Supported on tf 0.13
-  # validation {
-  #   condition     = "External" || "Internal"
-  #   error_message = "The ibmcloud_publish_strategy value must be \"External\" or \"Internal\"."
-  # }
+  validation {
+    condition     = can(regex("^External$|^Internal$", var.ibmcloud_publish_strategy))
+    error_message = "The ibmcloud_publish_strategy value must be \"External\" or \"Internal\"."
+  }
 }
 
 variable "ibmcloud_network_resource_group_name" {

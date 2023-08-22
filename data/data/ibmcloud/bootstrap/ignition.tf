@@ -4,6 +4,7 @@
 
 resource "ibm_cos_bucket" "bootstrap_ignition" {
   bucket_name          = "${local.prefix}-bootstrap-ignition"
+  endpoint_type        = "direct"
   resource_instance_id = var.cos_resource_instance_crn
   region_location      = var.ibmcloud_region
   storage_class        = "smart"
@@ -16,9 +17,10 @@ resource "ibm_cos_bucket" "bootstrap_ignition" {
 resource "ibm_cos_bucket_object" "bootstrap_ignition" {
   bucket_crn      = ibm_cos_bucket.bootstrap_ignition.crn
   bucket_location = ibm_cos_bucket.bootstrap_ignition.region_location
-  key             = "bootstrap.ign"
   content_file    = var.ignition_bootstrap_file
+  endpoint_type   = "direct"
   etag            = filemd5(var.ignition_bootstrap_file)
+  key             = "bootstrap.ign"
 }
 
 ############################################

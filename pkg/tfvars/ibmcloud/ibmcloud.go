@@ -2,13 +2,19 @@ package ibmcloud
 
 import (
 	"encoding/json"
+	"fmt"
+	"strings"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	"github.com/openshift/installer/pkg/types"
+	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	ibmcloudprovider "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
 )
+
+const IBMCloudEndpointJSONFileName = "ibmcloud_endpoints_override.json"
 
 // Auth is the collection of credentials that will be used by terrform.
 type Auth struct {
@@ -23,25 +29,26 @@ type DedicatedHost struct {
 
 type config struct {
 	Auth                     `json:",inline"`
-	Region                   string          `json:"ibmcloud_region,omitempty"`
 	BootstrapInstanceType    string          `json:"ibmcloud_bootstrap_instance_type,omitempty"`
 	CISInstanceCRN           string          `json:"ibmcloud_cis_crn,omitempty"`
+	ComputeSubnets           []string        `json:"ibmcloud_compute_subnets,omitempty"`
+	ControlPlaneSubnets      []string        `json:"ibmcloud_control_plane_subnets,omitempty"`
 	DNSInstanceID            string          `json:"ibmcloud_dns_id,omitempty"`
+	EndpointsJSONFile        string          `json:"ibmcloud_endpoints_json_file,omitempty"`
 	ExtraTags                []string        `json:"ibmcloud_extra_tags,omitempty"`
+	ImageFilePath            string          `json:"ibmcloud_image_filepath,omitempty"`
 	MasterAvailabilityZones  []string        `json:"ibmcloud_master_availability_zones"`
-	WorkerAvailabilityZones  []string        `json:"ibmcloud_worker_availability_zones"`
 	MasterInstanceType       string          `json:"ibmcloud_master_instance_type,omitempty"`
 	MasterDedicatedHosts     []DedicatedHost `json:"ibmcloud_master_dedicated_hosts,omitempty"`
-	WorkerDedicatedHosts     []DedicatedHost `json:"ibmcloud_worker_dedicated_hosts,omitempty"`
-	PublishStrategy          string          `json:"ibmcloud_publish_strategy,omitempty"`
 	NetworkResourceGroupName string          `json:"ibmcloud_network_resource_group_name,omitempty"`
-	ResourceGroupName        string          `json:"ibmcloud_resource_group_name,omitempty"`
-	ImageFilePath            string          `json:"ibmcloud_image_filepath,omitempty"`
 	PreexistingVPC           bool            `json:"ibmcloud_preexisting_vpc,omitempty"`
+	PublishStrategy          string          `json:"ibmcloud_publish_strategy,omitempty"`
+	Region                   string          `json:"ibmcloud_region,omitempty"`
+	ResourceGroupName        string          `json:"ibmcloud_resource_group_name,omitempty"`
 	VPC                      string          `json:"ibmcloud_vpc,omitempty"`
 	VPCPermitted             bool            `json:"ibmcloud_vpc_permitted,omitempty"`
-	ControlPlaneSubnets      []string        `json:"ibmcloud_control_plane_subnets,omitempty"`
-	ComputeSubnets           []string        `json:"ibmcloud_compute_subnets,omitempty"`
+	WorkerAvailabilityZones  []string        `json:"ibmcloud_worker_availability_zones"`
+	WorkerDedicatedHosts     []DedicatedHost `json:"ibmcloud_worker_dedicated_hosts,omitempty"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -49,6 +56,7 @@ type TFVarsSources struct {
 	Auth                     Auth
 	CISInstanceCRN           string
 	DNSInstanceID            string
+	EndpointsJSONFile        string
 	ImageURL                 string
 	MasterConfigs            []*ibmcloudprovider.IBMCloudMachineProviderSpec
 	MasterDedicatedHosts     []DedicatedHost
@@ -56,6 +64,7 @@ type TFVarsSources struct {
 	PreexistingVPC           bool
 	PublishStrategy          types.PublishingStrategy
 	ResourceGroupName        string
+	ServiceEndpointsJSON     string
 	VPCPermitted             bool
 	WorkerConfigs            []*ibmcloudprovider.IBMCloudMachineProviderSpec
 	WorkerDedicatedHosts     []DedicatedHost
@@ -96,26 +105,54 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		Auth:                     sources.Auth,
 		BootstrapInstanceType:    masterConfig.Profile,
 		CISInstanceCRN:           sources.CISInstanceCRN,
+		ComputeSubnets:           workerSubnets,
+		ControlPlaneSubnets:      masterSubnets,
 		DNSInstanceID:            sources.DNSInstanceID,
+		EndpointsJSONFile:        sources.EndpointsJSONFile,
 		ImageFilePath:            cachedImage,
 		MasterAvailabilityZones:  masterAvailabilityZones,
 		MasterDedicatedHosts:     sources.MasterDedicatedHosts,
 		MasterInstanceType:       masterConfig.Profile,
 		NetworkResourceGroupName: sources.NetworkResourceGroupName,
+		PreexistingVPC:           sources.PreexistingVPC,
 		PublishStrategy:          string(sources.PublishStrategy),
 		Region:                   masterConfig.Region,
 		ResourceGroupName:        sources.ResourceGroupName,
-		WorkerAvailabilityZones:  workerAvailabilityZones,
-		WorkerDedicatedHosts:     sources.WorkerDedicatedHosts,
-		PreexistingVPC:           sources.PreexistingVPC,
 		VPC:                      vpc,
 		VPCPermitted:             sources.VPCPermitted,
-		ControlPlaneSubnets:      masterSubnets,
-		ComputeSubnets:           workerSubnets,
+		WorkerAvailabilityZones:  workerAvailabilityZones,
+		WorkerDedicatedHosts:     sources.WorkerDedicatedHosts,
 
 		// TODO: IBM: Future support
 		// ExtraTags:               masterConfig.Tags,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
+}
+
+// CreateEndpointJSON creates JSON data containing IBM Cloud service endpoint override mappings
+func CreateEndpointJSON(endpoints []configv1.IBMCloudServiceEndpoint, region string) ([]byte, error) {
+	// If no endpoint overrides, simply return
+	if len(endpoints) == 0 {
+		return nil, nil
+	}
+
+	endpointContents := make(map[string]map[string]map[string]string)
+	for _, endpoint := range endpoints {
+		endpointVar, ok := ibmcloudtypes.IBMCloudServiceOverrides[strings.ToLower(endpoint.Name)]
+		if !ok {
+			return nil, errors.New(fmt.Sprintf("unable to find environment variable for service endpoint %s", endpoint.Name))
+		}
+		endpointContents[endpointVar] = map[string]map[string]string{"private": {region: endpoint.URL}}
+	}
+	// Write JSON data to file for Terraform
+	if len(endpointContents) > 0 {
+		jsonData, err := json.Marshal(endpointContents)
+		if err != nil {
+			return nil, errors.Wrap(err, "failure building service endpoint override JSON data")
+		}
+		return jsonData, nil
+	}
+	// If no data was populated, but endpoints is not empty (initial check), that should cause an error (endpoints provided are not supported currently)
+	return nil, errors.New(fmt.Sprintf("unsupported endpoints provided: %s", endpoints))
 }
