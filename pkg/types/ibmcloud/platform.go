@@ -1,5 +1,88 @@
 package ibmcloud
 
+import (
+	"strings"
+
+	configv1 "github.com/openshift/api/config/v1"
+)
+
+const (
+	// IBM Cloud Service Endpoint variables are supplied via documentation:
+	// https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs/guides/custom-service-endpoints#supported-endpoint-customizations
+
+	// IBMCloudServiceCIS is the lowercase name representation for IBM Cloud CIS.
+	IBMCloudServiceCIS    string = "cis"
+	// IBMCloudServiceCISVar is the variable name used by the IBM Cloud Terraform Provider to override the CIS endpoint.
+	IBMCloudServiceCISVar string = "IBMCLOUD_CIS_API_ENDPOINT"
+
+	// IBMCloudServiceCOS is the lowercase name representation for IBM Cloud COS.
+	IBMCloudServiceCOS    string = "cos"
+	// IBMCloudServiceCOSVar is the variable name used by the IBM Cloud Terraform Provider to override the COS endpoint.
+	IBMCloudServiceCOSVar string = "IBMCLOUD_COS_CONFIG_ENDPOINT"
+
+	// IBMCloudServiceDNSServices is the lowercase name representation for IBM Cloud DNS Services.
+	IBMCloudServiceDNSServices    string = "dnsservices"
+	// IBMCloudServiceDNSServicesVar is the variable name used by the IBM Cloud Terraform Provider to override the DNS Services endpoint.
+	IBMCloudServiceDNSServicesVar string = "IBMCLOUD_PRIVATE_DNS_API_ENDPOINT"
+
+	// IBMCloudServiceHyperProtect is the lowercase name representation for IBM Cloud Hyper Protect.
+	IBMCloudServiceHyperProtect    string = "hyperprotect"
+	// IBMCloudServiceHyperProtectVar is the variable name used by the IBM Cloud Terraform Provider to override the Hyper Protect endpoint.
+	IBMCloudServiceHyperProtectVar string = "IBMCLOUD_HPCS_API_ENDPOINT"
+
+	// IBMCloudServiceIAM is the lowercase name representation for IBM Cloud IAM.
+	IBMCloudServiceIAM    string = "iam"
+	// IBMCloudServiceIAMVar is the variable name used by the IBM Cloud Terraform Provider to override the IAM endpoint.
+	IBMCloudServiceIAMVar string = "IBMCLOUD_IAM_API_ENDPOINT"
+
+	// IBMCloudServiceKeyProtect is the lowercase name representation for IBM Cloud Key Protect.
+	IBMCloudServiceKeyProtect    string = "keyprotect"
+	// IBMCloudServiceKeyProtectVar is the variable name used by the IBM Cloud Terraform Provider to override the Key Protect endpoint.
+	IBMCloudServiceKeyProtectVar string = "IBMCLOUD_KP_API_ENDPOINT"
+
+	// IBMCloudServiceResourceController is the lowercase name representation for IBM Cloud Resource Controller.
+	IBMCloudServiceResourceController    string = "resourcecontroller"
+	// IBMCloudServiceResourceController is the variable name used by the IBM Cloud Terraform Provider to override the Resource Controller endpoint.
+	IBMCloudServiceResourceControllerVar string = "IBMCLOUD_RESOURCE_CONTROLLER_API_ENDPOINT"
+
+	// IBMCloudServiceResourceManager is the lowercase name representation for IBM Cloud Resource Management.
+	IBMCloudServiceResourceManager    string = "resourcemanager"
+	// IBMCloudServiceResourceManagerVar is the variable name used by the IBM Cloud Terraform Provider to override the Resource Manager endpoint.
+	IBMCloudServiceResourceManagerVar string = "IBMCLOUD_RESOURCE_MANAGEMENT_API_ENDPOINT"
+
+	// IBMCloudServiceVPC is the lowercase name representation for IBM Cloud VPC.
+	IBMCloudServiceVPC    string = "vpc"
+	// IBMCloudServiceVPCVar is the variable name used by the IBM Cloud Terraform Provider to override the VPC endpoint.
+	IBMCloudServiceVPCVar string = "IBMCLOUD_IS_NG_API_ENDPOINT"
+)
+
+var (
+	// IBMCloudServiceOverrides is a set of IBM Cloud services allowed to have their endpoints overridden mapped to their override variable.
+	IBMCloudServiceOverrides = map[string]string{
+		IBMCloudServiceCIS:                IBMCloudServiceCISVar,
+		IBMCloudServiceCOS:                IBMCloudServiceCOSVar,
+		IBMCloudServiceDNSServices:        IBMCloudServiceDNSServicesVar,
+		IBMCloudServiceHyperProtect:       IBMCloudServiceHyperProtectVar,
+		IBMCloudServiceIAM:                IBMCloudServiceIAMVar,
+		IBMCloudServiceKeyProtect:         IBMCloudServiceKeyProtectVar,
+		IBMCloudServiceResourceController: IBMCloudServiceResourceControllerVar,
+		IBMCloudServiceResourceManager:    IBMCloudServiceResourceManagerVar,
+		IBMCloudServiceVPC:                IBMCloudServiceVPCVar,
+	}
+)
+
+// CheckServiceEndpointOverride checks whether a service has an override endpoint.
+func CheckServiceEndpointOverride(service string, serviceEndpoints []configv1.IBMCloudServiceEndpoint) string {
+	if len(serviceEndpoints) > 0 {
+		for _, endpoint := range serviceEndpoints {
+			if strings.ToLower(endpoint.Name) == service {
+				return endpoint.URL
+			}
+		}
+	}
+	return ""
+}
+
 // Platform stores all the global configuration that all machinesets use.
 type Platform struct {
 	// Region specifies the IBM Cloud region where the cluster will be
@@ -38,6 +121,12 @@ type Platform struct {
 	// configuration.
 	// +optional
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
+
+	// ServiceEndpoints is a list which contains custom endpoints to override default
+	// service endpoints of IBM Cloud Services.
+	// There must only be one ServiceEndpoint for a service (no duplicates).
+	// +optional
+	ServiceEndpoints []configv1.IBMCloudServiceEndpoint `json:"serviceEndpoints,omitempty"`
 }
 
 // ClusterResourceGroupName returns the name of the resource group for the cluster.
