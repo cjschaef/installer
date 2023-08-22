@@ -624,11 +624,28 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			}
 		}
 
+		// NOTE(cjschaef): If one or more ServiceEndpoint's are supplied, attempt to build the Terraform endpoint_file_path
+		// https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs/guides/custom-service-endpoints#file-structure-for-endpoints-file
+		var endpointsJSONFile string
+		if len(installConfig.IBMCloud.ServiceEndpoints) > 0 {
+			endpointData, err := ibmcloudtfvars.CreateEndpointJSON(installConfig.Config.Platform.IBMCloud.ServiceEndpoints, installConfig.Config.Platform.IBMCloud.Region)
+			if err != nil {
+				return err
+			}
+			// Add endpoint JSON data to list of generated files for Terraform
+			t.FileList = append(t.FileList, &asset.File{
+				Filename: ibmcloudtfvars.IBMCloudEndpointJSONFileName,
+				Data: endpointData
+			}
+			endpointsJSONFile = ibmcloudtfvars.IBMCloudEndpointJSONFileName,
+		}
+
 		data, err = ibmcloudtfvars.TFVars(
 			ibmcloudtfvars.TFVarsSources{
 				Auth:                     auth,
 				CISInstanceCRN:           cisCRN,
 				DNSInstanceID:            dnsID,
+				EndpointsJSONFile:        endpointsJSONFile,
 				ImageURL:                 string(*rhcosImage),
 				MasterConfigs:            masterConfigs,
 				MasterDedicatedHosts:     masterDedicatedHosts,

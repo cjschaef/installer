@@ -50,6 +50,44 @@ g2VpcSubnetNames = existing-subnet-control-plane-eu-gb-1,existing-subnet-control
 
 `
 
+	singleEndpointOverrideConfig := `[global]
+version = 1.1.0
+[kubernetes]
+config-file = ""
+[provider]
+accountID = 1e1f75646aef447814a6d907cc83fb3c
+clusterID = ocp4-ghs4s3
+cluster-default-provider = g2
+region = eu-gb
+g2EndpointOverride = https://ibmcloud.vpc.override.endpoint.test
+g2Credentials = /etc/vpc/ibmcloud_api_key
+g2ResourceGroupName = ocp4-ghs4s3-rg
+g2VpcName = ocp4-ghs4s3-vpc
+g2workerServiceAccountID = 1e1f75646aef447814a6d907cc83fb3c
+g2VpcSubnetNames = existing-subnet-control-plane-eu-gb-1,existing-subnet-control-plane-eu-gb-2,existing-subnet-control-plane-eu-gb-3,existing-subnet-compute-eu-gb-1,existing-subnet-compute-eu-gb-2,existing-subnet-compute-eu-gb-3
+
+`
+
+	multiEndpointOverrideConfig := `[global]
+version = 1.1.0
+[kubernetes]
+config-file = ""
+[provider]
+accountID = 1e1f75646aef447814a6d907cc83fb3c
+clusterID = ocp4-ppcj33
+cluster-default-provider = g2
+region = eu-gb
+iamEndpointOverride = https://ibmcloud.iam.override.endpoint.test
+g2EndpointOverride = https://ibmcloud.vpc.override.endpoint.test
+rmEndpointOverride = https://ibmcloud.resource-manager.override.endpoint.test
+g2Credentials = /etc/vpc/ibmcloud_api_key
+g2ResourceGroupName = ocp4-ppcj33-rg
+g2VpcName = ocp4-ppcj33-vpc
+g2workerServiceAccountID = 1e1f75646aef447814a6d907cc83fb3c
+g2VpcSubnetNames = existing-subnet-control-plane-eu-gb-1,existing-subnet-control-plane-eu-gb-2,existing-subnet-control-plane-eu-gb-3,existing-subnet-compute-eu-gb-1,existing-subnet-compute-eu-gb-2,existing-subnet-compute-eu-gb-3
+
+`
+
 	eugbZones := []string{"eu-gb-1", "eu-gb-2", "eu-gb-3"}
 	useastZones := []string{"us-east-1", "us-east-2", "us-east-3"}
 
@@ -75,6 +113,7 @@ g2VpcSubnetNames = existing-subnet-control-plane-eu-gb-1,existing-subnet-control
 			subnets:           []string{},
 			cpZones:           useastZones,
 			computeZones:      useastZones,
+			serviceEndpoints:  {},
 			expectedConfig:    defaultConfig,
 		},
 		{
@@ -87,13 +126,62 @@ g2VpcSubnetNames = existing-subnet-control-plane-eu-gb-1,existing-subnet-control
 			subnets:           existingSubnets,
 			cpZones:           eugbZones,
 			computeZones:      eugbZones,
+			serviceEndpoints:  {},
 			expectedConfig:    existingSubnetConfig,
+		},
+		{
+			name:              "single endpoint override config",
+			infraID:           "ocp4-ghs4s3",
+			accountID:         accountID,
+			region:            "eu-gb",
+			resourceGroupName: "ocp4-ghs4s3-rg",
+			vpcName:           "ocp4-ghs4s3-vpc",
+			subnets:           existingSubnets,
+			cpZones:           eugbZones,
+			computeZones:      eugbZones,
+			serviceEndpoints:  []ServiceEndpoint{
+				{
+					Name: "Vpc",
+					URL:  "https://ibmcloud.vpc.override.endpoint.test",
+				},
+			},
+			expectedConfig:    singleEndpointOverrideConfig,
+		},
+		{
+			name:              "multiple endpoint override config",
+			infraID:           "ocp4-ppcj33",
+			accountID:         accountID,
+			region:            "eu-gb",
+			resourceGroupName: "ocp4-ppcj33-rg",
+			vpcName:           "ocp-ppcj33-vpc",
+			subnets:           existingSubnets,
+			cpZones:           eugbZones,
+			computeZones:      eugbZones,
+			serviceEndpoints:  []ServiceEndpoint{
+				{
+					Name: "cos",
+					URL:  "https://ibmcloud.cos.override.endpoint.test",
+				},
+				{
+					Name: "iam",
+					URL:  "https://ibmcloud.iam.override.endpoint.test",
+				},
+				{
+					Name: "vpc",
+					URL:  "https://ibmcloud.vpc.override.endpoint.test",
+				},
+				{
+					Name: "resourcemanager",
+					URL:  "https://ibmcloud.resource-manager.override.endpoint.test",
+				},
+			},
+			expectedConfig:    multiEndpointOverrideConfig,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			actualConfig, err := CloudProviderConfig(tc.infraID, tc.accountID, tc.region, tc.resourceGroupName, tc.vpcName, tc.subnets, tc.cpZones, tc.computeZones)
+			actualConfig, err := CloudProviderConfig(tc.infraID, tc.accountID, tc.region, tc.resourceGroupName, tc.vpcName, tc.subnets, tc.cpZones, tc.computeZones, tc.serviceEndpoints)
 			assert.NoError(t, err, "failed to create cloud provider config")
 			assert.Equal(t, tc.expectedConfig, actualConfig, "unexpected cloud provider config")
 		})

@@ -205,9 +205,19 @@ func (a *InstallConfig) platformValidation() error {
 		return icgcp.Validate(client, a.Config)
 	}
 	if a.Config.Platform.IBMCloud != nil {
-		client, err := icibmcloud.NewClient()
-		if err != nil {
-			return err
+		var client icibmcloud.API
+		// If service endpoints were provided, validate them first and then get a Client utilizing those endpoints
+		if len(a.Config.Platform.IBMCloud.ServiceEndpoints) > 0 {
+			icibmcloud.ValidateServiceEndpoints(a.Config)
+			client, err := icibmcloud.NewClientEndpoint(a.Config.Platform.IBMCloud.ServiceEndpoints)
+			if err != nil {
+				return err
+			}
+		} else {
+			client, err := icibmcloud.NewClient()
+			if err != nil {
+				return err
+			}
 		}
 		return icibmcloud.Validate(client, a.Config)
 	}

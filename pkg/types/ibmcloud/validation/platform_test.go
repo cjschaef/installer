@@ -102,6 +102,95 @@ func TestValidatePlatform(t *testing.T) {
 			}(),
 			valid: false,
 		},
+		{
+			name: "invalid url (no hostname) for service endpoint",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.ServiceEndpoints = []ibmcloud.ServiceEndpoint{{
+					Name: "iam",
+					URL:  "/some/path",
+				}}
+				return p
+			}(),
+			valid: false,
+		},
+		{
+			name: "invalid url (has path) for service endpoint",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.ServiceEndpoints = []ibmcloud.ServiceEndpoint{{
+					Name: "iam",
+					URL:  "https://test-iam.random.local/some/path",
+				}}
+				return p
+			}(),
+			valid: false,
+		}.
+		{
+			name: "invalid url (has request) for service endpoint",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.ServiceEndpoints = []ibmcloud.ServiceEndpoint{{
+					Name: "iam",
+					URL:  "https://test-iam.random.local?foo=some",
+				}}
+				return p
+			}(),
+			valid: false,
+		}.
+		{
+			name: "valid url (no scheme) for service endpoint",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.ServiceEndpoints = []ibmcloud.ServiceEndpoint{{
+					Name: "iam",
+					URL:  "test-iam.random.local",
+				}}
+				return p
+			valid: true,
+		},
+		{
+			name: "valid url (with scheme) for service endpoint",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.ServiceEndpoints = []ibmcloud.ServiceEndpoint{{
+					Name: "iam",
+					URL:  "https://test-iam.random.local",
+				}}
+				return p
+			}(),
+			valid: true,
+		},
+		{
+			name: "duplicate sevice endpoints",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.ServiceEndpoints = []ibmcloud.ServiceEndpoint{{
+					Name: "iam",
+					URL:  "test-iam.random.local",
+				}, {
+					Name: "iam",
+					URL:  "https://test-iam.random.local",
+				}}
+				return p
+			}(),
+			valid: false,
+		},
+		{
+			name: "multiple valid service endpoints",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.ServiceEndpoints = []ibmcloud.ServiceEndpoint{{
+					Name: "iam",
+					URL:  "test-iam.random.local",
+				}, {
+					Name: "vpc",
+					URL:  "test-vpc.random.local",
+				}}
+				return p
+			}(),
+			valid: true,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

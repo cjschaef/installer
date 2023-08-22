@@ -14,4 +14,8 @@ locals {
 provider "ibm" {
   ibmcloud_api_key = var.ibmcloud_api_key
   region           = var.ibmcloud_region
+
+  # Manage endpoints for IBM Cloud services
+  visibility          = var.ibmcloud_publish_strategy == "External" ? "public" : "private"
+  endpoints_file_path = var.ibmcloud_service_endpoints_json
 }

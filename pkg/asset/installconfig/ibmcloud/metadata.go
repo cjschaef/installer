@@ -6,9 +6,11 @@ import (
 	"sync"
 
 	"github.com/IBM/go-sdk-core/v5/core"
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/types"
+	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 )
 
 // Metadata holds additional metadata for InstallConfig resources that
@@ -235,6 +237,9 @@ func (m *Metadata) Client() (API, error) {
 }
 
 // NewIamAuthenticator returns a new IamAuthenticator for using IBM Cloud services.
-func NewIamAuthenticator(apiKey string) (*core.IamAuthenticator, error) {
+func NewIamAuthenticator(apiKey string, iamServiceEndpointOverride string) (*core.IamAuthenticator, error) {
+	if iamServiceEndpointOverride != "" {
+		return coreNewIamAuthenticatorBuilder().SetApiKey(apiKey).SetURL(iamServiceEndpointOverride).Build()
+	}
 	return core.NewIamAuthenticatorBuilder().SetApiKey(apiKey).Build()
 }

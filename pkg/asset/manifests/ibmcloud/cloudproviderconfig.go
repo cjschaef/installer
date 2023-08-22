@@ -6,6 +6,8 @@ import (
 	"sort"
 	"strings"
 	"text/template"
+
+	"github.com/openshift/installer/pkg/types/ibmcloud"
 )
 
 // https://github.com/kubernetes/kubernetes/blob/368ee4bb8ee7a0c18431cd87ee49f0c890aa53e5/staging/src/k8s.io/legacy-cloud-providers/gce/gce.go#L188
@@ -28,6 +30,9 @@ type provider struct {
 	ClusterID                string `gcfg:"clusterID"`
 	ClusterDefaultProvider   string `gcfg:"cluster-default-provider"`
 	Region                   string `gcfg:"region"`
+	IAMEndpointOverride      string `gcfg:"iamEndpointOverride"`
+	G2EndpointOverride       string `gcfg:"g2EndpointOverride"`
+	RMEndpointOverride       string `gcfg:"rmEndpointOverride"`
 	G2CredentialsFilePath    string `gcfg:"g2Credentials"`
 	G2ResourceGroupName      string `gcfg:"g2ResourceGroupName"`
 	G2VPCName                string `gcfg:"g2VpcName"`
@@ -36,7 +41,7 @@ type provider struct {
 }
 
 // CloudProviderConfig generates the cloud provider config for the IBMCloud platform.
-func CloudProviderConfig(infraID string, accountID string, region string, resourceGroupName string, vpcName string, subnets []string, controlPlaneZones []string, computeZones []string) (string, error) {
+func CloudProviderConfig(infraID string, accountID string, region string, resourceGroupName string, vpcName string, subnets []string, controlPlaneZones []string, computeZones []string, serviceEndpoints []ibmcloud.ServiceEndpoints) (string, error) {
 	if vpcName == "" {
 		vpcName = fmt.Sprintf("%s-vpc", infraID)
 	}
@@ -67,6 +72,19 @@ func CloudProviderConfig(infraID string, accountID string, region string, resour
 			G2VPCSubnetNames:         subnetNames,
 		},
 	}
+
+	// Add any IBM Cloud Service Endpoint overrides as necessary
+	for _, endpoint := range(serviceEndpoints) {
+		name := strings.ToLower(endpoint.Name)
+		if name == ibmcloud.IBMCloudServiceIAM {
+			config.Provider.IAMEndpointOverride = endpoint["URL"]
+		} else if name == ibmcloud.IBMCloudServiceVPC {
+			config.Provider.G2EndpointOverride = endpoint["URL"]
+		} else if name == ibmcloud.IBMCloudServiceRM {
+			config.Provider.RMEndpointOverride = endpoint["URL"]
+		}
+	}
+
 	buf := &bytes.Buffer{}
 	template := template.Must(template.New("ibmcloud cloudproviderconfig").Parse(configTmpl))
 	if err := template.Execute(buf, config); err != nil {
@@ -100,6 +118,9 @@ accountID = {{.Provider.AccountID}}
 clusterID = {{.Provider.ClusterID}}
 cluster-default-provider = {{.Provider.ClusterDefaultProvider}}
 region = {{.Provider.Region}}
+{{ if ne .Provider.IAMEndpointOverride ""}}iamEndpointOverride = {{ .Provider.IAMEndpointOverride }}{{ else }}""{{ end }}
+{{ if ne .Provider.G2EndpointOverride ""}}g2EndpointOverride = {{ .Provider.G2EndpointOverride }}{{ else }}""{{ end }}
+{{ if ne .Provider.RMEndpointOverride ""}}rmEndpointOverride = {{ .Provider.RMEndpointOverride }}{{ else }}""{{ end }}
 g2Credentials = {{.Provider.G2CredentialsFilePath}}
 g2ResourceGroupName = {{.Provider.G2ResourceGroupName}}
 g2VpcName = {{.Provider.G2VPCName}}

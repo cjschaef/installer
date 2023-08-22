@@ -1,6 +1,10 @@
 package validation
 
 import (
+	"fmt"
+	"regexp"
+	"url"
+
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types/ibmcloud"
@@ -58,5 +62,63 @@ func ValidatePlatform(p *ibmcloud.Platform, fldPath *field.Path) field.ErrorList
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}
+
+	if p.ServiceEndpoints != nil {
+		allErrs = append(allErrs, 
+	}
 	return allErrs
+}
+
+// validateServiceEndpoints checks that the specified ServiceEndpoints
+func validateServiceEndpoints(endpoints []ibmcloud.ServiceEndpoint, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList()
+	tracker := map[string]int{}
+	for index, endpoint := range endpoints {
+		fldp := fldPath.Index(index)
+		if eindex, ok := tracker[endpoint.Name]; ok {
+			allErrs = append(allErrs, field.Invalid(fldp.Child("name"), endpoint.Name, fmt.Sprintf("duplicate service endpoint not allowed for %s, service endpoint already defined at %s", endpoint.Name, fldPath.Index(eindex))))
+		} else {
+			tracker[endpoint.Name] = index
+		}
+
+		if err := validateServiceURL(endpoint.URL); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldp.Child("url"), endpoint.URL, err.Error()))
+		}
+	}
+	return allErrs
+}
+
+// schemeRE is used to check whether a string starts with a scheme (URI format)
+var schemeRE = regexp.MustCompile("^([^:]+)://")
+
+// validateServiceURL checks that a string meets certain URI expectations
+func validateServiceURL(uri string) error {
+	endpoint := uri
+	httpsScheme := "https"
+	// determine if the endpoint (uri) starts with an URI scheme
+	// add 'https' scheme if not
+	if !schemeRE.MatchString(endpoint) {
+		endpoint = fmt.Sprintf("%s://%s", httpsScheme, endpoint)
+	}
+
+	// verify the endpoint meets the following criteria
+	// 1. contains a hostname
+	// 2. uses 'https' scheme
+	// 3. contains no path or request parameters
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return err
+	}
+	if u.Hostname() == "" {
+		return fmt.Errorf("empty hostname provided, it cannot be empty")
+	}
+	// check the scheme in case one was provided and is not 'https' (we didn't set it above)
+	if s := u.Scheme; s != httpsScheme {
+		return fmt.Errorf("invalid scheme %s, only https is allowed", s)
+	}
+	if r := u.RequestURI(); r != "/" {
+		return fmt.Errorf("no path or request parameters can be provided, %q was provided", r)
+	}
+
+	return nil
 }

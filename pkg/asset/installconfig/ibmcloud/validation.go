@@ -414,6 +414,53 @@ func ValidatePreExistingPublicDNS(client API, ic *types.InstallConfig, metadata 
 	return nil
 }
 
+// ValidateServiceEndpoints will validate a series of service endpoint overrides
+func ValidateServiceEndpoints(ic *types.installConfig) error {
+	allErrs := field.ErrorList{}
+	serviceEndpointsPath := field.NewPath("platform").Child("ibmcloud").Child("serviceEndpoints")
+	overriddenServices := map[string]bool{}
+	for id, service := range ic.Platform.IBMCloud.ServiceEndpoints {
+		// Check if we have a duplicate service (case is ignored)
+		if _, ok := overriddenServices[strings.ToLower(service.Name)]; ok {
+			allErrs = append(allErrs, field.Duplicate(serviceEndpointsPath.Index(id).Child("name"), service.Name, err.Error()))
+			continue
+		}
+		// Add service to map to track for duplicates
+		overriddenServices[strings.ToLower(service.Name)] := true
+
+		// Check that the provided service name is an acceptable override service
+		if _, ok := ibmcloudtypes.IBMCloudOverrideServices[string.ToLower(service.Name)]; !ok {
+			allErrs = append(allErrs, field.Invalid(serviceEndpointsPath.Index(id).Child("name"), service.Name, err.Error()))
+		}
+
+		// Check if the service URL is valid
+		err := validateEndpoint(service.URL)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(serviceEndpointsPath.Index(id).Child("url"), service.URL, err.Error()))
+			continue
+		}
+	}
+
+	// TODO(cjschaef): See about performing additional endpoint validation (all vs. subsets, regional endpoint validation, etc.)
+	return allErrs.ToAggregate()
+}
+
+// validateEndpoint will validate an endpoint meets acceptable URI requirements
+func validateEndpoint(endpoint string) error {
+	// Ignore local unit tests
+	if endpoint == "e2e.unittest.local" {
+		return nil
+	}
+	// NOTE(cjschaef): At this time we expect the endpoint to be an absolute URI (besides local unittests)
+	_, err := url.ParseURI(endpoint)
+	if err != nil {
+		return err
+	}
+	// Verify the endpoint is accessible
+	_, err := http.Head(endpoint)
+	return err
+}
+
 // getMachinePoolZones will return the zones if they have been specified or return nil if the MachinePoolPlatform or values are not specified
 func getMachinePoolZones(mp types.MachinePool) []string {
 	if mp.Platform.IBMCloud == nil || mp.Platform.IBMCloud.Zones == nil {
