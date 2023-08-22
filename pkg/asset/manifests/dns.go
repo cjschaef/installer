@@ -177,7 +177,13 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 		config.Spec.PrivateZone = &configv1.DNSZone{ID: privateZoneID}
 
 	case ibmcloudtypes.Name:
-		client, err := icibmcloud.NewClient()
+		var client icibmcloud.API
+		var err error
+		if len(installConfig.Config.Platform.IBMCloud.ServiceEndpoints) > 0 {
+			client, err = icibmcloud.NewClientEndpointOverride(installConfig.Config.Platform.IBMCloud.ServiceEndpoints)
+		} else {
+			client, err = icibmcloud.NewClient()
+		}
 		if err != nil {
 			return errors.Wrap(err, "failed to get IBM Cloud client")
 		}

@@ -159,7 +159,7 @@ func (a *InstallConfig) finish(filename string) error {
 		a.Azure = icazure.NewMetadata(a.Config.Azure.CloudName, a.Config.Azure.ARMEndpoint)
 	}
 	if a.Config.IBMCloud != nil {
-		a.IBMCloud = icibmcloud.NewMetadata(a.Config.BaseDomain, a.Config.IBMCloud.Region, a.Config.IBMCloud.ControlPlaneSubnets, a.Config.IBMCloud.ComputeSubnets)
+		a.IBMCloud = icibmcloud.NewMetadata(a.Config)
 	}
 	if a.Config.PowerVS != nil {
 		a.PowerVS = icpowervs.NewMetadata(a.Config.BaseDomain)
@@ -205,7 +205,16 @@ func (a *InstallConfig) platformValidation() error {
 		return icgcp.Validate(client, a.Config)
 	}
 	if a.Config.Platform.IBMCloud != nil {
-		client, err := icibmcloud.NewClient()
+		var client icibmcloud.API
+		var err error
+		// If service endpoints were provided, validate them first and then get a Client utilizing those endpoints
+		if len(a.Config.Platform.IBMCloud.ServiceEndpoints) > 0 {
+			// TODO(cjschaef): Add ServiceEndpoint validation
+			// icibmcloud.ValidateServiceEndpoints(a.Config)
+			client, err = icibmcloud.NewClientEndpointOverride(a.Config.Platform.IBMCloud.ServiceEndpoints)
+		} else {
+			client, err = icibmcloud.NewClient()
+		}
 		if err != nil {
 			return err
 		}

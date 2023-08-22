@@ -4,6 +4,7 @@ locals {
 
 resource "ibm_cos_bucket" "images" {
   bucket_name          = "${local.prefix}-vsi-image"
+  endpoint_type        = "direct"
   resource_instance_id = var.cos_resource_instance_crn
   region_location      = var.region
   storage_class        = "smart"
@@ -13,6 +14,7 @@ resource "ibm_cos_bucket_object" "file" {
   bucket_crn      = ibm_cos_bucket.images.crn
   bucket_location = ibm_cos_bucket.images.region_location
   content_file    = var.image_filepath
+  endpoint_type   = "direct"
   key             = basename(var.image_filepath)
 }
 
