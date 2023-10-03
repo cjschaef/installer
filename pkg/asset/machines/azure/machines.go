@@ -98,7 +98,6 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	} else if len(mpool.Zones) == 1 {
 		machineSetProvider.Zone = mpool.Zones[0]
 	}
-
 	controlPlaneMachineSet := &machinev1.ControlPlaneMachineSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1",
@@ -263,7 +262,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		},
 		SecurityProfile:       securityProfile,
 		UltraSSDCapability:    ultraSSDCapability,
-		Zone:                  az,
+		Zone:                  &az,
 		Subnet:                subnet,
 		ManagedIdentity:       managedIdentity,
 		Vnet:                  virtualNetwork,
