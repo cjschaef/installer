@@ -1153,6 +1153,9 @@ func resourceIBMCOSBucketRead(d *schema.ResourceData, meta interface{}) error {
 	if endpointType == "private" {
 		sess.SetServiceURL("https://config.private.cloud-object-storage.cloud.ibm.com/v1")
 	}
+	if endpointType == "direct" {
+		sess.SetServiceURL("https://config.direct.cloud-object-storage.cloud.ibm.com/v1")
+	}
 
 	if apiType == "sl" {
 
