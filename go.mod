@@ -15,10 +15,10 @@ require (
 	github.com/Azure/go-autorest/autorest/to v0.4.0
 	github.com/IBM-Cloud/bluemix-go v0.0.0-20211102075456-ffc4e11dfb16
 	github.com/IBM-Cloud/power-go-client v1.2.0
-	github.com/IBM/go-sdk-core/v5 v5.13.2
+	github.com/IBM/go-sdk-core/v5 v5.13.4
 	github.com/IBM/networking-go-sdk v0.42.2
 	github.com/IBM/platform-services-go-sdk v0.42.0
-	github.com/IBM/vpc-go-sdk v0.20.0
+	github.com/IBM/vpc-go-sdk v0.41.0
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.1264
 	github.com/aliyun/aliyun-oss-go-sdk v2.1.8+incompatible
 	github.com/apparentlymart/go-cidr v1.1.0
@@ -238,6 +238,9 @@ replace (
 	sigs.k8s.io/cluster-api-provider-aws => github.com/openshift/cluster-api-provider-aws v0.2.1-0.20200929152424-eab2e087f366 // Indirect dependency through MAO from cluster API providers
 	sigs.k8s.io/cluster-api-provider-azure => github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20210626224711-5d94c794092f // Indirect dependency through MAO from cluster API providers
 )
+
+// TODO(cjschaef): Remove prior to PR, temporarily pull in necessary openshift/api Infrastructure changes
+replace github.com/openshift/api => github.com/cjschaef/api v0.0.0-20230814223635-2f259e8fcccd
 
 // Pin MCO so it doesn't get downgraded
 replace github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8
