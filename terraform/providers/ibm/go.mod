@@ -5,9 +5,9 @@ go 1.18
 require github.com/IBM-Cloud/terraform-provider-ibm v1.56.0
 
 require (
-	github.com/IBM-Cloud/bluemix-go v0.0.0-20230601050310-eecebfbff63e // indirect
-	github.com/IBM-Cloud/container-services-go-sdk v0.0.0-20230118060037-101bda076037 // indirect
-	github.com/IBM-Cloud/power-go-client v1.2.2 // indirect
+	github.com/IBM-Cloud/bluemix-go v0.0.0-20230914140903-40534e34a2a5 // indirect
+	github.com/IBM-Cloud/container-services-go-sdk v0.0.0-20230822142550-30562e113de9 // indirect
+	github.com/IBM-Cloud/power-go-client v1.2.4 // indirect
 	github.com/IBM/apigateway-go-sdk v0.0.0-20210714141226-a5d5d49caaca // indirect
 	github.com/IBM/appconfiguration-go-admin-sdk v0.3.0 // indirect
 	github.com/IBM/appid-management-go-sdk v0.0.0-20210908164609-dd0e0eaf732f // indirect
@@ -15,24 +15,22 @@ require (
 	github.com/IBM/cloudant-go-sdk v0.0.43 // indirect
 	github.com/IBM/code-engine-go-sdk v0.0.0-20230606173928-4863db061918 // indirect
 	github.com/IBM/container-registry-go-sdk v1.1.0 // indirect
-	github.com/IBM/continuous-delivery-go-sdk v1.1.1 // indirect
+	github.com/IBM/continuous-delivery-go-sdk v1.1.2 // indirect
 	github.com/IBM/event-notifications-go-admin-sdk v0.2.4 // indirect
 	github.com/IBM/eventstreams-go-sdk v1.2.0 // indirect
-	github.com/IBM/go-sdk-core/v5 v5.13.4 // indirect
+	github.com/IBM/go-sdk-core/v5 v5.14.1 // indirect
 	github.com/IBM/ibm-cos-sdk-go v1.10.0 // indirect
 	github.com/IBM/ibm-cos-sdk-go-config v1.2.0 // indirect
 	github.com/IBM/ibm-hpcs-tke-sdk v0.0.0-20211109141421-a4b61b05f7d1 // indirect
 	github.com/IBM/ibm-hpcs-uko-sdk v0.0.20-beta // indirect
-	github.com/IBM/keyprotect-go-client v0.10.0 // indirect
+	github.com/IBM/keyprotect-go-client v0.12.2 // indirect
 	github.com/IBM/networking-go-sdk v0.42.2 // indirect
-	github.com/IBM/platform-services-go-sdk v0.41.0 // indirect
+	github.com/IBM/platform-services-go-sdk v0.48.1 // indirect
 	github.com/IBM/push-notifications-go-sdk v0.0.0-20210310100607-5790b96c47f5 // indirect
-	github.com/IBM/scc-go-sdk/v3 v3.1.6 // indirect
-	github.com/IBM/scc-go-sdk/v4 v4.0.2 // indirect
 	github.com/IBM/schematics-go-sdk v0.2.1 // indirect
 	github.com/IBM/secrets-manager-go-sdk/v2 v2.0.0 // indirect
-	github.com/IBM/vpc-beta-go-sdk v0.5.0 // indirect
-	github.com/IBM/vpc-go-sdk v0.40.0 // indirect
+	github.com/IBM/vpc-beta-go-sdk v0.6.0 // indirect
+	github.com/IBM/vpc-go-sdk v0.41.0 // indirect
 	github.com/ScaleFT/sshkeys v0.0.0-20200327173127-6142f742bca5 // indirect
 	github.com/Shopify/sarama v1.29.1 // indirect
 	github.com/apache/openwhisk-client-go v0.0.0-20200201143223-a804fb82d105 // indirect
@@ -93,6 +91,7 @@ require (
 require (
 	github.com/IBM/go-sdk-core/v3 v3.2.4 // indirect
 	github.com/IBM/project-go-sdk v0.0.10 // indirect
+	github.com/IBM/scc-go-sdk/v5 v5.0.2 // indirect
 	github.com/Logicalis/asn1 v0.0.0-20190312173541-d60463189a56 // indirect
 	github.com/agext/levenshtein v1.2.2 // indirect
 	github.com/akamai/AkamaiOPEN-edgegrid-golang v1.2.2 // indirect
@@ -222,6 +221,8 @@ replace github.com/softlayer/softlayer-go v1.0.3 => github.com/IBM-Cloud/softlay
 replace github.com/dgrijalva/jwt-go v3.2.0+incompatible => github.com/golang-jwt/jwt v3.2.1+incompatible
 
 replace github.com/portworx/sched-ops v0.0.0-20200831185134-3e8010dc7056 => github.com/portworx/sched-ops v0.20.4-openstorage-rc3 // required by rook v1.7
+
+replace github.com/IBM-Cloud/terraform-provider-ibm v1.56.0 => github.com/cjschaef/terraform-provider-ibm v0.0.0-20231003150907-f72b2cb6965c
 
 exclude (
 	github.com/kubernetes-incubator/external-storage v0.20.4-openstorage-rc2
