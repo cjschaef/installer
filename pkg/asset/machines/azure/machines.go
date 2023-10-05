@@ -92,7 +92,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 
 		failureDomains = append(failureDomains, domain)
 	}
-	machineSetProvider.Zone = ""
+	machineSetProvider.Zone = new(string)
 	controlPlaneMachineSet := &machinev1.ControlPlaneMachineSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1",
@@ -253,7 +253,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		},
 		SecurityProfile:       securityProfile,
 		UltraSSDCapability:    ultraSSDCapability,
-		Zone:                  az,
+		Zone:                  &az,
 		Subnet:                subnet,
 		ManagedIdentity:       managedIdentity,
 		Vnet:                  virtualNetwork,

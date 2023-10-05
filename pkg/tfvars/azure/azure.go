@@ -101,7 +101,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 
 	masterAvailabilityZones := make([]string, len(sources.MasterConfigs))
 	for i, c := range sources.MasterConfigs {
-		masterAvailabilityZones[i] = c.Zone
+		masterAvailabilityZones[i] = *c.Zone
 	}
 
 	environment, err := environment(sources.CloudName)
