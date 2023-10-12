@@ -26,17 +26,6 @@ data "ibm_is_subnet" "compute_subnets" {
   identifier = var.compute_subnet_id_list[count.index]
 }
 
-
-############################################
-# KMS Encryption Key lookup
-############################################
-data "ibm_kms_key" "encryption_key" {
-  count       = length(local.boot_volume_key_crns) == 0 ? 0 : 1
-  instance_id = "c6509f3a-d187-4124-9bc3-6fd19db3850a"
-  key_id      = regex(var.ibmcloud_control_plane_boot_volume_key, "[a-f0-9-]{36}$")
-}
-
-
 ############################################
 # Bootstrap node
 ############################################
@@ -57,7 +46,7 @@ resource "ibm_is_instance" "bootstrap_node" {
   dynamic "boot_volume" {
     for_each = local.boot_volume_key_crns
     content {
-      encryption = data.ibm_kms_key.encryption_key.crn
+      encryption = boot_volume.value
     }
   }
 

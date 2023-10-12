@@ -1182,6 +1182,7 @@ func instanceCreateByImage(d *schema.ResourceData, meta interface{}, profile, na
 		enc, ok := bootvol[isInstanceBootEncryption]
 		encstr := enc.(string)
 		if ok && encstr != "" {
+			log.Printf("[DEBUG] (byimage) Setting encryption key CRN: %s", encstr)
 			volTemplate.EncryptionKey = &vpcv1.EncryptionKeyIdentity{
 				CRN: &encstr,
 			}
@@ -1567,6 +1568,7 @@ func instanceCreateByCatalogOffering(d *schema.ResourceData, meta interface{}, p
 		enc, ok := bootvol[isInstanceBootEncryption]
 		encstr := enc.(string)
 		if ok && encstr != "" {
+			log.Printf("[DEBUG] (bycatalog) Setting encryption key CRN: %s", encstr)
 			volTemplate.EncryptionKey = &vpcv1.EncryptionKeyIdentity{
 				CRN: &encstr,
 			}
@@ -1925,6 +1927,7 @@ func instanceCreateByTemplate(d *schema.ResourceData, meta interface{}, profile,
 		enc, ok := bootvol[isInstanceBootEncryption]
 		encstr := enc.(string)
 		if ok && encstr != "" {
+			log.Printf("[DEBUG] (bytemplate) Setting encryption key CRN: %s", encstr)
 			volTemplate.EncryptionKey = &vpcv1.EncryptionKeyIdentity{
 				CRN: &encstr,
 			}
@@ -2285,6 +2288,7 @@ func instanceCreateBySnapshot(d *schema.ResourceData, meta interface{}, profile,
 		enc, ok := bootvol[isInstanceBootEncryption]
 		encstr := enc.(string)
 		if ok && encstr != "" {
+			log.Printf("[DEBUG] (bysnapshot) Setting encryption key CRN: %s", encstr)
 			volTemplate.EncryptionKey = &vpcv1.EncryptionKeyIdentity{
 				CRN: &encstr,
 			}
@@ -3383,6 +3387,7 @@ func instanceGet(d *schema.ResourceData, meta interface{}, id string) error {
 				bootVol[isInstanceBootIOPS] = *vol.Iops
 				bootVol[isInstanceBootProfile] = *vol.Profile.Name
 				if vol.EncryptionKey != nil {
+					log.Printf("[DEBUG] (instanceget) Setting encryption key CRN: %s", *vol.EncryptionKey.CRN)
 					bootVol[isInstanceBootEncryption] = *vol.EncryptionKey.CRN
 				}
 				if vol.SourceSnapshot != nil {
