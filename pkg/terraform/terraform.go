@@ -61,6 +61,9 @@ func newTFExec(datadir string, terraformDir string) (*tfexec.Terraform, error) {
 	dd := path.Join(terraformDir, ".terraform")
 	os.Setenv("TF_DATA_DIR", dd)
 
+	// TODO(cjschaef): Remove after debugging IBM TF provider
+	os.Setenv("TF_LOG", "TRACE")
+
 	return tf, nil
 }
 
