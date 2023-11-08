@@ -76,9 +76,10 @@ func (p *Provider) DestroyBootstrap(dir string) error {
 	}
 
 	terraformDir := filepath.Join(dir, "terraform")
-	if err := os.Mkdir(terraformDir, 0777); err != nil {
-		return fmt.Errorf("could not create the terraform directory: %w", err)
-	}
+	_ = os.Mkdir(terraformDir, 0777)
+	//if err := os.Mkdir(terraformDir, 0777); err != nil {
+	//	return fmt.Errorf("could not create the terraform directory: %w", err)
+	//}
 
 	terraformDirPath, err := filepath.Abs(terraformDir)
 	if err != nil {

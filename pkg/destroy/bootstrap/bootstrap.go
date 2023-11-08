@@ -3,14 +3,19 @@ package bootstrap
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset/cluster"
 	openstackasset "github.com/openshift/installer/pkg/asset/cluster/openstack"
 	osp "github.com/openshift/installer/pkg/destroy/openstack"
 	infra "github.com/openshift/installer/pkg/infrastructure/platform"
+	ibmcloudtfvars "github.com/openshift/installer/pkg/tfvars/ibmcloud"
 	typesazure "github.com/openshift/installer/pkg/types/azure"
+	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
@@ -40,6 +45,25 @@ func Destroy(dir string) (err error) {
 	// Azure Stack uses the Azure platform but has its own Terraform configuration.
 	if platform == typesazure.Name && metadata.Azure.CloudName == typesazure.StackCloud {
 		platform = typesazure.StackTerraformName
+	}
+
+	// IBM Cloud allows override of service endpoints, required during bootstrap destroy.
+	// Create a JSON file wiht overrides, if these endpoints are present.
+	if platform == ibmcloudtypes.Name {
+		if metadata.IBMCloud != nil && len(metadata.IBMCloud.ServiceEndpoints) > 0 {
+			// Build the JSON containing endpoint overrides for IBM Cloud Services.
+			jsonData, err := ibmcloudtfvars.CreateEndpointJSON(metadata.IBMCloud.ServiceEndpoints, metadata.IBMCloud.Region)
+			if err != nil {
+			}
+
+			if jsonData != nil {
+				// If JSON data was generated, create the JSON file, for IBM Cloud Terraform provider to use during destroy.
+				if err := os.WriteFile(filepath.Join(dir, ibmcloudtfvars.IBMCloudEndpointJSONFileName), jsonData, 0o640); err != nil {
+					return errors.Wrap(err, "failed to write IBM Cloud service endpoint override JSON file for bootstrap destroy")
+				}
+				logrus.Infof("wrote ibm endpoint overrides to file: %s", filepath.Join(dir, ibmcloudtfvars.IBMCloudEndpointJSONFileName))
+			}
+		}
 	}
 
 	provider := infra.ProviderForPlatform(platform)
