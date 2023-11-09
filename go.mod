@@ -61,13 +61,13 @@ require (
 	github.com/openshift/assisted-service/api v0.0.0
 	github.com/openshift/assisted-service/client v0.0.0
 	github.com/openshift/assisted-service/models v0.0.0
-	github.com/openshift/client-go v0.0.0-20221019143426-16aed247da5c
+	github.com/openshift/client-go v0.0.0-20230503144108-75015d2347cb
 	github.com/openshift/cloud-credential-operator v0.0.0-20200316201045-d10080b52c9e
 	github.com/openshift/cluster-api-provider-baremetal v0.0.0-20220408122422-7a548effc26e
 	github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20230308152226-83c0473d4429
 	github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20220323121149-e3f2850dd519
 	github.com/openshift/hive/apis v0.0.0-20220222213051-def9088fdb5a
-	github.com/openshift/library-go v0.0.0-20220920133651-093893cf326b
+	github.com/openshift/library-go v0.0.0-20230508110756-9b7abe2c9cbf
 	github.com/openshift/machine-api-provider-ibmcloud v0.0.0-20230124105206-50aa171a52e1
 	github.com/openshift/machine-config-operator v0.0.0
 	github.com/ovirt/go-ovirt v0.0.0-20210809163552-d4276e35d3db
@@ -172,7 +172,6 @@ require (
 	github.com/googleapis/gax-go/v2 v2.11.0 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
-	github.com/hashicorp/go-hclog v1.2.0 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.4 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/hashicorp/terraform-json v0.14.0 // indirect
@@ -259,6 +258,9 @@ replace (
 // sigs.k8s.io/cluster-api-provider-aws => github.com/openshift/cluster-api-provider-aws v0.2.1-0.20200929152424-eab2e087f366 // Indirect dependency through MAO from cluster API providers
 // sigs.k8s.io/cluster-api-provider-azure => github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20210626224711-5d94c794092f // Indirect dependency through MAO from cluster API providers
 )
+
+// TODO(cjschaef): Remove before merge
+replace github.com/openshift/machine-api-provider-ibmcloud => github.com/cjschaef/machine-api-provider-ibmcloud v0.0.0-20231103140854-0bb5e77675f9
 
 replace sigs.k8s.io/cluster-api-provider-aws/v2 => sigs.k8s.io/cluster-api-provider-aws/v2 v2.0.0-20231024062453-0bf78b04b305
 

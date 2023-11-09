@@ -668,8 +668,6 @@ github.com/hashicorp/errwrap
 # github.com/hashicorp/go-cleanhttp v0.5.2
 ## explicit; go 1.13
 github.com/hashicorp/go-cleanhttp
-# github.com/hashicorp/go-hclog v1.2.0
-## explicit; go 1.13
 # github.com/hashicorp/go-multierror v1.1.1
 ## explicit; go 1.13
 github.com/hashicorp/go-multierror
@@ -8785,8 +8783,8 @@ github.com/openshift/assisted-service/client/versions
 # github.com/openshift/assisted-service/models v0.0.0 => github.com/openshift/assisted-service/models v0.0.0-20230831114549-1922eda29cf8
 ## explicit; go 1.18
 github.com/openshift/assisted-service/models
-# github.com/openshift/client-go v0.0.0-20221019143426-16aed247da5c
-## explicit; go 1.18
+# github.com/openshift/client-go v0.0.0-20230503144108-75015d2347cb
+## explicit; go 1.20
 github.com/openshift/client-go/config/applyconfigurations/config/v1
 github.com/openshift/client-go/config/applyconfigurations/config/v1alpha1
 github.com/openshift/client-go/config/applyconfigurations/internal
@@ -8839,11 +8837,11 @@ github.com/openshift/hive/apis/hive/v1/openstack
 github.com/openshift/hive/apis/hive/v1/ovirt
 github.com/openshift/hive/apis/hive/v1/vsphere
 github.com/openshift/hive/apis/scheme
-# github.com/openshift/library-go v0.0.0-20220920133651-093893cf326b
-## explicit; go 1.18
+# github.com/openshift/library-go v0.0.0-20230508110756-9b7abe2c9cbf
+## explicit; go 1.20
 github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers
 github.com/openshift/library-go/pkg/route/routeapihelpers
-# github.com/openshift/machine-api-provider-ibmcloud v0.0.0-20230124105206-50aa171a52e1
+# github.com/openshift/machine-api-provider-ibmcloud v0.0.0-20230124105206-50aa171a52e1 => github.com/cjschaef/machine-api-provider-ibmcloud v0.0.0-20231103140854-0bb5e77675f9
 ## explicit; go 1.19
 github.com/openshift/machine-api-provider-ibmcloud/pkg/apis
 github.com/openshift/machine-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1
@@ -9796,6 +9794,7 @@ sigs.k8s.io/yaml
 # github.com/metal3-io/baremetal-operator/apis => github.com/openshift/baremetal-operator/apis v0.0.0-20230531194024-8dde0991ffdd
 # github.com/metal3-io/baremetal-operator/pkg/hardwareutils => github.com/openshift/baremetal-operator/pkg/hardwareutils v0.0.0-20230531194024-8dde0991ffdd
 # k8s.io/cloud-provider-vsphere => github.com/openshift/cloud-provider-vsphere v1.19.1-0.20211222185833-7829863d0558
+# github.com/openshift/machine-api-provider-ibmcloud => github.com/cjschaef/machine-api-provider-ibmcloud v0.0.0-20231103140854-0bb5e77675f9
 # sigs.k8s.io/cluster-api-provider-aws/v2 => sigs.k8s.io/cluster-api-provider-aws/v2 v2.0.0-20231024062453-0bf78b04b305
 # sigs.k8s.io/cluster-api-provider-azure => sigs.k8s.io/cluster-api-provider-azure v1.11.1-0.20231026140308-a3f4914170d9
 # sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.16.1-0.20231024080022-f1c5dd3851ce
