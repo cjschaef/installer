@@ -89,7 +89,9 @@ const (
 	// hyperProtectDefaultURLTemplate is the default URL endpoint template, with region substitution, for IBM Cloud Hyper Protect service.
 	hyperProtectDefaultURLTemplate = "https://api.%s.hs-crypto.cloud.ibm.com"
 	// iamTokenDefaultURL is the default URL endpoint for IBM Cloud IAM token service.
-	iamTokenDefaultURL = "https://iam.cloud.ibm.com/identity/token" // #nosec G101
+	iamTokenDefaultURL = "https://iam.cloud.ibm.com/identity/token" // #nosec G101 // this is the URL for IBM Cloud IAM tokens
+	// iamTokenPath is the URL path, to add to override IAM endpoints, for the IBM Cloud IAM token service.
+	iamTokenPath = "identity/token"
 	// keyProtectDefaultURLTemplate is the default URL endpoint template, with region substitution, for IBM Cloud Key Protect service.
 	keyProtectDefaultURLTemplate = "https://%s.kms.cloud.ibm.com"
 )
@@ -740,6 +742,11 @@ func (c *Client) getKeyServiceAPI(crn ibmcrn.CRN) (*kpclient.Client, error) {
 			TokenURL:   iamTokenDefaultURL,
 			InstanceID: crn.ServiceInstance,
 		}
+
+		// Override HyperProtect service URL, if one was provided
+		if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceHyperProtect, c.serviceEndpoints); overrideURL != "" {
+			clientConfig.BaseURL = overrideURL
+		}
 	case keyProtectCRNServiceName:
 		clientConfig = kpclient.ClientConfig{
 			BaseURL:    fmt.Sprintf(keyProtectDefaultURLTemplate, crn.Region),
@@ -747,8 +754,19 @@ func (c *Client) getKeyServiceAPI(crn ibmcrn.CRN) (*kpclient.Client, error) {
 			TokenURL:   iamTokenDefaultURL,
 			InstanceID: crn.ServiceInstance,
 		}
+
+		// Override KeyProtect service URL, if one was provided
+		if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceKeyProtect, c.serviceEndpoints); overrideURL != "" {
+			clientConfig.BaseURL = overrideURL
+		}
 	default:
 		return nil, fmt.Errorf("unknown key service for provided encryption key: %s", crn)
+	}
+
+	// Override IAM token URL, if an IAM service override URL was provided
+	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceIAM, c.serviceEndpoints); overrideURL != "" {
+		// Construct the token URL using the overridden IAM URL and the token path
+		clientConfig.TokenURL = fmt.Sprintf("%s/%s", overrideURL, iamTokenPath)
 	}
 
 	return kpclient.New(clientConfig, kpclient.DefaultTransport())
