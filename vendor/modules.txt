@@ -182,7 +182,7 @@ github.com/IBM-Cloud/bluemix-go/models
 github.com/IBM-Cloud/bluemix-go/rest
 github.com/IBM-Cloud/bluemix-go/session
 github.com/IBM-Cloud/bluemix-go/trace
-# github.com/IBM-Cloud/power-go-client v1.5.3
+# github.com/IBM-Cloud/power-go-client v1.5.6
 ## explicit; go 1.20
 github.com/IBM-Cloud/power-go-client/clients/instance
 github.com/IBM-Cloud/power-go-client/errors
@@ -232,7 +232,7 @@ github.com/IBM-Cloud/power-go-client/power/client/storage_types
 github.com/IBM-Cloud/power-go-client/power/client/swagger_spec
 github.com/IBM-Cloud/power-go-client/power/client/workspaces
 github.com/IBM-Cloud/power-go-client/power/models
-# github.com/IBM/go-sdk-core/v5 v5.14.1
+# github.com/IBM/go-sdk-core/v5 v5.15.0
 ## explicit; go 1.19
 github.com/IBM/go-sdk-core/v5/core
 # github.com/IBM/keyprotect-go-client v0.12.2
@@ -248,14 +248,14 @@ github.com/IBM/networking-go-sdk/dnszonesv1
 github.com/IBM/networking-go-sdk/resourcerecordsv1
 github.com/IBM/networking-go-sdk/transitgatewayapisv1
 github.com/IBM/networking-go-sdk/zonesv1
-# github.com/IBM/platform-services-go-sdk v0.52.1
+# github.com/IBM/platform-services-go-sdk v0.55.0
 ## explicit; go 1.19
 github.com/IBM/platform-services-go-sdk/common
 github.com/IBM/platform-services-go-sdk/iamidentityv1
 github.com/IBM/platform-services-go-sdk/iampolicymanagementv1
 github.com/IBM/platform-services-go-sdk/resourcecontrollerv2
 github.com/IBM/platform-services-go-sdk/resourcemanagerv2
-# github.com/IBM/vpc-go-sdk v0.42.0
+# github.com/IBM/vpc-go-sdk v0.46.0
 ## explicit; go 1.18
 github.com/IBM/vpc-go-sdk/common
 github.com/IBM/vpc-go-sdk/vpcv1
@@ -500,8 +500,8 @@ github.com/go-openapi/jsonreference/internal
 # github.com/go-openapi/loads v0.21.2
 ## explicit; go 1.13
 github.com/go-openapi/loads
-# github.com/go-openapi/runtime v0.26.0
-## explicit; go 1.18
+# github.com/go-openapi/runtime v0.26.2
+## explicit; go 1.19
 github.com/go-openapi/runtime
 github.com/go-openapi/runtime/client
 github.com/go-openapi/runtime/logger
@@ -511,17 +511,17 @@ github.com/go-openapi/runtime/middleware/header
 github.com/go-openapi/runtime/middleware/untyped
 github.com/go-openapi/runtime/security
 github.com/go-openapi/runtime/yamlpc
-# github.com/go-openapi/spec v0.20.8
+# github.com/go-openapi/spec v0.20.11
 ## explicit; go 1.13
 github.com/go-openapi/spec
-# github.com/go-openapi/strfmt v0.21.7
+# github.com/go-openapi/strfmt v0.21.9
 ## explicit; go 1.19
 github.com/go-openapi/strfmt
 # github.com/go-openapi/swag v0.22.9
 ## explicit; go 1.19
 github.com/go-openapi/swag
-# github.com/go-openapi/validate v0.22.1
-## explicit; go 1.14
+# github.com/go-openapi/validate v0.22.3
+## explicit; go 1.18
 github.com/go-openapi/validate
 # github.com/go-playground/locales v0.14.1
 ## explicit; go 1.17
@@ -9096,7 +9096,7 @@ github.com/yosida95/uritemplate/v3
 ## explicit; go 1.18
 github.com/zclconf/go-cty/cty
 github.com/zclconf/go-cty/cty/set
-# go.mongodb.org/mongo-driver v1.11.3 => go.mongodb.org/mongo-driver v1.11.2
+# go.mongodb.org/mongo-driver v1.13.1 => go.mongodb.org/mongo-driver v1.11.2
 ## explicit; go 1.13
 go.mongodb.org/mongo-driver/bson
 go.mongodb.org/mongo-driver/bson/bsoncodec
@@ -9135,8 +9135,9 @@ go.opentelemetry.io/otel/internal/attribute
 go.opentelemetry.io/otel/internal/baggage
 go.opentelemetry.io/otel/internal/global
 go.opentelemetry.io/otel/propagation
-go.opentelemetry.io/otel/semconv/internal
-go.opentelemetry.io/otel/semconv/v1.12.0
+go.opentelemetry.io/otel/semconv/internal/v2
+go.opentelemetry.io/otel/semconv/v1.17.0
+go.opentelemetry.io/otel/semconv/v1.17.0/httpconv
 # go.opentelemetry.io/otel/metric v1.22.0
 ## explicit; go 1.20
 go.opentelemetry.io/otel/metric
@@ -9876,6 +9877,9 @@ sigs.k8s.io/cluster-api-provider-azure/util/webhook
 # sigs.k8s.io/cluster-api-provider-gcp v1.5.0
 ## explicit; go 1.20
 sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1
+# sigs.k8s.io/cluster-api-provider-ibmcloud v0.7.0
+## explicit; go 1.20
+sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2
 # sigs.k8s.io/cluster-api-provider-openstack v0.8.0
 ## explicit; go 1.20
 sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha7

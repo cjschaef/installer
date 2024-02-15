@@ -23,6 +23,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/gcp"
+	"github.com/openshift/installer/pkg/asset/machines/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
 	vspherecapi "github.com/openshift/installer/pkg/asset/machines/vsphere"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
@@ -33,6 +34,7 @@ import (
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
+	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -256,6 +258,43 @@ func (c *ClusterAPI) Generate(dependencies asset.Parents) error {
 			return fmt.Errorf("failed to create bootstrap machine objects %w", err)
 		}
 		c.FileList = append(c.FileList, bootstrapMachines...)
+	case ibmcloudtypes.Name:
+		mpool := defaultIBMCloudMachinePoolPlatform()
+		mpool.Set(ic.Platform.IBMCloud.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.IBMCloud)
+		if len(mpool.Zones) == 0 {
+			azs, err := ibmcloud.AvailabilityZones(ic.Platform.IBMCloud.Region, ic.Platform.IBMCloud.ServiceEndpoints)
+			if err != nil {
+				return fmt.Errorf("failed to fetch availability zones %w", err)
+			}
+			mpool.Zones = azs
+		}
+		pool.Platform.IBMCloud = &mpool
+
+		subnets := map[string]string{}
+		if len(ic.Platform.IBMCloud.ControlPlaneSubnets) > 0 {
+			subnetMetas, err := installConfig.IBMCloud.ControlPlaneSubnets(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to collect subnets for machines %w", err)
+			}
+			for _, subnet := range subnetMetas {
+				subnets[subnet.Zone] = subnet.Name
+			}
+		}
+		imageName := fmt.Sprintf("%s-rhcos", clusterID.InfraID)
+
+		c.FileList, err = ibmcloud.GenerateMachines(
+			ctx,
+			clusterID.InfraID,
+			ic,
+			subnets,
+			&pool,
+			imageName,
+			"master",
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create IBM Cloud machine objects %w", err)
+		}
 	case vspheretypes.Name:
 		mpool := defaultVSphereMachinePoolPlatform()
 		mpool.NumCPUs = 4

@@ -17,12 +17,12 @@ require (
 	github.com/Azure/go-autorest/autorest v0.11.29
 	github.com/Azure/go-autorest/autorest/to v0.4.0
 	github.com/IBM-Cloud/bluemix-go v0.0.0-20211102075456-ffc4e11dfb16
-	github.com/IBM-Cloud/power-go-client v1.5.3
-	github.com/IBM/go-sdk-core/v5 v5.14.1
+	github.com/IBM-Cloud/power-go-client v1.5.6
+	github.com/IBM/go-sdk-core/v5 v5.15.0
 	github.com/IBM/keyprotect-go-client v0.12.2
 	github.com/IBM/networking-go-sdk v0.42.2
-	github.com/IBM/platform-services-go-sdk v0.52.1
-	github.com/IBM/vpc-go-sdk v0.42.0
+	github.com/IBM/platform-services-go-sdk v0.55.0
+	github.com/IBM/vpc-go-sdk v0.46.0
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
 	github.com/aws/aws-sdk-go v1.44.315
@@ -35,7 +35,7 @@ require (
 	github.com/diskfs/go-diskfs v1.4.0
 	github.com/form3tech-oss/jwt-go v3.2.3+incompatible
 	github.com/go-openapi/errors v0.20.4
-	github.com/go-openapi/strfmt v0.21.7
+	github.com/go-openapi/strfmt v0.21.9
 	github.com/go-openapi/swag v0.22.9
 	github.com/go-playground/validator/v10 v10.13.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
@@ -111,6 +111,7 @@ require (
 	sigs.k8s.io/cluster-api-provider-aws/v2 v2.0.0-00010101000000-000000000000
 	sigs.k8s.io/cluster-api-provider-azure v0.0.0-00010101000000-000000000000
 	sigs.k8s.io/cluster-api-provider-gcp v1.5.0
+	sigs.k8s.io/cluster-api-provider-ibmcloud v0.7.0
 	sigs.k8s.io/cluster-api-provider-openstack v0.8.0
 	sigs.k8s.io/cluster-api-provider-vsphere v1.9.0
 	sigs.k8s.io/controller-runtime v0.16.5
@@ -166,9 +167,9 @@ require (
 	github.com/go-openapi/jsonpointer v0.20.2 // indirect
 	github.com/go-openapi/jsonreference v0.20.4 // indirect
 	github.com/go-openapi/loads v0.21.2 // indirect
-	github.com/go-openapi/runtime v0.26.0 // indirect
-	github.com/go-openapi/spec v0.20.8 // indirect
-	github.com/go-openapi/validate v0.22.1 // indirect
+	github.com/go-openapi/runtime v0.26.2 // indirect
+	github.com/go-openapi/spec v0.20.11 // indirect
+	github.com/go-openapi/validate v0.22.3 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/gobuffalo/flect v1.0.2 // indirect
@@ -242,7 +243,7 @@ require (
 	github.com/xlab/treeprint v1.2.0 // indirect
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
 	github.com/zclconf/go-cty v1.11.0 // indirect
-	go.mongodb.org/mongo-driver v1.11.3 // indirect
+	go.mongodb.org/mongo-driver v1.13.1 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/otel v1.22.0 // indirect
 	go.opentelemetry.io/otel/metric v1.22.0 // indirect

@@ -18,6 +18,7 @@ import (
 
 	"github.com/openshift/installer/data"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/clusterapi/internal/process"
 	"github.com/openshift/installer/pkg/clusterapi/internal/process/addr"
 	"github.com/openshift/installer/pkg/types/aws"
@@ -190,7 +191,30 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 			),
 		)
 	case ibmcloud.Name:
-		// TODO
+		ibmcloudFlags := []string{
+			"-v=2",
+			"--metrics-bind-addr=0",
+			"--health-addr={{suggestHealthHostPort}}",
+			"--leader-elect=false",
+			"--webhook-port={{.WebhookPort}}",
+			"--webhook-cert-dir={{.WebhookCertDir}}",
+			fmt.Sprintf("--namespace=%s", capiutils.Namespace),
+		}
+
+		// Get the ServiceEndpoint overrides, along with Region, to pass on to CAPI, if any.
+		if serviceEndpoints := installConfig.IBMCloud.GetRegionAndEndpointsFlag(); serviceEndpoints != "" {
+			ibmcloudFlags = append(ibmcloudFlags, fmt.Sprintf("--service-endpoint=%s", serviceEndpoints))
+		}
+
+		controllers = append(controllers,
+			c.getInfrastructureController(
+				&IBMCloud,
+				ibmcloudFlags,
+				map[string]string{
+					"IBMCLOUD_API_KEY": os.Getenv("IC_API_KEY"),
+				},
+			),
+		)
 	case nutanix.Name:
 		// TODO
 	case openstack.Name:
