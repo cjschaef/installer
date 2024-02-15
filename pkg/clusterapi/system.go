@@ -189,7 +189,31 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 			),
 		)
 	case ibmcloud.Name:
-		// TODO
+		ibmcloudFlags := []string{
+			"vpc",
+			"-v=2",
+			"--metrics-bind-addr=0",
+			"--health-addr={{suggestHealthHostPort}}",
+			"--webhook-port={{.WebhookPort}}",
+			"--webhook-cert-dir={{.WebhookCertDir}}",
+		}
+
+		// Get the IBM Cloud Region along with any serviceEndpoints to pass on to CAPI
+		ibmcloudFlags = append(ibmcloudFlags, fmt.Sprintf("--region=%s", installConfig.IBMCloud.GetRegionAndEndpointsFlag()))
+		// Add the ResourceGroup Name flag if one was specified in install-config
+		if installConfig.Platform.IBMCloud.ResourceGroupName != "" {
+			ibmcloudFlags = append(ibmcloudFlags, fmt.Sprintf("--resource-group-name=%s", installConfig.Platform.IBMCloud.ResourceGroupName))
+		}
+
+		controllers = append(controllers,
+			c.getInfrastructureController(
+				&IBMCloud,
+				ibmcloudFlags,
+				map[string]string{
+					"IBMCLOUD_API_KEY": os.Getenv("IC_API_KEY"),
+				},
+			),
+		)
 	case nutanix.Name:
 		// TODO
 	case vsphere.Name:

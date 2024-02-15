@@ -237,6 +237,25 @@ func (m *Metadata) Client() (API, error) {
 	return m.client, nil
 }
 
+// GetRegionAndEndpointsFlag will return the IBM Cloud region and any service endpoint overrides formatted as the IBM Cloud CAPI command line argument.
+func (m *Metadata) GetRegionAndEndpointsFlag() string {
+	flag := m.Region
+
+	// Append any ServiceEndpoint overrides onto the Region flag for CAPI
+	if m.serviceEndpoints != nil && len(m.serviceEndpoints) > 0 {
+		for index, endpoint := range m.serviceEndpoints {
+			// Format for first (and perhaps only) endpoint is unique, remaining are similar
+			if index == 0 {
+				flag = fmt.Sprintf("%s:%s=%s", flag, endpoint.Name, endpoint.URL)
+			} else {
+				flag = fmt.Sprintf("%s,%s=%s", flag, endpoint.Name, endpoint.URL)
+			}
+		}
+	}
+
+	return flag
+}
+
 // NewIamAuthenticator returns a new IamAuthenticator for using IBM Cloud services.
 func NewIamAuthenticator(apiKey string, iamServiceEndpointOverride string) (*core.IamAuthenticator, error) {
 	if iamServiceEndpointOverride != "" {
