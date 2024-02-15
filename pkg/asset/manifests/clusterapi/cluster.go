@@ -20,6 +20,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/asset/manifests/gcp"
+	"github.com/openshift/installer/pkg/asset/manifests/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/manifests/openstack"
 	"github.com/openshift/installer/pkg/asset/manifests/powervs"
 	"github.com/openshift/installer/pkg/asset/manifests/vsphere"
@@ -29,6 +30,7 @@ import (
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
+	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vsphereplatform "github.com/openshift/installer/pkg/types/vsphere"
@@ -112,6 +114,12 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 		out, err = gcp.GenerateClusterAssets(installConfig, clusterID)
 		if err != nil {
 			return fmt.Errorf("failed to generate GCP manifests: %w", err)
+		}
+	case ibmcloudtypes.Name:
+		var err error
+		out, err = ibmcloud.GenerateClusterAssets(installConfig, clusterID)
+		if err != nil {
+			return fmt.Errorf("failed to generate IBM Cloud manifests: %w", err)
 		}
 	case vsphereplatform.Name:
 		var err error
