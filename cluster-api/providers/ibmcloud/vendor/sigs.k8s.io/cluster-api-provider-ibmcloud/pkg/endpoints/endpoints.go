@@ -37,8 +37,6 @@ const (
 	TransitGateway serviceID = "transitgateway"
 	// COS service.
 	COS serviceID = "cos"
-	// RM used to identify Resource-Manager service.
-	RM serviceID = "rm"
 )
 
 type serviceID string

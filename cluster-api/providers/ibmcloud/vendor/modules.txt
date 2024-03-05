@@ -1016,6 +1016,8 @@ k8s.io/klog/v2/internal/dbg
 k8s.io/klog/v2/internal/serialize
 k8s.io/klog/v2/internal/severity
 k8s.io/klog/v2/internal/sloghandler
+k8s.io/klog/v2/internal/verbosity
+k8s.io/klog/v2/textlogger
 # k8s.io/kube-openapi v0.0.0-20231010175941-2dd684a91f00
 ## explicit; go 1.19
 k8s.io/kube-openapi/pkg/builder
@@ -1069,7 +1071,7 @@ sigs.k8s.io/cluster-api/util/labels
 sigs.k8s.io/cluster-api/util/labels/format
 sigs.k8s.io/cluster-api/util/patch
 sigs.k8s.io/cluster-api/util/predicates
-# sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0
+# sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0 => github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20240329171501-909a9fe1ed56
 ## explicit; go 1.21
 sigs.k8s.io/cluster-api-provider-ibmcloud
 sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta1
@@ -1080,7 +1082,6 @@ sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/authenticator
 sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/cos
 sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/powervs
 sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/resourcecontroller
-sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/resourcemanager
 sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/transitgateway
 sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/utils
 sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/vpc
@@ -1149,3 +1150,4 @@ sigs.k8s.io/structured-merge-diff/v4/value
 ## explicit; go 1.12
 sigs.k8s.io/yaml
 sigs.k8s.io/yaml/goyaml.v2
+# sigs.k8s.io/cluster-api-provider-ibmcloud => github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20240329171501-909a9fe1ed56
