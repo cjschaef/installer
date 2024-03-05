@@ -246,17 +246,27 @@ func (m *Metadata) Client() (API, error) {
 
 // GetRegionAndEndpointsFlag will return the IBM Cloud region and any service endpoint overrides formatted as the IBM Cloud CAPI command line argument.
 func (m *Metadata) GetRegionAndEndpointsFlag() string {
+	// If there are no endpoints, return an empty string (rather than just the region).
 	if m.serviceEndpoints == nil || len(m.serviceEndpoints) == 0 {
 		return ""
 	}
 
 	flag := m.Region
 	for index, endpoint := range m.serviceEndpoints {
+		// IBM Cloud CAPI has pre-defined endpoint service names that do not follow naming scheme, use those instead until they are fixed.
+		// TODO(cjschaef): See about opening a CAPI GH issue to link here for this restriction.
+		serviceName := endpoint.Name
+		if endpoint.Name == configv1.IBMCloudServiceResourceController {
+			serviceName = "rc"
+		} else if endpoint.Name == configv1.IBMCloudServiceVPC {
+			serviceName = "vpc"
+		}
+
 		// Format for first (and perhaps only) endpoint is unique, remaining are similar
 		if index == 0 {
-			flag = fmt.Sprintf("%s:%s=%s", flag, endpoint.Name, endpoint.URL)
+			flag = fmt.Sprintf("%s:%s=%s", flag, serviceName, endpoint.URL)
 		} else {
-			flag = fmt.Sprintf("%s,%s=%s", flag, endpoint.Name, endpoint.URL)
+			flag = fmt.Sprintf("%s,%s=%s", flag, serviceName, endpoint.URL)
 		}
 	}
 	return flag
