@@ -17,6 +17,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	ibmcloudic "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
+	"github.com/openshift/installer/pkg/types"
 )
 
 // GenerateClusterAssets generates the manifests for the cluster-api.
@@ -59,12 +60,17 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	if platform.ResourceGroupName != "" {
 		resourceGroup = platform.ResourceGroupName
 	}
-	//networkResourceGroup := resourceGroup
-	//if platform.NetworkResourceGroupName != "" {
-	//	networkResourceGroup = platform.NetworkResourceGroupName
-	//}
+	networkResourceGroup := resourceGroup
+	if platform.NetworkResourceGroupName != "" {
+		networkResourceGroup = platform.NetworkResourceGroupName
+	}
 
-	
+	controlPlaneSubnets := getSubnets(installConfig.IBMCloud.ComputeSubnetNames(context.TODO()))
+	computeSubnets := getSubnets(installConfig.IBMCloud.ComputeSubnets(context.TODO()))
+	vpcSecurityGroups, err := getVPCSecurityGroups(clusterID.InfraID, platform.GetVPCName(), networkResourceGroup, controlPlaneSubnets, computeSubnets)
+	if err != nil {
+		return nil, fmt.Errorf("failed building VPC Security Groups %w", err)
+	}
 
 	ibmcloudCluster := &capibmcloud.IBMVPCCluster{
 		ObjectMeta: metav1.ObjectMeta{
@@ -75,25 +81,37 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			ControlPlaneEndpoint: capi.APIEndpoint{
 				Host: fmt.Sprintf("api.%s.%s", &installConfig.Config.ObjectMeta.Name, installConfig.Config.BaseDomain),
 			},
-			/*NetworkSpec: capibmcloud.IBMVPCNetworkSpec{
+			COSInstance: cosInstance,
+			NetworkSpec: capibmcloud.IBMVPCNetworkSpec{
 				ResourceGroup: networkResourceGroup,
-				SecurityGroups: []capibmcloud.SecurityGroups{
-
-				},
+				SecurityGroups: vpcSecurityGroups,
 				ComputeSubnetsSpec: &capibmcloud.IBMVPCSubnetsSpec{
-					Subnets: getSubnets(installConfig.IBMCloud.ComputeSubnets(context.TODO())),
+					Subnets: computeSubnets,
 				},
 				ControlPlaneSubnetsSpec: &capibmcloud.IBMVPCSubnetsSpec{
-					Subnets: getSubnets(installConfig.IBMCloud.ControlPlaneSubnets(context.TODO())),
+					Subnets: controlPlaneSubnets,
 				},
-
 				VPC: &capibmcloud.IBMVPCResourceReference{
 					Name: platform.GetVPCName(),
 				},
-			},*/
+			},
 			Region:        platform.Region,
 			ResourceGroup: resourceGroup,
 		},
+	}
+
+	if installConfig.Config.Publish == types.InternalPublishingStrategy {
+		dnsInstance, err := getDNSServicesInstance(installConfig.Config.BaseDomain)
+		if err != nil {
+			return nil, fmt.Errorf("%w", err)
+		}
+		ibmcloudCluster.DNSServicesInstance = dnsInstance
+	} else {
+		cisInstance, err := getCISInstance(installConfig.Config.BaseDomain)
+		if err != nil {
+			return nil, fmt.Errorf("%w", err)
+		}
+		ibmcloudCluster.CISInstance = cisInstance
 	}
 
 	manifests = append(manifests, &asset.RuntimeFile{
@@ -112,6 +130,22 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	}, nil
 }
 
+func getCISInstance(domain string) (*capibmcloud.CISInstance, error) {
+	// TODO(cjschaef): Complete CIS lookup
+	return &capibmcloud.CISInstance{
+		Domain: "cis-base-domain",
+		Name:   "cis-instance-name",
+	}, nil
+}
+
+func getDNSServicesInstance(domain string) (*capibmcloud.DNSServicesInstance, error) {
+	// TODO(cjschaef): Complete DNS Services lookup
+	return &capibmcloud.DNSServicesInstance{
+		Name: "dns-instance-name",
+		Zone: "dns-instance-zone",
+	}, nil
+}
+
 func getSubnets(subnets map[string]ibmcloudic.Subnet) []capibmcloud.Subnet {
 	subnetList := make([]capibmcloud.Subnet, 0, len(subnets))
 	for _, subnet := range subnets {
@@ -121,4 +155,163 @@ func getSubnets(subnets map[string]ibmcloudic.Subnet) []capibmcloud.Subnet {
 		})
 	}
 	return subnetList
+}
+
+func getVPCSecurityGroups(infraID string, vpcName string, resourceGroupName string, allSubnets []capibmcloud.Subnet) ([]capibmcloud.SecurityGroup, error) {
+	clusterWideSGName := fmt.Sprintf("%s-sg-cluster-wide", infraID)
+	openshiftNetSGName := fmt.Sprintf("%s-sg-openshift-net", infraID)
+	kubeAPILBSGName := fmt.Sprintf("%s-sg-kube-api-lb", infraID)
+	controlPlaneSGName := fmt.Sprintf("%s-sg-control-plane", infraID)
+	cpInternalSGName := fmt.Sprintf("%s-sg-cp-internal", infraID)
+
+	// Build sets of Remotes for Security Group Rules
+	// - cluster-wide SSH rule (for CP and Compute subnets)
+	clusterWideSSHRemotes := make([]capibmcloud.SecurityGroupRuleRemote, 0, len(allSubnets))
+	// - openshift-net TCP rule for Node Ports (for CP and Compute subnets)
+	openshiftNetworkNodePortTCPRemotes := make([]capibmcloud.SecurityGroupRuleRemote, 0, len(allSubnets))
+	// - openshift-net UDP rule for Node Ports (for CP and Compute subnets)
+	openshiftNetworkNodePortUDPRemotes := make([]capibmcloud.SecurityGroupRuleRemote, 0, len(allSubnets))
+	for index, subnet := range allSubnets {
+		clusterWideSSHRemotes[index] = capibmcloud.SecurityGroupRuleRemote{
+			RemoteType:     capibmcloud.SecurityGroupRuleRemoteTypeCIDR,
+			CIDRSubnetName: subnet.Name,
+		}
+		openshiftNetworkNodePortTCPRemotes[index] = capibmcloud.SecurityGroupRuleRemote{
+			RemoteType:     capibmcloud.SecurityGroupRuleRemoteTypeCIDR,
+			CIDRSubnetName: subnet.Name,
+		}
+		openshiftNetworkNodePortUDPRemotes[index] = capibmcloud.SecurityGroupRuleRemote{
+			RemoteType:     capibmcloud.SecurityGroupRuleRemoteTypeCIDR,
+			CIDRSubnetName: subnet.Name,
+		}
+	}
+
+	return []capibmcloud.SecurityGroup{
+		{
+			Name: clusterWideSGName,
+			ResourceGroup: resourceGroupName,
+			Rules: []capibmcloud.SecurityGroupRule{
+				{
+					Action:    capibmcloud.SecurityGroupRuleActionAllow,
+					Direction: capibmcloud.SecurityGroupRuleDirectionInbound,
+					Source: &capibmcloud.SecurityGroupRuleRemoteSpec{
+						PortRange: &capibmcloud.PortRange{
+							MaximumPort: 22,
+							MinimumPort: 22,
+						},
+						Protocol: capibmcloud.SecurityGroupRuleProtocolTCP,
+						Remotes:  clusterWideSSHRemotes,
+					},
+				},
+				{
+					Action:    capibmcloud.SecurityGroupRuleActionAllow,
+					Direction: capibmcloud.SecurityGroupRuleDirectionInbound,
+					Source: &capibmcloud.SecurityGroupRuleRemoteSpec{
+						Protocol: capibmcloud.SecurityGroupRuleProtocolICMP,
+						Remotes: []capibmcloud.SecurityGroupRuleRemote{
+							{
+								RemoteType:        capibmcloud.SecurityGroupRuleRemoteTypeSG,
+								SecurityGroupName: clusterWideSGName,
+							},
+						},
+					},
+				},
+				{
+					Action:    capibmcloud.SecurityGroupRuleActionAllow,
+					Direction: capibmcloud.SecurityGroupRuleDirectionInbound,
+					Source: &capibmcloud.SecurityGroupRuleRemoteSpec{
+						PortRange: &capibmcloud.PortRange{
+							MaximumPort: 4789,
+							MinimumPort: 4789,
+						},
+						Protocol: capibmcloud.SecurityGroupRuleProtocolUDP,
+						Remotes: []capibmcloud.SecurityGroupRuleRemote{
+							{
+								RemoteType:        capibmcloud.SecurityGroupRuleRemoteTypeSG,
+								SecurityGroupName: clusterWideSGName,
+							},
+						},
+					},
+				},
+				{
+					Action:    capibmcloud.SecurityGroupRuleActionAllow,
+					Direction: capibmcloud.SecurityGroupRuleDirectionInbound,
+					Source: &capibmcloud.SecurityGroupRuleRemoteSpec{
+						PortRange: &capibmcloud.PortRange{
+							MaximumPort: 6081,
+							MinimumPort: 6081,
+						},
+						Protocol: capibmcloud.SecurityGroupRuleProtocolUDP,
+						Remotes: []capibmcloud.SecurityGroupRuleRemote{
+							{
+								RemoteType:        capibmcloud.SecurityGroupRuleRemoteTypeSG,
+								SecurityGroupName: clusterWideSGName,
+							},
+						},
+					},
+				},
+				{
+					Action: capibmcloud.SecurityGroupRuleActionAllow,
+					Destination: &capibmcloud.SecurityGroupRuleRemoteSpec{
+						Protocol: capibmcloudSecurityGroupRuleProtocolAny,
+						Remote: capibmcloudSecurityGroupRuleRemote{
+							RemoteType: capibmcloud.SecurityGroupRuleRemoteTypeAny,
+						},
+					},
+					Direction: capibmcloud.SecurityGroupRuleDirectionOutbound,
+				},
+			},
+			VPC: capibmcloud.VPCResourceReference{
+				Name: vpcName,
+			},
+		},
+		{
+			Name: openshiftNetSGName,
+			ResourceGroup: resourceGroupName,
+			Rules: []capibmcloud.SecurityGroupRule{
+				{
+					Name:
+				},
+			},
+			VPC: capibmcloud.VPCResourceReference{
+				Name: vpcName,
+			},
+		},
+		{
+			Name: kubeAPILBSGName,
+			ResourceGroup: resourceGroupName,
+			Rules: []capibmcloud.SecurityGroupRule{
+				{
+					Name:
+				},
+			},
+			VPC: capibmcloud.VPCResourceReference{
+				Name: vpcName,
+			},
+		},
+		{
+			Name: controlPlaneSGName,
+			ResourceGroup: resourceGroupName,
+			Rules: []capibmcloud.SecurityGroupRule{
+				{
+					Name:
+				},
+			},
+			VPC: capibmcloud.VPCResourceReference{
+				Name: vpcName,
+			},
+		},
+		{
+			Name: cpInternalSGName,
+			ResourceGroup: resourceGroupName,
+			Rules: []capibmcloud.SecurityGroupRule{
+				{
+					Name:
+				},
+			},
+			VPC: capibmcloud.VPCResourceReference{
+				Name: vpcName,
+			},
+		},
+	}, nil
 }
