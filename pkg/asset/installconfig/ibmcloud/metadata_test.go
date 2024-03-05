@@ -8,6 +8,7 @@ import (
 	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/golang/mock/gomock"
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/openshift/installer/pkg/asset/installconfig/ibmcloud/mock"
@@ -168,6 +169,13 @@ var (
 	zoneReferenceComputeSubnet2      = vpcv1.ZoneReference{Name: &newComputeSubnet2ZoneName}
 	zoneReferenceControlPlaneSubnet1 = vpcv1.ZoneReference{Name: &newControlPlaneSubnet1ZoneName}
 	zoneReferenceControlPlaneSubnet2 = vpcv1.ZoneReference{Name: &newControlPlaneSubnet2ZoneName}
+
+	// Service Endpoint URL's
+	cisServiceEndpoint                = "https://cishost.com"
+	cosServiceEndpoint                = "https://coshost.com"
+	iamServiceEndpoint                = "https://iamhost.com"
+	resourceControllerServiceEndpoint = "https://resourcecontrollerhost.com"
+	vpcServiceEndpoint                = "https://vpchost.com"
 )
 
 func baseMetadata() *Metadata {
@@ -866,6 +874,103 @@ func TestClient(t *testing.T) {
 			} else {
 				assert.Equal(t, tCase.expectedValue, actualValue)
 			}
+		})
+	}
+}
+
+func TestGetRegionAndEndpointsFlag(t *testing.T) {
+	testCases := []struct{
+		name          string
+		edits         editMetadata
+		expectedValue string
+	}{
+		{
+			name:          "no endpoints",
+			expectedValue: "",
+		},
+		{
+			name: "one endpoint",
+			edits: editMetadata{
+				func(m *Metadata) {
+					m.serviceEndpoints = []configv1.IBMCloudServiceEndpoint{
+						{
+							Name: configv1.IBMCloudServiceIAM,
+							URL:  iamServiceEndpoint,
+						},
+					}
+				},
+			},
+			expectedValue: fmt.Sprintf("%s:%s=%s", region, configv1.IBMCloudServiceIAM, iamServiceEndpoint),
+		},
+		{
+			name: "multiple endpoints",
+			edits: editMetadata{
+				func(m *Metadata) {
+					m.serviceEndpoints = []configv1.IBMCloudServiceEndpoint{
+						{
+							Name: configv1.IBMCloudServiceCIS,
+							URL:  cisServiceEndpoint,
+						},
+						{
+							Name: configv1.IBMCloudServiceCOS,
+							URL:  cosServiceEndpoint,
+						},
+						{
+							Name: configv1.IBMCloudServiceIAM,
+							URL:  iamServiceEndpoint,
+						},
+					}
+				},
+			},
+			expectedValue: fmt.Sprint("%s:%s=%s,%s=%s,%s=%s", region, configv1.IBMCloudServiceCIS, cisServiceEndpoint, configv1.IBMCloudServiceCOS, cosServiceEndpoint, configv1.IBMCloudServiceIAM, iamServiceEndpoint),
+		},
+		{
+			name: "resource-controller rename",
+			edits: editMetadata{
+				func (m *Metadata) {
+					m.serviceEndpoints = []configv1.IBMCloudServiceEndpoint{
+						{
+							Name: configv1.IBMCloudServiceIAM,
+							URL:  iamServiceEndpoint,
+						},
+						{
+							Name: configv1.IBMCloudServiceResourceController,
+							URL:  resourceControllerServiceEndpoint,
+						},
+					}
+				},
+			},
+			expectedValue: fmt.Sprintf("%s:%s=%s,%s=%s", region, configv1.IBMCloudServiceIAM, iamServiceEndpoint, "rc", resourceControllerServiceEndpoint),
+		},
+		{
+			name: "vpc rename",
+			edits: editMetadata{
+				func (m *Metadata) {
+					m.serviceEndpoints = []configv1.IBMCloudServiceEndpoint{
+						{
+							Name: configv1.IBMCloudServiceIAM,
+							URL:  iamServiceEndpoint,
+						},
+						{
+							Name: configv1.IBMCloudServiceVPC,
+							URL:  vpcServiceEndpoint,
+						},
+					}
+				},
+			},
+			expectedValue: fmt.Sprintf("%s:%s=%s,%s=%s", region, configv1.IBMCloudServiceIAM, iamServiceEndpoint, "vpc", vpcServiceEndpoint),
+		},
+	}
+
+	for _, tCase := range testCases {
+		t.Run(tCase.name, func(t *testing.T) {
+			metadata := baseMetadata()
+			for _, edit := range tCase.edits {
+				edit(metadata)
+			}
+
+			actualValue := metadata.GetRegionAndEndpointsFlag()
+			assert.Equal(t, tCase.expectedValue, actualValue)
 		})
 	}
 }
