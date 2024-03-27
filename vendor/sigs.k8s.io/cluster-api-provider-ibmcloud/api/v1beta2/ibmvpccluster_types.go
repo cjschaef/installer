@@ -32,28 +32,39 @@ const (
 
 // IBMVPCClusterSpec defines the desired state of IBMVPCCluster.
 type IBMVPCClusterSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// The IBM Cloud Region the cluster lives in.
-	Region string `json:"region"`
-
-	// The VPC resources should be created under the resource group.
-	ResourceGroup string `json:"resourceGroup"`
-
-	// The Name of VPC.
-	VPC string `json:"vpc,omitempty"`
-
-	// The Name of availability zone.
-	Zone string `json:"zone,omitempty"`
-
-	// ControlPlaneEndpoint represents the endpoint used to communicate with the control plane.
+	// controlPlaneEndpoint represents the endpoint used to communicate with the control plane.
 	// +optional
 	ControlPlaneEndpoint capiv1beta1.APIEndpoint `json:"controlPlaneEndpoint"`
 
 	// ControlPlaneLoadBalancer is optional configuration for customizing control plane behavior.
 	// +optional
+	// dep: use LoadBalancers instead
 	ControlPlaneLoadBalancer *VPCLoadBalancerSpec `json:"controlPlaneLoadBalancer,omitempty"`
+
+	// cosInstance is the IBM COS instance to use for cluster resources.
+	COSInstance *COSInstanceReference `json:"cosInstance,omitempty"`
+
+	// loadBalancers is a set of VPC Load Balancers definition to use for the cluster.
+	LoadBalancers []*VPCLoadBalancerSpec `json:"loadbalancers,omitempty"`
+
+	// networkSpec represents the VPC network to use for the cluster.
+	NetworkSpec *VPCNetworkSpec `json:"networkSpec,omitempty"`
+
+	// region defines the IBM Cloud Region the cluster resources will be deployed in.
+	Region string `json:"region"`
+
+	// resourceGroup defines the IBM Cloud resource group where the cluster resources should be created.
+	ResourceGroup string `json:"resourceGroup"`
+
+	// The Name of VPC.
+	// dep: use NetworkSpec instead.
+	VPC string `json:"vpc,omitempty"`
+
+	// The Name of availability zone.
+	// dep: use NetworkSpec instead.
+	Zone string `json:"zone,omitempty"`
 }
 
 // VPCLoadBalancerSpec defines the desired state of an VPC load balancer.
@@ -103,25 +114,100 @@ type VPCLoadBalancerStatus struct {
 	ControllerCreated *bool `json:"controllerCreated,omitempty"`
 }
 
+// VPCNetworkSpec defines the desired state of the network resources for the cluster.
+type VPCNetworkSpec struct {
+	// computeSubnetsSpec is a set of Subnet's which define the Compute subnets.
+	ComputeSubnetsSpec []Subnet `json:"computeSubnetsSpec,omitempty"`
+
+	// controlPlaneSubnetsSpec is a set of Subnet's which define the Control Plane subnets.
+	ControlPlaneSubnetsSpec []Subnet `json:"controlPlaneSubentsSpec,omitempty"`
+
+	// resourceGroup is the name of the Resource Group containing all of the newtork resources.
+	// This can be different than the Resource Group containing the remaining cluster resources.
+	ResourceGroup *string `json:"resourceGroup,omitempty"`
+
+	// securityGroups is a set of SecurityGroup's which define the VPC Security Groups that manage traffic within and out of the VPC.
+	SecurityGroups []SecurityGroup `json:"securityGroups,omitempty"`
+
+	// vpc defines the IBM Cloud VPC.
+	VPC *VPCResource `json:"vpc,omitempty"`
+}
+
 // IBMVPCClusterStatus defines the observed state of IBMVPCCluster.
 type IBMVPCClusterStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	VPC VPC `json:"vpc,omitempty"`
-
-	// Ready is true when the provider resource is ready.
-	// +optional
-	Ready       bool        `json:"ready"`
-	Subnet      Subnet      `json:"subnet,omitempty"`
-	VPCEndpoint VPCEndpoint `json:"vpcEndpoint,omitempty"`
-
-	// ControlPlaneLoadBalancerState is the status of the load balancer.
-	// +optional
-	ControlPlaneLoadBalancerState VPCLoadBalancerState `json:"controlPlaneLoadBalancerState,omitempty"`
 
 	// Conditions defines current service state of the load balancer.
 	// +optional
 	Conditions capiv1beta1.Conditions `json:"conditions,omitempty"`
+
+	// ControlPlaneLoadBalancerState is the status of the load balancer.
+	// dep: rely on NetworkStatus instead.
+	// +optional
+	ControlPlaneLoadBalancerState VPCLoadBalancerState `json:"controlPlaneLoadBalancerState,omitempty"`
+
+	// COSInstance is the reference to the IBM Cloud COS Instance used for the cluster.
+	COSInstance *ResourceReference `json:"cosInstance,omitempty"`
+
+	// networkStatus is the status of the VPC network in its entirety resources.
+	NetworkStatus *VPCNetworkStatus `json:"networkStatus,omitempty"`
+
+	// ready is true when the provider resource is ready.
+	// +kubebuilder:default=false
+	Ready bool `json:"ready"`
+
+	// resourceGroup is the reference to the IBM Cloud VPC resource group under which the resources will be created.
+	ResourceGroup *ResourceReference `json:"resourceGroupID,omitempty"`
+
+	// dep: rely on NetworkStatus instead.
+	Subnet Subnet `json:"subnet,omitempty"`
+
+	// dep: rely on NetworkStatus instead.
+	VPC VPC `json:"vpc,omitempty"`
+
+	// dep: rely on ControlPlaneEndpoint
+	VPCEndpoint VPCEndpoint `json:"vpcEndpoint,omitempty"`
+}
+
+// VPCNetworkStatus provides details on the status of VPC network resources.
+type VPCNetworkStatus struct {
+	// computeSubnets references the VPC Subnets for the cluster's Data Plane.
+	// +optional
+	ComputeSubnets []*VPCResourceStatus `json:"computeSubnets,omitempty"`
+
+	// controlPlaneSubnets references the VPC Subnets for the cluster's Control Plane.
+	// +optional
+	ControlPlaneSubnets []*VPCResourceStatus `json:"controlPlaneSubnets,omitempty"`
+
+	// loadBalancers references the VPC Load Balancer's for the cluster.
+	// +optional
+	LoadBalancers []VPCLoadBalancerStatus `json:"loadBalancers,omitempty"`
+
+	// publicGateways references the VPC Public Gateways for the cluster.
+	// +optional
+	PublicGateways []*VPCResourceStatus `json:"publicGateways,omitempty"`
+
+	// securityGroups references the VPC Security Groups for the cluster.
+	// +optional
+	SecurityGroups []*VPCResourceStatus `json:"securityGroups,omitempty"`
+
+	// vpc references the IBM Cloud VPC.
+	// +optional
+	VPC *VPCResourceStatus `json:"vpc,omitempty"`
+}
+
+// VPCResourceStatus identifies a resource by crn and type and whether it was created by the controller.
+type VPCResourceStatus struct {
+	// controllerCreated indicates whether the resource is created by the CAPI controller.
+	ControllerCreated bool `json:"controllerCreated,omitempty"`
+
+	// crn defines the IBM Cloud CRN of the resource.
+	// +required
+	CRN string `json:"crn"`
+
+	// type defines the type of IBM Cloud resource.
+	// +required
+	Type ResourceType `json:"type"`
 }
 
 // VPC holds the VPC information.
