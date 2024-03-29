@@ -45,7 +45,6 @@ import (
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/powervs"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/endpoints"
 	capibmrecord "sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/record"
-	genUtil "sigs.k8s.io/cluster-api-provider-ibmcloud/util"
 )
 
 // IBMPowerVSMachineReconciler reconciles a IBMPowerVSMachine object.
@@ -280,14 +279,14 @@ func (r *IBMPowerVSMachineReconciler) reconcileNormal(machineScope *scope.PowerV
 		return ctrl.Result{RequeueAfter: 2 * time.Minute}, nil
 	}
 
-	if !genUtil.CheckCreateInfraAnnotation(*machineScope.IBMPowerVSCluster) {
+	if !scope.CheckCreateInfraAnnotation(*machineScope.IBMPowerVSCluster) {
 		return ctrl.Result{}, nil
 	}
 	// Register instance with load balancer
 	machineScope.Info("updating loadbalancer for machine", "name", machineScope.IBMPowerVSMachine.Name)
 	internalIP := machineScope.GetMachineInternalIP()
 	if internalIP == "" {
-		machineScope.Info("Not able to update the LoadBalancer, Machine internal IP not yet set", "machine name", machineScope.IBMPowerVSMachine.Name)
+		machineScope.Info("Unable to update the LoadBalancer, Machine internal IP not yet set", "machine name", machineScope.IBMPowerVSMachine.Name)
 		return ctrl.Result{}, nil
 	}
 	poolMember, err := machineScope.CreateVPCLoadBalancerPoolMember()

@@ -18,8 +18,13 @@ package v1beta2
 
 import "github.com/IBM/vpc-go-sdk/vpcv1"
 
-// DefaultAPIServerPort is defuault API server port number.
-const DefaultAPIServerPort int32 = 6443
+const (
+	// CIDRBlockAny is the CIDRBlock representing any allowable destination/source IP.
+	CIDRBlockAny string = "0.0.0.0/0"
+
+	// DefaultAPIServerPort is defuault API server port number.
+	DefaultAPIServerPort int32 = 6443
+)
 
 // PowerVSInstanceState describes the state of an IBM Power VS instance.
 type PowerVSInstanceState string
@@ -65,6 +70,12 @@ var (
 	// ServiceInstanceStateActive is the string representing a service instance in an active state.
 	ServiceInstanceStateActive = ServiceInstanceState("active")
 
+	// ServiceInstanceStateProvisioning is the string representing a service instance in a provisioning state.
+	ServiceInstanceStateProvisioning = ServiceInstanceState("provisioning")
+
+	// ServiceInstanceStateFailed is the string representing a service instance in a failed state.
+	ServiceInstanceStateFailed = ServiceInstanceState("failed")
+
 	// ServiceInstanceStateRemoved is the string representing a service instance in a removed state.
 	ServiceInstanceStateRemoved = ServiceInstanceState("removed")
 )
@@ -76,6 +87,12 @@ var (
 	// TransitGatewayStateAvailable is the string representing a transit gateway in available state.
 	TransitGatewayStateAvailable = TransitGatewayState("available")
 
+	// TransitGatewayStatePending is the string representing a transit gateway in pending state.
+	TransitGatewayStatePending = TransitGatewayState("pending")
+
+	// TransitGatewayStateFailed is the string representing a transit gateway in failed state.
+	TransitGatewayStateFailed = TransitGatewayState("failed")
+
 	// TransitGatewayStateDeletePending is the string representing a transit gateway in deleting state.
 	TransitGatewayStateDeletePending = TransitGatewayState("deleting")
 )
@@ -86,6 +103,15 @@ type TransitGatewayConnectionState string
 var (
 	// TransitGatewayConnectionStateAttached is the string representing a transit gateway connection in attached state.
 	TransitGatewayConnectionStateAttached = TransitGatewayConnectionState("attached")
+
+	// TransitGatewayConnectionStateFailed is the string representing a transit gateway connection in failed state.
+	TransitGatewayConnectionStateFailed = TransitGatewayConnectionState("failed")
+
+	// TransitGatewayConnectionStatePending is the string representing a transit gateway connection in pending state.
+	TransitGatewayConnectionStatePending = TransitGatewayConnectionState("pending")
+
+	// TransitGatewayConnectionStateDeleting is the string representing a transit gateway connection in deleting state.
+	TransitGatewayConnectionStateDeleting = TransitGatewayConnectionState("deleting")
 )
 
 // VPCLoadBalancerState describes the state of the load balancer.
@@ -98,8 +124,30 @@ var (
 	// VPCLoadBalancerStateCreatePending is the string representing the load balancer in a queued state.
 	VPCLoadBalancerStateCreatePending = VPCLoadBalancerState("create_pending")
 
-	// VPCLoadBalancerStateDeletePending is the string representing the load balancer in a failed state.
+	// VPCLoadBalancerStateUpdatePending is the string representing the load balancer in updating state.
+	VPCLoadBalancerStateUpdatePending = VPCLoadBalancerState("update_pending")
+
+	// VPCLoadBalancerStateDeletePending is the string representing the load balancer in deleting state.
 	VPCLoadBalancerStateDeletePending = VPCLoadBalancerState("delete_pending")
+)
+
+// VPCSubnetState describes the state of a VPC Subnet.
+type VPCSubnetState string
+
+var (
+	// VPCSubnetStateDeleting is the string representing a VPC subnet in deleting state.
+	VPCSubnetStateDeleting = VPCSubnetState("deleting")
+)
+
+// VPCState describes the state of a VPC.
+type VPCState string
+
+var (
+	// VPCStatePending is the string representing a VPC in pending state.
+	VPCStatePending = VPCState("pending")
+
+	// VPCStateDeleting is the string representing a VPC in deleting state.
+	VPCStateDeleting = VPCState("deleting")
 )
 
 // DHCPServerState describes the state of the DHCP Server.
@@ -108,6 +156,12 @@ type DHCPServerState string
 var (
 	// DHCPServerStateActive indicates the active state of DHCP server.
 	DHCPServerStateActive = DHCPServerState("ACTIVE")
+
+	// DHCPServerStateBuild indicates the build state of DHCP server.
+	DHCPServerStateBuild = DHCPServerState("BUILD")
+
+	// DHCPServerStateError indicates the error state of DHCP server.
+	DHCPServerStateError = DHCPServerState("ERROR")
 )
 
 // DeletePolicy defines the policy used to identify images to be preserved.
@@ -136,8 +190,10 @@ var (
 	ResourceTypeVPC = ResourceType("vpc")
 	// ResourceTypeSubnet is VPC subnet resource.
 	ResourceTypeSubnet = ResourceType("subnet")
-	// ResourceTypePublicGateway is a VPC Public Gateway resource.
-	ResourceTypePublicGateway = ResourceType("publicGateway")
+	// ResourceTypeComputeSubnet is a VPC subnet resource designated for the Compute (Data) Plane.
+	ResourceTypeComputeSubnet = ResourceType("computeSubnet")
+	// ResourceTypeControlPlaneSubnet is a VPC subnet resource designated for the Control Plane.
+	ResourceTypeControlPlaneSubnet = ResourceType("controlPlaneSubnet")
 	// ResourceTypeSecurityGroup is a VPC Security Group resource.
 	ResourceTypeSecurityGroup = ResourceType("securityGroup")
 	// ResourceTypeCOSInstance is IBM COS instance resource.
@@ -146,90 +202,100 @@ var (
 	ResourceTypeCOSBucket = ResourceType("cosBucket")
 	// ResourceTypeResourceGroup is IBM Resource Group.
 	ResourceTypeResourceGroup = ResourceType("resourceGroup")
+	// ResourceTypePublicGateway is a VPC Public Gatway.
+	ResourceTypePublicGateway = ResourceType("publicGateway")
+	// ResourceTypeCustomImage is a VPC Custom Image.
+	ResourceTypeCustomImage = ResourceType("customImage")
 )
 
-type COSInstanceReference struct {
-	// name defines the name of the COS Instance.
-	// +kubebuilder:validation:MinLength:=3
-	// +kubebuilder:validation:MaxLength:=63
-	// +kubebuilder:validation:Pattern=`^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$`
-	// +required
-	Name string `json:"name"`
+const (
+	// VPCSecurityGroupRuleProtocolAllType is a string representation of the 'SecurityGroupRuleSecurityGroupRuleProtocolAll' type.
+	VPCSecurityGroupRuleProtocolAllType = "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolAll"
 
-	// id is the ID of the COS instance.
-	// +optional
-	ID *string `json:"id,omitempty"`
+	// VPCSecurityGroupRuleProtocolIcmpType is a string representation of the 'SecurityGroupRuleSecurityGroupRuleProtocolIcmp' type.
+	VPCSecurityGroupRuleProtocolIcmpType = "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolIcmp"
 
-	// bucketName is IBM Cloud COS bucket name.
-	// +optional
-	BucketName *string `json:"bucketName,omitempty"`
+	// VPCSecurityGroupRuleProtocolTcpudpType is a string representation of the 'SecurityGroupRuleSecurityGroupRuleProtocolTcpudp' type.
+	VPCSecurityGroupRuleProtocolTcpudpType = "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp"
 
-	// bucketID is the IBM Cloud COS bucket ID.
-	// +optional
-	BucketID *string `json:"bucketID,omitempty"`
+	// VPCSecurityGroupRuleRemoteCIDRType is a string representation of the 'VPCSecurityGroupRuleRemoteCIDRType' type.
+	VPCSecurityGroupRuleRemoteCIDRType = "*vpcv1.SecurityGroupRuleRemoteCIDR"
 
-	// bucketRegion is IBM Cloud COS bucket region.
-	// +optional
-	BucketRegion *string `json:"bucketRegion,omitempty"`
-}
+	// VPCSecurityGroupRuleRemoteIPType is a string representation of the 'VPCSecurityGroupRuleRemoteIPType' type.
+	VPCSecurityGroupRuleRemoteIPType = "*vpcv1.SecurityGroupRuleRemoteIP"
 
-// SecurityGroupRuleAction represents the actions for a Security Group Rule.
+	// VPCSecurityGroupRuleRemoteSecurityGroupReferenceType is a string representation of the 'VPCSecurityGroupRuleRemoteSecurityGroupReference' type.
+	VPCSecurityGroupRuleRemoteSecurityGroupReferenceType = "*vpcv1.SecurityGroupRuleRemoteSecurityGroupReference"
+)
+
+// VPCSecurityGroupRuleAction represents the actions for a Security Group Rule.
 // +kubebuilder:validation:Enum=allow;deny
-type SecurityGroupRuleAction string
+type VPCSecurityGroupRuleAction string
 
 const (
-	// SecurityGroupRuleActionAllow defines that the Rule should allow traffic.
-	SecurityGroupRuleActionAllow SecurityGroupRuleAction = vpcv1.NetworkACLRuleActionAllowConst
-	// SecurityGroupRuleActionDeny defines that the Rule should deny traffic.
-	SecurityGroupRuleActionDeny SecurityGroupRuleAction = vpcv1.NetworkACLRuleActionDenyConst
+	// VPCSecurityGroupRuleActionAllow defines that the Rule should allow traffic.
+	VPCSecurityGroupRuleActionAllow VPCSecurityGroupRuleAction = vpcv1.NetworkACLRuleActionAllowConst
+	// VPCSecurityGroupRuleActionDeny defines that the Rule should deny traffic.
+	VPCSecurityGroupRuleActionDeny VPCSecurityGroupRuleAction = vpcv1.NetworkACLRuleActionDenyConst
 )
 
-// SecurityGroupRuleDirection represents the directions for a Security Group Rule.
+// VPCSecurityGroupRuleDirection represents the directions for a Security Group Rule.
 // +kubebuilder:validation:Enum=inbound;outbound
-type SecurityGroupRuleDirection string
+type VPCSecurityGroupRuleDirection string
 
 const (
-	// SecurityGroupRuleDirectionInbound defines the Rule is for inbound traffic.
-	SecurityGroupRuleDirectionInbound SecurityGroupRuleDirection = vpcv1.NetworkACLRuleDirectionInboundConst
-	// SecurityGroupRuleDirectionOutbound defines the Rule is for outbound traffic.
-	SecurityGroupRuleDirectionOutbound SecurityGroupRuleDirection = vpcv1.NetworkACLRuleDirectionOutboundConst
+	// VPCSecurityGroupRuleDirectionInbound defines the Rule is for inbound traffic.
+	VPCSecurityGroupRuleDirectionInbound VPCSecurityGroupRuleDirection = vpcv1.NetworkACLRuleDirectionInboundConst
+	// VPCSecurityGroupRuleDirectionOutbound defines the Rule is for outbound traffic.
+	VPCSecurityGroupRuleDirectionOutbound VPCSecurityGroupRuleDirection = vpcv1.NetworkACLRuleDirectionOutboundConst
 )
 
-// SecurityGroupRuleProtocol represents the protocols for a Security Group Rule.
+// VPCSecurityGroupRuleProtocol represents the protocols for a Security Group Rule.
 // +kubebuilder:validation:Enum=all;icmp;tcp;udp
-type SecurityGroupRuleProtocol string
+type VPCSecurityGroupRuleProtocol string
 
 const (
-	// SecurityGroupRuleProtocolAll defines the Rule is for all network protocols.
-	SecurityGroupRuleProtocolAll SecurityGroupRuleProtocol = vpcv1.NetworkACLRuleProtocolAllConst
-	// SecurityGroupRuleProtocolICMP defiens the Rule is for ICMP network protocol.
-	SecurityGroupRuleProtocolICMP SecurityGroupRuleProtocol = vpcv1.NetworkACLRuleProtocolIcmpConst
-	// SecurityGroupRuleProtocolTCP defines the Rule is for TCP network protocol.
-	SecurityGroupRuleProtocolTCP SecurityGroupRuleProtocol = vpcv1.NetworkACLRuleProtocolTCPConst
-	// SecurityGroupRuleProtocolUDP defines the Rule is for UDP network protocol.
-	SecurityGroupRuleProtocolUDP SecurityGroupRuleProtocol = vpcv1.NetworkACLRuleProtocolUDPConst
+	// VPCSecurityGroupRuleProtocolAll defines the Rule is for all network protocols.
+	VPCSecurityGroupRuleProtocolAll VPCSecurityGroupRuleProtocol = vpcv1.NetworkACLRuleProtocolAllConst
+	// VPCSecurityGroupRuleProtocolIcmp defiens the Rule is for ICMP network protocol.
+	VPCSecurityGroupRuleProtocolIcmp VPCSecurityGroupRuleProtocol = vpcv1.NetworkACLRuleProtocolIcmpConst
+	// VPCSecurityGroupRuleProtocolTCP defines the Rule is for TCP network protocol.
+	VPCSecurityGroupRuleProtocolTCP VPCSecurityGroupRuleProtocol = vpcv1.NetworkACLRuleProtocolTCPConst
+	// VPCSecurityGroupRuleProtocolUDP defines the Rule is for UDP network protocol.
+	VPCSecurityGroupRuleProtocolUDP VPCSecurityGroupRuleProtocol = vpcv1.NetworkACLRuleProtocolUDPConst
 )
 
-// SecurityGroupRuleRemoteType represents the type of Security Group Rule's destination or source is
-// intended. This is intended to define the SecurityGroupRulePrototype subtype.
+// VPCSecurityGroupRuleRemoteType represents the type of Security Group Rule's destination or source is
+// intended. This is intended to define the VPCSecurityGroupRulePrototype subtype.
 // For example:
 // - any - Any source or destination (0.0.0.0/0)
 // - cidr - A CIDR representing a set of IP's (10.0.0.0/28)
-// - ip - A specific IP address (192.168.0.1)
+// - address - A specific address (192.168.0.1)
 // - sg - A Security Group.
-// +kubebuilder:validation:Enum=any;cidr;ip;sg
-type SecurityGroupRuleRemoteType string
+// +kubebuilder:validation:Enum=any;cidr;address;sg
+type VPCSecurityGroupRuleRemoteType string
 
 const (
-	// SecurityGroupRuleRemoteTypeAny defines the destination or source for the Rule is anything/anywhere.
-	SecurityGroupRuleRemoteTypeAny SecurityGroupRuleRemoteType = SecurityGroupRuleRemoteType("any")
-	// SecurityGroupRuleRemoteTypeCIDR defines the destination or source for the Rule is a CIDR block.
-	SecurityGroupRuleRemoteTypeCIDR SecurityGroupRuleRemoteType = SecurityGroupRuleRemoteType("cidr")
-	// SecurityGroupRuleRemoteTypeIP defines the destination or source for the Rule is an IP address.
-	SecurityGroupRuleRemoteTypeIP SecurityGroupRuleRemoteType = SecurityGroupRuleRemoteType("ip")
-	// SecurityGroupRuleRemoteTypeSG defines the destination or source for the Rule is a VPC Security Group.
-	SecurityGroupRuleRemoteTypeSG SecurityGroupRuleRemoteType = SecurityGroupRuleRemoteType("sg")
+	// VPCSecurityGroupRuleRemoteTypeAny defines the destination or source for the Rule is anything/anywhere.
+	VPCSecurityGroupRuleRemoteTypeAny VPCSecurityGroupRuleRemoteType = VPCSecurityGroupRuleRemoteType("any")
+	// VPCSecurityGroupRuleRemoteTypeCIDR defines the destination or source for the Rule is a CIDR block.
+	VPCSecurityGroupRuleRemoteTypeCIDR VPCSecurityGroupRuleRemoteType = VPCSecurityGroupRuleRemoteType("cidr")
+	// VPCSecurityGroupRuleRemoteTypeAddress defines the destination or source for the Rule is an address.
+	VPCSecurityGroupRuleRemoteTypeAddress VPCSecurityGroupRuleRemoteType = VPCSecurityGroupRuleRemoteType("address")
+	// VPCSecurityGroupRuleRemoteTypeSG defines the destination or source for the Rule is a VPC Security Group.
+	VPCSecurityGroupRuleRemoteTypeSG VPCSecurityGroupRuleRemoteType = VPCSecurityGroupRuleRemoteType("sg")
 )
+
+// GenericResourceReference represents a basic IBM Cloud resource.
+type GenericResourceReference struct {
+	// id defines the generic IBM Cloud Resource ID.
+	// +required
+	ID string `json:"id"`
+
+	// name defines the generic IBM Cloud Resource Name.
+	// +optional
+	Name *string `json:"name,omitempty"`
+}
 
 // NetworkInterface holds the network interface information like subnet id.
 type NetworkInterface struct {
@@ -237,128 +303,138 @@ type NetworkInterface struct {
 	Subnet string `json:"subnet,omitempty"`
 }
 
-// PortRange represents a range of ports, minimum to maximum.
+// VPCSecurityGroupPortRange represents a range of ports, minimum to maximum.
 // +kubebuilder:validation:XValidation:rule="self.maximumPort >= self.minimumPort",message="maximum port must be greater than or equal to minimum port"
-type PortRange struct {
+type VPCSecurityGroupPortRange struct {
 	// maximumPort is the inclusive upper range of ports.
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=65535
-	MaximumPort int `json:"maximumPort,omitempty"`
+	MaximumPort int64 `json:"maximumPort,omitempty"`
 
 	// minimumPort is the inclusive lower range of ports.
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=65535
-	MinimumPort int `json:"minimumPort,omitempty"`
+	MinimumPort int64 `json:"minimumPort,omitempty"`
 }
 
-// SecurityGroup defines a VPC Security Group that should exist or be created within the specified VPC, with the specified Security Group Rules.
-type SecurityGroup struct {
+// VPCSecurityGroup defines a VPC Security Group that should exist or be created within the specified VPC, with the specified Security Group Rules.
+// +kubebuilder:validation:XValidation:rule="has(self.id) || has(self.name)",message="either an id or name must be specified"
+type VPCSecurityGroup struct {
 	// id of the Security Group.
+	// +optional
 	ID *string `json:"id,omitempty"`
 
 	// name of the Security Group.
+	// +optional
 	Name *string `json:"name,omitempty"`
 
-	// resourceGroup of the Security Group.
-	ResourceGroup *string `json:"resourceGroup,omitempty"`
-
 	// rules are the Security Group Rules for the Security Group.
-	Rules []*SecurityGroupRule `json:"rules,omitempty"`
+	// +optional
+	Rules []*VPCSecurityGroupRule `json:"rules,omitempty"`
 
 	// tags are tags to add to the Security Group.
-	Tags []string `json:"tags,omitempty"`
-
-	// vpc is the IBM Cloud VPC for the Security Group.
-	VPC *VPCResourceReference `json:"vpc,omitempty"`
+	// +optional
+	Tags []*string `json:"tags,omitempty"`
 }
 
-// SecurityGroupRule defines a VPC Security Group Rule for a specified Security Group.
+// VPCSecurityGroupRule defines a VPC Security Group Rule for a specified Security Group.
 // +kubebuilder:validation:XValidation:rule="(has(self.destination) && !has(self.source)) || (!has(self.destination) && has(self.source))",message="both destination and source cannot be provided"
-// +kubebuilder:validation:XValidation:rule="has(self.destination) && self.direction == 'inbound'",message="destinationis not valid for SecurityGroupRuleDirectionInbound direction"
-// +kubebuilder:validation:XValidation:rule="has(self.source) && self.direction == 'outbound'",message="source is not valid for SecurityGroupRuleDirectionOutbound direction"
-type SecurityGroupRule struct {
+// +kubebuilder:validation:XValidation:rule="self.direction == 'inbound' ? has(self.source) : true",message="source must be set for VPCSecurityGroupRuleDirectionInbound direction"
+// +kubebuilder:validation:XValidation:rule="self.direction == 'inbound' ? !has(self.destination) : true",message="destination is not valid for VPCSecurityGroupRuleDirectionInbound direction"
+// +kubebuilder:validation:XValidation:rule="self.direction == 'outbound' ? has(self.destination) : true",message="destination must be set for VPCSecurityGroupRuleDirectionOutbound direction"
+// +kubebuilder:validation:XValidation:rule="self.direction == 'outbound' ? !has(self.source) : true",message="source is not valid for VPCSecurityGroupRuleDirectionOutbound direction"
+type VPCSecurityGroupRule struct {
 	// action defines whether to allow or deny traffic defined by the Security Group Rule.
 	// +required
-	Action SecurityGroupRuleAction `json:"action"`
+	Action VPCSecurityGroupRuleAction `json:"action"`
 
-	// destination is a SecurityGroupRulePrototype which defines the destination of outbound traffic for the Security Group Rule.
-	// Only used when direction is SecurityGroupRuleDirectionOutbound.
+	// destination is a VPCSecurityGroupRulePrototype which defines the destination of outbound traffic for the Security Group Rule.
+	// Only used when direction is VPCSecurityGroupRuleDirectionOutbound.
 	// +optional
-	Destination *SecurityGroupRulePrototype `json:"destination,omitempty"`
+	Destination *VPCSecurityGroupRulePrototype `json:"destination,omitempty"`
 
 	// direction defines whether the traffic is inbound or outbound for the Security Group Rule.
 	// +required
-	Direction SecurityGroupRuleDirection `json:"direction"`
+	Direction VPCSecurityGroupRuleDirection `json:"direction"`
 
 	// securityGroupID is the ID of the Security Group for the Security Group Rule.
+	// +optional
 	SecurityGroupID *string `json:"securityGroupID,omitempty"`
 
-	// source is a SecurityGroupRulePrototype which defines the source of inbound traffic for the Security Group Rule.
-	// Only used when direction is SecurityGroupRuleDirectionInbound.
-	Source *SecurityGroupRulePrototype `json:"source,omitempty"`
+	// source is a VPCSecurityGroupRulePrototype which defines the source of inbound traffic for the Security Group Rule.
+	// Only used when direction is VPCSecurityGroupRuleDirectionInbound.
+	// +optional
+	Source *VPCSecurityGroupRulePrototype `json:"source,omitempty"`
 }
 
-// SecurityGroupRuleRemote defines a VPC Security Group Rule's remote details.
+// VPCSecurityGroupRuleRemote defines a VPC Security Group Rule's remote details.
 // The type of remote defines the additional remote details where are used for defining the remote.
-// +kubebuilder:validation:XValidation:rule="self.remoteType == 'any' && (has(self.cidrSubnetName) || has(self.ip) || has(self.securityGroupName))",message="cidrSubnetName, ip, and securityGroupName are not valid for SecurityGroupRuleRemoteTypeAny remoteType"
-// +kubebuilder:validation:XValidation:rule="has(self.cidrSubnetName) && self.remoteType != 'cidr'",message="cidrSubnetName is only valid for SecurityGroupRuleRemoteTypeCIDR remoteType"
-// +kubebuilder:validation:XValidation:rule="has(self.ip) && self.remoteType != 'ip'",message="ip is only valid for SecurityGroupRuleRemoteTypeIP remoteType"
-// +kubebuilder:validation:XValidation:rule="has(self.securityGroupName) && self.remoteType != 'sg'",message="securityGroupName is only valid for SecurityGroupRuleRemoteTypeSG remoteType"
-type SecurityGroupRuleRemote struct {
+// +kubebuilder:validation:XValidation:rule="self.remoteType == 'any' ? (!has(self.cidrSubnetName) && !has(self.address) && !has(self.securityGroupName)) : true",message="cidrSubnetName, addresss, and securityGroupName are not valid for VPCSecurityGroupRuleRemoteTypeAny remoteType"
+// +kubebuilder:validation:XValidation:rule="self.remoteType == 'cidr' ? (has(self.cidrSubnetName) && !has(self.address) && !has(self.securityGroupName)) : true",message="only cidrSubnetName is valid for VPCSecurityGroupRuleRemoteTypeCIDR remoteType"
+// +kubebuilder:validation:XValidation:rule="self.remoteType == 'address' ? (has(self.address) && !has(self.cidrSubnetName) && !has(self.securityGroupName)) : true",message="only address is valid for VPCSecurityGroupRuleRemoteTypeIP remoteType"
+// +kubebuilder:validation:XValidation:rule="self.remoteType == 'sg' ? (has(self.securityGroupName) && !has(self.cidrSubnetName) && !has(self.address)) : true",message="only securityGroupName is valid for VPCSecurityGroupRuleRemoteTypeSG remoteType"
+type VPCSecurityGroupRuleRemote struct {
 	// cidrSubnetName is the name of the VPC Subnet to retrieve the CIDR from, to use for the remote's destination/source.
-	// Only used when remoteType is SecurityGroupRuleRemoteTypeCIDR.
+	// Only used when remoteType is VPCSecurityGroupRuleRemoteTypeCIDR.
 	// +optional
 	CIDRSubnetName *string `json:"cidrSubnetName,omitempty"`
 
-	// ip is the IP to use for the remote's destination/source.
-	// Only used when remoteType is SecurityGroupRuleRemoteTypeIP.
+	//  address is the address to use for the remote's destination/source.
+	// Only used when remoteType is VPCSecurityGroupRuleRemoteTypeAddress.
 	// +optional
-	IP *string `json:"ip,omitempty"`
+	Address *string `json:"address,omitempty"`
 
 	// remoteType defines the type of filter to define for the remote's destination/source.
 	// +required
-	RemoteType SecurityGroupRuleRemoteType `json:"remoteType"`
+	RemoteType VPCSecurityGroupRuleRemoteType `json:"remoteType"`
 
 	// securityGroupName is the name of the VPC Security Group to use for the remote's destination/source.
-	// Only used when remoteType is SecurityGroupRuleRemoteTypeSG
+	// Only used when remoteType is VPCSecurityGroupRuleRemoteTypeSG
 	// +optional
 	SecurityGroupName *string `json:"securityGroupName,omitempty"`
 }
 
-// SecurityGroupRulePrototype defines a VPC Security Group Rule's traffic specifics for a series of remotes (destinations or sources).
-// +kubebuilder:validation:XValidation:rule="self.protocol != 'icmp' && (has(self.icmpCode) || has(self.icmpType))",message="icmpCode and icmpType are only supported for the ICMP protocol"
-// +kubebuilder:validation:XValidation:rule="self.protocol == 'all' && has(self.portRange)",message="portRange is not valid for SecurityGroupRuleProtocolAll protocol"
-type SecurityGroupRulePrototype struct {
+// VPCSecurityGroupRulePrototype defines a VPC Security Group Rule's traffic specifics for a series of remotes (destinations or sources).
+// +kubebuilder:validation:XValidation:rule="self.protocol != 'icmp' ? (!has(self.icmpCode) && !has(self.icmpType)) : true",message="icmpCode and icmpType are only supported for VPCSecurityGroupRuleProtocolIcmp protocol"
+// +kubebuilder:validation:XValidation:rule="self.protocol == 'all' ? !has(self.portRange) : true",message="portRange is not valid for VPCSecurityGroupRuleProtocolAll protocol"
+// +kubebuilder:validation:XValidation:rule="self.protocol == 'icmp' ? !has(self.portRange) : true",message="portRange is not valid for VPCSecurityGroupRuleProtocolIcmp protocol"
+type VPCSecurityGroupRulePrototype struct {
 	// icmpCode is the ICMP code for the Rule.
-	// Only used when Protocol is SecurityGroupProtocolICMP.
+	// Only used when Protocol is VPCSecurityGroupRuleProtocolIcmp.
 	// +optional
-	ICMPCode *string `json:"icmpCode,omitempty"`
+	ICMPCode *int64 `json:"icmpCode,omitempty"`
 
 	// icmpType is the ICMP type for the Rule.
-	// Only used when Protocol is SecurityGroupProtocolICMP.
+	// Only used when Protocol is VPCSecurityGroupRuleProtocolIcmp.
 	// +optional
-	ICMPType *string `json:"icmpType,omitempty"`
+	ICMPType *int64 `json:"icmpType,omitempty"`
 
 	// portRange is a range of ports allowed for the Rule's remote.
 	// +optional
-	PortRange *PortRange `json:"portRange,omitempty"`
+	PortRange *VPCSecurityGroupPortRange `json:"portRange,omitempty"`
 
 	// protocol defines the traffic protocol used for the Security Group Rule.
 	// +required
-	Protocol SecurityGroupRuleProtocol `json:"protocol"`
+	Protocol VPCSecurityGroupRuleProtocol `json:"protocol"`
 
-	// remotes is a set of SecurityGroupRuleRemote's that define the traffic allowed by the Rule's remote.
-	// Specifying multiple SecurityGroupRuleRemote's creates a unique Security Group Rule with the shared Protocol, PortRange, etc.
+	// remotes is a set of VPCSecurityGroupRuleRemote's that define the traffic allowed by the Rule's remote.
+	// Specifying multiple VPCSecurityGroupRuleRemote's creates a unique Security Group Rule with the shared Protocol, PortRange, etc.
 	// This allows for easier management of Security Group Rule's for sets of CIDR's, IP's, etc.
-	Remotes []SecurityGroupRuleRemote `json:"remotes"`
+	Remotes []VPCSecurityGroupRuleRemote `json:"remotes"`
 }
 
 // Subnet describes a subnet.
 type Subnet struct {
 	Ipv4CidrBlock *string `json:"cidr,omitempty"`
-	Name          *string `json:"name,omitempty"`
-	ID            *string `json:"id,omitempty"`
-	Zone          *string `json:"zone,omitempty"`
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength:=63
+	// +kubebuilder:validation:Pattern=`^([a-z]|[a-z][-a-z0-9]*[a-z0-9])$`
+	Name *string `json:"name,omitempty"`
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength:=64
+	// +kubebuilder:validation:Pattern=`^[-0-9a-z_]+$`
+	ID   *string `json:"id,omitempty"`
+	Zone *string `json:"zone,omitempty"`
 }
 
 // VPCEndpoint describes a VPCEndpoint.
@@ -383,7 +459,4 @@ type VPCResource struct {
 	// +kubebuilder:validation:MinLength=1
 	// +optional
 	Name *string `json:"name,omitempty"`
-
-	// type is the type of VPC resource.
-	Type *ResourceType `json:"type,omitempty"`
 }

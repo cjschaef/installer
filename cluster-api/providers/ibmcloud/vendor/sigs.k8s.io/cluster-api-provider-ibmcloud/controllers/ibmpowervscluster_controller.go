@@ -45,7 +45,6 @@ import (
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/cloud/scope"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/cloud/services/powervs"
 	"sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/endpoints"
-	genUtil "sigs.k8s.io/cluster-api-provider-ibmcloud/util"
 )
 
 // IBMPowerVSClusterReconciler reconciles a IBMPowerVSCluster object.
@@ -54,6 +53,8 @@ type IBMPowerVSClusterReconciler struct {
 	Recorder        record.EventRecorder
 	ServiceEndpoint []endpoints.ServiceEndpoint
 	Scheme          *runtime.Scheme
+
+	ClientFactory scope.ClientFactory
 }
 
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=ibmpowervsclusters,verbs=get;list;watch;create;update;patch;delete
@@ -91,6 +92,7 @@ func (r *IBMPowerVSClusterReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		Cluster:           cluster,
 		IBMPowerVSCluster: ibmCluster,
 		ServiceEndpoint:   r.ServiceEndpoint,
+		ClientFactory:     r.ClientFactory,
 	})
 
 	if err != nil {
@@ -112,14 +114,14 @@ func (r *IBMPowerVSClusterReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	return r.reconcile(clusterScope)
 }
 
-func (r *IBMPowerVSClusterReconciler) reconcile(clusterScope *scope.PowerVSClusterScope) (ctrl.Result, error) {
+func (r *IBMPowerVSClusterReconciler) reconcile(clusterScope *scope.PowerVSClusterScope) (ctrl.Result, error) { //nolint:gocyclo
 	if controllerutil.AddFinalizer(clusterScope.IBMPowerVSCluster, infrav1beta2.IBMPowerVSClusterFinalizer) {
 		return ctrl.Result{}, nil
 	}
 
 	// check for annotation set for cluster resource and decide on proceeding with infra creation.
 	// do not proceed further if "powervs.cluster.x-k8s.io/create-infra=true" annotation is not set.
-	if !genUtil.CheckCreateInfraAnnotation(*clusterScope.IBMPowerVSCluster) {
+	if !scope.CheckCreateInfraAnnotation(*clusterScope.IBMPowerVSCluster) {
 		clusterScope.IBMPowerVSCluster.Status.Ready = true
 		return ctrl.Result{}, nil
 	}
@@ -141,10 +143,13 @@ func (r *IBMPowerVSClusterReconciler) reconcile(clusterScope *scope.PowerVSClust
 	powerVSCluster := clusterScope.IBMPowerVSCluster
 	// reconcile PowerVS service instance
 	clusterScope.Info("Reconciling PowerVS service instance")
-	if err := clusterScope.ReconcilePowerVSServiceInstance(); err != nil {
-		clusterScope.Error(err, "failed to reconcile service instance")
+	if requeue, err := clusterScope.ReconcilePowerVSServiceInstance(); err != nil {
+		clusterScope.Error(err, "failed to reconcile PowerVS service instance")
 		conditions.MarkFalse(powerVSCluster, infrav1beta2.ServiceInstanceReadyCondition, infrav1beta2.ServiceInstanceReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
 		return reconcile.Result{}, err
+	} else if requeue {
+		clusterScope.Info("PowerVS service instance creation is pending, requeuing")
+		return reconcile.Result{RequeueAfter: 1 * time.Minute}, nil
 	}
 	conditions.MarkTrue(powerVSCluster, infrav1beta2.ServiceInstanceReadyCondition)
 
@@ -152,51 +157,75 @@ func (r *IBMPowerVSClusterReconciler) reconcile(clusterScope *scope.PowerVSClust
 
 	// reconcile network
 	clusterScope.Info("Reconciling network")
-	if err := clusterScope.ReconcileNetwork(); err != nil {
-		clusterScope.Error(err, "failed to reconcile network")
+	if requeue, err := clusterScope.ReconcileNetwork(); err != nil {
+		clusterScope.Error(err, "failed to reconcile PowerVS network")
 		conditions.MarkFalse(powerVSCluster, infrav1beta2.NetworkReadyCondition, infrav1beta2.NetworkReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
 		return reconcile.Result{}, err
+	} else if requeue {
+		clusterScope.Info("PowerVS network creation is pending, requeuing")
+		return reconcile.Result{RequeueAfter: 1 * time.Minute}, nil
 	}
 	conditions.MarkTrue(powerVSCluster, infrav1beta2.NetworkReadyCondition)
 
 	// reconcile VPC
 	clusterScope.Info("Reconciling VPC")
-	if err := clusterScope.ReconcileVPC(); err != nil {
+	if requeue, err := clusterScope.ReconcileVPC(); err != nil {
 		clusterScope.Error(err, "failed to reconcile VPC")
 		conditions.MarkFalse(powerVSCluster, infrav1beta2.VPCReadyCondition, infrav1beta2.VPCReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
 		return reconcile.Result{}, err
+	} else if requeue {
+		clusterScope.Info("VPC creation is pending, requeuing")
+		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
 	}
 	conditions.MarkTrue(powerVSCluster, infrav1beta2.VPCReadyCondition)
 
 	// reconcile VPC Subnet
-	clusterScope.Info("Reconciling VPC subnet")
-	if err := clusterScope.ReconcileVPCSubnet(); err != nil {
-		clusterScope.Error(err, "failed to reconcile VPC subnet")
+	clusterScope.Info("Reconciling VPC subnets")
+	if requeue, err := clusterScope.ReconcileVPCSubnets(); err != nil {
+		clusterScope.Error(err, "failed to reconcile VPC subnets")
 		conditions.MarkFalse(powerVSCluster, infrav1beta2.VPCSubnetReadyCondition, infrav1beta2.VPCSubnetReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
 		return reconcile.Result{}, err
+	} else if requeue {
+		clusterScope.Info("VPC subnet creation is pending, requeuing")
+		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
 	}
 	conditions.MarkTrue(powerVSCluster, infrav1beta2.VPCSubnetReadyCondition)
 
+	// reconcile VPC security group
+	clusterScope.Info("Reconciling VPC security group")
+	if err := clusterScope.ReconcileVPCSecurityGroups(); err != nil {
+		clusterScope.Error(err, "failed to reconcile VPC security groups")
+		conditions.MarkFalse(powerVSCluster, infrav1beta2.VPCSecurityGroupReadyCondition, infrav1beta2.VPCSecurityGroupReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
+		return reconcile.Result{}, err
+	}
+	conditions.MarkTrue(powerVSCluster, infrav1beta2.VPCSecurityGroupReadyCondition)
+
 	// reconcile Transit Gateway
 	clusterScope.Info("Reconciling Transit Gateway")
-	if err := clusterScope.ReconcileTransitGateway(); err != nil {
+	if requeue, err := clusterScope.ReconcileTransitGateway(); err != nil {
 		clusterScope.Error(err, "failed to reconcile transit gateway")
 		conditions.MarkFalse(powerVSCluster, infrav1beta2.TransitGatewayReadyCondition, infrav1beta2.TransitGatewayReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
 		return reconcile.Result{}, err
+	} else if requeue {
+		clusterScope.Info("Transit gateway creation is pending, requeuing")
+		return reconcile.Result{RequeueAfter: 1 * time.Minute}, nil
 	}
 	conditions.MarkTrue(powerVSCluster, infrav1beta2.TransitGatewayReadyCondition)
 
 	// reconcile LoadBalancer
-	clusterScope.Info("Reconciling LoadBalancer")
-	if err := clusterScope.ReconcileLoadBalancer(); err != nil {
-		clusterScope.Error(err, "failed to reconcile loadBalancer")
+	clusterScope.Info("Reconciling VPC load balancers")
+	if requeue, err := clusterScope.ReconcileLoadBalancers(); err != nil {
+		clusterScope.Error(err, "failed to reconcile VPC load balancers")
 		conditions.MarkFalse(powerVSCluster, infrav1beta2.LoadBalancerReadyCondition, infrav1beta2.LoadBalancerReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
 		return reconcile.Result{}, err
+	} else if requeue {
+		clusterScope.Info("VPC load balancer creation is pending, requeuing")
+		return reconcile.Result{RequeueAfter: 1 * time.Minute}, nil
 	}
 
 	// reconcile COSInstance
 	if clusterScope.IBMPowerVSCluster.Spec.Ignition != nil {
-		clusterScope.Info("Reconciling COSInstance")
+		clusterScope.Info("Reconciling COS service instance")
 		if err := clusterScope.ReconcileCOSInstance(); err != nil {
 			conditions.MarkFalse(powerVSCluster, infrav1beta2.COSInstanceReadyCondition, infrav1beta2.COSInstanceReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
 			return reconcile.Result{}, err
@@ -236,7 +265,7 @@ func (r *IBMPowerVSClusterReconciler) reconcileDelete(ctx context.Context, clust
 	}
 
 	// check for annotation set for cluster resource and decide on proceeding with infra deletion.
-	if !genUtil.CheckCreateInfraAnnotation(*clusterScope.IBMPowerVSCluster) {
+	if !scope.CheckCreateInfraAnnotation(*clusterScope.IBMPowerVSCluster) {
 		controllerutil.RemoveFinalizer(cluster, infrav1beta2.IBMPowerVSClusterFinalizer)
 		return ctrl.Result{}, nil
 	}
@@ -246,23 +275,40 @@ func (r *IBMPowerVSClusterReconciler) reconcileDelete(ctx context.Context, clust
 	clusterScope.IBMPowerVSClient.WithClients(powervs.ServiceOptions{CloudInstanceID: clusterScope.GetServiceInstanceID()})
 
 	clusterScope.Info("Deleting Transit Gateway")
-	if err := clusterScope.DeleteTransitGateway(); err != nil {
+	if requeue, err := clusterScope.DeleteTransitGateway(); err != nil {
 		allErrs = append(allErrs, errors.Wrapf(err, "failed to delete transit gateway"))
+	} else if requeue {
+		clusterScope.Info("Transit gateway deletion is pending, requeuing")
+		return reconcile.Result{RequeueAfter: 1 * time.Minute}, nil
 	}
 
 	clusterScope.Info("Deleting VPC load balancer")
-	if err := clusterScope.DeleteLoadBalancer(); err != nil {
+	if requeue, err := clusterScope.DeleteLoadBalancer(); err != nil {
 		allErrs = append(allErrs, errors.Wrapf(err, "failed to delete VPC load balancer"))
+	} else if requeue {
+		clusterScope.Info("VPC load balancer deletion is pending, requeuing")
+		return reconcile.Result{RequeueAfter: 1 * time.Minute}, nil
 	}
 
-	clusterScope.Info("Deleting VPC subnet")
-	if err := clusterScope.DeleteVPCSubnet(); err != nil {
+	clusterScope.Info("Deleting VPC security group")
+	if err := clusterScope.DeleteVPCSecurityGroups(); err != nil {
 		allErrs = append(allErrs, errors.Wrapf(err, "failed to delete VPC subnet"))
 	}
 
+	clusterScope.Info("Deleting VPC subnet")
+	if requeue, err := clusterScope.DeleteVPCSubnet(); err != nil {
+		allErrs = append(allErrs, errors.Wrapf(err, "failed to delete VPC subnet"))
+	} else if requeue {
+		clusterScope.Info("VPC subnet deletion is pending, requeuing")
+		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
+	}
+
 	clusterScope.Info("Deleting VPC")
-	if err := clusterScope.DeleteVPC(); err != nil {
+	if requeue, err := clusterScope.DeleteVPC(); err != nil {
 		allErrs = append(allErrs, errors.Wrapf(err, "failed to delete VPC"))
+	} else if requeue {
+		clusterScope.Info("VPC deletion is pending, requeuing")
+		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
 	}
 
 	clusterScope.Info("Deleting DHCP server")
@@ -271,18 +317,22 @@ func (r *IBMPowerVSClusterReconciler) reconcileDelete(ctx context.Context, clust
 	}
 
 	clusterScope.Info("Deleting Power VS service instance")
-	if err := clusterScope.DeleteServiceInstance(); err != nil {
+	if requeue, err := clusterScope.DeleteServiceInstance(); err != nil {
 		allErrs = append(allErrs, errors.Wrapf(err, "failed to delete Power VS service instance"))
+	} else if requeue {
+		clusterScope.Info("PowerVS service instance deletion is pending, requeuing")
+		return reconcile.Result{RequeueAfter: 1 * time.Minute}, nil
 	}
 
 	if clusterScope.IBMPowerVSCluster.Spec.Ignition != nil {
 		clusterScope.Info("Deleting COS service instance")
 		if err := clusterScope.DeleteCOSInstance(); err != nil {
-			allErrs = append(allErrs, errors.Wrapf(err, "failed to delete COS instance"))
+			allErrs = append(allErrs, errors.Wrapf(err, "failed to delete COS service instance"))
 		}
 	}
 
 	if len(allErrs) > 0 {
+		clusterScope.Error(kerrors.NewAggregate(allErrs), "failed to delete IBMPowerVSCluster")
 		return ctrl.Result{}, kerrors.NewAggregate(allErrs)
 	}
 
@@ -421,9 +471,9 @@ func (c clusterDescendants) filterOwnedDescendants(cluster *infrav1beta2.IBMPowe
 }
 
 // SetupWithManager creates a new IBMPowerVSCluster controller for a manager.
-func (r *IBMPowerVSClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *IBMPowerVSClusterReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&infrav1beta2.IBMPowerVSCluster{}).
-		WithEventFilter(predicates.ResourceIsNotExternallyManaged(ctrl.LoggerFrom(context.TODO()))).
+		WithEventFilter(predicates.ResourceIsNotExternallyManaged(ctrl.LoggerFrom(ctx))).
 		Complete(r)
 }

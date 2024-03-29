@@ -65,6 +65,7 @@ type IBMPowerVSClusterSpec struct {
 	// when omitted system will dynamically create the service instance with name CLUSTER_NAME-serviceInstance.
 	// when ServiceInstance.ID is set, its expected that there exist a service instance in PowerVS workspace with id or else system will give error.
 	// when ServiceInstance.Name is set, system will first check for service instance with Name in PowerVS workspace, if not exist system will create new instance.
+	// if there are more than one service instance exist with the ServiceInstance.Name in given Zone, installation fails with an error. Use ServiceInstance.ID in those situations to use the specific service instance.
 	// ServiceInstance.Regex is not yet supported not yet supported and system will ignore the value.
 	// +optional
 	ServiceInstance *IBMPowerVSResourceReference `json:"serviceInstance,omitempty"`
@@ -80,7 +81,7 @@ type IBMPowerVSClusterSpec struct {
 	// resourceGroup name under which the resources will be created.
 	// when powervs.cluster.x-k8s.io/create-infra=true annotation is set on IBMPowerVSCluster resource,
 	// 1. it is expected to set the ResourceGroup.Name, not setting will result in webhook error.
-	// ServiceInstance.ID and ServiceInstance.Regex is not yet supported and system will ignore the value.
+	// ResourceGroup.ID and ResourceGroup.Regex is not yet supported and system will ignore the value.
 	// +optional
 	ResourceGroup *IBMPowerVSResourceReference `json:"resourceGroup,omitempty"`
 
@@ -102,6 +103,10 @@ type IBMPowerVSClusterSpec struct {
 	// if subnet with name VPCSubnets[].Name not found, system will create new subnet in VPCSubnets[].Zone.
 	// +optional
 	VPCSubnets []Subnet `json:"vpcSubnets,omitempty"`
+
+	// VPCSecurityGroups to attach it to the VPC resource
+	// +optional
+	VPCSecurityGroups []VPCSecurityGroup `json:"vpcSecurityGroups,omitempty"`
 
 	// transitGateway contains information about IBM Cloud TransitGateway
 	// IBM Cloud TransitGateway helps in establishing network connectivity between IBM Cloud Power VS and VPC infrastructure
@@ -200,6 +205,9 @@ type IBMPowerVSClusterStatus struct {
 	// vpcSubnet is reference to IBM Cloud VPC subnet.
 	VPCSubnet map[string]ResourceReference `json:"vpcSubnet,omitempty"`
 
+	// vpcSecurityGroups is reference to IBM Cloud VPC security group.
+	VPCSecurityGroups map[string]VPCSecurityGroupStatus `json:"vpcSecurityGroups,omitempty"`
+
 	// transitGateway is reference to IBM Cloud TransitGateway.
 	TransitGateway *ResourceReference `json:"transitGateway,omitempty"`
 
@@ -243,11 +251,19 @@ type IBMPowerVSClusterList struct {
 // TransitGateway holds the TransitGateway information.
 type TransitGateway struct {
 	// name of resource.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength:=63
+	// +kubebuilder:validation:Pattern=`^([a-zA-Z]|[a-zA-Z][-_a-zA-Z0-9]*[a-zA-Z0-9])$`
 	// +optional
 	Name *string `json:"name,omitempty"`
 	// id of resource.
 	// +optional
 	ID *string `json:"id,omitempty"`
+	// globalRouting indicates whether to set global routing true or not while creating the transit gateway.
+	// set this field to true only when PowerVS and VPC are from different regions, if they are same it's suggested to use local routing by setting the field to false.
+	// when the field is omitted,  based on PowerVS region (region associated with IBMPowerVSCluster.Spec.Zone) and VPC region(IBMPowerVSCluster.Spec.VPC.Region) system will decide whether to enable globalRouting or not.
+	// +optional
+	GlobalRouting *bool `json:"globalRouting,omitempty"`
 }
 
 // VPCResourceReference is a reference to a specific VPC resource by ID or Name
@@ -256,11 +272,15 @@ type TransitGateway struct {
 type VPCResourceReference struct {
 	// id of resource.
 	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength:=64
+	// +kubebuilder:validation:Pattern=`^[-0-9a-z_]+$`
 	// +optional
 	ID *string `json:"id,omitempty"`
 
 	// name of resource.
 	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength:=63
+	// +kubebuilder:validation:Pattern=`^([a-z]|[a-z][-a-z0-9]*[a-z0-9])$`
 	// +optional
 	Name *string `json:"name,omitempty"`
 

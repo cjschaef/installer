@@ -85,6 +85,11 @@ const (
 	// NetworkReconciliationFailedReason used when an error occurs during network reconciliation.
 	NetworkReconciliationFailedReason = "NetworkReconciliationFailed"
 
+	// VPCSecurityGroupReadyCondition reports on the successful reconciliation of a VPC.
+	VPCSecurityGroupReadyCondition capiv1beta1.ConditionType = "VPCSecurityGroupReady"
+	// VPCSecurityGroupReconciliationFailedReason used when an error occurs during VPC reconciliation.
+	VPCSecurityGroupReconciliationFailedReason = "VPCSecurityGroupReconciliationFailed"
+
 	// VPCReadyCondition reports on the successful reconciliation of a VPC.
 	VPCReadyCondition capiv1beta1.ConditionType = "VPCReady"
 	// VPCReconciliationFailedReason used when an error occurs during VPC reconciliation.
@@ -115,4 +120,8 @@ const (
 	// CreateInfrastructureAnnotation is the name of an annotation that indicates if
 	// Power VS infrastructure should be created as a part of cluster creation.
 	CreateInfrastructureAnnotation = "powervs.cluster.x-k8s.io/create-infra"
+
+	// CreateVPCInfrastructureAnnotation is the name of an annotation that indicates if
+	// VPC infrastructure should be created as part of cluster creation.
+	CreateVPCInfrastructureAnnotation = "vpc.cluster.x-k8s.io/create-infra"
 )
