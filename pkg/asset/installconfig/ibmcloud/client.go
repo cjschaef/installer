@@ -10,6 +10,10 @@ import (
 
 	ibmcrn "github.com/IBM-Cloud/bluemix-go/crn"
 	"github.com/IBM/go-sdk-core/v5/core"
+	cosaws "github.com/IBM/ibm-cos-sdk-go/aws"
+	"github.com/IBM/ibm-cos-sdk-go/aws/credentials/ibmiam"
+	cossession "github.com/IBM/ibm-cos-sdk-go/aws/session"
+	ibms3 "github.com/IBM/ibm-cos-sdk-go/service/s3"
 	kpclient "github.com/IBM/keyprotect-go-client"
 	"github.com/IBM/networking-go-sdk/dnsrecordsv1"
 	"github.com/IBM/networking-go-sdk/dnssvcsv1"
@@ -20,6 +24,7 @@ import (
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
+	"k8s.io/utils/ptr"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig/ibmcloud/responses"
@@ -34,6 +39,8 @@ type API interface {
 	GetAPIKey() string
 	GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error)
 	GetCISInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error)
+	GetCOSBucketByName(ctx context. Context, cosInstanceID string, bucketName string) (*ibms3.Bucket, error)
+	GetCOSInstanceByName(ctx context.Context, cosName string) (*resourcecontrollerv2.ResourceInstance, error)
 	GetDNSInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error)
 	GetDNSInstancePermittedNetworks(ctx context.Context, dnsID string, dnsZone string) ([]string, error)
 	GetDedicatedHostByName(ctx context.Context, name string, region string) (*vpcv1.DedicatedHost, error)
@@ -78,6 +85,8 @@ const (
 
 	// cisServiceID is the Cloud Internet Services' catalog service ID.
 	cisServiceID = "75874a60-cb12-11e7-948e-37ac098eb1b9"
+	// cosServiceID is the Cloud Object Storage catalog service ID.
+	cosServiceID = "dff97f5c-bc5e-4455-b470-411c3edbe49c"
 	// dnsServiceID is the DNS Services' catalog service ID.
 	dnsServiceID = "b4ed8a30-936f-11e9-b289-1d079699cbe5"
 
@@ -195,6 +204,64 @@ func (c *Client) getInstance(ctx context.Context, crnstr string, iType InstanceT
 // GetCISInstance gets a specific Cloud Internet Services by its CRN.
 func (c *Client) GetCISInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error) {
 	return c.getInstance(ctx, crnstr, CISInstanceType)
+}
+
+// GetCOSBucketByName will get the COS Bucket that matches the name provided.
+func (c *Client) GetCOSBucketByName(ctx context.Context, cosInstanceID string, bucketName string) (*ibms3.Bucket, error) {
+	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	config := cosaws.NewConfig()
+	// If an IAM service endpoint override was provided, use it to build the auth endpoint for the COS client (default is used for empty string)
+	var authEndpoint string
+	if c.iamServiceEndpointOverride != "" {
+		authEndpoint = fmt.Sprintf("%s/%s", c.iamServiceEndpointOverride, iamTokenPath)
+	}
+	// Setup IAM credentials for COS client, passing in the IAM auth endpoint
+	config.WithCredentials(ibmiam.NewStaticCredentials(cosaws.NewConfig(), authEndpoint, c.apiKey, cosInstanceID))
+	// If a COS service endpoint override was specified, set it in the COS config
+	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceCOS, c.serviceEndpoints); overrideURL != "" {
+		config.WithEndpoint(overrideURL)
+	}
+	sess := cossession.Must(cossession.NewSession())
+	cosClient := ibms3.New(sess, config)
+
+	options := &ibms3.ListBucketsInput{
+		IBMServiceInstanceId: ptr.To(cosInstanceID),
+	}
+	bucketOutput, err := cosClient.ListBuckets(options)
+	if err != nil {
+		return nil, fmt.Errorf("failed listing buckets %w", err)
+	}
+
+	for _, bucket := range bucketOutput.Buckets {
+		if *bucket.Name == bucketName {
+			return bucket, nil
+		}
+	}
+
+	return nil, fmt.Errorf("failed to find bucket '%s' in instance %s", bucketName, cosInstanceID)
+}
+
+// GetCOSInstanceByName will get the COS Instance (ResourceInstance) that matches the name provided.
+func (c *Client) GetCOSInstanceByName(ctx context.Context, cosName string) (*resourcecontrollerv2.ResourceInstance, error) {
+	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	options := c.controllerAPI.NewListResourceInstancesOptions()
+	options.SetResourceID(cosServiceID)
+
+	listResourceInstanceResponse, _, err := c.controllerAPI.ListResourceInstances(options)
+	if err != nil {
+	return nil, fmt.Errorf("failed to list cos instances %w", err)
+	}
+	for _, instance := range listResourceInstanceResponse.Resources {
+		if *instance.Name == cosName {
+			return &instance, nil
+		}
+	}
+
+	return nil, fmt.Errorf("failed to find cos instance %s", cosName)
 }
 
 // GetDNSInstance gets a specific DNS Services instance by its CRN.

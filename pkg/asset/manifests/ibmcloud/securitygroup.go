@@ -1,8 +1,24 @@
 package ibmcloud
 
+import (
+	"fmt"
+
+	"k8s.io/utils/ptr"
+	capibmcloud "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
+)
+
+const (
+	clusterWideSGNamePostfix  = "sg-cluster-wide"
+	openshiftNetSGNamePostfix = "sg-openshift-net"
+	kubeAPILBSGNamePostfix    = "sg-kube-api-lb"
+	controlPlaneSGNamePostfix = "sg-control-plane"
+	cpInternalSGNamePostfix   = "sg-cp-internal"
+)
 
 func buildClusterWideSecurityGroup(infraID string, vpcName string, resourceGroupName string, allSubnets []capibmcloud.Subnet) capibmcloud.SecurityGroup {
-	sgName := fmt.Sprintf("%s-sg-cluster-wide", infraID)
+	clusterWideSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, clusterWideSGNamePostfix))
+	vpcNamePtr := ptr.To(vpcName)
+	resourceGroupNamePtr := ptr.To(resourceGroupName)
 
 	// Build set of Remotes for Security Group Rules
 	// - cluster-wide SSH rule (for CP and Compute subnets)
@@ -15,13 +31,14 @@ func buildClusterWideSecurityGroup(infraID string, vpcName string, resourceGroup
 	}
 
 	return capibmcloud.SecurityGroup{
-		Name: clusterWideSGName,
-		ResourceGroup: resourceGroupName,
-		Rules: []capibmcloud.SecurityGroupRule{
+		Name: clusterWideSGNamePtr,
+		ResourceGroup: resourceGroupNamePtr,
+		Rules: []*capibmcloud.SecurityGroupRule{
 			{
+				// SSH inbound cluster-wide
 				Action:    capibmcloud.SecurityGroupRuleActionAllow,
 				Direction: capibmcloud.SecurityGroupRuleDirectionInbound,
-				Source: &capibmcloud.SecurityGroupRuleRemoteSpec{
+				Source: &capibmcloud.SecurityGroupRulePrototype{
 					PortRange: &capibmcloud.PortRange{
 						MaximumPort: 22,
 						MinimumPort: 22,
@@ -31,22 +48,24 @@ func buildClusterWideSecurityGroup(infraID string, vpcName string, resourceGroup
 				},
 			},
 			{
+				// ICMP inbound cluster-wide
 				Action:    capibmcloud.SecurityGroupRuleActionAllow,
 				Direction: capibmcloud.SecurityGroupRuleDirectionInbound,
-				Source: &capibmcloud.SecurityGroupRuleRemoteSpec{
+				Source: &capibmcloud.SecurityGroupRulePrototype{
 					Protocol: capibmcloud.SecurityGroupRuleProtocolICMP,
 					Remotes: []capibmcloud.SecurityGroupRuleRemote{
 						{
 							RemoteType:        capibmcloud.SecurityGroupRuleRemoteTypeSG,
-							SecurityGroupName: clusterWideSGName,
+							SecurityGroupName: clusterWideSGNamePtr,
 						},
 					},
 				},
 			},
 			{
+				// VXLAN and Geneve - port 4789
 				Action:    capibmcloud.SecurityGroupRuleActionAllow,
 				Direction: capibmcloud.SecurityGroupRuleDirectionInbound,
-				Source: &capibmcloud.SecurityGroupRuleRemoteSpec{
+				Source: &capibmcloud.SecurityGroupRulePrototype{
 					PortRange: &capibmcloud.PortRange{
 						MaximumPort: 4789,
 						MinimumPort: 4789,
@@ -55,15 +74,16 @@ func buildClusterWideSecurityGroup(infraID string, vpcName string, resourceGroup
 					Remotes: []capibmcloud.SecurityGroupRuleRemote{
 						{
 							RemoteType:        capibmcloud.SecurityGroupRuleRemoteTypeSG,
-							SecurityGroupName: clusterWideSGName,
+							SecurityGroupName: clusterWideSGNamePtr,
 						},
 					},
 				},
 			},
 			{
+				// VXLAN and Geneve - port 6081
 				Action:    capibmcloud.SecurityGroupRuleActionAllow,
 				Direction: capibmcloud.SecurityGroupRuleDirectionInbound,
-				Source: &capibmcloud.SecurityGroupRuleRemoteSpec{
+				Source: &capibmcloud.SecurityGroupRulePrototype{
 					PortRange: &capibmcloud.PortRange{
 						MaximumPort: 6081,
 						MinimumPort: 6081,
@@ -72,30 +92,35 @@ func buildClusterWideSecurityGroup(infraID string, vpcName string, resourceGroup
 					Remotes: []capibmcloud.SecurityGroupRuleRemote{
 						{
 							RemoteType:        capibmcloud.SecurityGroupRuleRemoteTypeSG,
-							SecurityGroupName: clusterWideSGName,
+							SecurityGroupName: clusterWideSGNamePtr,
 						},
 					},
 				},
 			},
 			{
+				// Outbound for cluster-wide
 				Action: capibmcloud.SecurityGroupRuleActionAllow,
-				Destination: &capibmcloud.SecurityGroupRuleRemoteSpec{
-					Protocol: capibmcloudSecurityGroupRuleProtocolAny,
-					Remote: capibmcloudSecurityGroupRuleRemote{
-						RemoteType: capibmcloud.SecurityGroupRuleRemoteTypeAny,
+				Destination: &capibmcloud.SecurityGroupRulePrototype{
+					Protocol: capibmcloud.SecurityGroupRuleProtocolAll,
+					Remotes: []capibmcloud.SecurityGroupRuleRemote{
+						{
+							RemoteType: capibmcloud.SecurityGroupRuleRemoteTypeAny,
+						},
 					},
 				},
 				Direction: capibmcloud.SecurityGroupRuleDirectionOutbound,
 			},
 		},
-		VPC: capibmcloud.VPCResourceReference{
-			Name: vpcName,
+		VPC: &capibmcloud.VPCResourceReference{
+			Name: vpcNamePtr,
 		},
 	}
 }
 
 func buildOpenshiftNetSecurityGroup(infraID string, vpcName string, resourceGroupName string, allSubnets []capibmcloud.Subnet) capibmcloud.SecurityGroup {
-	openshiftNetSGName := fmt.Sprintf("%s-sg-openshift-net", infraID)
+	openshiftNetSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, openshiftNetSGNamePostfix))
+	vpcNamePtr := ptr.To(vpcName)
+	resourceGroupNamePtr := ptr.To(resourceGroupName)
 
 	// Build sets of Remotes for Security Group Rules
 	// - openshift-net TCP rule for Node Ports (for CP and Compute subnets)
@@ -114,63 +139,342 @@ func buildOpenshiftNetSecurityGroup(infraID string, vpcName string, resourceGrou
 	}
 
 	return capibmcloud.SecurityGroup{
-		Name: openshiftNetSGName,
-		ResourceGroup: resourceGroupName,
-		Rules: []capibmcloud.SecurityGroupRule{
+		Name: openshiftNetSGNamePtr,
+		ResourceGroup: resourceGroupNamePtr,
+		Rules: []*capibmcloud.SecurityGroupRule{
 			{
-				Name:
+				// Host level services - TCP
+				Action:    capibmcloud.SecurityGroupRuleActionAllow,
+				Direction: capibmcloud.SecurityGroupRuleDirectionInbound,
+				Source: &capibmcloud.SecurityGroupRulePrototype{
+					PortRange: &capibmcloud.PortRange{
+						MaximumPort: 9999,
+						MinimumPort: 9000,
+					},
+					Protocol: capibmcloud.SecurityGroupRuleProtocolTCP,
+					Remotes: []capibmcloud.SecurityGroupRuleRemote{
+						{
+							RemoteType:        capibmcloud.SecurityGroupRuleRemoteTypeSG,
+							SecurityGroupName: openshiftNetSGNamePtr,
+						},
+					},
+				},
+			},
+			{
+				// Host level services - UDP
+				Action:    capibmcloud.SecurityGroupRuleActionAllow,
+				Direction: capibmcloud.SecurityGroupRuleDirectionInbound,
+				Source: &capibmcloud.SecurityGroupRulePrototype{
+					PortRange: &capibmcloud.PortRange{
+						MaximumPort: 9999,
+						MinimumPort: 9000,
+					},
+					Protocol: capibmcloud.SecurityGroupRuleProtocolUDP,
+					Remotes: []capibmcloud.SecurityGroupRuleRemote{
+						{
+							RemoteType:        capibmcloud.SecurityGroupRuleRemoteTypeSG,
+							SecurityGroupName: openshiftNetSGNamePtr,
+						},
+					},
+				},
+			},
+			{
+				// Kubernetes default ports
+				Action:    capibmcloud.SecurityGroupRuleActionAllow,
+				Direction: capibmcloud.SecurityGroupRuleDirectionInbound,
+				Source: &capibmcloud.SecurityGroupRulePrototype{
+					PortRange: &capibmcloud.PortRange{
+						MaximumPort: 10250,
+						MinimumPort: 10250,
+					},
+					Protocol: capibmcloud.SecurityGroupRuleProtocolTCP,
+					Remotes: []capibmcloud.SecurityGroupRuleRemote{
+						{
+							RemoteType:        capibmcloud.SecurityGroupRuleRemoteTypeSG,
+							SecurityGroupName: openshiftNetSGNamePtr,
+						},
+					},
+				},
+			},
+			{
+				// IPsec IKE - port 500
+				Action:    capibmcloud.SecurityGroupRuleActionAllow,
+				Direction: capibmcloud.SecurityGroupRuleDirectionInbound,
+				Source: &capibmcloud.SecurityGroupRulePrototype{
+					PortRange: &capibmcloud.PortRange{
+						MaximumPort: 500,
+						MinimumPort: 500,
+					},
+					Protocol: capibmcloud.SecurityGroupRuleProtocolUDP,
+					Remotes: []capibmcloud.SecurityGroupRuleRemote{
+						{
+							RemoteType:        capibmcloud.SecurityGroupRuleRemoteTypeSG,
+							SecurityGroupName: openshiftNetSGNamePtr,
+						},
+					},
+				},
+			},
+			{
+				// IPsec IKE NAT-T - port 4500
+				Action:    capibmcloud.SecurityGroupRuleActionAllow,
+				Direction: capibmcloud.SecurityGroupRuleDirectionInbound,
+				Source: &capibmcloud.SecurityGroupRulePrototype{
+					PortRange: &capibmcloud.PortRange{
+						MaximumPort: 4500,
+						MinimumPort: 4500,
+					},
+					Protocol: capibmcloud.SecurityGroupRuleProtocolUDP,
+					Remotes: []capibmcloud.SecurityGroupRuleRemote{
+						{
+							RemoteType:        capibmcloud.SecurityGroupRuleRemoteTypeSG,
+							SecurityGroupName: openshiftNetSGNamePtr,
+						},
+					},
+				},
+			},
+			{
+				// Kubernetes node ports - TCP
+				// Allows access to node ports from within VPC subnets to accomodate CCM LBs
+				Action:    capibmcloud.SecurityGroupRuleActionAllow,
+				Direction: capibmcloud.SecurityGroupRuleDirectionInbound,
+				Source: &capibmcloud.SecurityGroupRulePrototype{
+					PortRange: &capibmcloud.PortRange{
+						MaximumPort: 32767,
+						MinimumPort: 30000,
+					},
+					Protocol: capibmcloud.SecurityGroupRuleProtocolTCP,
+					Remotes:  openshiftNetworkNodePortTCPRemotes,
+				},
+			},
+			{
+				// Kubernetes node ports - UDP
+				// Allows access to node ports from within VPC subnets to accomodate CCM LBs
+				Action:    capibmcloud.SecurityGroupRuleActionAllow,
+				Direction: capibmcloud.SecurityGroupRuleDirectionInbound,
+				Source: &capibmcloud.SecurityGroupRulePrototype{
+					PortRange: &capibmcloud.PortRange{
+						MaximumPort: 32767,
+						MinimumPort: 30000,
+					},
+					Protocol: capibmcloud.SecurityGroupRuleProtocolUDP,
+					Remotes:  openshiftNetworkNodePortUDPRemotes,
+				},
 			},
 		},
-		VPC: capibmcloud.VPCResourceReference{
-			Name: vpcName,
+		VPC: &capibmcloud.VPCResourceReference{
+			Name: vpcNamePtr,
 		},
 	}
 }
 
 func buildKubeAPILBSecurityGroup(infraID string, vpcName string, resourceGroupName string) capibmcloud.SecurityGroup {
-	kubeAPILBSGName := fmt.Sprintf("%s-sg-kube-api-lb", infraID)
+	kubeAPILBSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, kubeAPILBSGNamePostfix))
+	controlPlaneSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, controlPlaneSGNamePostfix))
+	clusterWideSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, clusterWideSGNamePostfix))
+	vpcNamePtr := ptr.To(vpcName)
+	resourceGroupNamePtr := ptr.To(resourceGroupName)
+
 	return capibmcloud.SecurityGroup{
-		Name: kubeAPILBSGName,
-		ResourceGroup: resourceGroupName,
-		Rules: []capibmcloud.SecurityGroupRule{
+		Name: kubeAPILBSGNamePtr,
+		ResourceGroup: resourceGroupNamePtr,
+		Rules: []*capibmcloud.SecurityGroupRule{
 			{
-				Name:
+				// Kubernetes API LB - inbound
+				Action:    capibmcloud.SecurityGroupRuleActionAllow,
+				Direction: capibmcloud.SecurityGroupRuleDirectionInbound,
+				Source: &capibmcloud.SecurityGroupRulePrototype{
+					PortRange: &capibmcloud.PortRange{
+						MaximumPort: 6443,
+						MinimumPort: 6443,
+					},
+					Protocol: capibmcloud.SecurityGroupRuleProtocolTCP,
+					Remotes: []capibmcloud.SecurityGroupRuleRemote{
+						{
+							RemoteType: capibmcloud.SecurityGroupRuleRemoteTypeAny,
+						},
+					},
+				},
+			},
+			{
+				// Kubernetes API LB - outbound
+				Action:    capibmcloud.SecurityGroupRuleActionAllow,
+				Destination: &capibmcloud.SecurityGroupRulePrototype{
+					PortRange: &capibmcloud.PortRange{
+						MaximumPort: 6443,
+						MinimumPort: 6443,
+					},
+					Protocol: capibmcloud.SecurityGroupRuleProtocolTCP,
+					Remotes: []capibmcloud.SecurityGroupRuleRemote{
+						{
+							RemoteType:        capibmcloud.SecurityGroupRuleRemoteTypeSG,
+							SecurityGroupName: controlPlaneSGNamePtr,
+						},
+					},
+				},
+			},
+			{
+				// Machine Config Server LB - inbound
+				Action:    capibmcloud.SecurityGroupRuleActionAllow,
+				Direction: capibmcloud.SecurityGroupRuleDirectionInbound,
+				Source: &capibmcloud.SecurityGroupRulePrototype{
+					PortRange: &capibmcloud.PortRange{
+						MaximumPort: 22623,
+						MinimumPort: 22623,
+					},
+					Protocol: capibmcloud.SecurityGroupRuleProtocolTCP,
+					Remotes: []capibmcloud.SecurityGroupRuleRemote{
+						{
+							RemoteType:        capibmcloud.SecurityGroupRuleRemoteTypeSG,
+							SecurityGroupName: clusterWideSGNamePtr,
+						},
+					},
+				},
+			},
+			{
+				// Machine Config Server LB - outbound
+				Action:    capibmcloud.SecurityGroupRuleActionAllow,
+				Destination: &capibmcloud.SecurityGroupRulePrototype{
+					PortRange: &capibmcloud.PortRange{
+						MaximumPort: 22623,
+						MinimumPort: 22623,
+					},
+					Protocol: capibmcloud.SecurityGroupRuleProtocolTCP,
+					Remotes: []capibmcloud.SecurityGroupRuleRemote{
+						{
+							RemoteType:        capibmcloud.SecurityGroupRuleRemoteTypeSG,
+							SecurityGroupName: controlPlaneSGNamePtr,
+						},
+					},
+				},
+				Direction: capibmcloud.SecurityGroupRuleDirectionOutbound,
 			},
 		},
-		VPC: capibmcloud.VPCResourceReference{
-			Name: vpcName,
+		VPC: &capibmcloud.VPCResourceReference{
+			Name: vpcNamePtr,
 		},
 	}
 }
 
 func buildControlPlaneSecurityGroup(infraID string, vpcName string, resourceGroupName string) capibmcloud.SecurityGroup {
-	controlPlaneSGName := fmt.Sprintf("%s-sg-control-plane", infraID)
+	controlPlaneSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, controlPlaneSGNamePostfix))
+	clusterWideSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, clusterWideSGNamePostfix))
+	kubeAPILBSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, kubeAPILBSGNamePostfix))
+	vpcNamePtr := ptr.To(vpcName)
+	resourceGroupNamePtr := ptr.To(resourceGroupName)
+
 	return capibmcloud.SecurityGroup{
-		Name: controlPlaneSGName,
-		ResourceGroup: resourceGroupName,
-		Rules: []capibmcloud.SecurityGroupRule{
+		Name: controlPlaneSGNamePtr,
+		ResourceGroup: resourceGroupNamePtr,
+		Rules: []*capibmcloud.SecurityGroupRule{
 			{
-				Name:
+				// Kubernetes API - inbound via cluster
+				Action:    capibmcloud.SecurityGroupRuleActionAllow,
+				Direction: capibmcloud.SecurityGroupRuleDirectionInbound,
+				Source: &capibmcloud.SecurityGroupRulePrototype{
+					PortRange: &capibmcloud.PortRange{
+						MaximumPort: 6443,
+						MinimumPort: 6443,
+					},
+					Protocol: capibmcloud.SecurityGroupRuleProtocolTCP,
+					Remotes: []capibmcloud.SecurityGroupRuleRemote{
+						{
+							RemoteType:        capibmcloud.SecurityGroupRuleRemoteTypeSG,
+							SecurityGroupName: clusterWideSGNamePtr,
+						},
+					},
+				},
+			},
+			{
+				// Kubernetes API - inbound via LB
+				Action:    capibmcloud.SecurityGroupRuleActionAllow,
+				Direction: capibmcloud.SecurityGroupRuleDirectionInbound,
+				Source: &capibmcloud.SecurityGroupRulePrototype{
+					PortRange: &capibmcloud.PortRange{
+						MaximumPort: 6443,
+						MinimumPort: 6443,
+					},
+					Protocol: capibmcloud.SecurityGroupRuleProtocolTCP,
+					Remotes: []capibmcloud.SecurityGroupRuleRemote{
+						{
+							RemoteType:        capibmcloud.SecurityGroupRuleRemoteTypeSG,
+							SecurityGroupName: kubeAPILBSGNamePtr,
+						},
+					},
+				},
+			},
+			{
+				// Machine Config Server - inbound via LB
+				Action:    capibmcloud.SecurityGroupRuleActionAllow,
+				Direction: capibmcloud.SecurityGroupRuleDirectionInbound,
+				Source: &capibmcloud.SecurityGroupRulePrototype{
+					PortRange: &capibmcloud.PortRange{
+						MaximumPort: 22623,
+						MinimumPort: 22623,
+					},
+					Protocol: capibmcloud.SecurityGroupRuleProtocolTCP,
+					Remotes: []capibmcloud.SecurityGroupRuleRemote{
+						{
+							RemoteType:        capibmcloud.SecurityGroupRuleRemoteTypeSG,
+							SecurityGroupName: kubeAPILBSGNamePtr,
+						},
+					},
+				},
+			},
+			{
+				// Kubernetes default ports
+				Action:    capibmcloud.SecurityGroupRuleActionAllow,
+				Direction: capibmcloud.SecurityGroupRuleDirectionInbound,
+				Source: &capibmcloud.SecurityGroupRulePrototype{
+					PortRange: &capibmcloud.PortRange{
+						MaximumPort: 10259,
+						MinimumPort: 10257,
+					},
+					Protocol: capibmcloud.SecurityGroupRuleProtocolTCP,
+					Remotes: []capibmcloud.SecurityGroupRuleRemote{
+						{
+							RemoteType:        capibmcloud.SecurityGroupRuleRemoteTypeSG,
+							SecurityGroupName: clusterWideSGNamePtr,
+						},
+					},
+				},
 			},
 		},
-		VPC: capibmcloud.VPCResourceReference{
-			Name: vpcName,
+		VPC: &capibmcloud.VPCResourceReference{
+			Name: vpcNamePtr,
 		},
 	}
 }
 
 func buildCPInternalSecurityGroup(infraID string, vpcName string, resourceGroupName string) capibmcloud.SecurityGroup {
-	cpInternalSGName := fmt.Sprintf("%s-sg-cp-internal", infraID)
+	cpInternalSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, cpInternalSGNamePostfix))
+	vpcNamePtr := ptr.To(vpcName)
+	resourceGroupNamePtr := ptr.To(resourceGroupName)
+
 	return capibmcloud.SecurityGroup{
-		Name: cpInternalSGName,
-		ResourceGroup: resourceGroupName,
-		Rules: []capibmcloud.SecurityGroupRule{
+		Name: cpInternalSGNamePtr,
+		ResourceGroup: resourceGroupNamePtr,
+		Rules: []*capibmcloud.SecurityGroupRule{
 			{
-				Name:
+				// etcd internal traffic
+				Action:    capibmcloud.SecurityGroupRuleActionAllow,
+				Direction: capibmcloud.SecurityGroupRuleDirectionInbound,
+				Source: &capibmcloud.SecurityGroupRulePrototype{
+					PortRange: &capibmcloud.PortRange{
+						MaximumPort: 2380,
+						MinimumPort: 2379,
+					},
+					Protocol: capibmcloud.SecurityGroupRuleProtocolTCP,
+					Remotes: []capibmcloud.SecurityGroupRuleRemote{
+						{
+							RemoteType:        capibmcloud.SecurityGroupRuleRemoteTypeSG,
+							SecurityGroupName: cpInternalSGNamePtr,
+						},
+					},
+				},
 			},
 		},
-		VPC: capibmcloud.VPCResourceReference{
-			Name: vpcName,
+		VPC: &capibmcloud.VPCResourceReference{
+			Name: vpcNamePtr,
 		},
 	}
 }
@@ -183,5 +487,5 @@ func getVPCSecurityGroups(infraID string, vpcName string, resourceGroupName stri
 	securityGroups = append(securityGroups, buildKubeAPILBSecurityGroup(infraID, vpcName, resourceGroupName))
 	securityGroups = append(securityGroups, buildControlPlaneSecurityGroup(infraID, vpcName, resourceGroupName))
 	securityGroups = append(securityGroups, buildCPInternalSecurityGroup(infraID, vpcName, resourceGroupName))
-	return securityGroups, nil
+	return securityGroups
 }

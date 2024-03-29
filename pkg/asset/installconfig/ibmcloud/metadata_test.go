@@ -929,7 +929,7 @@ func TestGetRegionAndEndpointsFlag(t *testing.T) {
 					}
 				},
 			},
-			expectedValue: fmt.Sprint("%s:%s=%s,%s=%s,%s=%s", region, configv1.IBMCloudServiceCIS, cisServiceEndpoint, configv1.IBMCloudServiceCOS, cosServiceEndpoint, configv1.IBMCloudServiceIAM, iamServiceEndpoint),
+			expectedValue: fmt.Sprintf("%s:%s=%s,%s=%s,%s=%s", region, configv1.IBMCloudServiceCIS, cisServiceEndpoint, configv1.IBMCloudServiceCOS, cosServiceEndpoint, configv1.IBMCloudServiceIAM, iamServiceEndpoint),
 		},
 		{
 			name: "resource-controller rename",

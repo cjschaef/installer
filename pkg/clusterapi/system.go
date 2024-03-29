@@ -215,8 +215,8 @@ func (c *system) Run(ctx context.Context, installConfig *installconfig.InstallCo
 				ibmcloudFlags,
 				map[string]string{
 					"IBMCLOUD_AUTH_TYPE": "iam",
-					"IBMCLOUD_API_KEY":    os.Getenv("IC_API_KEY"),
-					"LOGLEVEL":           5,
+					"IBMCLOUD_API_KEY":   os.Getenv("IC_API_KEY"),
+					"LOGLEVEL":           "5",
 				},
 			),
 		)
