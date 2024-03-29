@@ -40,7 +40,7 @@ type API interface {
 	GetAPIKey() string
 	GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error)
 	GetCISInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error)
-	GetCOSBucketByName(ctx context. Context, cosInstanceID string, bucketName string) (*ibms3.Bucket, error)
+	GetCOSBucketByName(ctx context.Context, cosInstanceID string, bucketName string) (*ibms3.Bucket, error)
 	GetCOSInstanceByName(ctx context.Context, cosName string) (*resourcecontrollerv2.ResourceInstance, error)
 	GetDNSInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error)
 	GetDNSInstancePermittedNetworks(ctx context.Context, dnsID string, dnsZone string) ([]string, error)
@@ -254,7 +254,7 @@ func (c *Client) GetCOSInstanceByName(ctx context.Context, cosName string) (*res
 
 	listResourceInstanceResponse, _, err := c.controllerAPI.ListResourceInstances(options)
 	if err != nil {
-	return nil, fmt.Errorf("failed to list cos instances %w", err)
+		return nil, fmt.Errorf("failed to list cos instances %w", err)
 	}
 	for _, instance := range listResourceInstanceResponse.Resources {
 		if *instance.Name == cosName {

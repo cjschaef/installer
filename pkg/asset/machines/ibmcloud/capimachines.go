@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	ibmcloudprovider "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
@@ -14,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/types"
+	ibmcloudprovider "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
 )
 
 func GenerateMachines(ctx context.Context, infraID string, config *types.InstallConfig, subnets map[string]string, pool *types.MachinePool, imageName string, role string) ([]*asset.RuntimeFile, error) {
@@ -51,7 +51,7 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 		}*/
 		networkInterface := capibmcloudv1.NetworkInterface{
 			// SecurityGroups: securityGroups,
-			Subnet:         providerSpec.PrimaryNetworkInterface.Subnet,
+			Subnet: providerSpec.PrimaryNetworkInterface.Subnet,
 		}
 		// TODO(cjschaef): See if we can lookup the IBM Cloud VPC SSH key (Name or ID) via the public key from InstallConfig
 		// sshKeys := ...
@@ -64,15 +64,15 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: capiutils.Namespace,
 				Name:      machine.Name,
-				Labels:    map[string]string{
+				Labels: map[string]string{
 					"cluster.x-k8s.io/control-plane": "",
 				},
 			},
 			Spec: capibmcloudv1.IBMVPCMachineSpec{
-				BootVolume:              bootVolume,
+				BootVolume: bootVolume,
 				// DedicatedHost:           dedicatedHost,
-				Image:                   image,
-				Name:                    machine.Name,
+				Image: image,
+				Name:  machine.Name,
 				// NetworkResourceGroup:    providerSpec.NetworkResourceGroup,
 				PrimaryNetworkInterface: networkInterface,
 				Profile:                 providerSpec.Profile,
@@ -80,7 +80,7 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 				// ResourceGroup:           providerSpec.ResourceGroup,
 				// SSHKeys:                 sshKeys,
 				// UserDataSecret:          fmt.Sprintf("%s-user-data", role),
-				Zone:                    providerSpec.Zone,
+				Zone: providerSpec.Zone,
 			},
 		}
 
