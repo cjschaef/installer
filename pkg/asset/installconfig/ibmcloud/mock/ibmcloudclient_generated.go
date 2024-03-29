@@ -8,6 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	s3 "github.com/IBM/ibm-cos-sdk-go/service/s3"
 	dnsrecordsv1 "github.com/IBM/networking-go-sdk/dnsrecordsv1"
 	iamidentityv1 "github.com/IBM/platform-services-go-sdk/iamidentityv1"
 	resourcecontrollerv2 "github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
@@ -83,6 +84,36 @@ func (m *MockAPI) GetCISInstance(ctx context.Context, crnstr string) (*resourcec
 func (mr *MockAPIMockRecorder) GetCISInstance(ctx, crnstr interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCISInstance", reflect.TypeOf((*MockAPI)(nil).GetCISInstance), ctx, crnstr)
+}
+
+// GetCOSBucketByName mocks base method.
+func (m *MockAPI) GetCOSBucketByName(ctx context.Context, cosInstanceID, bucketName string) (*s3.Bucket, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCOSBucketByName", ctx, cosInstanceID, bucketName)
+	ret0, _ := ret[0].(*s3.Bucket)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCOSBucketByName indicates an expected call of GetCOSBucketByName.
+func (mr *MockAPIMockRecorder) GetCOSBucketByName(ctx, cosInstanceID, bucketName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCOSBucketByName", reflect.TypeOf((*MockAPI)(nil).GetCOSBucketByName), ctx, cosInstanceID, bucketName)
+}
+
+// GetCOSInstanceByName mocks base method.
+func (m *MockAPI) GetCOSInstanceByName(ctx context.Context, cosName string) (*resourcecontrollerv2.ResourceInstance, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCOSInstanceByName", ctx, cosName)
+	ret0, _ := ret[0].(*resourcecontrollerv2.ResourceInstance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCOSInstanceByName indicates an expected call of GetCOSInstanceByName.
+func (mr *MockAPIMockRecorder) GetCOSInstanceByName(ctx, cosName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCOSInstanceByName", reflect.TypeOf((*MockAPI)(nil).GetCOSInstanceByName), ctx, cosName)
 }
 
 // GetDNSInstance mocks base method.
