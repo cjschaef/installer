@@ -7,13 +7,13 @@ import (
 	"os"
 
 	"github.com/IBM/go-sdk-core/v5/core"
-	configv1 "github.com/openshift/api/config/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	capibmcloud "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
 	capi "sigs.k8s.io/cluster-api/api/v1beta1"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	ibmcloudic "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
@@ -99,7 +99,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		return nil, fmt.Errorf("failed collecting compute subnets %w", err)
 	}
 	capiComputeSubnets := getCAPISubnets(computeSubnets)
-	
+
 	// Create a consolidated set of all subnets, to use when generating SecurityGroups (this should prevent duplicates that appear in both subnet slices), resulting in duplicate SecurityGroupRules for subnet CIDR's. We may not have CIDR's until Infrastructure creation, so rely on Subnet names, to lookup CIDR's at runtime.
 	capiConsolidatedSubnets := consolidateCAPISubnets(capiControlPlaneSubnets, capiComputeSubnets)
 	vpcSecurityGroups := getVPCSecurityGroups(clusterID.InfraID, vpcName, networkResourceGroup, capiConsolidatedSubnets)
@@ -115,9 +115,9 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 			COSInstance: cosInstance,
 			NetworkSpec: &capibmcloud.VPCNetworkSpec{
-				ResourceGroup: ptr.To(networkResourceGroup),
-				SecurityGroups: vpcSecurityGroups,
-				ComputeSubnetsSpec: capiComputeSubnets,
+				ResourceGroup:           ptr.To(networkResourceGroup),
+				SecurityGroups:          vpcSecurityGroups,
+				ComputeSubnetsSpec:      capiComputeSubnets,
 				ControlPlaneSubnetsSpec: capiControlPlaneSubnets,
 				VPC: &capibmcloud.VPCResource{
 					Name: ptr.To(vpcName),

@@ -31,7 +31,7 @@ func buildClusterWideSecurityGroup(infraID string, vpcName string, resourceGroup
 	}
 
 	return capibmcloud.SecurityGroup{
-		Name: clusterWideSGNamePtr,
+		Name:          clusterWideSGNamePtr,
 		ResourceGroup: resourceGroupNamePtr,
 		Rules: []*capibmcloud.SecurityGroupRule{
 			{
@@ -139,7 +139,7 @@ func buildOpenshiftNetSecurityGroup(infraID string, vpcName string, resourceGrou
 	}
 
 	return capibmcloud.SecurityGroup{
-		Name: openshiftNetSGNamePtr,
+		Name:          openshiftNetSGNamePtr,
 		ResourceGroup: resourceGroupNamePtr,
 		Rules: []*capibmcloud.SecurityGroupRule{
 			{
@@ -275,7 +275,7 @@ func buildKubeAPILBSecurityGroup(infraID string, vpcName string, resourceGroupNa
 	resourceGroupNamePtr := ptr.To(resourceGroupName)
 
 	return capibmcloud.SecurityGroup{
-		Name: kubeAPILBSGNamePtr,
+		Name:          kubeAPILBSGNamePtr,
 		ResourceGroup: resourceGroupNamePtr,
 		Rules: []*capibmcloud.SecurityGroupRule{
 			{
@@ -297,7 +297,7 @@ func buildKubeAPILBSecurityGroup(infraID string, vpcName string, resourceGroupNa
 			},
 			{
 				// Kubernetes API LB - outbound
-				Action:    capibmcloud.SecurityGroupRuleActionAllow,
+				Action: capibmcloud.SecurityGroupRuleActionAllow,
 				Destination: &capibmcloud.SecurityGroupRulePrototype{
 					PortRange: &capibmcloud.PortRange{
 						MaximumPort: 6443,
@@ -332,7 +332,7 @@ func buildKubeAPILBSecurityGroup(infraID string, vpcName string, resourceGroupNa
 			},
 			{
 				// Machine Config Server LB - outbound
-				Action:    capibmcloud.SecurityGroupRuleActionAllow,
+				Action: capibmcloud.SecurityGroupRuleActionAllow,
 				Destination: &capibmcloud.SecurityGroupRulePrototype{
 					PortRange: &capibmcloud.PortRange{
 						MaximumPort: 22623,
@@ -363,7 +363,7 @@ func buildControlPlaneSecurityGroup(infraID string, vpcName string, resourceGrou
 	resourceGroupNamePtr := ptr.To(resourceGroupName)
 
 	return capibmcloud.SecurityGroup{
-		Name: controlPlaneSGNamePtr,
+		Name:          controlPlaneSGNamePtr,
 		ResourceGroup: resourceGroupNamePtr,
 		Rules: []*capibmcloud.SecurityGroupRule{
 			{
@@ -451,7 +451,7 @@ func buildCPInternalSecurityGroup(infraID string, vpcName string, resourceGroupN
 	resourceGroupNamePtr := ptr.To(resourceGroupName)
 
 	return capibmcloud.SecurityGroup{
-		Name: cpInternalSGNamePtr,
+		Name:          cpInternalSGNamePtr,
 		ResourceGroup: resourceGroupNamePtr,
 		Rules: []*capibmcloud.SecurityGroupRule{
 			{

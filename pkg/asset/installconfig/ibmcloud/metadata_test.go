@@ -8,9 +8,9 @@ import (
 	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/golang/mock/gomock"
-	configv1 "github.com/openshift/api/config/v1"
 	"github.com/stretchr/testify/assert"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig/ibmcloud/mock"
 	"github.com/openshift/installer/pkg/asset/installconfig/ibmcloud/responses"
 	"github.com/openshift/installer/pkg/types"
@@ -886,7 +886,7 @@ func TestClient(t *testing.T) {
 }
 
 func TestGetRegionAndEndpointsFlag(t *testing.T) {
-	testCases := []struct{
+	testCases := []struct {
 		name          string
 		edits         editMetadata
 		expectedValue string
@@ -934,7 +934,7 @@ func TestGetRegionAndEndpointsFlag(t *testing.T) {
 		{
 			name: "resource-controller rename",
 			edits: editMetadata{
-				func (m *Metadata) {
+				func(m *Metadata) {
 					m.serviceEndpoints = []configv1.IBMCloudServiceEndpoint{
 						{
 							Name: configv1.IBMCloudServiceIAM,
@@ -952,7 +952,7 @@ func TestGetRegionAndEndpointsFlag(t *testing.T) {
 		{
 			name: "vpc rename",
 			edits: editMetadata{
-				func (m *Metadata) {
+				func(m *Metadata) {
 					m.serviceEndpoints = []configv1.IBMCloudServiceEndpoint{
 						{
 							Name: configv1.IBMCloudServiceIAM,
