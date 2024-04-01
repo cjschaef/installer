@@ -1,10 +1,13 @@
 package ibmcloud
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -37,6 +40,10 @@ import (
 
 // API represents the calls made to the API.
 type API interface {
+	CreateCOSBucket(ctx context.Context, cosInstanceID string, bucketName string) error
+	CreateCOSInstance(ctx context.Context, cosName string, resourceGroupID string) (*resourcecontrollerv2.ResourceInstance, error)
+	CreateCOSObject(ctx context.Context, sourceFile string, cosInstanceID string, bucketName string) error
+	CreateResourceGroup(ctx context.Context, rgName string) error
 	GetAPIKey() string
 	GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error)
 	GetCISInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error)
@@ -155,6 +162,91 @@ func (c *Client) loadSDKServices() error {
 	return nil
 }
 
+// CreateCOSBucket will create a new COS Bucket in the COS Instance, based on the Instance ID.
+func (c *Client) CreateCOSBucket(ctx context.Context, cosInstanceID string, bucketName string) error {
+	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	cosClient := c.getCOSClient(cosInstanceID)
+
+	options := &ibms3.CreateBucketInput{
+
+	}
+	_, err := cosClient.CreateBucket(options)
+	if err != nil {
+		return fmt.Errorf("failed to create cos bucket: %w", err)
+	}
+	return nil
+}
+
+// CreateCOSInstance will create a new COS Instance and return the ResourceInstance details.
+func (c *Client) CreateCOSInstance(ctx context.Context, cosName string, resourceGroupID string) (*resourcecontrollerv2.ResourceInstance, error) {
+	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	createOptions := c.controllerAPI.NewCreateResourceInstanceOptions(cosName, "Global", resourceGroupID, cosServiceID)
+
+	instance, _, err := c.controllerAPI.CreateResourceInstance(createOptions)
+	if err != nil {
+		return nil, fmt.Errorf("failed creating new COS instance: %w", err)
+	}
+
+	return instance, nil
+}
+
+// CreateCOSObject will (upload) create a new COS object in the designated COS instance and bucket.
+func (c *Client) CreateCOSObject(ctx context.Context, sourceFile string, cosInstanceID string, bucketName string) error {
+	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	cosClient := c.getCOSClient(cosInstanceID)
+
+	fileData, err := ioutil.ReadFile(sourceFile)
+	if err != nil {
+		return fmt.Errorf("failed reading source file: %w", err)
+	}
+	fileName := filepath.Base(sourceFile)
+
+	options := &ibms3.PutObjectInput{
+		Body:   cosaws.ReadSeekCloser(bytes.NewReader(fileData)),
+		Bucket: cosaws.String(bucketName),
+		Key:    cosaws.String(fileName),
+	}
+
+	_, err = cosClient.PutObject(options)
+	if err != nil {
+		return fmt.Errorf("failed creating cos object: %w", err)
+	}
+	return nil
+}
+
+// CreateResourceGroup creates a new IBM Cloud Resource Group.
+func (c *Client) CreateResourceGroup(ctx context.Context, rgName string) error {
+	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	createRGOptions := c.managementAPI.NewCreateResourceGroupOptions()
+	createRGOptions.SetName(rgName)
+
+	// Create the Resource Group
+	result, _, err := c.managementAPI.CreateResourceGroup(createRGOptions)
+	if err != nil {
+		return fmt.Errorf("failed creating new resource group: %w", err)
+	}
+
+	// Verify the Resource Group now exists
+	// NOTE: the hope is that the RG is available immediately after its creation (no wait period)
+	rg, err := c.GetResourceGroup(ctx, rgName)
+	if err != nil {
+		return fmt.Errorf("failed verifying resource group was created: %w", err)
+	}
+	// ID and CRN should match
+	if result.ID != rg.ID || result.CRN != rg.CRN {
+		return fmt.Errorf("expected resource group id or crn does not match found resource group: %w", err)
+	}
+	return nil
+}
+
 // GetAPIKey gets the API Key.
 func (c *Client) GetAPIKey() string {
 	return c.apiKey
@@ -212,27 +304,14 @@ func (c *Client) GetCOSBucketByName(ctx context.Context, cosInstanceID string, b
 	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
-	config := cosaws.NewConfig()
-	// If an IAM service endpoint override was provided, use it to build the auth endpoint for the COS client (default is used for empty string)
-	var authEndpoint string
-	if c.iamServiceEndpointOverride != "" {
-		authEndpoint = fmt.Sprintf("%s/%s", c.iamServiceEndpointOverride, iamTokenPath)
-	}
-	// Setup IAM credentials for COS client, passing in the IAM auth endpoint
-	config.WithCredentials(ibmiam.NewStaticCredentials(cosaws.NewConfig(), authEndpoint, c.apiKey, cosInstanceID))
-	// If a COS service endpoint override was specified, set it in the COS config
-	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceCOS, c.serviceEndpoints); overrideURL != "" {
-		config.WithEndpoint(overrideURL)
-	}
-	sess := cossession.Must(cossession.NewSession())
-	cosClient := ibms3.New(sess, config)
+	cosClient := c.getCOSClient(cosInstanceID)
 
 	options := &ibms3.ListBucketsInput{
 		IBMServiceInstanceId: ptr.To(cosInstanceID),
 	}
 	bucketOutput, err := cosClient.ListBuckets(options)
 	if err != nil {
-		return nil, fmt.Errorf("failed listing buckets %w", err)
+		return nil, fmt.Errorf("failed listing buckets: %w", err)
 	}
 
 	for _, bucket := range bucketOutput.Buckets {
@@ -242,6 +321,28 @@ func (c *Client) GetCOSBucketByName(ctx context.Context, cosInstanceID string, b
 	}
 
 	return nil, fmt.Errorf("failed to find bucket '%s' in instance %s", bucketName, cosInstanceID)
+}
+
+// getCOSClient returns a new IBM Cloud COS client session.
+func (c *Client) getCOSClient(cosInstanceID string) *ibms3.S3 {
+	config := cosaws.NewConfig()
+
+	// If an IAM service endpoint override was provided, use it to build the auth endpoint for the COS client (default is used for empty string)
+	var authEndpoint string
+	if c.iamServiceEndpointOverride != "" {
+		authEndpoint = fmt.Sprintf("%s/%s", c.iamServiceEndpointOverride, iamTokenPath)
+	}
+
+	// Setup IAM credentials for COS client, passing in the IAM auth endpoint
+	config.WithCredentials(ibmiam.NewStaticCredentials(cosaws.NewConfig(), authEndpoint, c.apiKey, cosInstanceID))
+
+	// If a COS service endpoint override was specified, set it in the COS config
+	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceCOS, c.serviceEndpoints); overrideURL != "" {
+		config.WithEndpoint(overrideURL)
+	}
+
+	sess := cossession.Must(cossession.NewSession())
+	return ibms3.New(sess, config)
 }
 
 // GetCOSInstanceByName will get the COS Instance (ResourceInstance) that matches the name provided.
@@ -254,7 +355,7 @@ func (c *Client) GetCOSInstanceByName(ctx context.Context, cosName string) (*res
 
 	listResourceInstanceResponse, _, err := c.controllerAPI.ListResourceInstances(options)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list cos instances %w", err)
+		return nil, fmt.Errorf("failed to list cos instances: %w", err)
 	}
 	for _, instance := range listResourceInstanceResponse.Resources {
 		if *instance.Name == cosName {
