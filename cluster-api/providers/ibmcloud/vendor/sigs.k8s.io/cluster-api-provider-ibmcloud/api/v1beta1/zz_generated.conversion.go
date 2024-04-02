@@ -1253,6 +1253,10 @@ func Convert_v1beta1_IBMVPCClusterSpec_To_v1beta2_IBMVPCClusterSpec(in *IBMVPCCl
 }
 
 func autoConvert_v1beta2_IBMVPCClusterSpec_To_v1beta1_IBMVPCClusterSpec(in *v1beta2.IBMVPCClusterSpec, out *IBMVPCClusterSpec, s conversion.Scope) error {
+	out.Region = in.Region
+	out.ResourceGroup = in.ResourceGroup
+	out.VPC = in.VPC
+	out.Zone = in.Zone
 	out.ControlPlaneEndpoint = in.ControlPlaneEndpoint
 	if in.ControlPlaneLoadBalancer != nil {
 		in, out := &in.ControlPlaneLoadBalancer, &out.ControlPlaneLoadBalancer
@@ -1263,13 +1267,9 @@ func autoConvert_v1beta2_IBMVPCClusterSpec_To_v1beta1_IBMVPCClusterSpec(in *v1be
 	} else {
 		out.ControlPlaneLoadBalancer = nil
 	}
-	// WARNING: in.COSInstance requires manual conversion: does not exist in peer-type
+	// WARNING: in.Image requires manual conversion: does not exist in peer-type
 	// WARNING: in.LoadBalancers requires manual conversion: does not exist in peer-type
 	// WARNING: in.NetworkSpec requires manual conversion: does not exist in peer-type
-	out.Region = in.Region
-	out.ResourceGroup = in.ResourceGroup
-	out.VPC = in.VPC
-	out.Zone = in.Zone
 	return nil
 }
 
@@ -1690,6 +1690,7 @@ func autoConvert_v1beta2_VPCLoadBalancerSpec_To_v1beta1_VPCLoadBalancerSpec(in *
 	// WARNING: in.ID requires manual conversion: does not exist in peer-type
 	// WARNING: in.Public requires manual conversion: does not exist in peer-type
 	// WARNING: in.AdditionalListeners requires manual conversion: does not exist in peer-type
+	// WARNING: in.BackendPools requires manual conversion: does not exist in peer-type
 	return nil
 }
 

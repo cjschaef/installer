@@ -65,6 +65,12 @@ var (
 	// ServiceInstanceStateActive is the string representing a service instance in an active state.
 	ServiceInstanceStateActive = ServiceInstanceState("active")
 
+	// ServiceInstanceStateProvisioning is the string representing a service instance in a provisioning state.
+	ServiceInstanceStateProvisioning = ServiceInstanceState("provisioning")
+
+	// ServiceInstanceStateFailed is the string representing a service instance in a failed state.
+	ServiceInstanceStateFailed = ServiceInstanceState("failed")
+
 	// ServiceInstanceStateRemoved is the string representing a service instance in a removed state.
 	ServiceInstanceStateRemoved = ServiceInstanceState("removed")
 )
@@ -76,6 +82,12 @@ var (
 	// TransitGatewayStateAvailable is the string representing a transit gateway in available state.
 	TransitGatewayStateAvailable = TransitGatewayState("available")
 
+	// TransitGatewayStatePending is the string representing a transit gateway in pending state.
+	TransitGatewayStatePending = TransitGatewayState("pending")
+
+	// TransitGatewayStateFailed is the string representing a transit gateway in failed state.
+	TransitGatewayStateFailed = TransitGatewayState("failed")
+
 	// TransitGatewayStateDeletePending is the string representing a transit gateway in deleting state.
 	TransitGatewayStateDeletePending = TransitGatewayState("deleting")
 )
@@ -86,6 +98,15 @@ type TransitGatewayConnectionState string
 var (
 	// TransitGatewayConnectionStateAttached is the string representing a transit gateway connection in attached state.
 	TransitGatewayConnectionStateAttached = TransitGatewayConnectionState("attached")
+
+	// TransitGatewayConnectionStateFailed is the string representing a transit gateway connection in failed state.
+	TransitGatewayConnectionStateFailed = TransitGatewayConnectionState("failed")
+
+	// TransitGatewayConnectionStatePending is the string representing a transit gateway connection in pending state.
+	TransitGatewayConnectionStatePending = TransitGatewayConnectionState("pending")
+
+	// TransitGatewayConnectionStateDeleting is the string representing a transit gateway connection in deleting state.
+	TransitGatewayConnectionStateDeleting = TransitGatewayConnectionState("deleting")
 )
 
 // VPCLoadBalancerState describes the state of the load balancer.
@@ -98,8 +119,27 @@ var (
 	// VPCLoadBalancerStateCreatePending is the string representing the load balancer in a queued state.
 	VPCLoadBalancerStateCreatePending = VPCLoadBalancerState("create_pending")
 
-	// VPCLoadBalancerStateDeletePending is the string representing the load balancer in a failed state.
+	// VPCLoadBalancerStateDeletePending is the string representing the load balancer in deleting state.
 	VPCLoadBalancerStateDeletePending = VPCLoadBalancerState("delete_pending")
+)
+
+// VPCSubnetState describes the state of a VPC Subnet.
+type VPCSubnetState string
+
+var (
+	// VPCSubnetStateDeleting is the string representing a VPC subnet in deleting state.
+	VPCSubnetStateDeleting = VPCSubnetState("deleting")
+)
+
+// VPCState describes the state of a VPC.
+type VPCState string
+
+var (
+	// VPCStatePending is the string representing a VPC in pending state.
+	VPCStatePending = VPCState("pending")
+
+	// VPCStateDeleting is the string representing a VPC in deleting state.
+	VPCStateDeleting = VPCState("deleting")
 )
 
 // DHCPServerState describes the state of the DHCP Server.
@@ -108,6 +148,12 @@ type DHCPServerState string
 var (
 	// DHCPServerStateActive indicates the active state of DHCP server.
 	DHCPServerStateActive = DHCPServerState("ACTIVE")
+
+	// DHCPServerStateBuild indicates the build state of DHCP server.
+	DHCPServerStateBuild = DHCPServerState("BUILD")
+
+	// DHCPServerStateError indicates the error state of DHCP server.
+	DHCPServerStateError = DHCPServerState("ERROR")
 )
 
 // DeletePolicy defines the policy used to identify images to be preserved.
@@ -136,10 +182,6 @@ var (
 	ResourceTypeVPC = ResourceType("vpc")
 	// ResourceTypeSubnet is VPC subnet resource.
 	ResourceTypeSubnet = ResourceType("subnet")
-	// ResourceTypePublicGateway is a VPC Public Gateway resource.
-	ResourceTypePublicGateway = ResourceType("publicGateway")
-	// ResourceTypeSecurityGroup is a VPC Security Group resource.
-	ResourceTypeSecurityGroup = ResourceType("securityGroup")
 	// ResourceTypeCOSInstance is IBM COS instance resource.
 	ResourceTypeCOSInstance = ResourceType("cosInstance")
 	// ResourceTypeCOSBucket is IBM COS bucket resource.
@@ -147,31 +189,6 @@ var (
 	// ResourceTypeResourceGroup is IBM Resource Group.
 	ResourceTypeResourceGroup = ResourceType("resourceGroup")
 )
-
-type COSInstanceReference struct {
-	// name defines the name of the COS Instance.
-	// +kubebuilder:validation:MinLength:=3
-	// +kubebuilder:validation:MaxLength:=63
-	// +kubebuilder:validation:Pattern=`^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$`
-	// +required
-	Name string `json:"name"`
-
-	// id is the ID of the COS instance.
-	// +optional
-	ID *string `json:"id,omitempty"`
-
-	// bucketName is IBM Cloud COS bucket name.
-	// +optional
-	BucketName *string `json:"bucketName,omitempty"`
-
-	// bucketID is the IBM Cloud COS bucket ID.
-	// +optional
-	BucketID *string `json:"bucketID,omitempty"`
-
-	// bucketRegion is IBM Cloud COS bucket region.
-	// +optional
-	BucketRegion *string `json:"bucketRegion,omitempty"`
-}
 
 // SecurityGroupRuleAction represents the actions for a Security Group Rule.
 // +kubebuilder:validation:Enum=allow;deny
@@ -202,8 +219,8 @@ type SecurityGroupRuleProtocol string
 const (
 	// SecurityGroupRuleProtocolAll defines the Rule is for all network protocols.
 	SecurityGroupRuleProtocolAll SecurityGroupRuleProtocol = vpcv1.NetworkACLRuleProtocolAllConst
-	// SecurityGroupRuleProtocolICMP defiens the Rule is for ICMP network protocol.
-	SecurityGroupRuleProtocolICMP SecurityGroupRuleProtocol = vpcv1.NetworkACLRuleProtocolIcmpConst
+	// SecurityGroupRuleProtocolIcmp defiens the Rule is for ICMP network protocol.
+	SecurityGroupRuleProtocolIcmp SecurityGroupRuleProtocol = vpcv1.NetworkACLRuleProtocolIcmpConst
 	// SecurityGroupRuleProtocolTCP defines the Rule is for TCP network protocol.
 	SecurityGroupRuleProtocolTCP SecurityGroupRuleProtocol = vpcv1.NetworkACLRuleProtocolTCPConst
 	// SecurityGroupRuleProtocolUDP defines the Rule is for UDP network protocol.
@@ -252,23 +269,30 @@ type PortRange struct {
 }
 
 // SecurityGroup defines a VPC Security Group that should exist or be created within the specified VPC, with the specified Security Group Rules.
+// +kubebuilder:validation:XValidation:rule="!has(self.id) && !has(self.name)",message="either an id or name must be specified"
 type SecurityGroup struct {
 	// id of the Security Group.
+	// +optional
 	ID *string `json:"id,omitempty"`
 
 	// name of the Security Group.
+	// +optional
 	Name *string `json:"name,omitempty"`
 
 	// resourceGroup of the Security Group.
+	// +optional
 	ResourceGroup *string `json:"resourceGroup,omitempty"`
 
 	// rules are the Security Group Rules for the Security Group.
+	// +optional
 	Rules []*SecurityGroupRule `json:"rules,omitempty"`
 
 	// tags are tags to add to the Security Group.
-	Tags []string `json:"tags,omitempty"`
+	// +optional
+	Tags []*string `json:"tags,omitempty"`
 
 	// vpc is the IBM Cloud VPC for the Security Group.
+	// +optional
 	VPC *VPCResourceReference `json:"vpc,omitempty"`
 }
 
@@ -291,10 +315,12 @@ type SecurityGroupRule struct {
 	Direction SecurityGroupRuleDirection `json:"direction"`
 
 	// securityGroupID is the ID of the Security Group for the Security Group Rule.
+	// +optional
 	SecurityGroupID *string `json:"securityGroupID,omitempty"`
 
 	// source is a SecurityGroupRulePrototype which defines the source of inbound traffic for the Security Group Rule.
 	// Only used when direction is SecurityGroupRuleDirectionInbound.
+	// +optional
 	Source *SecurityGroupRulePrototype `json:"source,omitempty"`
 }
 
@@ -383,7 +409,4 @@ type VPCResource struct {
 	// +kubebuilder:validation:MinLength=1
 	// +optional
 	Name *string `json:"name,omitempty"`
-
-	// type is the type of VPC resource.
-	Type *ResourceType `json:"type,omitempty"`
 }

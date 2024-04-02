@@ -311,6 +311,60 @@ spec:
                       x-kubernetes-list-map-keys:
                       - port
                       x-kubernetes-list-type: map
+                    backendPools:
+                      description: backendPools defines the LB's backend pools.
+                      items:
+                        description: BackendPoolSpec defines the desired configuration
+                          of a VPC Load Balancer Backend Pool.
+                        properties:
+                          algorithm:
+                            description: algorithm defines the load balancing algorithm
+                              to use.
+                            type: string
+                          healthDelay:
+                            description: healthDelay defines the seconds to wait between
+                              health checks.
+                            format: int64
+                            type: integer
+                          healthMonitorPort:
+                            description: healthMonitorPort defines the port to perform
+                              health monitoring on.
+                            format: int64
+                            type: integer
+                          healthMonitorURL:
+                            description: healthMonitorURL defines the URL to use for
+                              health monitoring.
+                            type: string
+                          healthRetries:
+                            description: healthRetries defines the max retries for
+                              health check.
+                            format: int64
+                            type: integer
+                          healthTimeout:
+                            description: healthTimeout defines the seconds to wait
+                              for a health check response.
+                            format: int64
+                            type: integer
+                          healthType:
+                            description: healthType defines the protocol used for
+                              health checks.
+                            type: string
+                          name:
+                            description: name defines the name of the Backend Pool.
+                            type: string
+                          protocol:
+                            description: protocol defines the protocol to use for
+                              the Backend Pool.
+                            type: string
+                        required:
+                        - algorithm
+                        - healthDelay
+                        - healthRetries
+                        - healthTimeout
+                        - healthType
+                        - protocol
+                        type: object
+                      type: array
                     id:
                       description: id of the loadbalancer
                       type: string
@@ -986,6 +1040,61 @@ spec:
                               x-kubernetes-list-map-keys:
                               - port
                               x-kubernetes-list-type: map
+                            backendPools:
+                              description: backendPools defines the LB's backend pools.
+                              items:
+                                description: BackendPoolSpec defines the desired configuration
+                                  of a VPC Load Balancer Backend Pool.
+                                properties:
+                                  algorithm:
+                                    description: algorithm defines the load balancing
+                                      algorithm to use.
+                                    type: string
+                                  healthDelay:
+                                    description: healthDelay defines the seconds to
+                                      wait between health checks.
+                                    format: int64
+                                    type: integer
+                                  healthMonitorPort:
+                                    description: healthMonitorPort defines the port
+                                      to perform health monitoring on.
+                                    format: int64
+                                    type: integer
+                                  healthMonitorURL:
+                                    description: healthMonitorURL defines the URL
+                                      to use for health monitoring.
+                                    type: string
+                                  healthRetries:
+                                    description: healthRetries defines the max retries
+                                      for health check.
+                                    format: int64
+                                    type: integer
+                                  healthTimeout:
+                                    description: healthTimeout defines the seconds
+                                      to wait for a health check response.
+                                    format: int64
+                                    type: integer
+                                  healthType:
+                                    description: healthType defines the protocol used
+                                      for health checks.
+                                    type: string
+                                  name:
+                                    description: name defines the name of the Backend
+                                      Pool.
+                                    type: string
+                                  protocol:
+                                    description: protocol defines the protocol to
+                                      use for the Backend Pool.
+                                    type: string
+                                required:
+                                - algorithm
+                                - healthDelay
+                                - healthRetries
+                                - healthTimeout
+                                - healthType
+                                - protocol
+                                type: object
+                              type: array
                             id:
                               description: id of the loadbalancer
                               type: string
@@ -2811,7 +2920,7 @@ spec:
             description: IBMVPCClusterSpec defines the desired state of IBMVPCCluster.
             properties:
               controlPlaneEndpoint:
-                description: controlPlaneEndpoint represents the endpoint used to
+                description: ControlPlaneEndpoint represents the endpoint used to
                   communicate with the control plane.
                 properties:
                   host:
@@ -2826,9 +2935,8 @@ spec:
                 - port
                 type: object
               controlPlaneLoadBalancer:
-                description: |-
-                  ControlPlaneLoadBalancer is optional configuration for customizing control plane behavior.
-                  dep: use LoadBalancers instead
+                description: ControlPlaneLoadBalancer is optional configuration for
+                  customizing control plane behavior.
                 properties:
                   additionalListeners:
                     description: AdditionalListeners sets the additional listeners
@@ -2851,6 +2959,60 @@ spec:
                     x-kubernetes-list-map-keys:
                     - port
                     x-kubernetes-list-type: map
+                  backendPools:
+                    description: backendPools defines the LB's backend pools.
+                    items:
+                      description: BackendPoolSpec defines the desired configuration
+                        of a VPC Load Balancer Backend Pool.
+                      properties:
+                        algorithm:
+                          description: algorithm defines the load balancing algorithm
+                            to use.
+                          type: string
+                        healthDelay:
+                          description: healthDelay defines the seconds to wait between
+                            health checks.
+                          format: int64
+                          type: integer
+                        healthMonitorPort:
+                          description: healthMonitorPort defines the port to perform
+                            health monitoring on.
+                          format: int64
+                          type: integer
+                        healthMonitorURL:
+                          description: healthMonitorURL defines the URL to use for
+                            health monitoring.
+                          type: string
+                        healthRetries:
+                          description: healthRetries defines the max retries for health
+                            check.
+                          format: int64
+                          type: integer
+                        healthTimeout:
+                          description: healthTimeout defines the seconds to wait for
+                            a health check response.
+                          format: int64
+                          type: integer
+                        healthType:
+                          description: healthType defines the protocol used for health
+                            checks.
+                          type: string
+                        name:
+                          description: name defines the name of the Backend Pool.
+                          type: string
+                        protocol:
+                          description: protocol defines the protocol to use for the
+                            Backend Pool.
+                          type: string
+                      required:
+                      - algorithm
+                      - healthDelay
+                      - healthRetries
+                      - healthTimeout
+                      - healthType
+                      - protocol
+                      type: object
+                    type: array
                   id:
                     description: id of the loadbalancer
                     type: string
@@ -2864,27 +3026,23 @@ spec:
                       private
                     type: boolean
                 type: object
-              cosInstance:
-                description: cosInstance is the IBM COS instance to use for cluster
-                  resources.
+              image:
+                description: image represents the Image details used for the cluster.
                 properties:
-                  bucketID:
-                    description: bucketID is the IBM Cloud COS bucket ID.
-                    type: string
-                  bucketName:
-                    description: bucketName is IBM Cloud COS bucket name.
-                    type: string
-                  bucketRegion:
-                    description: bucketRegion is IBM Cloud COS bucket region.
-                    type: string
-                  id:
-                    description: id is the ID of the COS instance.
+                  cosObjectURL:
+                    description: cosObjectURL is the URL of a IBM Cloud COS Object
+                      used as the source of the image, if necessary.
                     type: string
                   name:
-                    description: name defines the name of the COS Instance.
-                    maxLength: 63
-                    minLength: 3
-                    pattern: ^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$
+                    description: name is the name of the desired VPC Custom Image.
+                    type: string
+                  operatingSystem:
+                    description: operatingSystem is the Custom Image's Operating System
+                      name.
+                    type: string
+                  resourceGroup:
+                    description: resourceGroup is the Resource Group to create the
+                      Custom Image in.
                     type: string
                 required:
                 - name
@@ -2917,6 +3075,60 @@ spec:
                       x-kubernetes-list-map-keys:
                       - port
                       x-kubernetes-list-type: map
+                    backendPools:
+                      description: backendPools defines the LB's backend pools.
+                      items:
+                        description: BackendPoolSpec defines the desired configuration
+                          of a VPC Load Balancer Backend Pool.
+                        properties:
+                          algorithm:
+                            description: algorithm defines the load balancing algorithm
+                              to use.
+                            type: string
+                          healthDelay:
+                            description: healthDelay defines the seconds to wait between
+                              health checks.
+                            format: int64
+                            type: integer
+                          healthMonitorPort:
+                            description: healthMonitorPort defines the port to perform
+                              health monitoring on.
+                            format: int64
+                            type: integer
+                          healthMonitorURL:
+                            description: healthMonitorURL defines the URL to use for
+                              health monitoring.
+                            type: string
+                          healthRetries:
+                            description: healthRetries defines the max retries for
+                              health check.
+                            format: int64
+                            type: integer
+                          healthTimeout:
+                            description: healthTimeout defines the seconds to wait
+                              for a health check response.
+                            format: int64
+                            type: integer
+                          healthType:
+                            description: healthType defines the protocol used for
+                              health checks.
+                            type: string
+                          name:
+                            description: name defines the name of the Backend Pool.
+                            type: string
+                          protocol:
+                            description: protocol defines the protocol to use for
+                              the Backend Pool.
+                            type: string
+                        required:
+                        - algorithm
+                        - healthDelay
+                        - healthRetries
+                        - healthTimeout
+                        - healthType
+                        - protocol
+                        type: object
+                      type: array
                     id:
                       description: id of the loadbalancer
                       type: string
@@ -3278,43 +3490,31 @@ spec:
                               type: string
                           type: object
                       type: object
+                      x-kubernetes-validations:
+                      - message: either an id or name must be specified
+                        rule: '!has(self.id) && !has(self.name)'
                     type: array
                   vpc:
                     description: vpc defines the IBM Cloud VPC.
                     properties:
-                      id:
-                        description: id of the resource.
-                        minLength: 1
-                        type: string
                       name:
-                        description: name of the resource.
-                        minLength: 1
                         type: string
-                      type:
-                        description: type is the type of VPC resource.
-                        type: string
+                    required:
+                    - name
                     type: object
-                    x-kubernetes-validations:
-                    - message: an id or name must be provided
-                      rule: '!has(self.id) && !has(self.name)'
                 type: object
               region:
-                description: region defines the IBM Cloud Region the cluster resources
-                  will be deployed in.
+                description: The IBM Cloud Region the cluster lives in.
                 type: string
               resourceGroup:
-                description: resourceGroup defines the IBM Cloud resource group where
-                  the cluster resources should be created.
+                description: The VPC resources should be created under the resource
+                  group.
                 type: string
               vpc:
-                description: |-
-                  The Name of VPC.
-                  dep: use NetworkSpec instead.
+                description: The Name of VPC.
                 type: string
               zone:
-                description: |-
-                  The Name of availability zone.
-                  dep: use NetworkSpec instead.
+                description: The Name of availability zone.
                 type: string
             required:
             - region
@@ -3398,19 +3598,11 @@ spec:
                       description: VPCResourceStatus identifies a resource by crn
                         and type and whether it was created by the controller.
                       properties:
-                        controllerCreated:
-                          description: controllerCreated indicates whether the resource
-                            is created by the CAPI controller.
-                          type: boolean
                         crn:
                           description: crn defines the IBM Cloud CRN of the resource.
                           type: string
-                        type:
-                          description: type defines the type of IBM Cloud resource.
-                          type: string
                       required:
                       - crn
-                      - type
                       type: object
                     type: array
                   controlPlaneSubnets:
@@ -3420,19 +3612,11 @@ spec:
                       description: VPCResourceStatus identifies a resource by crn
                         and type and whether it was created by the controller.
                       properties:
-                        controllerCreated:
-                          description: controllerCreated indicates whether the resource
-                            is created by the CAPI controller.
-                          type: boolean
                         crn:
                           description: crn defines the IBM Cloud CRN of the resource.
                           type: string
-                        type:
-                          description: type defines the type of IBM Cloud resource.
-                          type: string
                       required:
                       - crn
-                      - type
                       type: object
                     type: array
                   loadBalancers:
@@ -3465,19 +3649,11 @@ spec:
                       description: VPCResourceStatus identifies a resource by crn
                         and type and whether it was created by the controller.
                       properties:
-                        controllerCreated:
-                          description: controllerCreated indicates whether the resource
-                            is created by the CAPI controller.
-                          type: boolean
                         crn:
                           description: crn defines the IBM Cloud CRN of the resource.
                           type: string
-                        type:
-                          description: type defines the type of IBM Cloud resource.
-                          type: string
                       required:
                       - crn
-                      - type
                       type: object
                     type: array
                   securityGroups:
@@ -3487,37 +3663,21 @@ spec:
                       description: VPCResourceStatus identifies a resource by crn
                         and type and whether it was created by the controller.
                       properties:
-                        controllerCreated:
-                          description: controllerCreated indicates whether the resource
-                            is created by the CAPI controller.
-                          type: boolean
                         crn:
                           description: crn defines the IBM Cloud CRN of the resource.
                           type: string
-                        type:
-                          description: type defines the type of IBM Cloud resource.
-                          type: string
                       required:
                       - crn
-                      - type
                       type: object
                     type: array
                   vpc:
                     description: vpc references the IBM Cloud VPC.
                     properties:
-                      controllerCreated:
-                        description: controllerCreated indicates whether the resource
-                          is created by the CAPI controller.
-                        type: boolean
                       crn:
                         description: crn defines the IBM Cloud CRN of the resource.
                         type: string
-                      type:
-                        description: type defines the type of IBM Cloud resource.
-                        type: string
                     required:
                     - crn
-                    - type
                     type: object
                 type: object
               ready:
@@ -3668,7 +3828,7 @@ spec:
                     description: IBMVPCClusterSpec defines the desired state of IBMVPCCluster.
                     properties:
                       controlPlaneEndpoint:
-                        description: controlPlaneEndpoint represents the endpoint
+                        description: ControlPlaneEndpoint represents the endpoint
                           used to communicate with the control plane.
                         properties:
                           host:
@@ -3683,9 +3843,8 @@ spec:
                         - port
                         type: object
                       controlPlaneLoadBalancer:
-                        description: |-
-                          ControlPlaneLoadBalancer is optional configuration for customizing control plane behavior.
-                          dep: use LoadBalancers instead
+                        description: ControlPlaneLoadBalancer is optional configuration
+                          for customizing control plane behavior.
                         properties:
                           additionalListeners:
                             description: AdditionalListeners sets the additional listeners
@@ -3709,6 +3868,61 @@ spec:
                             x-kubernetes-list-map-keys:
                             - port
                             x-kubernetes-list-type: map
+                          backendPools:
+                            description: backendPools defines the LB's backend pools.
+                            items:
+                              description: BackendPoolSpec defines the desired configuration
+                                of a VPC Load Balancer Backend Pool.
+                              properties:
+                                algorithm:
+                                  description: algorithm defines the load balancing
+                                    algorithm to use.
+                                  type: string
+                                healthDelay:
+                                  description: healthDelay defines the seconds to
+                                    wait between health checks.
+                                  format: int64
+                                  type: integer
+                                healthMonitorPort:
+                                  description: healthMonitorPort defines the port
+                                    to perform health monitoring on.
+                                  format: int64
+                                  type: integer
+                                healthMonitorURL:
+                                  description: healthMonitorURL defines the URL to
+                                    use for health monitoring.
+                                  type: string
+                                healthRetries:
+                                  description: healthRetries defines the max retries
+                                    for health check.
+                                  format: int64
+                                  type: integer
+                                healthTimeout:
+                                  description: healthTimeout defines the seconds to
+                                    wait for a health check response.
+                                  format: int64
+                                  type: integer
+                                healthType:
+                                  description: healthType defines the protocol used
+                                    for health checks.
+                                  type: string
+                                name:
+                                  description: name defines the name of the Backend
+                                    Pool.
+                                  type: string
+                                protocol:
+                                  description: protocol defines the protocol to use
+                                    for the Backend Pool.
+                                  type: string
+                              required:
+                              - algorithm
+                              - healthDelay
+                              - healthRetries
+                              - healthTimeout
+                              - healthType
+                              - protocol
+                              type: object
+                            type: array
                           id:
                             description: id of the loadbalancer
                             type: string
@@ -3722,27 +3936,25 @@ spec:
                               or private
                             type: boolean
                         type: object
-                      cosInstance:
-                        description: cosInstance is the IBM COS instance to use for
-                          cluster resources.
+                      image:
+                        description: image represents the Image details used for the
+                          cluster.
                         properties:
-                          bucketID:
-                            description: bucketID is the IBM Cloud COS bucket ID.
-                            type: string
-                          bucketName:
-                            description: bucketName is IBM Cloud COS bucket name.
-                            type: string
-                          bucketRegion:
-                            description: bucketRegion is IBM Cloud COS bucket region.
-                            type: string
-                          id:
-                            description: id is the ID of the COS instance.
+                          cosObjectURL:
+                            description: cosObjectURL is the URL of a IBM Cloud COS
+                              Object used as the source of the image, if necessary.
                             type: string
                           name:
-                            description: name defines the name of the COS Instance.
-                            maxLength: 63
-                            minLength: 3
-                            pattern: ^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$
+                            description: name is the name of the desired VPC Custom
+                              Image.
+                            type: string
+                          operatingSystem:
+                            description: operatingSystem is the Custom Image's Operating
+                              System name.
+                            type: string
+                          resourceGroup:
+                            description: resourceGroup is the Resource Group to create
+                              the Custom Image in.
                             type: string
                         required:
                         - name
@@ -3776,6 +3988,61 @@ spec:
                               x-kubernetes-list-map-keys:
                               - port
                               x-kubernetes-list-type: map
+                            backendPools:
+                              description: backendPools defines the LB's backend pools.
+                              items:
+                                description: BackendPoolSpec defines the desired configuration
+                                  of a VPC Load Balancer Backend Pool.
+                                properties:
+                                  algorithm:
+                                    description: algorithm defines the load balancing
+                                      algorithm to use.
+                                    type: string
+                                  healthDelay:
+                                    description: healthDelay defines the seconds to
+                                      wait between health checks.
+                                    format: int64
+                                    type: integer
+                                  healthMonitorPort:
+                                    description: healthMonitorPort defines the port
+                                      to perform health monitoring on.
+                                    format: int64
+                                    type: integer
+                                  healthMonitorURL:
+                                    description: healthMonitorURL defines the URL
+                                      to use for health monitoring.
+                                    type: string
+                                  healthRetries:
+                                    description: healthRetries defines the max retries
+                                      for health check.
+                                    format: int64
+                                    type: integer
+                                  healthTimeout:
+                                    description: healthTimeout defines the seconds
+                                      to wait for a health check response.
+                                    format: int64
+                                    type: integer
+                                  healthType:
+                                    description: healthType defines the protocol used
+                                      for health checks.
+                                    type: string
+                                  name:
+                                    description: name defines the name of the Backend
+                                      Pool.
+                                    type: string
+                                  protocol:
+                                    description: protocol defines the protocol to
+                                      use for the Backend Pool.
+                                    type: string
+                                required:
+                                - algorithm
+                                - healthDelay
+                                - healthRetries
+                                - healthTimeout
+                                - healthType
+                                - protocol
+                                type: object
+                              type: array
                             id:
                               description: id of the loadbalancer
                               type: string
@@ -4157,43 +4424,31 @@ spec:
                                       type: string
                                   type: object
                               type: object
+                              x-kubernetes-validations:
+                              - message: either an id or name must be specified
+                                rule: '!has(self.id) && !has(self.name)'
                             type: array
                           vpc:
                             description: vpc defines the IBM Cloud VPC.
                             properties:
-                              id:
-                                description: id of the resource.
-                                minLength: 1
-                                type: string
                               name:
-                                description: name of the resource.
-                                minLength: 1
                                 type: string
-                              type:
-                                description: type is the type of VPC resource.
-                                type: string
+                            required:
+                            - name
                             type: object
-                            x-kubernetes-validations:
-                            - message: an id or name must be provided
-                              rule: '!has(self.id) && !has(self.name)'
                         type: object
                       region:
-                        description: region defines the IBM Cloud Region the cluster
-                          resources will be deployed in.
+                        description: The IBM Cloud Region the cluster lives in.
                         type: string
                       resourceGroup:
-                        description: resourceGroup defines the IBM Cloud resource
-                          group where the cluster resources should be created.
+                        description: The VPC resources should be created under the
+                          resource group.
                         type: string
                       vpc:
-                        description: |-
-                          The Name of VPC.
-                          dep: use NetworkSpec instead.
+                        description: The Name of VPC.
                         type: string
                       zone:
-                        description: |-
-                          The Name of availability zone.
-                          dep: use NetworkSpec instead.
+                        description: The Name of availability zone.
                         type: string
                     required:
                     - region
