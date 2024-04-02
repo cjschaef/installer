@@ -3029,9 +3029,17 @@ spec:
               image:
                 description: image represents the Image details used for the cluster.
                 properties:
-                  cosObjectURL:
-                    description: cosObjectURL is the URL of a IBM Cloud COS Object
-                      used as the source of the image, if necessary.
+                  cosBucket:
+                    description: cosBucket is the name of the IBM Cloud COS Bucket
+                      containing the source of the image, if necessary.
+                    type: string
+                  cosInstance:
+                    description: cosInstance is the name of the IBM Cloud COS Instance
+                      containing the source of the image, if necessary.
+                    type: string
+                  cosObject:
+                    description: cosObject is the name of a IBM Cloud COS Object used
+                      as the source of the image, if necessary.
                     type: string
                   name:
                     description: name is the name of the desired VPC Custom Image.
@@ -3047,6 +3055,11 @@ spec:
                 required:
                 - name
                 type: object
+                x-kubernetes-validations:
+                - message: if any of cosInstance, cosBucket, or cosObject are specified,
+                    all must be specified
+                  rule: (has(self.cosInstance) || (has(self.cosBucket) || (has(self.cosObject))
+                    && (!has(self.cosInstance) || !has(self.cosBucket) || !has(self.cosObject))
               loadbalancers:
                 description: loadBalancers is a set of VPC Load Balancers definition
                   to use for the cluster.
@@ -3497,11 +3510,18 @@ spec:
                   vpc:
                     description: vpc defines the IBM Cloud VPC.
                     properties:
-                      name:
+                      id:
+                        description: id of the resource.
+                        minLength: 1
                         type: string
-                    required:
-                    - name
+                      name:
+                        description: name of the resource.
+                        minLength: 1
+                        type: string
                     type: object
+                    x-kubernetes-validations:
+                    - message: an id or name must be provided
+                      rule: '!has(self.id) && !has(self.name)'
                 type: object
               region:
                 description: The IBM Cloud Region the cluster lives in.
@@ -3940,8 +3960,17 @@ spec:
                         description: image represents the Image details used for the
                           cluster.
                         properties:
-                          cosObjectURL:
-                            description: cosObjectURL is the URL of a IBM Cloud COS
+                          cosBucket:
+                            description: cosBucket is the name of the IBM Cloud COS
+                              Bucket containing the source of the image, if necessary.
+                            type: string
+                          cosInstance:
+                            description: cosInstance is the name of the IBM Cloud
+                              COS Instance containing the source of the image, if
+                              necessary.
+                            type: string
+                          cosObject:
+                            description: cosObject is the name of a IBM Cloud COS
                               Object used as the source of the image, if necessary.
                             type: string
                           name:
@@ -3959,6 +3988,12 @@ spec:
                         required:
                         - name
                         type: object
+                        x-kubernetes-validations:
+                        - message: if any of cosInstance, cosBucket, or cosObject
+                            are specified, all must be specified
+                          rule: (has(self.cosInstance) || (has(self.cosBucket) ||
+                            (has(self.cosObject)) && (!has(self.cosInstance) || !has(self.cosBucket)
+                            || !has(self.cosObject))
                       loadbalancers:
                         description: loadBalancers is a set of VPC Load Balancers
                           definition to use for the cluster.
@@ -4431,11 +4466,18 @@ spec:
                           vpc:
                             description: vpc defines the IBM Cloud VPC.
                             properties:
-                              name:
+                              id:
+                                description: id of the resource.
+                                minLength: 1
                                 type: string
-                            required:
-                            - name
+                              name:
+                                description: name of the resource.
+                                minLength: 1
+                                type: string
                             type: object
+                            x-kubernetes-validations:
+                            - message: an id or name must be provided
+                              rule: '!has(self.id) && !has(self.name)'
                         type: object
                       region:
                         description: The IBM Cloud Region the cluster lives in.
