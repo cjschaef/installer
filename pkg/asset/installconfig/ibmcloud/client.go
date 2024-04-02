@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -38,14 +37,14 @@ import (
 
 // API represents the calls made to the API.
 type API interface {
-	CreateCOSBucket(ctx context.Context, cosInstanceID string, bucketName string) error
+	CreateCOSBucket(ctx context.Context, cosInstanceID string, bucketName string, region string) error
 	CreateCOSInstance(ctx context.Context, cosName string, resourceGroupID string) (*resourcecontrollerv2.ResourceInstance, error)
-	CreateCOSObject(ctx context.Context, sourceFile string, cosInstanceID string, bucketName string) error
+	CreateCOSObject(ctx context.Context, sourceData []byte, fileName string, cosInstanceID string, bucketName string, region string) error
 	CreateResourceGroup(ctx context.Context, rgName string) error
 	GetAPIKey() string
 	GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error)
 	GetCISInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error)
-	GetCOSBucketByName(ctx context.Context, cosInstanceID string, bucketName string) (*ibms3.Bucket, error)
+	GetCOSBucketByName(ctx context.Context, cosInstanceID string, bucketName string, region string) (*ibms3.Bucket, error)
 	GetCOSInstanceByName(ctx context.Context, cosName string) (*resourcecontrollerv2.ResourceInstance, error)
 	GetDNSInstance(ctx context.Context, crnstr string) (*resourcecontrollerv2.ResourceInstance, error)
 	GetDNSInstancePermittedNetworks(ctx context.Context, dnsID string, dnsZone string) ([]string, error)
@@ -93,6 +92,8 @@ const (
 	cisServiceID = "75874a60-cb12-11e7-948e-37ac098eb1b9"
 	// cosServiceID is the Cloud Object Storage catalog service ID.
 	cosServiceID = "dff97f5c-bc5e-4455-b470-411c3edbe49c"
+	// cosSerivcePlanID is the Cloud Object Storage catalog service plan ID.
+	cosServicePlanID = "1e4e33e4-cfa6-4f12-9016-be594a6d5f87"
 	// dnsServiceID is the DNS Services' catalog service ID.
 	dnsServiceID = "b4ed8a30-936f-11e9-b289-1d079699cbe5"
 
@@ -101,6 +102,8 @@ const (
 	// keyProtectCRNServiceName is the service name within the IBM Cloud CRN for the Key Protect service.
 	keyProtectCRNServiceName = "kms"
 
+	// cosDefaultURLTEmplate is the default URL endpoint template, with region subsitution, for IBM Cloud Object Storage service.
+	cosDefaultURLTemplate = "s3.%s.cloud-object-storage.appdomain.cloud"
 	// hyperProtectDefaultURLTemplate is the default URL endpoint template, with region substitution, for IBM Cloud Hyper Protect service.
 	hyperProtectDefaultURLTemplate = "https://api.%s.hs-crypto.cloud.ibm.com"
 	// iamTokenDefaultURL is the default URL endpoint for IBM Cloud IAM token service.
@@ -161,14 +164,14 @@ func (c *Client) loadSDKServices() error {
 }
 
 // CreateCOSBucket will create a new COS Bucket in the COS Instance, based on the Instance ID.
-func (c *Client) CreateCOSBucket(ctx context.Context, cosInstanceID string, bucketName string) error {
+func (c *Client) CreateCOSBucket(ctx context.Context, cosInstanceID string, bucketName string, region string) error {
 	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
-	cosClient := c.getCOSClient(cosInstanceID)
+	cosClient := c.getCOSClient(cosInstanceID, region)
 
 	options := &ibms3.CreateBucketInput{
-		Bucket: ptr.To(bucketName),
+		Bucket:   ptr.To(bucketName),
 	}
 	_, err := cosClient.CreateBucket(options)
 	if err != nil {
@@ -182,7 +185,7 @@ func (c *Client) CreateCOSInstance(ctx context.Context, cosName string, resource
 	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
-	createOptions := c.controllerAPI.NewCreateResourceInstanceOptions(cosName, "Global", resourceGroupID, cosServiceID)
+	createOptions := c.controllerAPI.NewCreateResourceInstanceOptions(cosName, "Global", resourceGroupID, cosServicePlanID)
 
 	instance, _, err := c.controllerAPI.CreateResourceInstance(createOptions)
 	if err != nil {
@@ -193,25 +196,19 @@ func (c *Client) CreateCOSInstance(ctx context.Context, cosName string, resource
 }
 
 // CreateCOSObject will (upload) create a new COS object in the designated COS instance and bucket.
-func (c *Client) CreateCOSObject(ctx context.Context, sourceFile string, cosInstanceID string, bucketName string) error {
+func (c *Client) CreateCOSObject(ctx context.Context, sourceData []byte, fileName string, cosInstanceID string, bucketName string, region string) error {
 	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
-	cosClient := c.getCOSClient(cosInstanceID)
-
-	fileData, err := os.ReadFile(sourceFile)
-	if err != nil {
-		return fmt.Errorf("failed reading source file: %w", err)
-	}
-	fileName := filepath.Base(sourceFile)
+	cosClient := c.getCOSClient(cosInstanceID, region)
 
 	options := &ibms3.PutObjectInput{
-		Body:   cosaws.ReadSeekCloser(bytes.NewReader(fileData)),
+		Body:   cosaws.ReadSeekCloser(bytes.NewReader(sourceData)),
 		Bucket: cosaws.String(bucketName),
 		Key:    cosaws.String(fileName),
 	}
 
-	_, err = cosClient.PutObject(options)
+	_, err := cosClient.PutObject(options)
 	if err != nil {
 		return fmt.Errorf("failed creating cos object: %w", err)
 	}
@@ -223,25 +220,22 @@ func (c *Client) CreateResourceGroup(ctx context.Context, rgName string) error {
 	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
+	// Get the Account ID
+	apiKeyDetails, err := c.GetAuthenticatorAPIKeyDetails(ctx)
+	if err != nil {
+		return fmt.Errorf("failed retrieving account ID: %w", err)
+	}
+
 	createRGOptions := c.managementAPI.NewCreateResourceGroupOptions()
 	createRGOptions.SetName(rgName)
+	createRGOptions.SetAccountID(*apiKeyDetails.AccountID)
 
 	// Create the Resource Group
-	result, _, err := c.managementAPI.CreateResourceGroup(createRGOptions)
+	_, _, err = c.managementAPI.CreateResourceGroup(createRGOptions)
 	if err != nil {
 		return fmt.Errorf("failed creating new resource group: %w", err)
 	}
 
-	// Verify the Resource Group now exists
-	// NOTE: the hope is that the RG is available immediately after its creation (no wait period)
-	rg, err := c.GetResourceGroup(ctx, rgName)
-	if err != nil {
-		return fmt.Errorf("failed verifying resource group was created: %w", err)
-	}
-	// ID and CRN should match
-	if result.ID != rg.ID || result.CRN != rg.CRN {
-		return fmt.Errorf("expected resource group id or crn does not match found resource group: %w", err)
-	}
 	return nil
 }
 
@@ -298,11 +292,11 @@ func (c *Client) GetCISInstance(ctx context.Context, crnstr string) (*resourceco
 }
 
 // GetCOSBucketByName will get the COS Bucket that matches the name provided.
-func (c *Client) GetCOSBucketByName(ctx context.Context, cosInstanceID string, bucketName string) (*ibms3.Bucket, error) {
+func (c *Client) GetCOSBucketByName(ctx context.Context, cosInstanceID string, bucketName string, region string) (*ibms3.Bucket, error) {
 	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
-	cosClient := c.getCOSClient(cosInstanceID)
+	cosClient := c.getCOSClient(cosInstanceID, region)
 
 	options := &ibms3.ListBucketsInput{
 		IBMServiceInstanceId: ptr.To(cosInstanceID),
@@ -322,7 +316,7 @@ func (c *Client) GetCOSBucketByName(ctx context.Context, cosInstanceID string, b
 }
 
 // getCOSClient returns a new IBM Cloud COS client session.
-func (c *Client) getCOSClient(cosInstanceID string) *ibms3.S3 {
+func (c *Client) getCOSClient(cosInstanceID string, region string) *ibms3.S3 {
 	config := cosaws.NewConfig()
 
 	// If an IAM service endpoint override was provided, use it to build the auth endpoint for the COS client (default is used for empty string)
@@ -333,6 +327,7 @@ func (c *Client) getCOSClient(cosInstanceID string) *ibms3.S3 {
 
 	// Setup IAM credentials for COS client, passing in the IAM auth endpoint
 	config.WithCredentials(ibmiam.NewStaticCredentials(cosaws.NewConfig(), authEndpoint, c.apiKey, cosInstanceID))
+	config.WithEndpoint(fmt.Sprintf(cosDefaultURLTemplate, region))
 
 	// If a COS service endpoint override was specified, set it in the COS config
 	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceCOS, c.serviceEndpoints); overrideURL != "" {

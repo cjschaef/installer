@@ -72,17 +72,17 @@ func (mr *MockAPIMockRecorder) CreateCOSInstance(ctx, cosName, resourceGroupID i
 }
 
 // CreateCOSObject mocks base method.
-func (m *MockAPI) CreateCOSObject(ctx context.Context, sourceFile, cosInstanceID, bucketName string) error {
+func (m *MockAPI) CreateCOSObject(ctx context.Context, sourceData []byte, fileName, cosInstanceID, bucketName string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateCOSObject", ctx, sourceFile, cosInstanceID, bucketName)
+	ret := m.ctrl.Call(m, "CreateCOSObject", ctx, sourceData, fileName, cosInstanceID, bucketName)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateCOSObject indicates an expected call of CreateCOSObject.
-func (mr *MockAPIMockRecorder) CreateCOSObject(ctx, sourceFile, cosInstanceID, bucketName interface{}) *gomock.Call {
+func (mr *MockAPIMockRecorder) CreateCOSObject(ctx, sourceData, fileName, cosInstanceID, bucketName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCOSObject", reflect.TypeOf((*MockAPI)(nil).CreateCOSObject), ctx, sourceFile, cosInstanceID, bucketName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCOSObject", reflect.TypeOf((*MockAPI)(nil).CreateCOSObject), ctx, sourceData, fileName, cosInstanceID, bucketName)
 }
 
 // CreateResourceGroup mocks base method.
