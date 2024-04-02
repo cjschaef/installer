@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	corev1 "k8s.io/api/core/v1"
@@ -26,12 +27,12 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	// TODO(cjschaef): Add support for creating VPC Subnet Address Pools (CIDRs) during Infrastructure bring up
 	// mainCIDR := capiutils.CIDRFromInstallConfig(installConfig)
 	platform := installConfig.Config.Platform.IBMCloud
-	// Make sure we have a fresh instance of Metadata and Client, in case of any service endpoint overrides
+	// Make sure we have a fresh instance of Metadata, in case of any service endpoint overrides
 	metadata := ibmcloudic.NewMetadata(installConfig.Config)
-	client, err := metadata.Client()
-	if err != nil {
-		return nil, fmt.Errorf("failed creating IBM Cloud client %w", err)
-	}
+	//client, err := metadata.Client()
+	//if err != nil {
+	//	return nil, fmt.Errorf("failed creating IBM Cloud client %w", err)
+	//}
 
 	// Create IBM Cloud Credentials for IBM Cloud CAPI
 	ibmcloudCreds := &corev1.Secret{
@@ -41,6 +42,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		},
 		Data: make(map[string][]byte),
 	}
+	ibmcloudCreds.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Secret"))
 
 	// TODO(cjschaef): Determine whether we need these credentials or will rely on env var's for CAPI
 	// Encode the API key prior to adding it to secret data
@@ -74,19 +76,23 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		networkResourceGroup = platform.NetworkResourceGroupName
 	}
 	vpcName := platform.GetVPCName()
+	if vpcName == "" {
+		vpcName = fmt.Sprintf("%s-vpc", clusterID.InfraID)
+	}
 
-	// Lookup COS Instance ID and Bucket, based on name from infraID.
-	// They should have been created by PreProvision step.
-	instance, err := client.GetCOSInstanceByName(context.TODO(), fmt.Sprintf("%s-cos", clusterID.InfraID))
-	if err != nil {
-		return nil, fmt.Errorf("failed to find COS instance %w", err)
+	// Create the ImageSpec details, generating the names of the COS resources we expect to use.
+	// They should be created by PreProvision step.
+	cosInstanceNamePtr := ptr.To(fmt.Sprintf("%s-cos", clusterID.InfraID))
+	cosBucketNamePtr := ptr.To(fmt.Sprintf("%s-vsi-image", clusterID.InfraID))
+	// Trim the gzip extension (and anything else) from the imageName
+	trimmedImageName := strings.SplitN(imageName, ".gz", 2)[0]
+	imageSpec := &capibmcloud.ImageSpec{
+		Name:          fmt.Sprintf("%s-rhcos", clusterID.InfraID),
+		COSInstance:   cosInstanceNamePtr,
+		COSBucket:     cosBucketNamePtr,
+		COSObject:     ptr.To(trimmedImageName),
+		ResourceGroup: ptr.To(resourceGroup),
 	}
-	bucket, err := client.GetCOSBucketByName(context.TODO(), *instance.ID, fmt.Sprintf("%s-vsi-image", clusterID.InfraID))
-	if err != nil {
-		return nil, fmt.Errorf("failed to find cos bucket %w", err)
-	}
-	// Build the expected COS Object URL of the RHCOS image
-	rhcosImageURL := fmt.Sprintf("cos://%s/%s/%s", platform.Region, *bucket.Name, imageName)
 
 	// Get and transform Subnets into CAPI.Subnets
 	controlPlaneSubnets, err := metadata.ControlPlaneSubnets(context.TODO())
@@ -109,6 +115,10 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 
 	// Create the IBMVPCCluster manifest
 	ibmcloudCluster := &capibmcloud.IBMVPCCluster{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: capibmcloud.GroupVersion.String(),
+			Kind:       "IBMVPCCluster",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
 			Namespace: capiutils.Namespace,
@@ -118,11 +128,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				Host: fmt.Sprintf("api.%s.%s", installConfig.Config.ObjectMeta.Name, installConfig.Config.BaseDomain),
 				Port: 6443,
 			},
-			Image: &capibmcloud.ImageSpec{
-				Name:          fmt.Sprintf("%s-rhcos", clusterID.InfraID),
-				COSObjectURL:  ptr.To(rhcosImageURL),
-				ResourceGroup: ptr.To(resourceGroup),
-			},
+			Image:         imageSpec,
 			LoadBalancers: loadBalancers,
 			NetworkSpec: &capibmcloud.VPCNetworkSpec{
 				ResourceGroup:           ptr.To(networkResourceGroup),

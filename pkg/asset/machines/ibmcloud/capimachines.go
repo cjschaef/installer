@@ -7,7 +7,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
-	capibmcloudv1 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
+	capibmcloud "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
 	capi "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -22,7 +22,7 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 		return nil, fmt.Errorf("failed to create %s machines %w", role, err)
 	}
 
-	capibmcloudMachines := make([]*capibmcloudv1.IBMVPCMachine, 0, len(machines))
+	capibmcloudMachines := make([]*capibmcloud.IBMVPCMachine, 0, len(machines))
 	result := make([]*asset.RuntimeFile, 0, len(machines))
 
 	for _, machine := range machines {
@@ -33,14 +33,14 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 		}
 
 		// Generate the necessary machine data
-		bootVolume := &capibmcloudv1.VPCVolume{}
+		bootVolume := &capibmcloud.VPCVolume{}
 		if providerSpec.BootVolume.EncryptionKey != "" {
 			bootVolume.EncryptionKeyCRN = providerSpec.BootVolume.EncryptionKey
 		}
 		//dedicatedHost := capibmcloudv1.IBMVPCResourceReference{
 		//	Name: ptr.To(providerSpec.DedicatedHost),
 		//}
-		image := &capibmcloudv1.IBMVPCResourceReference{
+		image := &capibmcloud.IBMVPCResourceReference{
 			Name: ptr.To(imageName),
 		}
 		/*securityGroups := []*capibmcloudv1.IBMVPCResourceReference{}
@@ -49,14 +49,14 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 				Name: ptr.To(sg),
 			})
 		}*/
-		networkInterface := capibmcloudv1.NetworkInterface{
+		networkInterface := capibmcloud.NetworkInterface{
 			// SecurityGroups: securityGroups,
 			Subnet: providerSpec.PrimaryNetworkInterface.Subnet,
 		}
 		// TODO(cjschaef): See if we can lookup the IBM Cloud VPC SSH key (Name or ID) via the public key from InstallConfig
 		// sshKeys := ...
 
-		capibmcloudMachine := &capibmcloudv1.IBMVPCMachine{
+		capibmcloudMachine := &capibmcloud.IBMVPCMachine{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 				Kind:       "IBMVPCMachine",
@@ -68,7 +68,7 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 					"cluster.x-k8s.io/control-plane": "",
 				},
 			},
-			Spec: capibmcloudv1.IBMVPCMachineSpec{
+			Spec: capibmcloud.IBMVPCMachineSpec{
 				BootVolume: bootVolume,
 				// DedicatedHost:           dedicatedHost,
 				Image: image,
@@ -83,7 +83,7 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 				Zone: providerSpec.Zone,
 			},
 		}
-
+		capibmcloudMachine.SetGroupVersionKind(capibmcloud.GroupVersion.WithKind("IBMVPCMachine"))
 		capibmcloudMachines = append(capibmcloudMachines, capibmcloudMachine)
 
 		result = append(result, &asset.RuntimeFile{
@@ -111,6 +111,7 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 				},
 			},
 		}
+		capiMachine.SetGroupVersionKind(capi.GroupVersion.WithKind("Machine"))
 
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", capiMachine.Name)},
@@ -122,7 +123,7 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 	if role == "master" {
 		// Simply use the first Control Plane machine for bootstrap spec
 		bootstrapSpec := capibmcloudMachines[0].Spec
-		bootstrapMachine := &capibmcloudv1.IBMVPCMachine{
+		bootstrapMachine := &capibmcloud.IBMVPCMachine{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: capiutils.GenerateBoostrapMachineName(infraID),
 				Labels: map[string]string{
@@ -131,6 +132,7 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 			},
 			Spec: bootstrapSpec,
 		}
+		bootstrapMachine.SetGroupVersionKind(capibmcloud.GroupVersion.WithKind("IBMVPCMachine"))
 
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_inframachine_%s.yaml", bootstrapMachine.Name)},
@@ -156,6 +158,7 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 				},
 			},
 		}
+		bootstrapCAPIMachine.SetGroupVersionKind(capi.GroupVersion.WithKind("Machine"))
 
 		result = append(result, &asset.RuntimeFile{
 			File:   asset.File{Filename: fmt.Sprintf("10_machine_%s.yaml", bootstrapMachine.Name)},
