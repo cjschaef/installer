@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -170,7 +169,7 @@ func (c *Client) CreateCOSBucket(ctx context.Context, cosInstanceID string, buck
 	cosClient := c.getCOSClient(cosInstanceID)
 
 	options := &ibms3.CreateBucketInput{
-
+		Bucket: ptr.To(bucketName),
 	}
 	_, err := cosClient.CreateBucket(options)
 	if err != nil {
@@ -201,7 +200,7 @@ func (c *Client) CreateCOSObject(ctx context.Context, sourceFile string, cosInst
 
 	cosClient := c.getCOSClient(cosInstanceID)
 
-	fileData, err := ioutil.ReadFile(sourceFile)
+	fileData, err := os.ReadFile(sourceFile)
 	if err != nil {
 		return fmt.Errorf("failed reading source file: %w", err)
 	}
