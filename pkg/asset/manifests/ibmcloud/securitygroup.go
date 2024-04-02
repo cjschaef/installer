@@ -52,7 +52,7 @@ func buildClusterWideSecurityGroup(infraID string, vpcName string, resourceGroup
 				Action:    capibmcloud.SecurityGroupRuleActionAllow,
 				Direction: capibmcloud.SecurityGroupRuleDirectionInbound,
 				Source: &capibmcloud.SecurityGroupRulePrototype{
-					Protocol: capibmcloud.SecurityGroupRuleProtocolICMP,
+					Protocol: capibmcloud.SecurityGroupRuleProtocolIcmp,
 					Remotes: []capibmcloud.SecurityGroupRuleRemote{
 						{
 							RemoteType:        capibmcloud.SecurityGroupRuleRemoteTypeSG,

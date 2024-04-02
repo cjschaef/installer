@@ -117,7 +117,7 @@ func (c *Cluster) Generate(dependencies asset.Parents) error {
 		}
 	case ibmcloudtypes.Name:
 		var err error
-		out, err = ibmcloud.GenerateClusterAssets(installConfig, clusterID)
+		out, err = ibmcloud.GenerateClusterAssets(installConfig, clusterID, filepath.Base(string(*rhcosImage)))
 		if err != nil {
 			return fmt.Errorf("failed to generate IBM Cloud manifests: %w", err)
 		}

@@ -21,11 +21,12 @@ import (
 )
 
 // GenerateClusterAssets generates the manifests for the cluster-api.
-func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID) (*capiutils.GenerateClusterAssetsOutput, error) {
+func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID, imageName string) (*capiutils.GenerateClusterAssetsOutput, error) {
 	manifests := []*asset.RuntimeFile{}
 	// TODO(cjschaef): Add support for creating VPC Subnet Address Pools (CIDRs) during Infrastructure bring up
 	// mainCIDR := capiutils.CIDRFromInstallConfig(installConfig)
 	platform := installConfig.Config.Platform.IBMCloud
+	// Make sure we have a fresh instance of Metadata and Client, in case of any service endpoint overrides
 	metadata := ibmcloudic.NewMetadata(installConfig.Config)
 	client, err := metadata.Client()
 	if err != nil {
@@ -41,6 +42,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		Data: make(map[string][]byte),
 	}
 
+	// TODO(cjschaef): Determine whether we need these credentials or will rely on env var's for CAPI
 	// Encode the API key prior to adding it to secret data
 	encodedAPIKey := make([]byte, base64.StdEncoding.EncodedLen(len(os.Getenv("IC_API_KEY"))))
 	base64.StdEncoding.Encode(encodedAPIKey, []byte(os.Getenv("IC_API_KEY")))
@@ -73,7 +75,8 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	}
 	vpcName := platform.GetVPCName()
 
-	// Lookup COS Instance ID and Bucket ID, based on name from infraID
+	// Lookup COS Instance ID and Bucket, based on name from infraID.
+	// They should have been created by PreProvision step.
 	instance, err := client.GetCOSInstanceByName(context.TODO(), fmt.Sprintf("%s-cos", clusterID.InfraID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to find COS instance %w", err)
@@ -82,13 +85,10 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	if err != nil {
 		return nil, fmt.Errorf("failed to find cos bucket %w", err)
 	}
+	// Build the expected COS Object URL of the RHCOS image
+	rhcosImageURL := fmt.Sprintf("cos://%s/%s/%s", platform.Region, *bucket.Name, imageName)
 
-	cosInstance := &capibmcloud.COSInstanceReference{
-		Name:       *instance.Name,
-		ID:         instance.ID,
-		BucketName: bucket.Name,
-	}
-
+	// Get and transform Subnets into CAPI.Subnets
 	controlPlaneSubnets, err := metadata.ControlPlaneSubnets(context.TODO())
 	if err != nil {
 		return nil, fmt.Errorf("failed collecting control plane subnets %w", err)
@@ -104,6 +104,10 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	capiConsolidatedSubnets := consolidateCAPISubnets(capiControlPlaneSubnets, capiComputeSubnets)
 	vpcSecurityGroups := getVPCSecurityGroups(clusterID.InfraID, vpcName, networkResourceGroup, capiConsolidatedSubnets)
 
+	// Get the LB's
+	loadBalancers := getLoadBalancers(clusterID.InfraID, installConfig.Config.Publish)
+
+	// Create the IBMVPCCluster manifest
 	ibmcloudCluster := &capibmcloud.IBMVPCCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
@@ -112,8 +116,14 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		Spec: capibmcloud.IBMVPCClusterSpec{
 			ControlPlaneEndpoint: capi.APIEndpoint{
 				Host: fmt.Sprintf("api.%s.%s", installConfig.Config.ObjectMeta.Name, installConfig.Config.BaseDomain),
+				Port: 6443,
 			},
-			COSInstance: cosInstance,
+			Image: &capibmcloud.ImageSpec{
+				Name:          fmt.Sprintf("%s-rhcos", clusterID.InfraID),
+				COSObjectURL:  ptr.To(rhcosImageURL),
+				ResourceGroup: ptr.To(resourceGroup),
+			},
+			LoadBalancers: loadBalancers,
 			NetworkSpec: &capibmcloud.VPCNetworkSpec{
 				ResourceGroup:           ptr.To(networkResourceGroup),
 				SecurityGroups:          vpcSecurityGroups,
