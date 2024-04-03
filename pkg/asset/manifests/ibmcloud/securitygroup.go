@@ -311,6 +311,7 @@ func buildKubeAPILBSecurityGroup(infraID string, vpcName string, resourceGroupNa
 						},
 					},
 				},
+				Direction: capibmcloud.SecurityGroupRuleDirectionOutbound,
 			},
 			{
 				// Machine Config Server LB - inbound

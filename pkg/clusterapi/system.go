@@ -13,6 +13,7 @@ import (
 	"text/template"
 	"time"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
@@ -253,13 +254,19 @@ func (c *system) Run(ctx context.Context) error {
 			ibmcloudFlags = append(ibmcloudFlags, fmt.Sprintf("--service-endpoint=%s", serviceEndpoints))
 		}
 
+		iamEndpoint := "https://iam.cloud.ibm.com"
+		if overrideURL := ibmcloud.CheckServiceEndpointOverride(configv1.IBMCloudServiceIAM, installConfig.Config.Platform.IBMCloud.ServiceEndpoints); overrideURL != "" {
+			iamEndpoint = overrideURL
+		}
+
 		controllers = append(controllers,
 			c.getInfrastructureController(
 				&IBMCloud,
 				ibmcloudFlags,
 				map[string]string{
 					"IBMCLOUD_AUTH_TYPE": "iam",
-					"IBMCLOUD_API_KEY":   os.Getenv("IC_API_KEY"),
+					"IBMCLOUD_APIKEY":    os.Getenv("IC_API_KEY"),
+					"IBMCLOUD_AUTH_URL":  iamEndpoint,
 					"LOGLEVEL":           "5",
 				},
 			),
