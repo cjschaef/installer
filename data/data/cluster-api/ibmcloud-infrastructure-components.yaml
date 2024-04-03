@@ -3058,8 +3058,8 @@ spec:
                 x-kubernetes-validations:
                 - message: if any of cosInstance, cosBucket, or cosObject are specified,
                     all must be specified
-                  rule: (has(self.cosInstance) || (has(self.cosBucket) || (has(self.cosObject))
-                    && (!has(self.cosInstance) || !has(self.cosBucket) || !has(self.cosObject))
+                  rule: (has(self.cosInstance) && has(self.cosBucket) && has(self.cosObject))
+                    || (!has(self.cosInstance) && !has(self.cosBucket) && !has(self.cosObject))
               loadbalancers:
                 description: loadBalancers is a set of VPC Load Balancers definition
                   to use for the cluster.
@@ -3314,20 +3314,19 @@ spec:
                                       x-kubernetes-validations:
                                       - message: cidrSubnetName, ip, and securityGroupName
                                           are not valid for SecurityGroupRuleRemoteTypeAny
-                                          remoteType
-                                        rule: self.remoteType == 'any' && (has(self.cidrSubnetName)
-                                          || has(self.ip) || has(self.securityGroupName))
-                                      - message: cidrSubnetName is only valid for
-                                          SecurityGroupRuleRemoteTypeCIDR remoteType
-                                        rule: has(self.cidrSubnetName) && self.remoteType
-                                          != 'cidr'
-                                      - message: ip is only valid for SecurityGroupRuleRemoteTypeIP
-                                          remoteType
-                                        rule: has(self.ip) && self.remoteType != 'ip'
-                                      - message: securityGroupName is only valid for
-                                          SecurityGroupRuleRemoteTypeSG remoteType
-                                        rule: has(self.securityGroupName) && self.remoteType
-                                          != 'sg'
+                                          remoteType; cidrSubnetName is only valid
+                                          for SecurityGroupRuleRemoteTypeCIDR remoteType;
+                                          ip is only valid for SecurityGroupRuleRemoteTypeIP
+                                          remoteType; securityGroupName is only valid
+                                          for SecurityGroupRuleRemoteTypeSG remoteType
+                                        rule: (self.remoteType == 'any' && !has(self.cidrSubnetName)
+                                          && !has(self.ip) && !has(self.securityGroupName))
+                                          || (self.remoteType == 'cidr' && has(self.cidrSubnetName)
+                                          && !has(self.ip) && !has(self.securityGroupName))
+                                          || (self.remoteType == 'ip' && has(self.ip)
+                                          && !has(self.cidrSubnetName) && !has(self.securityGroupName))
+                                          || (self.remoteType == 'sg' && has(self.securityGroupName)
+                                          && !has(self.cidrSubnetName) && !has(self.ip))
                                     type: array
                                 required:
                                 - protocol
@@ -3335,12 +3334,15 @@ spec:
                                 type: object
                                 x-kubernetes-validations:
                                 - message: icmpCode and icmpType are only supported
-                                    for the ICMP protocol
-                                  rule: self.protocol != 'icmp' && (has(self.icmpCode)
-                                    || has(self.icmpType))
+                                    for the ICMP protocol, but not required for ICMP
+                                  rule: (self.protocol != 'icmp' && !has(self.icmpCode)
+                                    && !has(self.icmpType)) || self.protocol == 'icmp'
                                 - message: portRange is not valid for SecurityGroupRuleProtocolAll
-                                    protocol
-                                  rule: self.protocol == 'all' && has(self.portRange)
+                                    or SecurityGroupRuleProtocolIcmp protocols
+                                  rule: (self.protocol == 'all' && !has(self.portRange))
+                                    || (self.protocol == 'icmp' && !has(self.portRange))
+                                    || (self.protocol != 'all' && self.protocol !=
+                                    'icmp')
                               direction:
                                 description: direction defines whether the traffic
                                   is inbound or outbound for the Security Group Rule.
@@ -3437,20 +3439,19 @@ spec:
                                       x-kubernetes-validations:
                                       - message: cidrSubnetName, ip, and securityGroupName
                                           are not valid for SecurityGroupRuleRemoteTypeAny
-                                          remoteType
-                                        rule: self.remoteType == 'any' && (has(self.cidrSubnetName)
-                                          || has(self.ip) || has(self.securityGroupName))
-                                      - message: cidrSubnetName is only valid for
-                                          SecurityGroupRuleRemoteTypeCIDR remoteType
-                                        rule: has(self.cidrSubnetName) && self.remoteType
-                                          != 'cidr'
-                                      - message: ip is only valid for SecurityGroupRuleRemoteTypeIP
-                                          remoteType
-                                        rule: has(self.ip) && self.remoteType != 'ip'
-                                      - message: securityGroupName is only valid for
-                                          SecurityGroupRuleRemoteTypeSG remoteType
-                                        rule: has(self.securityGroupName) && self.remoteType
-                                          != 'sg'
+                                          remoteType; cidrSubnetName is only valid
+                                          for SecurityGroupRuleRemoteTypeCIDR remoteType;
+                                          ip is only valid for SecurityGroupRuleRemoteTypeIP
+                                          remoteType; securityGroupName is only valid
+                                          for SecurityGroupRuleRemoteTypeSG remoteType
+                                        rule: (self.remoteType == 'any' && !has(self.cidrSubnetName)
+                                          && !has(self.ip) && !has(self.securityGroupName))
+                                          || (self.remoteType == 'cidr' && has(self.cidrSubnetName)
+                                          && !has(self.ip) && !has(self.securityGroupName))
+                                          || (self.remoteType == 'ip' && has(self.ip)
+                                          && !has(self.cidrSubnetName) && !has(self.securityGroupName))
+                                          || (self.remoteType == 'sg' && has(self.securityGroupName)
+                                          && !has(self.cidrSubnetName) && !has(self.ip))
                                     type: array
                                 required:
                                 - protocol
@@ -3458,12 +3459,15 @@ spec:
                                 type: object
                                 x-kubernetes-validations:
                                 - message: icmpCode and icmpType are only supported
-                                    for the ICMP protocol
-                                  rule: self.protocol != 'icmp' && (has(self.icmpCode)
-                                    || has(self.icmpType))
+                                    for the ICMP protocol, but not required for ICMP
+                                  rule: (self.protocol != 'icmp' && !has(self.icmpCode)
+                                    && !has(self.icmpType)) || self.protocol == 'icmp'
                                 - message: portRange is not valid for SecurityGroupRuleProtocolAll
-                                    protocol
-                                  rule: self.protocol == 'all' && has(self.portRange)
+                                    or SecurityGroupRuleProtocolIcmp protocols
+                                  rule: (self.protocol == 'all' && !has(self.portRange))
+                                    || (self.protocol == 'icmp' && !has(self.portRange))
+                                    || (self.protocol != 'all' && self.protocol !=
+                                    'icmp')
                             required:
                             - action
                             - direction
@@ -3472,12 +3476,11 @@ spec:
                             - message: both destination and source cannot be provided
                               rule: (has(self.destination) && !has(self.source)) ||
                                 (!has(self.destination) && has(self.source))
-                            - message: destinationis not valid for SecurityGroupRuleDirectionInbound
-                                direction
-                              rule: has(self.destination) && self.direction == 'inbound'
-                            - message: source is not valid for SecurityGroupRuleDirectionOutbound
-                                direction
-                              rule: has(self.source) && self.direction == 'outbound'
+                            - message: destination is not valid for SecurityGroupRuleDirectionInbound
+                                direction and source is not valid for SecruityGroupRuleDirectionOutbound
+                              rule: self.direction == 'inbound' && !has(self.destination)
+                                && has(self.source) || (self.direction == 'outbound'
+                                && has(self.destination) && !has(self.source))
                           type: array
                         tags:
                           description: tags are tags to add to the Security Group.
@@ -3505,7 +3508,7 @@ spec:
                       type: object
                       x-kubernetes-validations:
                       - message: either an id or name must be specified
-                        rule: '!has(self.id) && !has(self.name)'
+                        rule: has(self.id) || has(self.name)
                     type: array
                   vpc:
                     description: vpc defines the IBM Cloud VPC.
@@ -3521,7 +3524,7 @@ spec:
                     type: object
                     x-kubernetes-validations:
                     - message: an id or name must be provided
-                      rule: '!has(self.id) && !has(self.name)'
+                      rule: has(self.id) || has(self.name)
                 type: object
               region:
                 description: The IBM Cloud Region the cluster lives in.
@@ -3991,9 +3994,9 @@ spec:
                         x-kubernetes-validations:
                         - message: if any of cosInstance, cosBucket, or cosObject
                             are specified, all must be specified
-                          rule: (has(self.cosInstance) || (has(self.cosBucket) ||
-                            (has(self.cosObject)) && (!has(self.cosInstance) || !has(self.cosBucket)
-                            || !has(self.cosObject))
+                          rule: (has(self.cosInstance) && has(self.cosBucket) && has(self.cosObject))
+                            || (!has(self.cosInstance) && !has(self.cosBucket) &&
+                            !has(self.cosObject))
                       loadbalancers:
                         description: loadBalancers is a set of VPC Load Balancers
                           definition to use for the cluster.
@@ -4253,24 +4256,25 @@ spec:
                                               x-kubernetes-validations:
                                               - message: cidrSubnetName, ip, and securityGroupName
                                                   are not valid for SecurityGroupRuleRemoteTypeAny
+                                                  remoteType; cidrSubnetName is only
+                                                  valid for SecurityGroupRuleRemoteTypeCIDR
+                                                  remoteType; ip is only valid for
+                                                  SecurityGroupRuleRemoteTypeIP remoteType;
+                                                  securityGroupName is only valid
+                                                  for SecurityGroupRuleRemoteTypeSG
                                                   remoteType
-                                                rule: self.remoteType == 'any' &&
-                                                  (has(self.cidrSubnetName) || has(self.ip)
-                                                  || has(self.securityGroupName))
-                                              - message: cidrSubnetName is only valid
-                                                  for SecurityGroupRuleRemoteTypeCIDR
-                                                  remoteType
-                                                rule: has(self.cidrSubnetName) &&
-                                                  self.remoteType != 'cidr'
-                                              - message: ip is only valid for SecurityGroupRuleRemoteTypeIP
-                                                  remoteType
-                                                rule: has(self.ip) && self.remoteType
-                                                  != 'ip'
-                                              - message: securityGroupName is only
-                                                  valid for SecurityGroupRuleRemoteTypeSG
-                                                  remoteType
-                                                rule: has(self.securityGroupName)
-                                                  && self.remoteType != 'sg'
+                                                rule: (self.remoteType == 'any' &&
+                                                  !has(self.cidrSubnetName) && !has(self.ip)
+                                                  && !has(self.securityGroupName))
+                                                  || (self.remoteType == 'cidr' &&
+                                                  has(self.cidrSubnetName) && !has(self.ip)
+                                                  && !has(self.securityGroupName))
+                                                  || (self.remoteType == 'ip' && has(self.ip)
+                                                  && !has(self.cidrSubnetName) &&
+                                                  !has(self.securityGroupName)) ||
+                                                  (self.remoteType == 'sg' && has(self.securityGroupName)
+                                                  && !has(self.cidrSubnetName) &&
+                                                  !has(self.ip))
                                             type: array
                                         required:
                                         - protocol
@@ -4278,12 +4282,17 @@ spec:
                                         type: object
                                         x-kubernetes-validations:
                                         - message: icmpCode and icmpType are only
-                                            supported for the ICMP protocol
-                                          rule: self.protocol != 'icmp' && (has(self.icmpCode)
-                                            || has(self.icmpType))
+                                            supported for the ICMP protocol, but not
+                                            required for ICMP
+                                          rule: (self.protocol != 'icmp' && !has(self.icmpCode)
+                                            && !has(self.icmpType)) || self.protocol
+                                            == 'icmp'
                                         - message: portRange is not valid for SecurityGroupRuleProtocolAll
-                                            protocol
-                                          rule: self.protocol == 'all' && has(self.portRange)
+                                            or SecurityGroupRuleProtocolIcmp protocols
+                                          rule: (self.protocol == 'all' && !has(self.portRange))
+                                            || (self.protocol == 'icmp' && !has(self.portRange))
+                                            || (self.protocol != 'all' && self.protocol
+                                            != 'icmp')
                                       direction:
                                         description: direction defines whether the
                                           traffic is inbound or outbound for the Security
@@ -4384,24 +4393,25 @@ spec:
                                               x-kubernetes-validations:
                                               - message: cidrSubnetName, ip, and securityGroupName
                                                   are not valid for SecurityGroupRuleRemoteTypeAny
+                                                  remoteType; cidrSubnetName is only
+                                                  valid for SecurityGroupRuleRemoteTypeCIDR
+                                                  remoteType; ip is only valid for
+                                                  SecurityGroupRuleRemoteTypeIP remoteType;
+                                                  securityGroupName is only valid
+                                                  for SecurityGroupRuleRemoteTypeSG
                                                   remoteType
-                                                rule: self.remoteType == 'any' &&
-                                                  (has(self.cidrSubnetName) || has(self.ip)
-                                                  || has(self.securityGroupName))
-                                              - message: cidrSubnetName is only valid
-                                                  for SecurityGroupRuleRemoteTypeCIDR
-                                                  remoteType
-                                                rule: has(self.cidrSubnetName) &&
-                                                  self.remoteType != 'cidr'
-                                              - message: ip is only valid for SecurityGroupRuleRemoteTypeIP
-                                                  remoteType
-                                                rule: has(self.ip) && self.remoteType
-                                                  != 'ip'
-                                              - message: securityGroupName is only
-                                                  valid for SecurityGroupRuleRemoteTypeSG
-                                                  remoteType
-                                                rule: has(self.securityGroupName)
-                                                  && self.remoteType != 'sg'
+                                                rule: (self.remoteType == 'any' &&
+                                                  !has(self.cidrSubnetName) && !has(self.ip)
+                                                  && !has(self.securityGroupName))
+                                                  || (self.remoteType == 'cidr' &&
+                                                  has(self.cidrSubnetName) && !has(self.ip)
+                                                  && !has(self.securityGroupName))
+                                                  || (self.remoteType == 'ip' && has(self.ip)
+                                                  && !has(self.cidrSubnetName) &&
+                                                  !has(self.securityGroupName)) ||
+                                                  (self.remoteType == 'sg' && has(self.securityGroupName)
+                                                  && !has(self.cidrSubnetName) &&
+                                                  !has(self.ip))
                                             type: array
                                         required:
                                         - protocol
@@ -4409,12 +4419,17 @@ spec:
                                         type: object
                                         x-kubernetes-validations:
                                         - message: icmpCode and icmpType are only
-                                            supported for the ICMP protocol
-                                          rule: self.protocol != 'icmp' && (has(self.icmpCode)
-                                            || has(self.icmpType))
+                                            supported for the ICMP protocol, but not
+                                            required for ICMP
+                                          rule: (self.protocol != 'icmp' && !has(self.icmpCode)
+                                            && !has(self.icmpType)) || self.protocol
+                                            == 'icmp'
                                         - message: portRange is not valid for SecurityGroupRuleProtocolAll
-                                            protocol
-                                          rule: self.protocol == 'all' && has(self.portRange)
+                                            or SecurityGroupRuleProtocolIcmp protocols
+                                          rule: (self.protocol == 'all' && !has(self.portRange))
+                                            || (self.protocol == 'icmp' && !has(self.portRange))
+                                            || (self.protocol != 'all' && self.protocol
+                                            != 'icmp')
                                     required:
                                     - action
                                     - direction
@@ -4424,14 +4439,11 @@ spec:
                                         be provided
                                       rule: (has(self.destination) && !has(self.source))
                                         || (!has(self.destination) && has(self.source))
-                                    - message: destinationis not valid for SecurityGroupRuleDirectionInbound
-                                        direction
-                                      rule: has(self.destination) && self.direction
-                                        == 'inbound'
-                                    - message: source is not valid for SecurityGroupRuleDirectionOutbound
-                                        direction
-                                      rule: has(self.source) && self.direction ==
-                                        'outbound'
+                                    - message: destination is not valid for SecurityGroupRuleDirectionInbound
+                                        direction and source is not valid for SecruityGroupRuleDirectionOutbound
+                                      rule: self.direction == 'inbound' && !has(self.destination)
+                                        && has(self.source) || (self.direction ==
+                                        'outbound' && has(self.destination) && !has(self.source))
                                   type: array
                                 tags:
                                   description: tags are tags to add to the Security
@@ -4461,7 +4473,7 @@ spec:
                               type: object
                               x-kubernetes-validations:
                               - message: either an id or name must be specified
-                                rule: '!has(self.id) && !has(self.name)'
+                                rule: has(self.id) || has(self.name)
                             type: array
                           vpc:
                             description: vpc defines the IBM Cloud VPC.
@@ -4477,7 +4489,7 @@ spec:
                             type: object
                             x-kubernetes-validations:
                             - message: an id or name must be provided
-                              rule: '!has(self.id) && !has(self.name)'
+                              rule: has(self.id) || has(self.name)
                         type: object
                       region:
                         description: The IBM Cloud Region the cluster lives in.

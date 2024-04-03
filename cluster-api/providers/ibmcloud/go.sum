@@ -36,8 +36,8 @@ github.com/cenkalti/backoff/v4 v4.2.1 h1:y4OZtCnogmCPw98Zjyt5a6+QwPLGkiQsYW5oUqy
 github.com/cenkalti/backoff/v4 v4.2.1/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyYozVcomhLiZE=
 github.com/cespare/xxhash/v2 v2.2.0 h1:DC2CZ1Ep5Y4k3ZQ899DldepgrayRUGE6BBZ/cd9Cj44=
 github.com/cespare/xxhash/v2 v2.2.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
-github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20240402201928-89b23a086be2 h1:T56G2oTIW5zI3alCq4tSJI2Ru73cvNuVK5OUlm1DM9g=
-github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20240402201928-89b23a086be2/go.mod h1:y7Dj0vBUvq6PjNz5PYGEWyHSn5eOAULgMCfXiSzgKxY=
+github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20240403213615-80c08b9edac4 h1:vqegP9rhG5C8/CjH7l/QY8XjE8r0oSjb3HOTRt1rreo=
+github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20240403213615-80c08b9edac4/go.mod h1:y7Dj0vBUvq6PjNz5PYGEWyHSn5eOAULgMCfXiSzgKxY=
 github.com/coredns/caddy v1.1.0 h1:ezvsPrT/tA/7pYDBZxu0cT0VmWk75AfIaf6GSYCNMf0=
 github.com/coredns/caddy v1.1.0/go.mod h1:A6ntJQlAWuQfFlsd9hvigKbo2WS0VUs2l1e2F+BawD4=
 github.com/coredns/corefile-migration v1.0.21 h1:W/DCETrHDiFo0Wj03EyMkaQ9fwsmSgqTCQDHpceaSsE=

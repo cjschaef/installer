@@ -159,7 +159,7 @@ type VPCLoadBalancerStatus struct {
 }
 
 // ImageSpec defines the desired state of the VPC Custom Image resources for the cluster.
-// +kubebuilder:validation:XValidation:rule="(has(self.cosInstance) || (has(self.cosBucket) || (has(self.cosObject)) && (!has(self.cosInstance) || !has(self.cosBucket) || !has(self.cosObject))",message="if any of cosInstance, cosBucket, or cosObject are specified, all must be specified"
+// +kubebuilder:validation:XValidation:rule="(has(self.cosInstance) && has(self.cosBucket) && has(self.cosObject)) || (!has(self.cosInstance) && !has(self.cosBucket) && !has(self.cosObject))",message="if any of cosInstance, cosBucket, or cosObject are specified, all must be specified"
 type ImageSpec struct {
 	// name is the name of the desired VPC Custom Image.
 	// +required

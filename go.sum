@@ -1345,8 +1345,8 @@ github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5P
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
 github.com/cjlapao/common-go v0.0.29 h1:SOiTEEmA/YWOaP37U8beyqbxjvTtWcUAuvQAchGOQLE=
 github.com/cjlapao/common-go v0.0.29/go.mod h1:OyTAY388jfEj8uaRzx0uYneFghKDLL5KP+ewSydlQ5g=
-github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20240402201928-89b23a086be2 h1:T56G2oTIW5zI3alCq4tSJI2Ru73cvNuVK5OUlm1DM9g=
-github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20240402201928-89b23a086be2/go.mod h1:y7Dj0vBUvq6PjNz5PYGEWyHSn5eOAULgMCfXiSzgKxY=
+github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20240403213615-80c08b9edac4 h1:vqegP9rhG5C8/CjH7l/QY8XjE8r0oSjb3HOTRt1rreo=
+github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20240403213615-80c08b9edac4/go.mod h1:y7Dj0vBUvq6PjNz5PYGEWyHSn5eOAULgMCfXiSzgKxY=
 github.com/clarketm/json v1.14.1 h1:43bkbTTKKdDx7crs3WHzkrnH6S1EvAF1VZrdFGMmmz4=
 github.com/clarketm/json v1.14.1/go.mod h1:ynr2LRfb0fQU34l07csRNBTcivjySLLiY1YzQqKVfdo=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
