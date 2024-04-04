@@ -43,17 +43,17 @@ func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 }
 
 // CreateCOSBucket mocks base method.
-func (m *MockAPI) CreateCOSBucket(ctx context.Context, cosInstanceID, bucketName string) error {
+func (m *MockAPI) CreateCOSBucket(ctx context.Context, cosInstanceID, bucketName, region string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateCOSBucket", ctx, cosInstanceID, bucketName)
+	ret := m.ctrl.Call(m, "CreateCOSBucket", ctx, cosInstanceID, bucketName, region)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateCOSBucket indicates an expected call of CreateCOSBucket.
-func (mr *MockAPIMockRecorder) CreateCOSBucket(ctx, cosInstanceID, bucketName interface{}) *gomock.Call {
+func (mr *MockAPIMockRecorder) CreateCOSBucket(ctx, cosInstanceID, bucketName, region interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCOSBucket", reflect.TypeOf((*MockAPI)(nil).CreateCOSBucket), ctx, cosInstanceID, bucketName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCOSBucket", reflect.TypeOf((*MockAPI)(nil).CreateCOSBucket), ctx, cosInstanceID, bucketName, region)
 }
 
 // CreateCOSInstance mocks base method.
@@ -72,17 +72,31 @@ func (mr *MockAPIMockRecorder) CreateCOSInstance(ctx, cosName, resourceGroupID i
 }
 
 // CreateCOSObject mocks base method.
-func (m *MockAPI) CreateCOSObject(ctx context.Context, sourceData []byte, fileName, cosInstanceID, bucketName string) error {
+func (m *MockAPI) CreateCOSObject(ctx context.Context, sourceData []byte, fileName, cosInstanceID, bucketName, region string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateCOSObject", ctx, sourceData, fileName, cosInstanceID, bucketName)
+	ret := m.ctrl.Call(m, "CreateCOSObject", ctx, sourceData, fileName, cosInstanceID, bucketName, region)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateCOSObject indicates an expected call of CreateCOSObject.
-func (mr *MockAPIMockRecorder) CreateCOSObject(ctx, sourceData, fileName, cosInstanceID, bucketName interface{}) *gomock.Call {
+func (mr *MockAPIMockRecorder) CreateCOSObject(ctx, sourceData, fileName, cosInstanceID, bucketName, region interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCOSObject", reflect.TypeOf((*MockAPI)(nil).CreateCOSObject), ctx, sourceData, fileName, cosInstanceID, bucketName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCOSObject", reflect.TypeOf((*MockAPI)(nil).CreateCOSObject), ctx, sourceData, fileName, cosInstanceID, bucketName, region)
+}
+
+// CreateIAMAuthorizationPolicy mocks base method.
+func (m *MockAPI) CreateIAMAuthorizationPolicy(tx context.Context, sourceServiceName, sourceServiceResourceType, targetServiceName, targetServiceInstanceID string, roles []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateIAMAuthorizationPolicy", tx, sourceServiceName, sourceServiceResourceType, targetServiceName, targetServiceInstanceID, roles)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateIAMAuthorizationPolicy indicates an expected call of CreateIAMAuthorizationPolicy.
+func (mr *MockAPIMockRecorder) CreateIAMAuthorizationPolicy(tx, sourceServiceName, sourceServiceResourceType, targetServiceName, targetServiceInstanceID, roles interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateIAMAuthorizationPolicy", reflect.TypeOf((*MockAPI)(nil).CreateIAMAuthorizationPolicy), tx, sourceServiceName, sourceServiceResourceType, targetServiceName, targetServiceInstanceID, roles)
 }
 
 // CreateResourceGroup mocks base method.
@@ -144,18 +158,18 @@ func (mr *MockAPIMockRecorder) GetCISInstance(ctx, crnstr interface{}) *gomock.C
 }
 
 // GetCOSBucketByName mocks base method.
-func (m *MockAPI) GetCOSBucketByName(ctx context.Context, cosInstanceID, bucketName string) (*s3.Bucket, error) {
+func (m *MockAPI) GetCOSBucketByName(ctx context.Context, cosInstanceID, bucketName, region string) (*s3.Bucket, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCOSBucketByName", ctx, cosInstanceID, bucketName)
+	ret := m.ctrl.Call(m, "GetCOSBucketByName", ctx, cosInstanceID, bucketName, region)
 	ret0, _ := ret[0].(*s3.Bucket)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetCOSBucketByName indicates an expected call of GetCOSBucketByName.
-func (mr *MockAPIMockRecorder) GetCOSBucketByName(ctx, cosInstanceID, bucketName interface{}) *gomock.Call {
+func (mr *MockAPIMockRecorder) GetCOSBucketByName(ctx, cosInstanceID, bucketName, region interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCOSBucketByName", reflect.TypeOf((*MockAPI)(nil).GetCOSBucketByName), ctx, cosInstanceID, bucketName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCOSBucketByName", reflect.TypeOf((*MockAPI)(nil).GetCOSBucketByName), ctx, cosInstanceID, bucketName, region)
 }
 
 // GetCOSInstanceByName mocks base method.

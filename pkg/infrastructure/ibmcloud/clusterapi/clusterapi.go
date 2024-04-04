@@ -81,14 +81,20 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 	// Create a COS Instance and Bucket to host the RHCOS image file.
 	// NOTE(cjschaef): Support to use an existing COS Object (RHCO image file) or VPC Custom Image could be added to skip this step.
 	cosInstanceName := fmt.Sprintf("%s-cos", in.InfraID)
-	cosInstance, err := client.CreateCOSInstance(ctx, cosInstanceName, *resourceGroup.ID)
+	cosInstance, err := client.GetCOSInstanceByName(ctx, cosInstanceName)
 	if err != nil {
-		return fmt.Errorf("failed creating RHCOS image COS instance: %w", err)
+		cosInstance, err = client.CreateCOSInstance(ctx, cosInstanceName, *resourceGroup.ID)
+		if err != nil {
+			return fmt.Errorf("failed creating RHCOS image COS instance: %w", err)
+		}
 	}
 	bucketName := fmt.Sprintf("%s-vsi-imge", in.InfraID)
-	err = client.CreateCOSBucket(ctx, *cosInstance.ID, bucketName, region)
+	_, err = client.GetCOSBucketByName(ctx, *cosInstance.ID, bucketName, region)
 	if err != nil {
-		return fmt.Errorf("failed creating RHCOS image COS bucket: %w", err)
+		err = client.CreateCOSBucket(ctx, *cosInstance.ID, bucketName, region)
+		if err != nil {
+			return fmt.Errorf("failed creating RHCOS image COS bucket: %w", err)
+		}
 	}
 
 	// Upload the RHCOS image to the COS Bucket.
@@ -105,7 +111,12 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 		return fmt.Errorf("failed uploading RHCOS image: %w", err)
 	}
 
-	// NOTE(cjschaef): We may need to create an IAM Authorization policy for VPC to COS Reader access, for when the Custom Image is created using the COS Object above.
+	// Create IAM authorization for VPC to COS access for Custom Image Creation
+	err = client.CreateIAMAuthorizationPolicy(ctx, "is", "image", "cloud-object-storage", *cosInstance.ID, []string{"crn:v1:bluemix:public:iam::::serviceRole:Reader"})
+	if err != nil {
+		return fmt.Errorf("failed creating vpc-cos IAM authorization policy: %w", err)
+	}
+
 	return nil
 }
 

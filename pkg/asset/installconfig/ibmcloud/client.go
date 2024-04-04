@@ -21,6 +21,7 @@ import (
 	"github.com/IBM/networking-go-sdk/dnszonesv1"
 	"github.com/IBM/networking-go-sdk/zonesv1"
 	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
+	"github.com/IBM/platform-services-go-sdk/iampolicymanagementv1"
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
@@ -41,6 +42,7 @@ type API interface {
 	CreateCOSBucket(ctx context.Context, cosInstanceID string, bucketName string, region string) error
 	CreateCOSInstance(ctx context.Context, cosName string, resourceGroupID string) (*resourcecontrollerv2.ResourceInstance, error)
 	CreateCOSObject(ctx context.Context, sourceData []byte, fileName string, cosInstanceID string, bucketName string, region string) error
+	CreateIAMAuthorizationPolicy(tx context.Context, sourceServiceName string, sourceServiceResourceType string, targetServiceName string, targetServiceInstanceID string, roles []string) error
 	CreateResourceGroup(ctx context.Context, rgName string) error
 	GetAPIKey() string
 	GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error)
@@ -172,7 +174,7 @@ func (c *Client) CreateCOSBucket(ctx context.Context, cosInstanceID string, buck
 	cosClient := c.getCOSClient(cosInstanceID, region)
 
 	options := &ibms3.CreateBucketInput{
-		Bucket:   ptr.To(bucketName),
+		Bucket: ptr.To(bucketName),
 	}
 	_, err := cosClient.CreateBucket(options)
 	if err != nil {
@@ -213,6 +215,98 @@ func (c *Client) CreateCOSObject(ctx context.Context, sourceData []byte, fileNam
 	if err != nil {
 		return fmt.Errorf("failed creating cos object: %w", err)
 	}
+	return nil
+}
+
+// CreateIAMAuthorizationPolicy creates a new IAM Authorization policy for read access to VPC to a COS Instance.
+func (c *Client) CreateIAMAuthorizationPolicy(ctx context.Context, sourceServiceName string, sourceServiceResourceType string, targetServiceName string, targetServiceInstanceID string, roles []string) error {
+	apiKeyDetails, err := c.GetAuthenticatorAPIKeyDetails(ctx)
+	if err != nil {
+		return fmt.Errorf("failed collecting account ID: %w", err)
+	}
+
+	policyRoles := []iampolicymanagementv1.Roles{}
+
+	for _, role := range roles {
+		newRole := iampolicymanagementv1.Roles{
+			RoleID: ptr.To(role),
+		}
+		policyRoles = append(policyRoles, newRole)
+	}
+
+	policyControl := &iampolicymanagementv1.Control{
+		Grant: &iampolicymanagementv1.Grant{
+			Roles: policyRoles,
+		},
+	}
+
+	// setup the source service policy details (VPC Custom Image)
+	policySubject := &iampolicymanagementv1.V2PolicySubject{
+		Attributes: []iampolicymanagementv1.V2PolicySubjectAttribute{
+			{
+				Key:      ptr.To("serviceName"),
+				Operator: ptr.To("stringEquals"),
+				Value:    ptr.To(sourceServiceName),
+			},
+			{
+				Key:      ptr.To("accountId"),
+				Operator: ptr.To("stringEquals"),
+				Value:    ptr.To(apiKeyDetails.AccountID),
+			},
+			{
+				Key:      ptr.To("resourceType"),
+				Operator: ptr.To("stringEquals"),
+				Value:    ptr.To(sourceServiceResourceType),
+			},
+		},
+	}
+
+	// setup the target resource policy details (COS)
+	policyResource := &iampolicymanagementv1.V2PolicyResource{
+		Attributes: []iampolicymanagementv1.V2PolicyResourceAttribute{
+			{
+				Key:      ptr.To("serviceName"),
+				Operator: ptr.To("stringEquals"),
+				Value:    ptr.To(targetServiceName),
+			},
+			{
+				Key:      ptr.To("accountId"),
+				Operator: ptr.To("stringEquals"),
+				Value:    apiKeyDetails.AccountID,
+			},
+			{
+				Key:      ptr.To("serviceInstance"),
+				Operator: ptr.To("stringEquals"),
+				Value:    ptr.To(targetServiceInstanceID),
+			},
+		},
+	}
+
+	authenticator, err := NewIamAuthenticator(c.GetAPIKey(), c.iamServiceEndpointOverride)
+	if err != nil {
+		return fmt.Errorf("failed setting up IAM policy management service: %w", err)
+	}
+	iamPolicyManagementServiceOptions := &iampolicymanagementv1.IamPolicyManagementV1Options{
+		Authenticator: authenticator,
+	}
+	if c.iamServiceEndpointOverride != "" {
+		iamPolicyManagementServiceOptions.URL = c.iamServiceEndpointOverride
+	}
+
+	iamPolicyManagementService, err := iampolicymanagementv1.NewIamPolicyManagementV1(iamPolicyManagementServiceOptions)
+	if err != nil {
+		return fmt.Errorf("failed creation IAM policy management service: %w", err)
+	}
+
+	options := iamPolicyManagementService.NewCreateV2PolicyOptions(policyControl, "authorization")
+	options.SetSubject(policySubject)
+	options.SetResource(policyResource)
+
+	_, _, err = iamPolicyManagementService.CreateV2Policy(options)
+	if err != nil {
+		return fmt.Errorf("failed creating IAM authorization policy: %w", err)
+	}
+
 	return nil
 }
 
