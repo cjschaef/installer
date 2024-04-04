@@ -36,6 +36,7 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 	// 1. Create the Resource Group to house cluster resources, if necessary (BYO RG).
 	// 2. Create a COS Instance and Bucket to host the RHCOS Custom Image file.
 	// 3. Upload the RHCOS image to the COS Bucket.
+	// 4. Add IAM Authorization for VPC Image Service to access the COS Object/Bucket/Instance.
 
 	// Setup IBM Cloud Client.
 	metadata := ibmcloudic.NewMetadata(in.InstallConfig.Config)
@@ -55,13 +56,13 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 	resourceGroup, err := client.GetResourceGroup(ctx, resourceGroupName)
 	if err != nil {
 		// If Resource Group cannot be found, but it was provided in install-config (use existing RG), raise an error.
-		// We could create the Resource Group, defined by user, but that will make Resource cleanup more difficult.
+		// We could create the Resource Group, defined by user, but that might make resource cleanup more difficult.
 		if in.InstallConfig.Config.Platform.IBMCloud.ResourceGroupName != "" {
 			return fmt.Errorf("provided resource group not found: %w", err)
 		}
 	}
 
-	// Create Resource Group if it wasn't found (and was provided as existing RG).
+	// Create Resource Group if it wasn't found (and isn't expected to be an existing RG).
 	if resourceGroup == nil {
 		err := client.CreateResourceGroup(ctx, resourceGroupName)
 		if err != nil {

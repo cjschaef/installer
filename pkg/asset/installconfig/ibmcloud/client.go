@@ -219,6 +219,12 @@ func (c *Client) CreateCOSObject(ctx context.Context, sourceData []byte, fileNam
 
 // CreateIAMAuthorizationPolicy creates a new IAM Authorization policy for read access to VPC to a COS Instance.
 func (c *Client) CreateIAMAuthorizationPolicy(ctx context.Context, sourceServiceName string, sourceServiceResourceType string, targetServiceName string, targetServiceInstanceID string, roles []string) error {
+	accountIDKeyPtr := ptr.To("accountId")
+	resourceTypeKeyPtr := ptr.To("resourceType")
+	serviceInstanceKeyPtr := ptr.To("serviceInstance")
+	serviceNameKeyPtr := ptr.To("serviceName")
+	stringEqualsOperatorPtr := ptr.To("stringEquals")
+
 	apiKeyDetails, err := c.GetAuthenticatorAPIKeyDetails(ctx)
 	if err != nil {
 		return fmt.Errorf("failed collecting account ID: %w", err)
@@ -243,18 +249,18 @@ func (c *Client) CreateIAMAuthorizationPolicy(ctx context.Context, sourceService
 	policySubject := &iampolicymanagementv1.V2PolicySubject{
 		Attributes: []iampolicymanagementv1.V2PolicySubjectAttribute{
 			{
-				Key:      ptr.To("serviceName"),
-				Operator: ptr.To("stringEquals"),
+				Key:      serviceNameKeyPtr,
+				Operator: stringEqualsOperatorPtr,
 				Value:    ptr.To(sourceServiceName),
 			},
 			{
-				Key:      ptr.To("accountId"),
-				Operator: ptr.To("stringEquals"),
-				Value:    ptr.To(apiKeyDetails.AccountID),
+				Key:      accountIDKeyPtr,
+				Operator: stringEqualsOperatorPtr,
+				Value:    apiKeyDetails.AccountID,
 			},
 			{
-				Key:      ptr.To("resourceType"),
-				Operator: ptr.To("stringEquals"),
+				Key:      resourceTypeKeyPtr,
+				Operator: stringEqualsOperatorPtr,
 				Value:    ptr.To(sourceServiceResourceType),
 			},
 		},
@@ -264,18 +270,18 @@ func (c *Client) CreateIAMAuthorizationPolicy(ctx context.Context, sourceService
 	policyResource := &iampolicymanagementv1.V2PolicyResource{
 		Attributes: []iampolicymanagementv1.V2PolicyResourceAttribute{
 			{
-				Key:      ptr.To("serviceName"),
-				Operator: ptr.To("stringEquals"),
+				Key:      serviceNameKeyPtr,
+				Operator: stringEqualsOperatorPtr,
 				Value:    ptr.To(targetServiceName),
 			},
 			{
-				Key:      ptr.To("accountId"),
-				Operator: ptr.To("stringEquals"),
+				Key:      accountIDKeyPtr,
+				Operator: stringEqualsOperatorPtr,
 				Value:    apiKeyDetails.AccountID,
 			},
 			{
-				Key:      ptr.To("serviceInstance"),
-				Operator: ptr.To("stringEquals"),
+				Key:      serviceInstanceKeyPtr,
+				Operator: stringEqualsOperatorPtr,
 				Value:    ptr.To(targetServiceInstanceID),
 			},
 		},
