@@ -22,7 +22,7 @@ func buildClusterWideSecurityGroup(infraID string, vpcName string, resourceGroup
 
 	// Build set of Remotes for Security Group Rules
 	// - cluster-wide SSH rule (for CP and Compute subnets)
-	clusterWideSSHRemotes := make([]capibmcloud.SecurityGroupRuleRemote, 0, len(allSubnets))
+	clusterWideSSHRemotes := make([]capibmcloud.SecurityGroupRuleRemote, len(allSubnets))
 	for index, subnet := range allSubnets {
 		clusterWideSSHRemotes[index] = capibmcloud.SecurityGroupRuleRemote{
 			RemoteType:     capibmcloud.SecurityGroupRuleRemoteTypeCIDR,

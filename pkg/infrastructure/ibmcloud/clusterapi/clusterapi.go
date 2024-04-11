@@ -85,7 +85,7 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 			return fmt.Errorf("failed creating RHCOS image COS instance: %w", err)
 		}
 	}
-	bucketName := fmt.Sprintf("%s-vsi-imge", in.InfraID)
+	bucketName := fmt.Sprintf("%s-vsi-image", in.InfraID)
 	_, err = client.GetCOSBucketByName(ctx, *cosInstance.ID, bucketName, region)
 	if err != nil {
 		err = client.CreateCOSBucket(ctx, *cosInstance.ID, bucketName, region)

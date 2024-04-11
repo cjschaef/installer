@@ -29,10 +29,11 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	platform := installConfig.Config.Platform.IBMCloud
 	// Make sure we have a fresh instance of Metadata, in case of any service endpoint overrides
 	metadata := ibmcloudic.NewMetadata(installConfig.Config)
-	//client, err := metadata.Client()
-	//if err != nil {
-	//	return nil, fmt.Errorf("failed creating IBM Cloud client %w", err)
-	//}
+	client, err := metadata.Client()
+	if err != nil {
+		return nil, fmt.Errorf("failed creating IBM Cloud client %w", err)
+	}
+	operatingSystem := "rhel-coreos-stable-amd64"
 
 	// Create IBM Cloud Credentials for IBM Cloud CAPI
 	ibmcloudCreds := &corev1.Secret{
@@ -87,11 +88,15 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	// Trim the gzip extension (and anything else) from the imageName
 	trimmedImageName := strings.SplitN(imageName, ".gz", 2)[0]
 	imageSpec := &capibmcloud.ImageSpec{
-		Name:          fmt.Sprintf("%s-rhcos", clusterID.InfraID),
-		COSInstance:   cosInstanceNamePtr,
-		COSBucket:     cosBucketNamePtr,
-		COSObject:     ptr.To(trimmedImageName),
-		ResourceGroup: ptr.To(resourceGroup),
+		Name:            fmt.Sprintf("%s-rhcos", clusterID.InfraID),
+		COSInstance:     cosInstanceNamePtr,
+		COSBucket:       cosBucketNamePtr,
+		COSBucketRegion: ptr.To(platform.Region),
+		COSObject:       ptr.To(trimmedImageName),
+		OperatingSystem: ptr.To(operatingSystem),
+		ResourceGroup:   &capibmcloud.GenericResourceReference{
+			Name: ptr.To(resourceGroup),
+		},
 	}
 
 	// Get and transform Subnets into CAPI.Subnets
@@ -99,10 +104,55 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	if err != nil {
 		return nil, fmt.Errorf("failed collecting control plane subnets %w", err)
 	}
+	// If no Control Plane subnets were provided in InstallConfig, we build a default set to cover all zones in the region.
+	// TODO(cjschaef): We may need to get the list of AZ's from the InstallConfig.ControlPlane.Platform.IBMCloud.Zones info.
+	if len(controlPlaneSubnets) == 0 {
+		zones, err := client.GetVPCZonesForRegion(context.TODO(), platform.Region)
+		if err != nil {
+			return nil, fmt.Errorf("failed collecting zones in region: %w", err)
+		}
+		if controlPlaneSubnets == nil {
+			controlPlaneSubnets = make(map[string]ibmcloudic.Subnet, 0)
+		}
+		for _, zone := range zones {
+			subnetName, err := ibmcloudic.CreateSubnetName(clusterID.InfraID, "master", zone)
+			if err != nil {
+				return nil, fmt.Errorf("failed creating subnet name: %w", err)
+			}
+			// Typically, the map is keyed by the Subnet ID, but we don't have that if we are generating new subnet names. Since the ID's don't get used in Cluster manifest generation, we should be okay, as the key is ignored during ibmcloudic.Subnet to capibmcloud.Subnet transition.
+			controlPlaneSubnets[subnetName] = ibmcloudic.Subnet{
+				Name: subnetName,
+				Zone: zone,
+			}
+		}
+	}
 	capiControlPlaneSubnets := getCAPISubnets(controlPlaneSubnets)
+
 	computeSubnets, err := metadata.ComputeSubnets(context.TODO())
 	if err != nil {
 		return nil, fmt.Errorf("failed collecting compute subnets %w", err)
+	}
+	// If no Compute subnets were provided in InstallConfig, we build a default set to cover all zones in the region.
+	// NOTE(cjschaef): We may need to get the list of AZ's from the InstallConfig.Compute.Platform.IBMCloud.Zones info.
+	if len(computeSubnets) == 0 {
+		zones, err := client.GetVPCZonesForRegion(context.TODO(), platform.Region)
+		if err != nil {
+			return nil, fmt.Errorf("failed collecting zones in region: %w", err)
+		}
+		if computeSubnets == nil {
+			computeSubnets = make(map[string]ibmcloudic.Subnet, 0)
+		}
+		for _, zone := range zones {
+			subnetName, err := ibmcloudic.CreateSubnetName(clusterID.InfraID, "master", zone)
+			if err != nil {
+				return nil, fmt.Errorf("failed creating subnet name: %w", err)
+			}
+			// Typically, the map is keyed by the Subnet ID, but we don't have that if we are generating new subnet names. Since the ID's don't get used in Cluster manifest generation, we should be okay, as the key is ignored during ibmcloudic.Subnet to capibmcloud.Subnet transition.
+			computeSubnets[subnetName] = ibmcloudic.Subnet{
+				Name: subnetName,
+				Zone: zone,
+			}
+		}
 	}
 	capiComputeSubnets := getCAPISubnets(computeSubnets)
 
@@ -122,6 +172,9 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
 			Namespace: capiutils.Namespace,
+			Annotations: map[string]string{
+				"vpc.cluster.x-k8s.io/create-infra": "true",
+			},
 		},
 		Spec: capibmcloud.IBMVPCClusterSpec{
 			ControlPlaneEndpoint: capi.APIEndpoint{
@@ -163,7 +216,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 // consolidateCAPISubnets will attempt to consolidate two Subnet slices, and attempt to remove any duplicated Subnets (appear in both slices).
 // This does not attempt to remove duplicate Subnets that exist in a single slice however.
 func consolidateCAPISubnets(subnetsA []capibmcloud.Subnet, subnetsB []capibmcloud.Subnet) []capibmcloud.Subnet {
-	consolidatedSubnets := make([]capibmcloud.Subnet, len(subnetsA), (len(subnetsA) + len(subnetsB)))
+	consolidatedSubnets := make([]capibmcloud.Subnet, len(subnetsA))
 	copiedSubnetNames := make(map[string]bool, len(subnetsA))
 
 	for index, subnet := range subnetsA {
@@ -182,7 +235,7 @@ func consolidateCAPISubnets(subnetsA []capibmcloud.Subnet, subnetsB []capibmclou
 
 // getCAPISubnets converts InstallConfig based Subnets to CAPI based Subnets for Cluster manifest generation.
 func getCAPISubnets(subnets map[string]ibmcloudic.Subnet) []capibmcloud.Subnet {
-	subnetList := make([]capibmcloud.Subnet, 0, len(subnets))
+	subnetList := make([]capibmcloud.Subnet, len(subnets))
 	for _, subnet := range subnets {
 		subnetList = append(subnetList, capibmcloud.Subnet{
 			Name: ptr.To(subnet.Name),
