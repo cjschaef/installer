@@ -250,12 +250,12 @@ func (c *system) Run(ctx context.Context) error {
 		}
 
 		// Get the ServiceEndpoint overrides, along with Region, to pass on to CAPI, if any.
-		if serviceEndpoints := installConfig.IBMCloud.GetRegionAndEndpointsFlag(); serviceEndpoints != "" {
+		if serviceEndpoints := metadata.IBMCloud.GetRegionAndEndpointsFlag(); serviceEndpoints != "" {
 			ibmcloudFlags = append(ibmcloudFlags, fmt.Sprintf("--service-endpoint=%s", serviceEndpoints))
 		}
 
 		iamEndpoint := "https://iam.cloud.ibm.com"
-		if overrideURL := ibmcloud.CheckServiceEndpointOverride(configv1.IBMCloudServiceIAM, installConfig.Config.Platform.IBMCloud.ServiceEndpoints); overrideURL != "" {
+		if overrideURL := ibmcloud.CheckServiceEndpointOverride(configv1.IBMCloudServiceIAM, metadata.IBMCloud.ServiceEndpoints); overrideURL != "" {
 			iamEndpoint = overrideURL
 		}
 

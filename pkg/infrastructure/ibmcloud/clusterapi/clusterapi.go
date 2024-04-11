@@ -27,6 +27,18 @@ func (p Provider) Name() string {
 	return ibmcloudtypes.Name
 }
 
+// NetworkTimeout allows platform provider to override the timeout
+// when waiting for the network infrastructure to become ready.
+func (p Provider) NetworkTimeout() time.Duration {
+	return 30 * time.Minute
+}
+
+// ProvisionTimeout allows platform provider to override the timeout
+// when waiting for the machines to provision.
+func (p Provider) ProvisionTimeout() time.Duration {
+	return 15 * time.Minute
+}
+
 // BootstrapHasPublicIP indicates that an ExternalIP is not
 // required in the machine ready checks.
 func (Provider) BootstrapHasPublicIP() bool { return false }
@@ -89,7 +101,7 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 			return fmt.Errorf("failed creating RHCOS image COS instance: %w", err)
 		}
 	}
-	bucketName := fmt.Sprintf("%s-vsi-imge", in.InfraID)
+	bucketName := fmt.Sprintf("%s-vsi-image", in.InfraID)
 	_, err = client.GetCOSBucketByName(ctx, *cosInstance.ID, bucketName, region)
 	if err != nil {
 		err = client.CreateCOSBucket(ctx, *cosInstance.ID, bucketName, region)

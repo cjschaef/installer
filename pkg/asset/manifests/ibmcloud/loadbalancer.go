@@ -58,7 +58,7 @@ func buildPrivateLoadBalancer(infraID string) *capibmcloud.VPCLoadBalancerSpec {
 				Port: machineConfigServerPort,
 			},
 		},
-		BackendPools: []*capibmcloud.BackendPoolSpec{
+		BackendPools: []capibmcloud.BackendPoolSpec{
 			{
 				// Kubernetes API pool
 				Name:             ptr.To(fmt.Sprintf("%s-%s", infraID, kubernetesAPIPrivatePostfix)),
@@ -94,7 +94,7 @@ func buildPublicLoadBalancer(infraID string) *capibmcloud.VPCLoadBalancerSpec {
 				Port: kubernetesAPIPort,
 			},
 		},
-		BackendPools: []*capibmcloud.BackendPoolSpec{
+		BackendPools: []capibmcloud.BackendPoolSpec{
 			{
 				// Kubernetes API pool
 				Name:             ptr.To(fmt.Sprintf("%s-%s", infraID, kubernetesAPIPublicPostfix)),

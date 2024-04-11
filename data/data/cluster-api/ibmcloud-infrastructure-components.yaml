@@ -3779,6 +3779,10 @@ spec:
                     description: cosObject is the name of a IBM Cloud COS Object used
                       as the source of the image, if necessary.
                     type: string
+                  crn:
+                    description: crn is the IBM Cloud CRN of the existing VPC Custom
+                      Image
+                    type: string
                   name:
                     description: name is the name of the desired VPC Custom Image.
                     type: string
@@ -3799,14 +3803,17 @@ spec:
                     required:
                     - id
                     type: object
-                required:
-                - name
                 type: object
                 x-kubernetes-validations:
                 - message: if any of cosInstance, cosBucket, or cosObject are specified,
                     all must be specified
-                  rule: (has(self.cosInstance) || (has(self.cosBucket) || (has(self.cosObject))
-                    && (!has(self.cosInstance) || !has(self.cosBucket) || !has(self.cosObject))
+                  rule: (!has(self.cosInstance) && !has(self.cosBucket) && !has(self.cosObject))
+                    || (has(self.cosInstance) && has(self.cosBucket) && has(self.cosObject))
+                - message: an existing image name or crn must be provided, or to create
+                    a new image the cos resources must be provided, with or without
+                    a name
+                  rule: has(self.name) || has(self.crn) || (has(self.cosInstance)
+                    && has(self.cosBucket) && has(self.cosObject))
               loadbalancers:
                 description: loadBalancers is a set of VPC Load Balancers definition
                   to use for the cluster.
@@ -4382,7 +4389,7 @@ spec:
                     type: object
                     x-kubernetes-validations:
                     - message: an id or name must be provided
-                      rule: '!has(self.id) && !has(self.name)'
+                      rule: has(self.id) || has(self.name)
                   workerSubnets:
                     description: workerSubnets is a set of Subnet's which define the
                       Compute subnets.
@@ -4911,6 +4918,10 @@ spec:
                             description: cosObject is the name of a IBM Cloud COS
                               Object used as the source of the image, if necessary.
                             type: string
+                          crn:
+                            description: crn is the IBM Cloud CRN of the existing
+                              VPC Custom Image
+                            type: string
                           name:
                             description: name is the name of the desired VPC Custom
                               Image.
@@ -4934,15 +4945,18 @@ spec:
                             required:
                             - id
                             type: object
-                        required:
-                        - name
                         type: object
                         x-kubernetes-validations:
                         - message: if any of cosInstance, cosBucket, or cosObject
                             are specified, all must be specified
-                          rule: (has(self.cosInstance) || (has(self.cosBucket) ||
-                            (has(self.cosObject)) && (!has(self.cosInstance) || !has(self.cosBucket)
-                            || !has(self.cosObject))
+                          rule: (!has(self.cosInstance) && !has(self.cosBucket) &&
+                            !has(self.cosObject)) || (has(self.cosInstance) && has(self.cosBucket)
+                            && has(self.cosObject))
+                        - message: an existing image name or crn must be provided,
+                            or to create a new image the cos resources must be provided,
+                            with or without a name
+                          rule: has(self.name) || has(self.crn) || (has(self.cosInstance)
+                            && has(self.cosBucket) && has(self.cosObject))
                       loadbalancers:
                         description: loadBalancers is a set of VPC Load Balancers
                           definition to use for the cluster.
@@ -5552,7 +5566,7 @@ spec:
                             type: object
                             x-kubernetes-validations:
                             - message: an id or name must be provided
-                              rule: '!has(self.id) && !has(self.name)'
+                              rule: has(self.id) || has(self.name)
                           workerSubnets:
                             description: workerSubnets is a set of Subnet's which
                               define the Compute subnets.
