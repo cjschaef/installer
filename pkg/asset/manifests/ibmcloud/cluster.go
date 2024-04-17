@@ -143,7 +143,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			computeSubnets = make(map[string]ibmcloudic.Subnet, 0)
 		}
 		for _, zone := range zones {
-			subnetName, err := ibmcloudic.CreateSubnetName(clusterID.InfraID, "master", zone)
+			subnetName, err := ibmcloudic.CreateSubnetName(clusterID.InfraID, "worker", zone)
 			if err != nil {
 				return nil, fmt.Errorf("failed creating subnet name: %w", err)
 			}
@@ -217,7 +217,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 // This does not attempt to remove duplicate Subnets that exist in a single slice however.
 func consolidateCAPISubnets(subnetsA []capibmcloud.Subnet, subnetsB []capibmcloud.Subnet) []capibmcloud.Subnet {
 	consolidatedSubnets := make([]capibmcloud.Subnet, len(subnetsA))
-	copiedSubnetNames := make(map[string]bool, len(subnetsA))
+	copiedSubnetNames := make(map[string]bool, 0)
 
 	for index, subnet := range subnetsA {
 		consolidatedSubnets[index] = subnet
@@ -235,7 +235,7 @@ func consolidateCAPISubnets(subnetsA []capibmcloud.Subnet, subnetsB []capibmclou
 
 // getCAPISubnets converts InstallConfig based Subnets to CAPI based Subnets for Cluster manifest generation.
 func getCAPISubnets(subnets map[string]ibmcloudic.Subnet) []capibmcloud.Subnet {
-	subnetList := make([]capibmcloud.Subnet, len(subnets))
+	subnetList := make([]capibmcloud.Subnet, 0)
 	for _, subnet := range subnets {
 		subnetList = append(subnetList, capibmcloud.Subnet{
 			Name: ptr.To(subnet.Name),

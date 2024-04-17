@@ -124,9 +124,9 @@ func buildOpenshiftNetSecurityGroup(infraID string, vpcName string, resourceGrou
 
 	// Build sets of Remotes for Security Group Rules
 	// - openshift-net TCP rule for Node Ports (for CP and Compute subnets)
-	openshiftNetworkNodePortTCPRemotes := make([]capibmcloud.SecurityGroupRuleRemote, 0, len(allSubnets))
+	openshiftNetworkNodePortTCPRemotes := make([]capibmcloud.SecurityGroupRuleRemote, len(allSubnets))
 	// - openshift-net UDP rule for Node Ports (for CP and Compute subnets)
-	openshiftNetworkNodePortUDPRemotes := make([]capibmcloud.SecurityGroupRuleRemote, 0, len(allSubnets))
+	openshiftNetworkNodePortUDPRemotes := make([]capibmcloud.SecurityGroupRuleRemote, len(allSubnets))
 	for index, subnet := range allSubnets {
 		openshiftNetworkNodePortTCPRemotes[index] = capibmcloud.SecurityGroupRuleRemote{
 			RemoteType:     capibmcloud.SecurityGroupRuleRemoteTypeCIDR,
