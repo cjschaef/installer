@@ -106,6 +106,31 @@ func (s *Service) SetSubnetPublicGateway(options *vpcv1.SetSubnetPublicGatewayOp
 	return s.vpcService.SetSubnetPublicGateway(options)
 }
 
+// GetPublicGateway returns a public gateway.
+func (s *Service) GetPublicGateway(options *vpcv1.GetPublicGatewayOptions) (*vpcv1.PublicGateway, *core.DetailedResponse, error) {
+	return s.vpcService.GetPublicGateway(options)
+}
+
+// GetPublicGatewayByName returns a public gateway by name.
+func (s *Service) GetPublicGatewayByName(name string, resourceGroupID string) (*vpcv1.PublicGateway, error) {
+	listOptions := s.vpcService.NewListPublicGatewaysOptions()
+	listOptions.SetResourceGroupID(resourceGroupID)
+	listPublicGatewaysPager, err := s.vpcService.NewPublicGatewaysPager(listOptions)
+	if err != nil {
+		return nil, err
+	}
+	allItems, err := listPublicGatewaysPager.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	for _, item := range allItems {
+		if *item.Name == name {
+			return &item, nil
+		}
+	}
+	return nil, nil
+}
+
 // ListVPCAddressPrefixes returns list of all address prefixes for a VPC.
 func (s *Service) ListVPCAddressPrefixes(options *vpcv1.ListVPCAddressPrefixesOptions) (*vpcv1.AddressPrefixCollection, *core.DetailedResponse, error) {
 	return s.vpcService.ListVPCAddressPrefixes(options)
@@ -154,6 +179,36 @@ func (s *Service) ListLoadBalancerPoolMembers(options *vpcv1.ListLoadBalancerPoo
 // ListKeys returns list of keys in a region.
 func (s *Service) ListKeys(options *vpcv1.ListKeysOptions) (*vpcv1.KeyCollection, *core.DetailedResponse, error) {
 	return s.vpcService.ListKeys(options)
+}
+
+// CreateImage creates a VPC Custom Image.
+func (s *Service) CreateImage(options *vpcv1.CreateImageOptions) (*vpcv1.Image, *core.DetailedResponse, error) {
+	return s.vpcService.CreateImage(options)
+}
+
+// DeleteImage deletes a VPC Custom Image.
+func (s *Service) DeleteImage(options *vpcv1.DeleteImageOptions) (*core.DetailedResponse, error) {
+	return s.vpcService.DeleteImage(options)
+}
+
+// GetImage returns a VPC Custom Image.
+func (s *Service) GetImage(options *vpcv1.GetImageOptions) (*vpcv1.Image, *core.DetailedResponse, error) {
+	return s.vpcService.GetImage(options)
+}
+
+// GetImageByName returns the VPC Custom Image with given name. If not found, returns nil.
+func (s *Service) GetImageByName(name string) (*vpcv1.Image, error) {
+	options := s.vpcService.NewListImagesOptions()
+	options.SetName(name)
+
+	image, _, err := s.vpcService.ListImages(options)
+	if err != nil {
+		return nil, err
+	}
+	if len(image.Images) != 1 {
+		return nil, nil
+	}
+	return &image.Images[0], nil
 }
 
 // ListImages returns list of images in a region.
@@ -335,6 +390,20 @@ func (s *Service) GetSubnetAddrPrefix(vpcID, zone string) (string, error) {
 		return *addrPrefix.CIDR, nil
 	}
 	return "", fmt.Errorf("not found a valid CIDR for VPC %s in zone %s", vpcID, zone)
+}
+
+// GetZonesByRegion returns the set of VPC Availability Zones in an IBM Cloud Region.
+func (s *Service) GetZonesByRegion(region string) ([]string, error) {
+	zones := make([]string, 0)
+	options := s.vpcService.NewListRegionZonesOptions(region)
+	result, _, err := s.vpcService.ListRegionZones(options)
+	if err != nil {
+		return zones, err
+	}
+	for _, zone := range result.Zones {
+		zones = append(zones, *zone.Name)
+	}
+	return zones, nil
 }
 
 // NewService returns a new VPC Service.

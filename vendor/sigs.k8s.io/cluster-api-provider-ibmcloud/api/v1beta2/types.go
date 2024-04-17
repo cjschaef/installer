@@ -182,12 +182,20 @@ var (
 	ResourceTypeVPC = ResourceType("vpc")
 	// ResourceTypeSubnet is VPC subnet resource.
 	ResourceTypeSubnet = ResourceType("subnet")
+	// ResourceTypeComputeSubnet is a VPC subnet resource designated for the Compute (Data) Plane.
+	ResourceTypeComputeSubnet = ResourceType("computeSubnet")
+	// ResourceTypeControlPlaneSubnet is a VPC subnet resource designated for the Control Plane.
+	ResourceTypeControlPlaneSubnet = ResourceType("controlPlaneSubnet")
 	// ResourceTypeCOSInstance is IBM COS instance resource.
 	ResourceTypeCOSInstance = ResourceType("cosInstance")
 	// ResourceTypeCOSBucket is IBM COS bucket resource.
 	ResourceTypeCOSBucket = ResourceType("cosBucket")
 	// ResourceTypeResourceGroup is IBM Resource Group.
 	ResourceTypeResourceGroup = ResourceType("resourceGroup")
+	// ResourceTypePublicGateway is a VPC Public Gatway.
+	ResourceTypePublicGateway = ResourceType("publicGateway")
+	// ResourceTypeCustomImage is a VPC Custom Image.
+	ResourceTypeCustomImage = ResourceType("customImage")
 )
 
 // SecurityGroupRuleAction represents the actions for a Security Group Rule.
@@ -248,6 +256,17 @@ const (
 	SecurityGroupRuleRemoteTypeSG SecurityGroupRuleRemoteType = SecurityGroupRuleRemoteType("sg")
 )
 
+// GenericResourceReference represents a basic IBM Cloud resource.
+type GenericResourceReference struct {
+	// id defines the generic IBM Cloud Resource ID.
+	// +required
+	ID string `json:"id"`
+
+	// name defines the generic IBM Cloud Resource Name.
+	// +optional
+	Name *string `json:"name,omitempty"`
+}
+
 // NetworkInterface holds the network interface information like subnet id.
 type NetworkInterface struct {
 	// Subnet ID of the network interface.
@@ -298,7 +317,10 @@ type SecurityGroup struct {
 
 // SecurityGroupRule defines a VPC Security Group Rule for a specified Security Group.
 // +kubebuilder:validation:XValidation:rule="(has(self.destination) && !has(self.source)) || (!has(self.destination) && has(self.source))",message="both destination and source cannot be provided"
-// +kubebuilder:validation:XValidation:rule="self.direction == 'inbound' && !has(self.destination) && has(self.source) || (self.direction == 'outbound' && has(self.destination) && !has(self.source))",message="destination is not valid for SecurityGroupRuleDirectionInbound direction and source is not valid for SecruityGroupRuleDirectionOutbound"
+// +kubebuilder:validation:XValidation:rule="self.direction == 'inbound' ? has(self.source) : true",message="source must be set for SecurityGroupRuleDirectionInbound direction"
+// +kubebuilder:validation:XValidation:rule="self.direction == 'inbound' ? !has(self.destination) : true",message="destination is not valid for SecurityGroupRuleDirectionInbound direction"
+// +kubebuilder:validation:XValidation:rule="self.direction == 'outbound' ? has(self.destination) : true",message="destination must be set for SecurityGroupRuleDirectionOutbound direction"
+// +kubebuilder:validation:XValidation:rule="self.direction == 'outbound' ? !has(self.source) : true",message="source is not valid for SecurityGroupRuleDirectionOutbound direction"
 type SecurityGroupRule struct {
 	// action defines whether to allow or deny traffic defined by the Security Group Rule.
 	// +required
@@ -325,7 +347,10 @@ type SecurityGroupRule struct {
 
 // SecurityGroupRuleRemote defines a VPC Security Group Rule's remote details.
 // The type of remote defines the additional remote details where are used for defining the remote.
-// +kubebuilder:validation:XValidation:rule="(self.remoteType == 'any' && !has(self.cidrSubnetName) && !has(self.ip) && !has(self.securityGroupName)) || (self.remoteType == 'cidr' && has(self.cidrSubnetName) && !has(self.ip) && !has(self.securityGroupName)) || (self.remoteType == 'ip' && has(self.ip) && !has(self.cidrSubnetName) && !has(self.securityGroupName)) || (self.remoteType == 'sg' && has(self.securityGroupName) && !has(self.cidrSubnetName) && !has(self.ip))",message="cidrSubnetName, ip, and securityGroupName are not valid for SecurityGroupRuleRemoteTypeAny remoteType; cidrSubnetName is only valid for SecurityGroupRuleRemoteTypeCIDR remoteType; ip is only valid for SecurityGroupRuleRemoteTypeIP remoteType; securityGroupName is only valid for SecurityGroupRuleRemoteTypeSG remoteType"
+// +kubebuilder:validation:XValidation:rule="self.remoteType == 'any' ? (!has(self.cidrSubnetName) && !has(self.ip) && !has(self.securityGroupName)) : true",message="cidrSubnetName, ip, and securityGroupName are not valid for SecurityGroupRuleRemoteTypeAny remoteType"
+// +kubebuilder:validation:XValidation:rule="self.remoteType == 'cidr' ? (has(self.cidrSubnetName) && !has(self.ip) && !has(self.securityGroupName)) : true",message="only cidrSubnetName is valid for SecurityGroupRuleRemoteTypeCIDR remoteType"
+// +kubebuilder:validation:XValidation:rule="self.remoteType == 'ip' ? (has(self.ip) && !has(self.cidrSubnetName) && !has(self.securityGroupName)) : true",message="only ip is valid for SecurityGroupRuleRemoteTypeIP remoteType"
+// +kubebuilder:validation:XValidation:rule="self.remoteType == 'sg' ? (has(self.securityGroupName) && !has(self.cidrSubnetName) && !has(self.ip)) : true",message="only securityGroupName is valid for SecurityGroupRuleRemoteTypeSG remoteType"
 type SecurityGroupRuleRemote struct {
 	// cidrSubnetName is the name of the VPC Subnet to retrieve the CIDR from, to use for the remote's destination/source.
 	// Only used when remoteType is SecurityGroupRuleRemoteTypeCIDR.
@@ -348,8 +373,9 @@ type SecurityGroupRuleRemote struct {
 }
 
 // SecurityGroupRulePrototype defines a VPC Security Group Rule's traffic specifics for a series of remotes (destinations or sources).
-// +kubebuilder:validation:XValidation:rule="(self.protocol != 'icmp' && !has(self.icmpCode) && !has(self.icmpType)) || self.protocol == 'icmp'",message="icmpCode and icmpType are only supported for the ICMP protocol, but not required for ICMP"
-// +kubebuilder:validation:XValidation:rule="(self.protocol == 'all' && !has(self.portRange)) || (self.protocol == 'icmp' && !has(self.portRange)) || (self.protocol != 'all' && self.protocol != 'icmp')",message="portRange is not valid for SecurityGroupRuleProtocolAll or SecurityGroupRuleProtocolIcmp protocols"
+// +kubebuilder:validation:XValidation:rule="self.protocol != 'icmp' ? (!has(self.icmpCode) && !has(self.icmpType)) : true",message="icmpCode and icmpType are only supported for SecurityGroupRuleProtocolIcmp protocol"
+// +kubebuilder:validation:XValidation:rule="self.protocol == 'all' ? !has(self.portRange) : true",message="portRange is not valid for SecurityGroupRuleProtocolAll protocol"
+// +kubebuilder:validation:XValidation:rule="self.protocol == 'icmp' ? !has(self.portRange) : true",message="portRange is not valid for SecurityGroupRuleProtocolIcmp protocol"
 type SecurityGroupRulePrototype struct {
 	// icmpCode is the ICMP code for the Rule.
 	// Only used when Protocol is SecurityGroupProtocolICMP.

@@ -58,6 +58,23 @@ func CheckCreateInfraAnnotation(cluster infrav1beta2.IBMPowerVSCluster) bool {
 	return createInfra
 }
 
+// CheckCreateVPCInfraAnnotation checks for annotations set on IBMVPCCluster object to determine cluster creation workflow.
+func CheckCreateVPCInfraAnnotation(cluster infrav1beta2.IBMVPCCluster) bool {
+	annotations := cluster.GetAnnotations()
+	if len(annotations) == 0 {
+		return false
+	}
+	value, found := annotations[infrav1beta2.CreateVPCInfrastructureAnnotation]
+	if !found {
+		return false
+	}
+	createInfra, err := strconv.ParseBool(value)
+	if err != nil {
+		return false
+	}
+	return createInfra
+}
+
 //TODO: Move this to powervs-utils.
 
 // Region describes respective IBM Cloud COS region, VPC region and Zones associated with a region in Power VS.

@@ -1297,7 +1297,7 @@ func Convert_v1beta1_IBMVPCClusterStatus_To_v1beta2_IBMVPCClusterStatus(in *IBMV
 func autoConvert_v1beta2_IBMVPCClusterStatus_To_v1beta1_IBMVPCClusterStatus(in *v1beta2.IBMVPCClusterStatus, out *IBMVPCClusterStatus, s conversion.Scope) error {
 	out.Conditions = *(*apiv1beta1.Conditions)(unsafe.Pointer(&in.Conditions))
 	out.ControlPlaneLoadBalancerState = VPCLoadBalancerState(in.ControlPlaneLoadBalancerState)
-	// WARNING: in.COSInstance requires manual conversion: does not exist in peer-type
+	// WARNING: in.ImageStatus requires manual conversion: does not exist in peer-type
 	// WARNING: in.NetworkStatus requires manual conversion: does not exist in peer-type
 	out.Ready = in.Ready
 	// WARNING: in.ResourceGroup requires manual conversion: does not exist in peer-type
