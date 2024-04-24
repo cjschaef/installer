@@ -66,6 +66,15 @@ func (s *Service) ListVpcs(options *vpcv1.ListVpcsOptions) (*vpcv1.VPCCollection
 	return s.vpcService.ListVpcs(options)
 }
 
+// ListVpcsPager returns the full list of VPCs (avoiding pagnation) in a region.
+func (s *Service) ListVpcsPager(options *vpcv1.ListVpcsOptions) ([]vpcv1.VPC, error) {
+	pager, err := s.vpcService.NewVpcsPager(options)
+	if err != nil {
+		return nil, err
+	}
+	return pager.GetAll()
+}
+
 // CreateSubnet creates a subnet.
 func (s *Service) CreateSubnet(options *vpcv1.CreateSubnetOptions) (*vpcv1.Subnet, *core.DetailedResponse, error) {
 	return s.vpcService.CreateSubnet(options)
@@ -81,19 +90,18 @@ func (s *Service) ListSubnets(options *vpcv1.ListSubnetsOptions) (*vpcv1.SubnetC
 	return s.vpcService.ListSubnets(options)
 }
 
+// ListSubnetsPager returns the full list of subnets (avoiding pagnation) in a region.
+func (s *Service) ListSubnetsPager(options *vpcv1.ListSubnetsOptions) ([]vpcv1.Subnet, error) {
+	pager, err := s.vpcService.NewSubnetsPager(options)
+	if err != nil {
+		return nil, err
+	}
+	return pager.GetAll()
+}
+
 // GetSubnetPublicGateway returns a public gateway attached to the subnet.
 func (s *Service) GetSubnetPublicGateway(options *vpcv1.GetSubnetPublicGatewayOptions) (*vpcv1.PublicGateway, *core.DetailedResponse, error) {
 	return s.vpcService.GetSubnetPublicGateway(options)
-}
-
-// CreatePublicGateway creates a public gateway for the VPC.
-func (s *Service) CreatePublicGateway(options *vpcv1.CreatePublicGatewayOptions) (*vpcv1.PublicGateway, *core.DetailedResponse, error) {
-	return s.vpcService.CreatePublicGateway(options)
-}
-
-// DeletePublicGateway deletes a public gateway.
-func (s *Service) DeletePublicGateway(options *vpcv1.DeletePublicGatewayOptions) (*core.DetailedResponse, error) {
-	return s.vpcService.DeletePublicGateway(options)
 }
 
 // UnsetSubnetPublicGateway detaches a public gateway from the subnet.
@@ -104,6 +112,16 @@ func (s *Service) UnsetSubnetPublicGateway(options *vpcv1.UnsetSubnetPublicGatew
 // SetSubnetPublicGateway attaches a public gateway to the subnet.
 func (s *Service) SetSubnetPublicGateway(options *vpcv1.SetSubnetPublicGatewayOptions) (*vpcv1.PublicGateway, *core.DetailedResponse, error) {
 	return s.vpcService.SetSubnetPublicGateway(options)
+}
+
+// CreatePublicGateway creates a public gateway for the VPC.
+func (s *Service) CreatePublicGateway(options *vpcv1.CreatePublicGatewayOptions) (*vpcv1.PublicGateway, *core.DetailedResponse, error) {
+	return s.vpcService.CreatePublicGateway(options)
+}
+
+// DeletePublicGateway deletes a public gateway.
+func (s *Service) DeletePublicGateway(options *vpcv1.DeletePublicGatewayOptions) (*core.DetailedResponse, error) {
+	return s.vpcService.DeletePublicGateway(options)
 }
 
 // GetPublicGateway returns a public gateway.
@@ -136,9 +154,68 @@ func (s *Service) ListVPCAddressPrefixes(options *vpcv1.ListVPCAddressPrefixesOp
 	return s.vpcService.ListVPCAddressPrefixes(options)
 }
 
+// CreateSecurityGroup creates a security group.
+func (s *Service) CreateSecurityGroup(options *vpcv1.CreateSecurityGroupOptions) (*vpcv1.SecurityGroup, *core.DetailedResponse, error) {
+	return s.vpcService.CreateSecurityGroup(options)
+}
+
+// DeleteSecurityGroup deletes a security group.
+func (s *Service) DeleteSecurityGroup(options *vpcv1.DeleteSecurityGroupOptions) (*core.DetailedResponse, error) {
+	return s.vpcService.DeleteSecurityGroup(options)
+}
+
+// GetSecurityGroup returns a security group.
+func (s *Service) GetSecurityGroup(options *vpcv1.GetSecurityGroupOptions) (*vpcv1.SecurityGroup, *core.DetailedResponse, error) {
+	return s.vpcService.GetSecurityGroup(options)
+}
+
+// GetSecurityGroupName returns a security group by name.
+func (s *Service) GetSecurityGroupByName(securityGroupName string) (*vpcv1.SecurityGroup, error) {
+	options := s.vpcService.NewListSecurityGroupsOptions()
+
+	pager, err := s.vpcService.NewSecurityGroupsPager(options)
+	if err != nil {
+		return nil, err
+	}
+	allItems, err := pager.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	for _, item := range allItems {
+		if *item.Name == securityGroupName {
+			return &item, nil
+		}
+	}
+	return nil, nil
+}
+
+// ListSecurityGroups returns a list of security groups.
+func (s *Service) ListSecurityGroups(options *vpcv1.ListSecurityGroupsOptions) (*vpcv1.SecurityGroupCollection, *core.DetailedResponse, error) {
+	return s.vpcService.ListSecurityGroups(options)
+}
+
+// ListSecurityGroupsPager returns the full list of Security Groups (avoiding pagnation).
+func (s *Service) ListSecurityGroupsPager(options *vpcv1.ListSecurityGroupsOptions) ([]vpcv1.SecurityGroup, error) {
+	pager, err := s.vpcService.NewSecurityGroupsPager(options)
+	if err != nil {
+		return nil, err
+	}
+	return pager.GetAll()
+}
+
 // CreateSecurityGroupRule creates a rule for a security group.
 func (s *Service) CreateSecurityGroupRule(options *vpcv1.CreateSecurityGroupRuleOptions) (vpcv1.SecurityGroupRuleIntf, *core.DetailedResponse, error) {
 	return s.vpcService.CreateSecurityGroupRule(options)
+}
+
+// GetSecurityGroupRule returns a security group rule.
+func (s *Service) GetSecurityGroupRule(options *vpcv1.GetSecurityGroupRuleOptions) (vpcv1.SecurityGroupRuleIntf, *core.DetailedResponse, error) {
+	return s.vpcService.GetSecurityGroupRule(options)
+}
+
+// ListSecurityGroupRules returns a list of security group rules.
+func (s *Service) ListSecurityGroupRules(options *vpcv1.ListSecurityGroupRulesOptions) (*vpcv1.SecurityGroupRuleCollection, *core.DetailedResponse, error) {
+	return s.vpcService.ListSecurityGroupRules(options)
 }
 
 // CreateLoadBalancer creates a new load balancer.

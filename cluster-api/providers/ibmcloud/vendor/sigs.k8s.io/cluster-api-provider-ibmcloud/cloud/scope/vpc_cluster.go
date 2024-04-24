@@ -20,6 +20,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
+	"strconv"
 
 	"github.com/go-logr/logr"
 
@@ -303,15 +305,29 @@ func (s *VPCClusterScope) SetVPCResourceStatus(resourceType infrav1beta2.Resourc
 		} else {
 			s.IBMVPCCluster.Status.NetworkStatus.ComputeSubnets[resource.Name] = ptr.To(resource)
 		}
+	case infrav1beta2.ResourceTypeSecurityGroup:
+		if s.IBMVPCCluster.Status.NetworkStatus == nil {
+			s.IBMVPCCluster.Status.NetworkStatus = &infrav1beta2.VPCNetworkStatus{}
+		}
+		if s.IBMVPCCluster.Status.NetworkStatus.SecurityGroups == nil {
+			s.IBMVPCCluster.Status.NetworkStatus.SecurityGroups = make(map[string]*infrav1beta2.VPCResourceStatus)
+		}
+		if securityGroup, ok := s.IBMVPCCluster.Status.NetworkStatus.SecurityGroups[resource.Name]; ok {
+			securityGroup.Set(resource)
+		} else {
+			s.IBMVPCCluster.Status.NetworkStatus.SecurityGroups[resource.Name] = ptr.To(resource)
+		}
 	default:
 		s.Info("unsupported vpc resource type")
 	}
 }
 
+/*
 // NetworkSpec returns the cluster NetworkSpec.
 func (s *VPCClusterScope) NetworkSpec() *infrav1beta2.VPCNetworkSpec {
 	return s.IBMVPCCluster.Spec.NetworkSpec
-}
+}.
+*/
 
 // VPC returns the cluster VPC information.
 func (s *VPCClusterScope) VPC() *infrav1beta2.VPCResource {
@@ -435,6 +451,28 @@ func (s *VPCClusterScope) GetSubnetIDs() ([]string, error) { //nolint: gocyclo
 		subnets = append(subnets, id)
 	}
 	return subnets, nil
+}
+
+// getSecurityGroupID returns the Security Group ID from the SecurityGroup resource or attempts to look it up in Status. It does not attempt to find the ID using vpcv1 API calls.
+func (s *VPCClusterScope) getSecurityGroupID(securityGroup infrav1beta2.SecurityGroup) *string {
+	if securityGroup.ID != nil {
+		return securityGroup.ID
+	}
+	// If the Security Group name is not set (nor the ID), that is a problem, but return nil as we only check known information
+	if securityGroup.Name == nil {
+		return nil
+	}
+	return s.getSecurityGroupIDFromStatus(*securityGroup.Name)
+}
+
+// getSecurityGroupIDFromStatus returns the Security Group ID from the NetworkStatus for the specified Security Group name, if it possible (it has been cached in Status).
+func (s *VPCClusterScope) getSecurityGroupIDFromStatus(name string) *string {
+	if s.IBMVPCCluster.Status.NetworkStatus != nil && s.IBMVPCCluster.Status.NetworkStatus.SecurityGroups != nil {
+		if sg, ok := s.IBMVPCCluster.Status.NetworkStatus.SecurityGroups[name]; ok {
+			return ptr.To(sg.ID)
+		}
+	}
+	return nil
 }
 
 /*
@@ -622,8 +660,8 @@ func (s *VPCClusterScope) ReconcileVPC() (bool, error) {
 
 // createVPC creates VPC.
 func (s *VPCClusterScope) createVPC() (*string, error) {
-	// For VPC, we may rely on using the Network's Resource Group ID, if it was provided. Otherwise, we default to the cluster's Resource Group ID.
-	resourceGroupID, err := s.GetNetworkResourceGroupID()
+	/// We will use the cluster Resource Group ID, as we expect to create all resources in that Resource Group.
+	resourceGroupID, err := s.GetResourceGroupID()
 	if err != nil {
 		return nil, fmt.Errorf("error getting resource group id: %w", err)
 	}
@@ -651,6 +689,7 @@ func (s *VPCClusterScope) createVPC() (*string, error) {
 // ReconcileVPCCustomImage reconciles the VPC Custom Image.
 func (s *VPCClusterScope) ReconcileVPCCustomImage() (bool, error) {
 	var imageID *string
+	// Attempt to collect VPC Custom Image info from Status
 	if s.IBMVPCCluster.Status.ImageStatus != nil {
 		if s.IBMVPCCluster.Status.ImageStatus.ID != "" {
 			imageID = ptr.To(s.IBMVPCCluster.Status.ImageStatus.ID)
@@ -735,8 +774,8 @@ func (s *VPCClusterScope) createCustomImage() (*vpcv1.Image, error) {
 			resourceGroupID = id.ID
 		}
 	} else {
-		// Otherwise, we use the Network Resource Group ID, if it exists, or just the cluster Resource Group ID.
-		id, err := s.GetNetworkResourceGroupID()
+		// We will use the cluster Resource Group ID, as we expect to create all resources in that Resource Group.
+		id, err := s.GetResourceGroupID()
 		if err != nil {
 			return nil, err
 		}
@@ -776,6 +815,10 @@ func (s *VPCClusterScope) createCustomImage() (*vpcv1.Image, error) {
 	if err != nil {
 		return nil, err
 	}
+	if imageDetails == nil || imageDetails.ID == nil || imageDetails.Name == nil || imageDetails.CRN == nil {
+		return nil, fmt.Errorf("error failed creating custom image")
+	}
+
 	if err := s.TagResource(s.IBMVPCCluster.Name, *imageDetails.CRN); err != nil {
 		return nil, err
 	}
@@ -802,96 +845,11 @@ func (s *VPCClusterScope) buildCOSObjectHRef() (*string, error) {
 	return ptr.To(href), nil
 }
 
-/*
-// ReconcilePublicGateways reconciles the VPC Public Gateway(s).
-func (s *VPCClusterScope) ReconcilePublicGateways() (bool, error) {
-	// If Public Gateways are not enabled, we have nothing to reconcile
-	if s.NetworkSpec().EnablePublicGateways != nil && !*s.NetworkSpec().EnablePublicGateways {
-		return false, nil
-	}
-
-	// Retrieve the zones covered by any supplied subnets.
-	subnetZones, err := s.getSubnetZones()
-	if err != nil {
-		return false, err
-	}
-
-	// If no zones are listed, we expect to default to using all zones in the region.
-	if len(subnetZones) == 0 {
-		zones, err := s.VPCClient.GetZonesByRegion(s.IBMVPCCluster.Spec.Region)
-		if err != nil {
-			return false, err
-		}
-		subnetZones = append(subnetZones, zones...)
-	}
-
-	// Now that we should have the expected subnet zones, we can check those covered by any Public Gateways in Status, to confirm if they exist and no additional Public Gateways are needed.
-	ready, err := s.validatePublicGatewayStatus(subnetZones)
-	if err != nil {
-		return false, err
-	} else if ready {
-		return false, nil
-	}
-
-	// Otherwise, get the existing Public Gateways created for this cluster, from Status.
-	existingPublicGateways := make(map[string]*infrav1beta2.VPCResourceStatus, 0)
-	if s.IBMVPCCluster.Status.NetworkStatus != nil && len(s.IBMVPCCluster.Status.NetworkStatus.PublicGateways) != 0 {
-		for k, v := range s.IBMVPCCluster.Status.NetworkStatus.PublicGateways {
-			existingPublicGateways[k] = v
-		}
-	}
-
-	// Get zones (which expect to contain a subnet) which do not have a Public Gateway as of yet.
-	missingZones, err := s.getMissingPublicGatewayZones(existingPublicGateways, subnetZones)
-	if err != nil {
-		return false, err
-	}
-
-	// Process remaining zones to check or create a Public Gateway.
-	requeue := false
-	for _, zone := range missingZones {
-		publicGateway, err := s.VPCClient.GetPublicGatewayByZone(zone)
-		if err != nil {
-			return false, err
-		}
-
-		if publicGateway != nil {
-			if publicGateway.Status != nil && *publicGateway.Status == vpcv1.PublicGatewayStatusAvailableConst {
-				// If the Public Gateway was ready, update its status and move onto next Public Gateway (zone).
-				s.SetVPCResourceStatus(infrav1beta2.ResourceTypePublicGateway, infrav1beta2.VPCResourceStatus{
-					ID:    *publicGateway.ID,
-					Ready: true,
-				})
-			} else {
-				// Otherwise, requeue to give the Public Gateway more time to be ready, move onto next Public Gateway.
-				requeue = true
-			}
-			continue
-		}
-
-		// Since a Public Gateway was not found, attempt to create one for the zone.
-		publicGateway, err = s.createPublicGateway(zone)
-		if err != nil {
-			return false, err
-		}
-		if publicGateway == nil || publicGateway.ID == nil {
-			return false, fmt.Errorf("error failure creating public gateway in zone %s", zone)
-		}
-		s.SetVPCResourceStatus(infrav1beta2.ResourceTypePublicGateway, infrav1beta2.VPCResourceStatus{
-			ID:    *publicGateway.ID,
-			Ready: false,
-		})
-	}
-
-	return requeue, nil
-}.
-*/
-
 // findOrCreatePublicGateway will attempt to find if there is an existing Public Gateway for a specific zone, for the cluster (in cluster's/Network's Resource Group and VPC), or create a new one. Only one Public Gateway is required in each zone, for any subnets in that zone.
 func (s *VPCClusterScope) findOrCreatePublicGateway(zone string) (*vpcv1.PublicGateway, error) {
 	publicGatewayName := fmt.Sprintf("%s-%s", *s.GetServiceName(infrav1beta2.ResourceTypePublicGateway), zone)
-	// We will use the Network Resource Group ID (as we'd expect the Public Gateways for the Network to be in that Resource Group).
-	resourceGroupID, err := s.GetNetworkResourceGroupID()
+	// We will use the cluster Resource Group ID, as we expect to create all resources (Public Gateways and Subnets) in that Resource Group.
+	resourceGroupID, err := s.GetResourceGroupID()
 	if err != nil {
 		return nil, err
 	}
@@ -900,7 +858,7 @@ func (s *VPCClusterScope) findOrCreatePublicGateway(zone string) (*vpcv1.PublicG
 		return nil, err
 	}
 	// If we found the Public Gateway, with an ID, for the zone, return it.
-	// NOTE(cjschaef): We may wish to confirm the PublicGateway, by checking Tags (Global Tagging), but this might be sufficient.
+	// NOTE(cjschaef): We may wish to confirm the PublicGateway, by checking Tags (Global Tagging), but this might be sufficient, as we don't expect to .
 	if publicGateway != nil && publicGateway.ID != nil {
 		return publicGateway, nil
 	}
@@ -916,6 +874,9 @@ func (s *VPCClusterScope) findOrCreatePublicGateway(zone string) (*vpcv1.PublicG
 
 	publicGatewayDetails, _, err := s.VPCClient.CreatePublicGateway(&vpcv1.CreatePublicGatewayOptions{
 		Name: ptr.To(publicGatewayName),
+		ResourceGroup: &vpcv1.ResourceGroupIdentity{
+			ID: ptr.To(resourceGroupID),
+		},
 		VPC: &vpcv1.VPCIdentity{
 			ID: vpcID,
 		},
@@ -926,9 +887,23 @@ func (s *VPCClusterScope) findOrCreatePublicGateway(zone string) (*vpcv1.PublicG
 	if err != nil {
 		return nil, err
 	}
-	if publicGatewayDetails == nil || publicGatewayDetails.ID == nil {
+	if publicGatewayDetails == nil {
 		return nil, fmt.Errorf("error failed creating public gateway for zone %s", zone)
+	} else if publicGatewayDetails.ID == nil {
+		s.Info("error failed creating public gateway, no ID", "name", publicGatewayName)
+		return nil, fmt.Errorf("error failed creating public gateway, no ID")
+	} else if publicGatewayDetails.CRN == nil {
+		s.Info("error failed creating public gateway, no CRN", "name", publicGatewayName)
+		return nil, fmt.Errorf("error failed creating public gateway, no CRN")
 	}
+	s.Info("created public gateway", "id", publicGatewayDetails.ID)
+
+	// Add a tag to the public gateway for the cluster
+	err = s.TagResource(s.IBMVPCCluster.Name, *publicGatewayDetails.CRN)
+	if err != nil {
+		return nil, err
+	}
+
 	return publicGatewayDetails, nil
 }
 
@@ -949,12 +924,10 @@ func (s *VPCClusterScope) ReconcileSubnets() (bool, error) {
 	// Reconcile Control Plane subnets
 	requeue := false
 	for _, subnet := range subnets {
-		requiresReconcile, err := s.reconcileSubnet(subnet, true)
-		if err != nil {
+		if requiresRequeue, err := s.reconcileSubnet(subnet, true); err != nil {
 			return false, fmt.Errorf("error failed reconciling control plane subnet: %w", err)
-		}
-		// If the reconcile of the subnet requires further reconciliation, plan to requeue entire ReconcileSubnets call, but attempt to further reconcile additional Subnets (prevent single subnet reconciliation in each call)
-		if requiresReconcile {
+		} else if requiresRequeue {
+			// If the reconcile of the subnet requires further reconciliation, plan to requeue entire ReconcileSubnets call, but attempt to further reconcile additional Subnets (attempt parallel subnet reconciliation)
 			requeue = true
 		}
 	}
@@ -974,13 +947,10 @@ func (s *VPCClusterScope) ReconcileSubnets() (bool, error) {
 
 	// Reconcile Compute subnets
 	for _, subnet := range subnets {
-		requiresReconcile, err := s.reconcileSubnet(subnet, false)
-		if err != nil {
+		if requiresRequeue, err := s.reconcileSubnet(subnet, false); err != nil {
 			return false, fmt.Errorf("error failed reconciling compute subnet: %w", err)
-		}
-
-		// If the reconcile of the subnet requires further reconciliation, plan to requeue entire ReconcileSubnets call, but attempt to further reconcile additional Subnets (prevent single reconciliation)
-		if requiresReconcile {
+		} else if requiresRequeue {
+			// If the reconcile of the subnet requires further reconciliation, plan to requeue entire ReconcileSubnets call, but attempt to further reconcile additional Subnets (attempt parallel subnet reconciliation)
 			requeue = true
 		}
 	}
@@ -1017,6 +987,9 @@ func (s *VPCClusterScope) reconcileSubnet(subnet infrav1beta2.Subnet, isControlP
 	if subnet.ID != nil {
 		subnetID = subnet.ID
 	} else {
+		if subnet.Name == nil {
+			return false, fmt.Errorf("error subnet has no name or id")
+		}
 		subnetDetails, err := s.VPCClient.GetVPCSubnetByName(*subnet.Name)
 		if err != nil {
 			return false, err
@@ -1081,14 +1054,7 @@ func (s *VPCClusterScope) reconcileSubnet(subnet infrav1beta2.Subnet, isControlP
 		s.Error(err, "error creating subnet", "name", subnet.Name)
 		return false, err
 	}
-	if subnetDetails.ID == nil {
-		s.Info("error failed creating subnet", "name", subnet.Name)
-		return false, fmt.Errorf("error failed creating subnet")
-	} else if subnetDetails.CRN == nil {
-		s.Info("error new subnet CRN missing", "name", subnet.Name)
-		return false, fmt.Errorf("error failure during subnet creation")
-	}
-	s.Info("created subnet", "id", subnetID)
+	s.Info("Successfully created subnet", "id", subnetID)
 
 	// Update status with subnet ID for the proper Plane subnet map
 	subnetResourceStatus := &infrav1beta2.VPCResourceStatus{
@@ -1107,110 +1073,13 @@ func (s *VPCClusterScope) reconcileSubnet(subnet infrav1beta2.Subnet, isControlP
 		s.IBMVPCCluster.Status.NetworkStatus.ComputeSubnets[*subnetDetails.ID] = subnetResourceStatus
 	}
 
-	// Add a tag to the subnet for the cluster
-	err = s.TagResource(s.IBMVPCCluster.Name, *subnetDetails.CRN)
-	if err != nil {
-		return false, err
-	}
-
 	// Recommend we requeue reconciliation after subnet was successfully created
 	return true, nil
 }
 
-/*
-// ReconcileVPCSubnet reconciles VPC subnet.
-func (s *VPCClusterScope) ReconcileVPCSubnet() (bool, error) {
-	subnets := make([]infrav1beta2.Subnet, 0)
-	// check whether user has set the vpc subnets
-	if len(s.IBMVPCCluster.Spec.VPCSubnets) == 0 {
-		// if the user did not set any subnet, we try to create subnet in all the zones.
-		powerVSZone := s.Zone()
-		if powerVSZone == nil {
-			return false, fmt.Errorf("error reconicling vpc subnet, powervs zone is not set")
-		}
-		region := endpoints.ConstructRegionFromZone(*powerVSZone)
-		vpcZones, err := genUtil.VPCZonesForPowerVSRegion(region)
-		if err != nil {
-			return false, err
-		}
-		if len(vpcZones) == 0 {
-			return false, fmt.Errorf("error reconicling vpc subnet,error getting vpc zones, no zone found for region %s", region)
-		}
-		for _, zone := range vpcZones {
-			subnet := infrav1beta2.Subnet{
-				Name: ptr.To(fmt.Sprintf("%s-%s", *s.GetServiceName(infrav1beta2.ResourceTypeSubnet), zone)),
-				Zone: ptr.To(zone),
-			}
-			subnets = append(subnets, subnet)
-		}
-	}
-	for index, subnet := range s.IBMVPCCluster.Spec.VPCSubnets {
-		if subnet.Name == nil {
-			subnet.Name = ptr.To(fmt.Sprintf("%s-%d", *s.GetServiceName(infrav1beta2.ResourceTypeSubnet), index))
-		}
-		subnets = append(subnets, subnet)
-	}
-	for _, subnet := range subnets {
-		s.Info("Reconciling vpc subnet", "subnet", subnet)
-		var subnetID *string
-		if subnet.ID != nil {
-			subnetID = subnet.ID
-		} else {
-			subnetID = s.GetVPCSubnetID(*subnet.Name)
-		}
-		if subnetID != nil {
-			subnetDetails, _, err := s.IBMVPCClient.GetSubnet(&vpcv1.GetSubnetOptions{
-				ID: subnetID,
-			})
-			if err != nil {
-				return false, err
-			}
-			if subnetDetails == nil {
-				return false, fmt.Errorf("error failed to get vpc subnet with id %s", *subnetID)
-			}
-			// check for next subnet
-			continue
-		}
-
-		// check VPC subnet exist in cloud
-		vpcSubnetID, err := s.checkVPCSubnet(*subnet.Name)
-		if err != nil {
-			s.Error(err, "error checking VPC subnet in IBM Cloud")
-			return false, err
-		}
-		if vpcSubnetID != "" {
-			s.Info("Found VPC subnet in IBM Cloud", "id", vpcSubnetID)
-			s.SetVPCSubnetID(*subnet.Name, infrav1beta2.ResourceReference{ID: &vpcSubnetID, ControllerCreated: ptr.To(false)})
-			// check for next subnet
-			continue
-		}
-		subnetID, err = s.createVPCSubnet(subnet)
-		if err != nil {
-			s.Error(err, "error creating vpc subnet")
-			return false, err
-		}
-		s.Info("created vpc subnet", "id", subnetID)
-		s.SetVPCSubnetID(*subnet.Name, infrav1beta2.ResourceReference{ID: subnetID, ControllerCreated: ptr.To(true)})
-		return true, nil
-	}
-	return false, nil
-}
-
-// checkVPCSubnet checks VPC subnet exist in cloud.
-func (s *VPCClusterScope) checkVPCSubnet(subnetName string) (string, error) {
-	vpcSubnet, err := s.IBMVPCClient.GetVPCSubnetByName(subnetName)
-	if err != nil {
-		return "", err
-	}
-	if vpcSubnet == nil {
-		return "", nil
-	}
-	return *vpcSubnet.ID, nil
-}.
-*/
-
 // createSubnet creates a new VPC subnet.
 func (s *VPCClusterScope) createSubnet(subnet infrav1beta2.Subnet) (*vpcv1.Subnet, error) {
+	// Created resources should be placed in the cluster Resource Group (not Network, if it exists)
 	resourceGroupID, err := s.GetResourceGroupID()
 	if err != nil {
 		s.Error(err, "error fetching resource group id for subnet creation")
@@ -1232,10 +1101,8 @@ func (s *VPCClusterScope) createSubnet(subnet infrav1beta2.Subnet) (*vpcv1.Subne
 	}
 
 	// NOTE(cjschaef): We likely will want to add support to use custom Address Prefixes
-	cidrBlock, err := s.VPCClient.GetSubnetAddrPrefix(*vpcID, *subnet.Zone)
-	if err != nil {
-		return nil, err
-	}
+	// For now, we rely on the API to assign us prefixes, as we request via IP count
+	var ipCount int64 = 256
 	// We currnetly only support IPv4
 	ipVersion := "ipv4"
 
@@ -1248,8 +1115,8 @@ func (s *VPCClusterScope) createSubnet(subnet infrav1beta2.Subnet) (*vpcv1.Subne
 
 	options := &vpcv1.CreateSubnetOptions{}
 	options.SetSubnetPrototype(&vpcv1.SubnetPrototype{
-		IPVersion:     ptr.To(ipVersion),
-		Ipv4CIDRBlock: ptr.To(cidrBlock),
+		IPVersion:             ptr.To(ipVersion),
+		TotalIpv4AddressCount: ptr.To(ipCount),
 		Name:          subnet.Name,
 		VPC: &vpcv1.VPCIdentity{
 			ID: vpcID,
@@ -1271,13 +1138,553 @@ func (s *VPCClusterScope) createSubnet(subnet infrav1beta2.Subnet) (*vpcv1.Subne
 		return nil, err
 	}
 	if subnetDetails == nil {
-		return nil, fmt.Errorf("create subnet returned nil")
+		s.Info("error failed creating subnet", "name", subnet.Name)
+		return nil, fmt.Errorf("error failed creating subnet")
+	} else if subnetDetails.ID == nil {
+		s.Info("error failed creating subnet, no ID", "name", subnet.Name)
+		return nil, fmt.Errorf("error failed creating subnet, no ID")
+	} else if subnetDetails.CRN == nil {
+		s.Info("error failed creating subnet, no CRN", "name", subnet.Name)
+		return nil, fmt.Errorf("error failed creating subnet, no CRN")
 	}
+
+	// Add a tag to the subnet for the cluster
+	err = s.TagResource(s.IBMVPCCluster.Name, *subnetDetails.CRN)
+	if err != nil {
+		return nil, err
+	}
+
 	return subnetDetails, nil
 }
 
-/*
+// ReconcileSecurityGroups will attempt to reconcile the defined SecurityGroups and their SecurityGroupRules. Our best option is to perform a first set of passes, creating all the SecurityGroups first, then reconcile the SecurityGroupRules after that, as the SecuirtyGroupRules could be dependent on an IBM Cloud Security Group that must be created first.
+func (s *VPCClusterScope) ReconcileSecurityGroups() (bool, error) {
+	// If no Security Groups were supplied, we have nothing to do.
+	if len(s.IBMVPCCluster.Spec.NetworkSpec.SecurityGroups) == 0 {
+		return false, nil
+	}
 
+	// Reconcile each Security Group first, process rules later.
+	requeue := false
+	for _, securityGroup := range s.IBMVPCCluster.Spec.NetworkSpec.SecurityGroups {
+		if requiresRequeue, err := s.reconcileSecurityGroup(securityGroup); err != nil {
+			return false, fmt.Errorf("error failed reonciling security groups: %w", err)
+		} else if requiresRequeue {
+			requeue = true
+		} 
+	}
+
+	// If one or more Security Groups requires a requeue of reconciliation, let's do that now, and process the Security Group Rules after all Security Groups are reconciled.
+	if requeue {
+		return true, nil
+	}
+
+	// Reconcile each Security Groups's Rules
+	requeue = false
+	for _, securityGroup := range s.IBMVPCCluster.Spec.NetworkSpec.SecurityGroups {
+		if requiresRequeue, err := s.reconcileSecurityGroupRules(securityGroup); err != nil {
+			return false, fmt.Errorf("error failed reconciling security group rules: %w", err)
+		} else if requiresRequeue {
+			requeue = true
+		}
+	}
+
+	if requeue {
+		return true, nil
+	}
+
+	// All Security Groups and Security Group Rules have been reconciled with no requeue's required
+	return false, nil
+}
+
+// reconcileSecurityGroup will attempt to reconcile a defined SecurityGroup. By design, we confirm the IBM Cloud Security Group exists first, before attempting to reconcile the defined SecurityGroupRules. We return early if the IBM Cloud Security Group did not exist or needed to be created, to return in a followup pass to create the SecurityGroup's Rules.
+func (s *VPCClusterScope) reconcileSecurityGroup(securityGroup infrav1beta2.SecurityGroup) (bool, error) {
+	var securityGroupID *string
+	// If Security Group already has an ID defined, use that for lookup
+	if securityGroup.ID != nil {
+		securityGroupID = securityGroup.ID
+	} else {
+		if securityGroup.Name == nil {
+			return false, fmt.Errorf("error securityGroup has no name or id")
+		}
+		// Check the Status if an ID is already available for the Security Group
+		if s.IBMVPCCluster.Status.NetworkStatus != nil && s.IBMVPCCluster.Status.NetworkStatus.SecurityGroups != nil {
+			if id, ok := s.IBMVPCCluster.Status.NetworkStatus.SecurityGroups[*securityGroup.Name]; ok {
+				securityGroupID = &id.ID
+			}
+		}
+		
+		// Otherwise, attempt to lookup the ID by name
+		if securityGroupDetails, err := s.VPCClient.GetSecurityGroupByName(*securityGroup.Name); err != nil {
+			return false, fmt.Errorf("error failed lookup of security group by name: %w", err)
+		} else if securityGroupDetails != nil && securityGroupDetails.ID != nil {
+			securityGroupID = securityGroupDetails.ID
+		}
+	}
+
+	// If we have an ID for the SecurityGroup, we can check the status
+	if securityGroupID != nil {
+		if securityGroupDetails, _, err := s.VPCClient.GetSecurityGroup(&vpcv1.GetSecurityGroupOptions{
+			ID: securityGroupID,
+		}); err != nil {
+			return false, fmt.Errorf("error failed lookup of security group: %w", err)
+		} else if securityGroupDetails == nil {
+			// The Security Group cannot be found by ID, it was removed or didn't exist
+			// TODO(cjschaef): We may wish to clear the ID's to get a new Security Group created, but for now we return an error
+			return false, fmt.Errorf("error could not find security group with id=%s", securityGroupID)
+		}
+
+		// Security Groups do not have a status, so we assume if it exists, it is ready
+		s.SetVPCResourceStatus(infrav1beta2.ResourceTypeSecurityGroup, infrav1beta2.VPCResourceStatus{
+			ID:    *securityGroupID,
+			Ready: true,
+		})
+		return false, nil
+	}
+
+	// If we don't have an ID at this point, we assume we need to create the Security Group
+	securityGroupDetails, _, err := s.VPCClient.CreateSecurityGroup(&vpcv1.CreateSecurityGroupOptions{
+		Name: securityGroup.Name,
+	})
+	if err != nil {
+		s.Error(err, "error creating security group", "name", securityGroup.Name)
+		return false, err
+	}
+	if securityGroupDetails == nil {
+		s.Info("error failed creating security group", "name", securityGroup.Name)
+		return false, fmt.Errorf("error failed creating security group")
+	} else if securityGroupDetails.ID == nil {
+		s.Info("error failed creating security group, no ID", "name", securityGroup.Name)
+		return false, fmt.Errorf("error failed creating security group, no ID")
+	} else if securityGroupDetails.CRN == nil {
+		s.Info("error new security group CRN missing, no CRN", "name", securityGroup.Name)
+		return false, fmt.Errorf("error failure creating security group, no CRN")
+	}
+
+	// Security Groups do not have a status, we could set the status as ready at this point, but for now will trigger a requeue and set status as not ready
+	s.SetVPCResourceStatus(infrav1beta2.ResourceTypeSecurityGroup, infrav1beta2.VPCResourceStatus{
+		ID:    *securityGroupDetails.ID,
+		Ready: false,
+	})
+
+	// Add a tag to the Security Group for the cluster
+	err = s.TagResource(s.IBMVPCCluster.Name, *securityGroupDetails.CRN)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// reconcile SecurityGroupRules will attempt to reconcile the set of defined SecurityGroupRules for a SecurityGroup, one Rule at a time. Each defined Rule can contain multiple remotes, requiring a unique IBM Cloud Security Group Rule, based on the expected traffic direction, inbound (Source) or outbound (Destination).
+func (s *VPCClusterScope) reconcileSecurityGroupRules(securityGroup infrav1beta2.SecurityGroup) (bool, error) {
+	// We assume that the securityGroup exists in Status, if it doesn't then it should be re-reconciled
+	securityGroupID := s.getSecurityGroupID(securityGroup)
+	if securityGroupID == nil {
+		return true, nil
+	}
+
+	// If the SecurityGroup has no rules, we have nothing more to do for this Security Group
+	if len(securityGroup.Rules) == 0 {
+		return false, nil
+	}
+
+	// Reconcile each SecurityGroupRule in the SecurityGroup
+	requeue := false
+	for _, securityGroupRule := range securityGroup.Rules {
+		if requiresRequeue, err := s.reconcileSecurityGroupRule(*securityGroupID, *securityGroupRule); err != nil {
+			return false, err
+		} else if requiresRequeue {
+			requeue = true
+		}
+	}
+
+	return requeue, nil
+}
+
+// reconcileSecurityGroupRule will attempt to reconcile a defined SecurityGroupRule, with one or more Remotes, for a SecurityGroup. If the IBM Cloud Security Group contains no Rules, we simply attempt to create the defined Rule (via the Remote(s) provided).
+func (s *VPCClusterScope) reconcileSecurityGroupRule(securityGroupID string, securityGroupRule infrav1beta2.SecurityGroupRule) (bool, error) {
+	existingSecurityGroupRuleIntfs, _, err := s.VPCClient.ListSecurityGroupRules(&vpcv1.ListSecurityGroupRulesOptions{
+		SecurityGroupID: ptr.To(securityGroupID),
+	})
+	if err != nil {
+		return false, fmt.Errorf("error failed listing security group rules during reconcile of security group id=%s: %w", securityGroupID, err)
+	}
+
+	// If the Security Group has no Rules at all, we simply create the Rule
+	if existingSecurityGroupRuleIntfs == nil || existingSecurityGroupRuleIntfs.Rules == nil || len(existingSecurityGroupRuleIntfs.Rules) == 0 {
+		s.Info("Creating security group rules for security group id=%s", securityGroupID)
+		err := s.createSecurityGroupRuleAllRemotes(securityGroupID, securityGroupRule)
+		if err != nil {
+			return false, err
+		}
+		s.Info("Created security group rules")
+
+		// Security Group Rules do not have a Status, so we likely don't need to requeue, but for now, will requeue to verify the Security Group Rules
+		return true, nil
+	}
+
+	// Validate the Security Group Rule(s) exist or create
+	if exists, err := s.findOrCreateSecurityGroupRule(securityGroupID, securityGroupRule, existingSecurityGroupRuleIntfs); err != nil {
+		return false, err
+	} else if exists {
+		return false, nil
+	}
+
+	// Security Group Rules do not have a Status, so we likely don't need to requeue, but for now, will requeue to verify the Security Group Rules
+	return true, nil
+}
+
+// findOrCreateSecurityGroupRule will attempt to match up the SecurityGroupRule's Remote(s) (multiple Remotes can be supplied per Rule definition), and will create any missing IBM Cloud Security Group Rules based on the SecurityGroupRule and Remote(s). Remotes are defined either by a Destination (outbound) or a Source (inbound), which defines the type of IBM Cloud Security Group Rule that should exist or be created.
+func (s *VPCClusterScope) findOrCreateSecurityGroupRule(securityGroupID string, securityGroupRule infrav1beta2.SecurityGroupRule, existingSecurityGroupRules *vpcv1.SecurityGroupRuleCollection) (bool, error) {
+	// Use either the SecurityGroupRule.Destination or SecurityGroupRule.Source for further details based on SecurityGroupRule.Direction
+	var securityGroupRulePrototype infrav1beta2.SecurityGroupRulePrototype
+	switch securityGroupRule.Direction {
+	case infrav1beta2.SecurityGroupRuleDirectionInbound:
+		securityGroupRulePrototype = *securityGroupRule.Source
+	case infrav1beta2.SecurityGroupRuleDirectionOutbound:
+		securityGroupRulePrototype = *securityGroupRule.Destination
+	default:
+		return false, fmt.Errorf("error unsupported SecurityGroupRuleDirection defined")
+	}
+
+	// Each defined SecurityGroupRule can have multiple Remotes specified, each signifying a separate Security Group Rule (with the same Action, Direction, etc.)
+	allMatch := true
+	for _, remote := range securityGroupRulePrototype.Remotes {
+		remoteMatch := false
+		for _, existingRuleIntf := range existingSecurityGroupRules.Rules {
+			// Perform analysis of the existingRuleIntf, based on its Protocol type, further analysis is performed based on remaining attributes to find if the specific Rule and Remote match
+			switch reflect.TypeOf(existingRuleIntf).String() {
+			case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolAll":
+				// If our Remote doesn't define all Protocols, we don't need further checks, move on to next Rule
+				if securityGroupRulePrototype.Protocol != infrav1beta2.SecurityGroupRuleProtocolAll {
+					continue
+				}
+				existingRule := existingRuleIntf.(*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolAll)
+				// If the Remote doesn't have the same Direction as the Rule, no further checks are necessary
+				if securityGroupRule.Direction != infrav1beta2.SecurityGroupRuleDirection(*existingRule.Direction) {
+					continue
+				}
+				if found, err := s.checkSecurityGroupRuleProtocolAll(securityGroupRulePrototype, remote, existingRule); err != nil {
+					return false, err
+				} else if found {
+					// If we found the matching IBM Cloud Security Group Rule for the defined SecurityGroupRule and Remote, we can stop checking IBM Cloud Security Group Rules for this remote and move onto the next remote.
+					// The expectation is that only one IBM Cloud Security Group Rule will match, but if at least one matches the defined SecurityGroupRule, that is sufficient.
+					remoteMatch = true
+					break
+				}
+			case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolIcmp":
+				// If our Remote doesn't define ICMP Protocol, we don't need further checks, move on to next Rule
+				if securityGroupRulePrototype.Protocol != infrav1beta2.SecurityGroupRuleProtocolIcmp {
+					continue
+				}
+				existingRule := existingRuleIntf.(*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolIcmp)
+				// If the Remote doesn't have the same Direction as the Rule, no further checks are necessary
+				if securityGroupRule.Direction != infrav1beta2.SecurityGroupRuleDirection(*existingRule.Direction) {
+					continue
+				}
+				if found, err := s.checkSecurityGroupRuleProtocolIcmp(securityGroupRulePrototype, remote, existingRule); err != nil {
+					return false, err
+				} else if found {
+					// If we found the matching IBM Cloud Security Group Rule for the defined SecurityGroupRule and Remote, we can stop checking IBM Cloud Security Group Rules for this remote and move onto the next remote.
+					remoteMatch = true
+					break
+				}
+			case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp":
+				// If our Remote doesn't define TCP/UDP Protocol, we don't need further checks, move on to next Rule
+				if securityGroupRulePrototype.Protocol != infrav1beta2.SecurityGroupRuleProtocolTCP && securityGroupRulePrototype.Protocol != infrav1beta2.SecurityGroupRuleProtocolUDP {
+					continue
+				}
+				existingRule := existingRuleIntf.(*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp)
+				// If the Remote doesn't have the same Direction as the Rule, no further checks are necessary
+				if securityGroupRule.Direction != infrav1beta2.SecurityGroupRuleDirection(*existingRule.Direction) {
+					continue
+				}
+				if found, err := s.checkSecurityGroupRuleProtocolTcpudp(securityGroupRulePrototype, remote, existingRule); err != nil {
+					return false, err
+				} else if found {
+					// If we found the matching IBM Cloud Security Group Rule for the defined SecurityGroupRule and Remote, we can stop checking IBM Cloud Security Group Rules for this remote and move onto the next remote.
+					remoteMatch = true
+					break
+				}
+			}
+		}
+
+		// If we did not find a matching SecurityGroupRule for this defined Remote, create one now and expect to requeue
+		if !remoteMatch {
+			err := s.createSecurityGroupRule(securityGroupID, securityGroupRule, remote)
+			if err != nil {
+				return false, err
+			}
+			allMatch = false
+		}
+	}
+	return allMatch, nil
+}
+
+// checkSecurityGroupRuleProtocolAll analyzes an IBM Cloud Security Group Rule designated for 'all' protocols, to verify if the supplied Rule and Remote match the attributes from the existing 'ProtocolAll' Rule.
+func (s *VPCClusterScope) checkSecurityGroupRuleProtocolAll(securityGroupRulePrototype infrav1beta2.SecurityGroupRulePrototype, securityGroupRuleRemote infrav1beta2.SecurityGroupRuleRemote, existingRule *vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolAll) (bool, error) {
+	if exists, err := s.checkSecurityGroupRulePrototypeRemote(securityGroupRuleRemote, existingRule.Remote); err != nil {
+		return false, err
+	} else if exists {
+		return true, nil
+	}
+	return false, nil
+}
+
+// checkSecurityGroupRuleProtocolIcmp analyzes an IBM Cloud Security Group Rule designated for 'icmp' protocol, to verify if the supplied Rule and Remote match the attributes from the existing 'ProtocolIcmp' Rule.
+func (s *VPCClusterScope) checkSecurityGroupRuleProtocolIcmp(securityGroupRulePrototype infrav1beta2.SecurityGroupRulePrototype, securityGroupRuleRemote infrav1beta2.SecurityGroupRuleRemote, existingRule *vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolIcmp) (bool, error) {
+	if exists, err := s.checkSecurityGroupRulePrototypeRemote(securityGroupRuleRemote, existingRule.Remote); err != nil {
+		return false, err
+	} else if !exists {
+		return false, nil
+	}
+	// If ICMPCode is set, then ICMPType must also be set, via kubebuilder specifications
+	if securityGroupRulePrototype.ICMPCode != nil && securityGroupRulePrototype.ICMPType != nil {
+		// If the existingRule has a Code and Type and they are both equal to the securityGroupRulePrototype's ICMPType and ICMPCode, the existingRule matches our definition for ICMP in securityGroupRulePrototype.
+		if existingRule.Code != nil && existingRule.Type != nil {
+			if *securityGroupRulePrototype.ICMPCode == *existingRule.Code && *securityGroupRulePrototype.ICMPType == *existingRule.Type {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
+}
+
+// checkSecurityGroupRuleProtocolTcpudp analyzes an IBM Cloud Security Group Rule designated for either 'tcp' or 'udp' protocols, to verify if the supplied Rule and Remote match the attributes from the existing 'ProtocolTcpudp' Rule.
+func (s *VPCClusterScope) checkSecurityGroupRuleProtocolTcpudp(securityGroupRulePrototype infrav1beta2.SecurityGroupRulePrototype, securityGroupRuleRemote infrav1beta2.SecurityGroupRuleRemote, existingRule *vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp) (bool, error) {
+	// Check the protocol next, either TCP or UDP, to verify it matches
+	if securityGroupRulePrototype.Protocol != infrav1beta2.SecurityGroupRuleProtocol(*existingRule.Protocol) {
+		return false, nil
+	}
+
+	if exists, err := s.checkSecurityGroupRulePrototypeRemote(securityGroupRuleRemote, existingRule.Remote); err != nil {
+		return false, err
+	} else if exists {
+		// If PortRange is set, verify whether the MinimumPort and MaximumPort match the existingRule's values, if they are set.
+		if securityGroupRulePrototype.PortRange != nil {
+			if existingRule.PortMin != nil && securityGroupRulePrototype.PortRange.MinimumPort == *existingRule.PortMin && existingRule.PortMax != nil && securityGroupRulePrototype.PortRange.MaximumPort == *existingRule.PortMax {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
+}
+
+func (s *VPCClusterScope) checkSecurityGroupRulePrototypeRemote(securityGroupRuleRemote infrav1beta2.SecurityGroupRuleRemote, existingRemote vpcv1.SecurityGroupRuleRemoteIntf) (bool, error) {
+	// NOTE(cjschaef): We only currently monitor Remote, not Local, as we don't support defining Local in SecurityGroup/SecurityGroupRule.
+	switch reflect.TypeOf(existingRemote).String() {
+	case "*vpcv1.SecurityGroupRuleRemoteCIDR":
+		if securityGroupRuleRemote.RemoteType == infrav1beta2.SecurityGroupRuleRemoteTypeCIDR {
+			cidrRule := existingRemote.(*vpcv1.SecurityGroupRuleRemoteCIDR)
+			subnetDetails, err := s.VPCClient.GetVPCSubnetByName(*securityGroupRuleRemote.SecurityGroupName)
+			if err != nil {
+				return false, fmt.Errorf("error failed getting subnet by name for security group rule: %w", err)
+			} else if subnetDetails == nil {
+				return false, fmt.Errorf("error failed getting subnet by name for security group rule")
+			} else if subnetDetails.Ipv4CIDRBlock == nil {
+				return false, fmt.Errorf("error failed getting subnet by name for security group rule, no CIDRBlock")
+			}
+			if *subnetDetails.Ipv4CIDRBlock == *cidrRule.CIDRBlock {
+				return true, nil
+			}
+		}
+	case "*vpcv1.SecurityGroupRuleRemoteIP":
+		ipRule := existingRemote.(*vpcv1.SecurityGroupRuleRemoteIP)
+		switch securityGroupRuleRemote.RemoteType {
+		case infrav1beta2.SecurityGroupRuleRemoteTypeIP:
+			if *securityGroupRuleRemote.IP == *ipRule.Address {
+				return true, nil
+			}
+		case infrav1beta2.SecurityGroupRuleRemoteTypeAny:
+			if *ipRule.Address == infrav1beta2.CIDRBlockAny {
+				return true, nil
+			}
+		}
+	case "*vpcv1.SecurityGroupRuleRemoteSecurityGroupReference":
+		if securityGroupRuleRemote.RemoteType == infrav1beta2.SecurityGroupRuleRemoteTypeSG {
+			sgRule := existingRemote.(*vpcv1.SecurityGroupRuleRemoteSecurityGroupReference)
+			// We can compare the SecurityGroup details from the securityGroupRemote and SecurityGroupRuleRemoteSecurityGroupReference, if those values are available
+			// Option #1. We can compare the Security Group Name (name is manditory for securityGroupRemote)
+			// Option #2. We can compare the Security Group ID (may already have securityGroupRemote ID)
+			// Option #3. We can compare the Security Group CRN (need ot lookup the CRN for securityGroupRemote)
+
+			// Option #1: If the SecurityGroupRuleRemoteSecurityGroupReference has a name assigned, we can shortcut and simply check that
+			if sgRule.Name != nil && *securityGroupRuleRemote.SecurityGroupName == *sgRule.Name {
+				return true, nil
+			}
+			// Try to get the Security Group Id for quick lookup (from NetworkStatus)
+			var securityGroupDetails *vpcv1.SecurityGroup
+			var err error
+			if securityGroupID := s.getSecurityGroupIDFromStatus(*securityGroupRuleRemote.SecurityGroupName); securityGroupID != nil {
+				// Option #2: If the SecurityGroupRuleRemoteSecurityGroupReference has an ID assigned, we can shortcut and simply check that
+				if sgRule.ID != nil && *securityGroupID == *sgRule.ID {
+					return true, nil
+				}
+				securityGroupDetails, _, err = s.VPCClient.GetSecurityGroup(&vpcv1.GetSecurityGroupOptions{
+					ID: securityGroupID,
+				})
+			} else {
+				securityGroupDetails, err = s.VPCClient.GetSecurityGroupByName(*securityGroupRuleRemote.SecurityGroupName)
+			}
+			if err != nil {
+				return false, fmt.Errorf("error failed getting security group by name for security group rule: %w", err)
+			} else if securityGroupDetails == nil {
+				return false, fmt.Errorf("error failed getting security group by name for security group rule")
+			} else if securityGroupDetails.CRN == nil {
+				return false, fmt.Errorf("error failed getting security group by name for security group rule, no CRN")
+			}
+			// Option #3: We check the SecurityGroupRuleRemoteSecurityGroupReference's CRN, if the Name and ID were not available
+			if *securityGroupDetails.CRN == *sgRule.CRN {
+				return true, nil
+			}
+		}
+	default:
+		if securityGroupRuleRemote.RemoteType == infrav1beta2.SecurityGroupRuleRemoteTypeAny {
+
+		}
+	}
+	return false, nil
+}
+
+// createSecurityGroupRuleAllRemotes will create one or more IBM Cloud Security Group Rules for a specific SecurityGroup, based on the provided SecurityGroupRule and Remotes defined in the SecurityGroupRule definition (one or more Remotes can be defined per SecurityGroupRule definition).
+func (s *VPCClusterScope) createSecurityGroupRuleAllRemotes(securityGroupID string, securityGroupRule infrav1beta2.SecurityGroupRule) error {
+	var remotes []infrav1beta2.SecurityGroupRuleRemote
+	switch securityGroupRule.Direction {
+	case infrav1beta2.SecurityGroupRuleDirectionInbound:
+		remotes = securityGroupRule.Source.Remotes
+	case infrav1beta2.SecurityGroupRuleDirectionOutbound:
+		remotes = securityGroupRule.Destination.Remotes
+	}
+	for _, remote := range remotes {
+		err := s.createSecurityGroupRule(securityGroupID, securityGroupRule, remote)
+		if err != nil {
+			return fmt.Errorf("error failed creating security group rule: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// createSecurityGroupRule will create a new IBM Cloud Security Group Rule for a specific Security Group, based on the provided SecurityGroupRule and Remote definitions.
+func (s *VPCClusterScope) createSecurityGroupRule(securityGroupID string, securityGroupRule infrav1beta2.SecurityGroupRule, remote infrav1beta2.SecurityGroupRuleRemote) error {
+	options := &vpcv1.CreateSecurityGroupRuleOptions{
+		SecurityGroupID: &securityGroupID,
+	}
+	// Setup variables to use for logging details on the resulting IBM Cloud Security Group Rule creation options
+	var securityGroupRulePrototype *infrav1beta2.SecurityGroupRulePrototype
+	if securityGroupRule.Direction == infrav1beta2.SecurityGroupRuleDirectionInbound {
+		securityGroupRulePrototype = securityGroupRule.Source
+	} else {
+		securityGroupRulePrototype = securityGroupRule.Destination
+	}
+	prototypeRemote, err := s.createSecurityGroupRuleRemote(remote)
+	if err != nil {
+		return err
+	}
+	switch securityGroupRulePrototype.Protocol {
+	case infrav1beta2.SecurityGroupRuleProtocolAll:
+		prototype := &vpcv1.SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll{
+			Direction: ptr.To(string(securityGroupRule.Direction)),
+			Protocol:  ptr.To(string(securityGroupRulePrototype.Protocol)),
+			Remote:    prototypeRemote,
+		}
+		options.SetSecurityGroupRulePrototype(prototype)
+	case infrav1beta2.SecurityGroupRuleProtocolIcmp:
+		prototype := &vpcv1.SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp{
+			Direction: ptr.To(string(securityGroupRule.Direction)),
+			Protocol:  ptr.To(string(securityGroupRulePrototype.Protocol)),
+			Remote:    prototypeRemote,
+		}
+		// If ICMP Code or Type is specified, both must be, enforced by kubebuilder
+		if securityGroupRulePrototype.ICMPCode != nil && securityGroupRulePrototype.ICMPType != nil {
+			prototype.Code = securityGroupRulePrototype.ICMPCode
+			prototype.Type = securityGroupRulePrototype.ICMPType
+		}
+		options.SetSecurityGroupRulePrototype(prototype)
+	case infrav1beta2.SecurityGroupRuleProtocolTCP:
+		// TCP and UDP use the same Prototype, simply with different Protocols, which is agnostic in code
+		fallthrough
+	case infrav1beta2.SecurityGroupRuleProtocolUDP:
+		prototype := &vpcv1.SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp{
+			Direction: ptr.To(string(securityGroupRule.Direction)),
+			Protocol:  ptr.To(string(securityGroupRulePrototype.Protocol)),
+			Remote:    prototypeRemote,
+		}
+		if securityGroupRulePrototype.PortRange != nil {
+			prototype.PortMin = ptr.To(securityGroupRulePrototype.PortRange.MinimumPort)
+			prototype.PortMax = ptr.To(securityGroupRulePrototype.PortRange.MaximumPort)
+		}
+		options.SetSecurityGroupRulePrototype(prototype)
+	default:
+		// This should not be possible, provided the strict kubebuilder enforcements
+		return fmt.Errorf("error failed creating security group rule, unknown protocol")
+	}
+
+	s.Info("Creating Security Group Rule for Security Group", "id", securityGroupID, "direction", securityGroupRule.Direction, "protocol", securityGroupRulePrototype.Protocol, "prototypeRemote", prototypeRemote)
+	securityGroupRuleIntfDetails, _, err := s.VPCClient.CreateSecurityGroupRule(options)
+	if err != nil {
+		return err
+	} else if securityGroupRuleIntfDetails == nil {
+		return fmt.Errorf("error failed creating security group rule")
+	}
+
+	// Typecast the resulting SecurityGroupRuleIntf, to retrieve the ID for logging
+	var ruleID *string
+	switch reflect.TypeOf(securityGroupRuleIntfDetails).String() {
+	case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolAll":
+		rule := securityGroupRuleIntfDetails.(*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolAll)
+		ruleID = rule.ID
+	case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolIcmp":
+		rule := securityGroupRuleIntfDetails.(*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolIcmp)
+		ruleID = rule.ID
+	case "*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp":
+		rule := securityGroupRuleIntfDetails.(*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp)
+		ruleID = rule.ID
+	}
+	s.Info("Created Security Group Rule", "id", ruleID)
+	return nil
+}
+
+// createSecurityGroupRuleRemote will create an IBM Cloud SecurityGroupRuleRemotePrototype, which defines the Remote details for an IBM Cloud Security Group Rule, provided by the SecurityGroupRuleRemote. Lookups of Security Group CRN's, by Name, or Subnet CIDRBlock's, by Name, allows the use of CAPI created resources to be defined in the SecurityGroupRuleRemote, when the CRN or CIDRBlock are unknown (runtime defined).
+func (s *VPCClusterScope) createSecurityGroupRuleRemote(remote infrav1beta2.SecurityGroupRuleRemote) (*vpcv1.SecurityGroupRuleRemotePrototype, error) {
+	remotePrototype := &vpcv1.SecurityGroupRuleRemotePrototype{}
+	switch remote.RemoteType {
+	case infrav1beta2.SecurityGroupRuleRemoteTypeAny:
+		remotePrototype.CIDRBlock = ptr.To(infrav1beta2.CIDRBlockAny)
+	case infrav1beta2.SecurityGroupRuleRemoteTypeCIDR:
+		// As we nned the Subnet CIDR block, we have to perform an IBM Cloud API call either way, so simply make the call using the item we know, the Name
+		subnetDetails, err := s.VPCClient.GetVPCSubnetByName(*remote.CIDRSubnetName)
+		if err != nil {
+			return nil, fmt.Errorf("error failed lookup of subnet during security group rule remote creation: %w", err)
+		} else if subnetDetails == nil {
+			return nil, fmt.Errorf("error failed lookup of subnet during security group rule remote creation")
+		} else if subnetDetails.Ipv4CIDRBlock == nil {
+			return nil, fmt.Errorf("error failed lookup of subnet during security group rule remote creation, no Ipv4CIDRBlock")
+		}
+		remotePrototype.CIDRBlock = subnetDetails.Ipv4CIDRBlock
+	case infrav1beta2.SecurityGroupRuleRemoteTypeIP:
+		remotePrototype.Address = remote.IP
+	case infrav1beta2.SecurityGroupRuleRemoteTypeSG:
+		// As we need the Security Group CRN, we have to perform an IBM Cloud API call either way, so simply make the call using the item we know, the Name
+		securityGroupDetails, err := s.VPCClient.GetSecurityGroupByName(*remote.SecurityGroupName)
+		if err != nil {
+			return nil, fmt.Errorf("error failed lookup of security group during security group rule remote creation: %w", err)
+		} else if securityGroupDetails == nil {
+			return nil, fmt.Errorf("error failed lookup of security group during security group rule remote creation")
+		} else if securityGroupDetails.CRN == nil {
+			return nil, fmt.Errorf("error failed lookup of security group during security group rule remote creation, no CRN")
+		}
+		remotePrototype.CRN = securityGroupDetails.CRN
+	default:
+		// This should not be possible, given the strict kubebuilder enforcements
+		return nil, fmt.Errorf("error failed creating security group rule remote")
+	}
+
+	return remotePrototype, nil
+}
+
+/*
 // ReconcileLoadBalancer reconcile loadBalancer.
 func (s *VPCClusterScope) ReconcileLoadBalancer() (bool, error) {
 	loadBalancers := make([]infrav1beta2.VPCLoadBalancerSpec, 0)
@@ -1458,120 +1865,6 @@ func (s *VPCClusterScope) createLoadBalancer(lb infrav1beta2.VPCLoadBalancerSpec
 	}, nil
 }
 
-// COSInstance returns the COS instance reference.
-func (s *VPCClusterScope) COSInstance() *infrav1beta2.CosInstance {
-	return s.IBMVPCCluster.Spec.CosInstance
-}
-
-// ReconcileCOSInstance reconcile COS bucket.
-func (s *VPCClusterScope) ReconcileCOSInstance() error {
-	// check COS service instance exist in cloud
-	cosServiceInstanceStatus, err := s.checkCOSServiceInstance()
-	if err != nil {
-		return err
-	}
-	if cosServiceInstanceStatus != nil {
-		s.SetStatus(infrav1beta2.ResourceTypeCOSInstance, infrav1beta2.ResourceReference{ID: cosServiceInstanceStatus.GUID, ControllerCreated: ptr.To(false)})
-	} else {
-		// create COS service instance
-		cosServiceInstanceStatus, err = s.createCOSServiceInstance()
-		if err != nil {
-			s.Error(err, "error creating cos service instance")
-			return err
-		}
-		s.Info("Created COS service instance", "id", cosServiceInstanceStatus.GUID)
-		s.SetStatus(infrav1beta2.ResourceTypeCOSInstance, infrav1beta2.ResourceReference{ID: cosServiceInstanceStatus.GUID, ControllerCreated: ptr.To(true)})
-	}
-
-	props, err := authenticator.GetProperties()
-	if err != nil {
-		s.Error(err, "error while fetching service properties")
-		return err
-	}
-
-	apiKey, ok := props["APIKEY"]
-	if !ok {
-		return fmt.Errorf("ibmcloud api key is not provided, set %s environmental variable", "IBMCLOUD_API_KEY")
-	}
-
-	region := s.bucketRegion()
-	if region == "" {
-		return fmt.Errorf("failed to determine cos bucket region, both buckeet region and vpc region not set")
-	}
-
-	serviceEndpoint := fmt.Sprintf("s3.%s.%s", region, cosURLDomain)
-	// Fetch the COS service endpoint.
-	cosServiceEndpoint := endpoints.FetchEndpoints(string(endpoints.COS), s.ServiceEndpoint)
-	if cosServiceEndpoint != "" {
-		s.Logger.V(3).Info("Overriding the default COS endpoint", "cosEndpoint", cosServiceEndpoint)
-		serviceEndpoint = cosServiceEndpoint
-	}
-
-	cosOptions := cos.ServiceOptions{
-		Options: &cosSession.Options{
-			Config: aws.Config{
-				Endpoint: &serviceEndpoint,
-				Region:   &region,
-			},
-		},
-	}
-
-	cosClient, err := cos.NewService(cosOptions, apiKey, *cosServiceInstanceStatus.GUID)
-	if err != nil {
-		return fmt.Errorf("failed to create cos client: %w", err)
-	}
-	s.COSClient = cosClient
-
-	// check bucket exist in service instance
-	if exist, err := s.checkCOSBucket(); exist {
-		return nil
-	} else if err != nil {
-		s.Error(err, "error checking cos bucket")
-		return err
-	}
-
-	// create bucket in service instance
-	if err := s.createCOSBucket(); err != nil {
-		s.Error(err, "error creating cos bucket")
-		return err
-	}
-	return nil
-}
-
-func (s *VPCClusterScope) checkCOSBucket() (bool, error) {
-	if _, err := s.COSClient.GetBucketByName(*s.GetServiceName(infrav1beta2.ResourceTypeCOSBucket)); err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			case s3.ErrCodeNoSuchBucket, "Forbidden", "NotFound":
-				// If the bucket doesn't exist that's ok, we'll try to create it
-				return false, nil
-			default:
-				return false, err
-			}
-		} else {
-			return false, err
-		}
-	}
-	return true, nil
-}
-
-func (s *VPCClusterScope) checkCOSServiceInstance() (*resourcecontrollerv2.ResourceInstance, error) {
-	// check cos service instance
-	serviceInstance, err := s.ResourceClient.GetInstanceByName(*s.GetServiceName(infrav1beta2.ResourceTypeCOSInstance), resourcecontroller.CosResourceID, resourcecontroller.CosResourcePlanID)
-	if err != nil {
-		return nil, err
-	}
-	if serviceInstance == nil {
-		s.Info("cos service instance is nil", "name", *s.GetServiceName(infrav1beta2.ResourceTypeCOSInstance))
-		return nil, nil
-	}
-	if *serviceInstance.State != string(infrav1beta2.ServiceInstanceStateActive) {
-		s.Info("cos service instance not in active state", "current state", *serviceInstance.State)
-		return nil, fmt.Errorf("cos instance not in active state, current state: %s", *serviceInstance.State)
-	}
-	return serviceInstance, nil
-}
-
 // getVPCRegion returns region associated with VPC zone.
 func (s *VPCClusterScope) getVPCRegion() *string {
 	if s.IBMVPCCluster.Spec.VPC != nil {
@@ -1724,38 +2017,6 @@ func (s *VPCClusterScope) DeleteVPC() (bool, error) {
 		return false, fmt.Errorf("error deleting VPC: %w", err)
 	}
 	return true, nil
-}
-
-// resourceCreatedByController helps to identify resource created by controller or not.
-func (s *VPCClusterScope) isResourceCreatedByController(resourceType infrav1beta2.ResourceType) bool { //nolint:gocyclo
-	switch resourceType {
-	case infrav1beta2.ResourceTypeVPC:
-		vpcStatus := s.IBMVPCCluster.Status.VPC
-		if vpcStatus == nil || vpcStatus.ControllerCreated == nil || !*vpcStatus.ControllerCreated {
-			return false
-		}
-		return true
-	case infrav1beta2.ResourceTypeServiceInstance:
-		serviceInstance := s.IBMVPCCluster.Status.ServiceInstance
-		if serviceInstance == nil || serviceInstance.ControllerCreated == nil || !*serviceInstance.ControllerCreated {
-			return false
-		}
-		return true
-	}
-	return false
-}
-
-// TODO: duplicate function, optimize it.
-func (s *VPCClusterScope) bucketRegion() string {
-	if s.COSInstance() != nil && s.COSInstance().BucketRegion != "" {
-		return s.COSInstance().BucketRegion
-	}
-	// if the bucket region is not set, use vpc region
-	vpcDetails := s.VPC()
-	if vpcDetails != nil && vpcDetails.Region != nil {
-		return *vpcDetails.Region
-	}
-	return ""
 }.
 */
 

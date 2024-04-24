@@ -18,8 +18,13 @@ package v1beta2
 
 import "github.com/IBM/vpc-go-sdk/vpcv1"
 
-// DefaultAPIServerPort is defuault API server port number.
-const DefaultAPIServerPort int32 = 6443
+const (
+	// CIDRBlockAny is the CIDRBlock representing any allowable destination/source IP.
+	CIDRBlockAny string = "0.0.0.0/0"
+
+	// DefaultAPIServerPort is defuault API server port number.
+	DefaultAPIServerPort int32 = 6443
+)
 
 // PowerVSInstanceState describes the state of an IBM Power VS instance.
 type PowerVSInstanceState string
@@ -186,6 +191,8 @@ var (
 	ResourceTypeComputeSubnet = ResourceType("computeSubnet")
 	// ResourceTypeControlPlaneSubnet is a VPC subnet resource designated for the Control Plane.
 	ResourceTypeControlPlaneSubnet = ResourceType("controlPlaneSubnet")
+	// ResourceTypeSecurityGroup is a VPC Security Group resource.
+	ResourceTypeSecurityGroup = ResourceType("securityGroup")
 	// ResourceTypeCOSInstance is IBM COS instance resource.
 	ResourceTypeCOSInstance = ResourceType("cosInstance")
 	// ResourceTypeCOSBucket is IBM COS bucket resource.
@@ -279,12 +286,12 @@ type PortRange struct {
 	// maximumPort is the inclusive upper range of ports.
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=65535
-	MaximumPort int `json:"maximumPort,omitempty"`
+	MaximumPort int64 `json:"maximumPort,omitempty"`
 
 	// minimumPort is the inclusive lower range of ports.
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=65535
-	MinimumPort int `json:"minimumPort,omitempty"`
+	MinimumPort int64 `json:"minimumPort,omitempty"`
 }
 
 // SecurityGroup defines a VPC Security Group that should exist or be created within the specified VPC, with the specified Security Group Rules.
@@ -380,12 +387,12 @@ type SecurityGroupRulePrototype struct {
 	// icmpCode is the ICMP code for the Rule.
 	// Only used when Protocol is SecurityGroupProtocolICMP.
 	// +optional
-	ICMPCode *string `json:"icmpCode,omitempty"`
+	ICMPCode *int64 `json:"icmpCode,omitempty"`
 
 	// icmpType is the ICMP type for the Rule.
 	// Only used when Protocol is SecurityGroupProtocolICMP.
 	// +optional
-	ICMPType *string `json:"icmpType,omitempty"`
+	ICMPType *int64 `json:"icmpType,omitempty"`
 
 	// portRange is a range of ports allowed for the Rule's remote.
 	// +optional

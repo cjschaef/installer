@@ -3250,12 +3250,14 @@ spec:
                                     description: |-
                                       icmpCode is the ICMP code for the Rule.
                                       Only used when Protocol is SecurityGroupProtocolICMP.
-                                    type: string
+                                    format: int64
+                                    type: integer
                                   icmpType:
                                     description: |-
                                       icmpType is the ICMP type for the Rule.
                                       Only used when Protocol is SecurityGroupProtocolICMP.
-                                    type: string
+                                    format: int64
+                                    type: integer
                                   portRange:
                                     description: portRange is a range of ports allowed
                                       for the Rule's remote.
@@ -3263,12 +3265,14 @@ spec:
                                       maximumPort:
                                         description: maximumPort is the inclusive
                                           upper range of ports.
+                                        format: int64
                                         maximum: 65535
                                         minimum: 1
                                         type: integer
                                       minimumPort:
                                         description: minimumPort is the inclusive
                                           lower range of ports.
+                                        format: int64
                                         maximum: 65535
                                         minimum: 1
                                         type: integer
@@ -3383,12 +3387,14 @@ spec:
                                     description: |-
                                       icmpCode is the ICMP code for the Rule.
                                       Only used when Protocol is SecurityGroupProtocolICMP.
-                                    type: string
+                                    format: int64
+                                    type: integer
                                   icmpType:
                                     description: |-
                                       icmpType is the ICMP type for the Rule.
                                       Only used when Protocol is SecurityGroupProtocolICMP.
-                                    type: string
+                                    format: int64
+                                    type: integer
                                   portRange:
                                     description: portRange is a range of ports allowed
                                       for the Rule's remote.
@@ -3396,12 +3402,14 @@ spec:
                                       maximumPort:
                                         description: maximumPort is the inclusive
                                           upper range of ports.
+                                        format: int64
                                         maximum: 65535
                                         minimum: 1
                                         type: integer
                                       minimumPort:
                                         description: minimumPort is the inclusive
                                           lower range of ports.
+                                        format: int64
                                         maximum: 65535
                                         minimum: 1
                                         type: integer
@@ -4272,12 +4280,14 @@ spec:
                                             description: |-
                                               icmpCode is the ICMP code for the Rule.
                                               Only used when Protocol is SecurityGroupProtocolICMP.
-                                            type: string
+                                            format: int64
+                                            type: integer
                                           icmpType:
                                             description: |-
                                               icmpType is the ICMP type for the Rule.
                                               Only used when Protocol is SecurityGroupProtocolICMP.
-                                            type: string
+                                            format: int64
+                                            type: integer
                                           portRange:
                                             description: portRange is a range of ports
                                               allowed for the Rule's remote.
@@ -4285,12 +4295,14 @@ spec:
                                               maximumPort:
                                                 description: maximumPort is the inclusive
                                                   upper range of ports.
+                                                format: int64
                                                 maximum: 65535
                                                 minimum: 1
                                                 type: integer
                                               minimumPort:
                                                 description: minimumPort is the inclusive
                                                   lower range of ports.
+                                                format: int64
                                                 maximum: 65535
                                                 minimum: 1
                                                 type: integer
@@ -4416,12 +4428,14 @@ spec:
                                             description: |-
                                               icmpCode is the ICMP code for the Rule.
                                               Only used when Protocol is SecurityGroupProtocolICMP.
-                                            type: string
+                                            format: int64
+                                            type: integer
                                           icmpType:
                                             description: |-
                                               icmpType is the ICMP type for the Rule.
                                               Only used when Protocol is SecurityGroupProtocolICMP.
-                                            type: string
+                                            format: int64
+                                            type: integer
                                           portRange:
                                             description: portRange is a range of ports
                                               allowed for the Rule's remote.
@@ -4429,12 +4443,14 @@ spec:
                                               maximumPort:
                                                 description: maximumPort is the inclusive
                                                   upper range of ports.
+                                                format: int64
                                                 maximum: 65535
                                                 minimum: 1
                                                 type: integer
                                               minimumPort:
                                                 description: minimumPort is the inclusive
                                                   lower range of ports.
+                                                format: int64
                                                 maximum: 65535
                                                 minimum: 1
                                                 type: integer

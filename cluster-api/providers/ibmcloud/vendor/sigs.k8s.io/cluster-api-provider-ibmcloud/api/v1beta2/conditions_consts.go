@@ -95,6 +95,11 @@ const (
 	// VPCSubnetReconciliationFailedReason used when an error occurs during VPC subnet reconciliation.
 	VPCSubnetReconciliationFailedReason = "VPCSubnetReconciliationFailed"
 
+	// VPCSecurityGroupReadyCondition reports on the sucessful reconciliation of VPC Security Groups.
+	VPCSecurityGroupReadyCondition capiv1beta1.ConditionType = "VPCSecurityGroupReady"
+	// VPCSecurityGroupReconciliationFailedReason used when an error occurs during VPC Security Group reconciliation.
+	VPCSecurityGroupReconciliationFailedReason = "VPCSecurityGroupReconciliationFailed"
+
 	// TransitGatewayReadyCondition reports on the successful reconciliation of a Power VS transit gateway.
 	TransitGatewayReadyCondition capiv1beta1.ConditionType = "TransitGatewayReady"
 	// TransitGatewayReconciliationFailedReason used when an error occurs during transit gateway reconciliation.
