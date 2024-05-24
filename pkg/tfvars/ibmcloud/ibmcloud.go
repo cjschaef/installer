@@ -3,6 +3,7 @@ package ibmcloud
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -145,9 +146,16 @@ func CreateEndpointJSON(endpoints []configv1.IBMCloudServiceEndpoint, region str
 	endpointContents := ibmcloudtypes.EndpointsJSON{}
 	for _, endpoint := range endpoints {
 		switch endpoint.Name {
-		// COS endpoint is not used in Terraform
+		// HACK(cjschaef): COS endpoint support has been hacked into the TF plugin and can now be added to endpoint file.
 		case configv1.IBMCloudServiceCOS:
-			continue
+			endpointContents.IBMCloudEndpointCOS = &ibmcloudtypes.EndpointsVisibility{
+				Private: map[string]string{
+					region: endpoint.URL,
+				},
+				Public: map[string]string{
+					region: endpoint.URL,
+				},
+			}
 		case configv1.IBMCloudServiceCIS:
 			endpointContents.IBMCloudEndpointCIS = &ibmcloudtypes.EndpointsVisibility{
 				Private: map[string]string{
@@ -242,6 +250,31 @@ func CreateEndpointJSON(endpoints []configv1.IBMCloudServiceEndpoint, region str
 			return nil, fmt.Errorf("unable to build override values for unknown service: %s", endpoint.Name)
 		}
 	}
+
+	// HACK(cjschaef): Allow user to provide the IBMCLOUD_COS_CONFIG_ENDPOINT for Terraform via an environment variable. The COS endpoint should be provided via ServiceEndpoints in install-config.
+	if url := os.Getenv(ibmcloudtypes.IBMCloudServiceCOSConfigVar); url != "" {
+		endpointContents.IBMCloudEndpointCOSConfig = &ibmcloudtypes.EndpointsVisibility{
+			Private: map[string]string{
+				region: url,
+			},
+			Public: map[string]string{
+				region: url,
+			},
+		}
+	}
+
+	// HACK(cjschaef): Allow user to provide the IBMCLOUD_RESOURCE_CATALOG_API_ENDPOINT for Terraform via an environment variable.
+	if url := os.Getenv(ibmcloudtypes.IBMCloudServiceResourceCatalogVar); url != "" {
+		endpointContents.IBMCloudEndpointResourceCatalog = &ibmcloudtypes.EndpointsVisibility{
+			Private: map[string]string{
+				region: url,
+			},
+			Public: map[string]string{
+				region: url,
+			},
+		}
+	}
+
 	jsonData, err := json.Marshal(endpointContents)
 	if err != nil {
 		return nil, fmt.Errorf("failure building service endpoint override JSON data: %w", err)

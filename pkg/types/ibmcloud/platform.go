@@ -11,8 +11,13 @@ const (
 	// IBMCloudServiceCISVar is the variable name used by the IBM Cloud Terraform Provider to override the CIS endpoint.
 	IBMCloudServiceCISVar string = "IBMCLOUD_CIS_API_ENDPOINT"
 
+	// HACK(cjschaef): We are hacking TF plugin to allow injection of COS endpoint in endpoints file.
 	// IBMCloudServiceCOSVar is the variable name used by the IBM Cloud Terraform Provider to override the COS endpoint.
-	IBMCloudServiceCOSVar string = "IBMCLOUD_COS_CONFIG_ENDPOINT"
+	IBMCloudServiceCOSVar string = "IBMCLOUD_COS_ENDPOINT"
+
+	// HACK(cjschaef): We are hacking TF plugin to allow injection of COS endpoint in endpoints file and injection of the COS Config endpoint as well, to avoid openshift/api changes, we rely on an environment variable for COS Config endpoint, and not part of install-config like other services.
+	// IBMCloudServiceCOSConfigVar is the variable name used by the IBM Cloud Terraform Provider to override the COS Config endpoint.
+	IBMCloudServiceCOSConfigVar string = "IBMCLOUD_COS_CONFIG_ENDPOINT"
 
 	// IBMCloudServiceDNSServicesVar is the variable name used by the IBM Cloud Terraform Provider to override the DNS Services endpoint.
 	IBMCloudServiceDNSServicesVar string = "IBMCLOUD_PRIVATE_DNS_API_ENDPOINT"
@@ -31,6 +36,9 @@ const (
 
 	// IBMCloudServiceKeyProtectVar is the variable name used by the IBM Cloud Terraform Provider to override the Key Protect endpoint.
 	IBMCloudServiceKeyProtectVar string = "IBMCLOUD_KP_API_ENDPOINT" //nolint:gosec // not hardcoded creds
+
+	// IBMCloudServiceResourceCatalogVar is the variable name used by the IBMCloud Terraform Provider to override the Resource Catalog endpoint.
+	IBMCloudServiceResourceCatalogVar string = "IBMCLOUD_RESOURCE_CATALOG_API_ENDPOINT"
 
 	// IBMCloudServiceResourceControllerVar is the variable name used by the IBM Cloud Terraform Provider to override the Resource Controller endpoint.
 	IBMCloudServiceResourceControllerVar string = "IBMCLOUD_RESOURCE_CONTROLLER_API_ENDPOINT"
@@ -66,7 +74,10 @@ type EndpointsJSON struct {
 	IBMCloudEndpointCIS *EndpointsVisibility `json:"IBMCLOUD_CIS_API_ENDPOINT,omitempty"`
 
 	// IBMCloudEndpointCOS contains endpoint mapping for IBM Cloud COS.
-	IBMCloudEndpointCOS *EndpointsVisibility `json:"IBMCLOUD_COS_CONFIG_ENDPOINT,omitempty"`
+	IBMCloudEndpointCOS *EndpointsVisibility `json:"IBMCLOUD_COS_ENDPOINT,omitempty"`
+
+	// IBMCloudEndpointCOSConfig contains endpoint mapping for IBM Cloud COS Config.
+	IBMCloudEndpointCOSConfig *EndpointsVisibility `json:"IBMCLOUD_COS_CONFIG_ENDPOINT,omitempty"`
 
 	// IBMCloudEndpointDNSServices contains endpoint mapping for IBM Cloud DNS Services.
 	IBMCloudEndpointDNSServices *EndpointsVisibility `json:"IBMCLOUD_PRIVATE_DNS_API_ENDPOINT,omitempty"`
@@ -85,6 +96,9 @@ type EndpointsJSON struct {
 
 	// IBMCloudEndpointKeyProtect contains endpoint mapping for IBM Cloud Key Protect.
 	IBMCloudEndpointKeyProtect *EndpointsVisibility `json:"IBMCLOUD_KP_API_ENDPOINT,omitempty"`
+
+	// IBMCloudEndpointResourceCatalog contains endpoint mapping for IBM Cloud Resource Catalog.
+	IBMCloudEndpointResourceCatalog *EndpointsVisibility `json:"IBMCLOUD_RESOURCE_CATALOG_API_ENDPOINT,omitempty"`
 
 	// IBMCloudEndpointResourceController contains endpoint mapping for IBM Cloud Resource Controller.
 	IBMCloudEndpointResourceController *EndpointsVisibility `json:"IBMCLOUD_RESOURCE_CONTROLLER_API_ENDPOINT,omitempty"`

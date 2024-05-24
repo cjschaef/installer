@@ -122,6 +122,7 @@ func GetServiceURLForRegion(region string) (string, error) {
 		"au-syd":   "https://au-syd.compliance.cloud.ibm.com",   // The API endpoint in the au-syd region
 		"ca-tor":   "https://ca-tor.compliance.cloud.ibm.com",   // The API endpoint in the ca-tor region
 		"eu-de":    "https://eu-de.compliance.cloud.ibm.com",    // The API endpoint in the eu-de region
+		"eu-es":    "https://eu-es.compliance.cloud.ibm.com",    // The API endpoint in the eu-es region
 		"eu-fr2":   "https://eu-fr2.compliance.cloud.ibm.com",   // The API endpoint in the eu-fr2 region
 		"us-south": "https://us-south.compliance.cloud.ibm.com", // The API endpoint in the us-south region
 	}
@@ -982,6 +983,9 @@ func (securityAndComplianceCenterApi *SecurityAndComplianceCenterApiV3) CreatePr
 	}
 	if createProfileOptions.ProfileType != nil {
 		body["profile_type"] = createProfileOptions.ProfileType
+	}
+	if createProfileOptions.ProfileVersion != nil {
+		body["profile_version"] = createProfileOptions.ProfileVersion
 	}
 	if createProfileOptions.Controls != nil {
 		body["controls"] = createProfileOptions.Controls
@@ -3188,7 +3192,8 @@ func (securityAndComplianceCenterApi *SecurityAndComplianceCenterApiV3) GetProvi
 	builder := core.NewRequestBuilder(core.GET)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = securityAndComplianceCenterApi.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(securityAndComplianceCenterApi.Service.Options.URL, `/v3/provider_types/{provider_type_id}`, pathParamsMap)
+	instanceURL, err := getInstanceBasedURL(securityAndComplianceCenterApi.Service.Options.URL, *getProviderTypeByIdOptions.InstanceID)
+	_, err = builder.ResolveRequestURL(instanceURL, `/provider_types/{provider_type_id}`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -5350,6 +5355,9 @@ type CreateProfileOptions struct {
 	// The profile type.
 	ProfileType *string `json:"profile_type" validate:"required"`
 
+	// The profile version.
+	ProfileVersion *string `json:"profile_version,omitempty"`
+
 	// The controls that are in the profile.
 	Controls []ProfileControlsPrototype `json:"controls" validate:"required"`
 
@@ -5410,6 +5418,12 @@ func (_options *CreateProfileOptions) SetProfileDescription(profileDescription s
 // SetProfileType : Allow user to set ProfileType
 func (_options *CreateProfileOptions) SetProfileType(profileType string) *CreateProfileOptions {
 	_options.ProfileType = core.StringPtr(profileType)
+	return _options
+}
+
+// SetProfileVersion : Allow user to set ProfileVersion
+func (_options *CreateProfileOptions) SetProfileVersion(profileVersion string) *CreateProfileOptions {
+	_options.ProfileVersion = core.StringPtr(profileVersion)
 	return _options
 }
 
@@ -6654,6 +6668,9 @@ func (options *GetProfileOptions) SetHeaders(param map[string]string) *GetProfil
 
 // GetProviderTypeByIdOptions : The GetProviderTypeByID options.
 type GetProviderTypeByIdOptions struct {
+	// ID of the instance
+	InstanceID *string `json:"instance_id" validate:"required,ne="`
+
 	// The provider type ID.
 	ProviderTypeID *string `json:"provider_type_id" validate:"required,ne="`
 
@@ -6672,10 +6689,17 @@ type GetProviderTypeByIdOptions struct {
 }
 
 // NewGetProviderTypeByIdOptions : Instantiate GetProviderTypeByIdOptions
-func (*SecurityAndComplianceCenterApiV3) NewGetProviderTypeByIdOptions(providerTypeID string) *GetProviderTypeByIdOptions {
+func (*SecurityAndComplianceCenterApiV3) NewGetProviderTypeByIdOptions(instanceID, providerTypeID string) *GetProviderTypeByIdOptions {
 	return &GetProviderTypeByIdOptions{
+		InstanceID:     core.StringPtr(instanceID),
 		ProviderTypeID: core.StringPtr(providerTypeID),
 	}
+}
+
+// SetInstanceID : Allow user to set InstanceID
+func (_options *GetProviderTypeByIdOptions) SetInstanceID(instanceID string) *GetProviderTypeByIdOptions {
+	_options.InstanceID = core.StringPtr(instanceID)
+	return _options
 }
 
 // SetProviderTypeID : Allow user to set ProviderTypeID

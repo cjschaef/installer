@@ -496,7 +496,7 @@ func getS3Client(bxSession *bxsession.Session, bucketLocation string, endpointTy
 	var s3Conf *aws.Config
 
 	apiEndpoint := getCosEndpoint(bucketLocation, endpointType)
-	apiEndpoint = conns.EnvFallBack([]string{"IBMCLOUD_COS_ENDPOINT"}, apiEndpoint)
+	apiEndpoint = conns.FileFallBack(bxSession.Config.EndpointsFile, "private", "IBMCLOUD_COS_ENDPOINT", bucketLocation, apiEndpoint)
 	if apiEndpoint == "" {
 		return nil, fmt.Errorf("the endpoint doesn't exists for given location %s and endpoint type %s", bucketLocation, endpointType)
 	}

@@ -17,7 +17,7 @@ import (
 )
 
 func DataSourceIbmSccProviderType() *schema.Resource {
-	return &schema.Resource{
+	return AddSchemaData(&schema.Resource{
 		ReadContext: dataSourceIbmSccProviderTypeRead,
 
 		Schema: map[string]*schema.Schema{
@@ -109,7 +109,7 @@ func DataSourceIbmSccProviderType() *schema.Resource {
 				Description: "Time at which resource was updated.",
 			},
 		},
-	}
+	})
 }
 
 func dataSourceIbmSccProviderTypeRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -120,6 +120,7 @@ func dataSourceIbmSccProviderTypeRead(context context.Context, d *schema.Resourc
 
 	getProviderTypeByIdOptions := &securityandcompliancecenterapiv3.GetProviderTypeByIdOptions{}
 
+	getProviderTypeByIdOptions.SetInstanceID(d.Get("instance_id").(string))
 	getProviderTypeByIdOptions.SetProviderTypeID(d.Get("provider_type_id").(string))
 
 	providerTypeItem, response, err := securityAndComplianceCenterApIsClient.GetProviderTypeByIDWithContext(context, getProviderTypeByIdOptions)
@@ -211,12 +212,5 @@ func dataSourceIbmSccProviderTypeLabelTypeToMap(model *securityandcompliancecent
 	if model.Tip != nil {
 		modelMap["tip"] = model.Tip
 	}
-	return modelMap, nil
-}
-
-func dataSourceIbmSccProviderTypeAdditionalPropertyToMap(model *securityandcompliancecenterapiv3.AdditionalProperty) (map[string]interface{}, error) {
-	modelMap := make(map[string]interface{})
-	modelMap["type"] = model.Type
-	modelMap["display_name"] = model.DisplayName
 	return modelMap, nil
 }
