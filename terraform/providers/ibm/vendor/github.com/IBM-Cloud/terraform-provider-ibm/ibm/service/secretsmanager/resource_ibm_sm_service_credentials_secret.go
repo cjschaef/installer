@@ -66,7 +66,6 @@ func ResourceIbmSmServiceCredentialsSecret() *schema.Resource {
 			"version_custom_metadata": &schema.Schema{
 				Type:        schema.TypeMap,
 				Optional:    true,
-				Computed:    true,
 				Description: "The secret version metadata that a user can customize.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
@@ -277,8 +276,14 @@ func ResourceIbmSmServiceCredentialsSecret() *schema.Resource {
 			},
 			"ttl": &schema.Schema{
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
+				Computed:    true,
 				Description: "The time-to-live (TTL) or lease duration to assign to generated credentials.",
+			},
+			"expiration_date": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The date a secret is expired. The date format follows RFC 3339.",
 			},
 			"updated_at": &schema.Schema{
 				Type:        schema.TypeString,
@@ -465,6 +470,12 @@ func resourceIbmSmServiceCredentialsSecretRead(context context.Context, d *schem
 		}
 	}
 
+	if secret.ExpirationDate != nil {
+		if err = d.Set("expiration_date", DateTimeToRFC3339(secret.ExpirationDate)); err != nil {
+			return diag.FromErr(fmt.Errorf("Error setting expiration_date: %s", err))
+		}
+	}
+
 	return nil
 }
 
@@ -537,7 +548,7 @@ func resourceIbmSmServiceCredentialsSecretUpdate(context context.Context, d *sch
 		// Apply change to version_custom_metadata in current version
 		secretVersionMetadataPatchModel := new(secretsmanagerv2.SecretVersionMetadataPatch)
 		secretVersionMetadataPatchModel.VersionCustomMetadata = d.Get("version_custom_metadata").(map[string]interface{})
-		secretVersionMetadataPatchModelAsPatch, _ := secretVersionMetadataPatchModel.AsPatch()
+		secretVersionMetadataPatchModelAsPatch, _ := secretVersionMetadataAsPatchFunction(secretVersionMetadataPatchModel)
 
 		updateSecretVersionOptions := &secretsmanagerv2.UpdateSecretVersionMetadataOptions{}
 		updateSecretVersionOptions.SetSecretID(secretId)
@@ -699,7 +710,7 @@ func resourceIbmSmServiceCredentialsSecretRotationPolicyToMap(modelIntf secretsm
 	return modelMap, nil
 }
 
-func resourceIbmSmServiceCredentialsSecretSourceServiceToMap(sourceService *secretsmanagerv2.ServiceCredentialsSecretSourceService) (map[string]interface{}, error) {
+func resourceIbmSmServiceCredentialsSecretSourceServiceToMap(sourceService *secretsmanagerv2.ServiceCredentialsSecretSourceServiceRO) (map[string]interface{}, error) {
 	mainModelMap := make(map[string]interface{})
 	if sourceService.Instance != nil {
 		instanceMap := make(map[string]interface{})

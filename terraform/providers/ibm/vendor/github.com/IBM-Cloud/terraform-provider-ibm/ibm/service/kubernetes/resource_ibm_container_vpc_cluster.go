@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2017, 2022 All Rights Reserved.
+// Copyright IBM Corp. 2017, 2023 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package kubernetes
@@ -35,6 +35,10 @@ const (
 	ingressReady       = "IngressReady"
 )
 
+const (
+	DisableOutboundTrafficProtectionFlag = "disable_outbound_traffic_protection"
+)
+
 func ResourceIBMContainerVpcCluster() *schema.Resource {
 	return &schema.Resource{
 		Create:   resourceIBMContainerVpcClusterCreate,
@@ -53,10 +57,10 @@ func ResourceIBMContainerVpcCluster() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 
 			"flavor": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "Cluster nodes flavour",
+				Type:             schema.TypeString,
+				Required:         true,
+				DiffSuppressFunc: flex.ApplyOnce,
+				Description:      "Cluster nodes flavour",
 			},
 
 			"name": {
@@ -101,26 +105,35 @@ func ResourceIBMContainerVpcCluster() *schema.Resource {
 							Optional:    true,
 							Description: "Account ID of KMS instance holder - if not provided, defaults to the account in use",
 						},
+						"wait_for_apply": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+							Description: "Forces terraform to wait till the changes take effect, not marking the cluster complete till",
+						},
 					},
 				},
 			},
 
 			"zones": {
-				Type:        schema.TypeSet,
-				Required:    true,
-				Description: "Zone info",
+				Type:             schema.TypeSet,
+				Required:         true,
+				Description:      "Zone info",
+				DiffSuppressFunc: flex.ApplyOnce,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "Zone for the worker pool in a multizone cluster",
+							Type:             schema.TypeString,
+							Required:         true,
+							Description:      "Zone for the worker pool in a multizone cluster",
+							DiffSuppressFunc: flex.ApplyOnce,
 						},
 
 						"subnet_id": {
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "The VPC subnet to assign the cluster",
+							Type:             schema.TypeString,
+							Required:         true,
+							Description:      "The VPC subnet to assign the cluster",
+							DiffSuppressFunc: flex.ApplyOnce,
 						},
 					},
 				},
@@ -189,56 +202,62 @@ func ResourceIBMContainerVpcCluster() *schema.Resource {
 			},
 
 			"worker_count": {
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Default:     1,
-				Description: "Number of worker nodes in the cluster",
+				Type:             schema.TypeInt,
+				Optional:         true,
+				Default:          1,
+				DiffSuppressFunc: flex.ApplyOnce,
+				Description:      "Number of worker nodes in the default worker pool",
 			},
 
 			"worker_labels": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Computed:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "Labels for default worker pool",
+				Type:             schema.TypeMap,
+				Optional:         true,
+				Computed:         true,
+				Elem:             &schema.Schema{Type: schema.TypeString},
+				DiffSuppressFunc: flex.ApplyOnce,
+				Description:      "Labels for default worker pool",
 			},
 
 			"operating_system": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Computed:    true,
-				Description: "The operating system of the workers in the default worker pool.",
+				Type:             schema.TypeString,
+				Optional:         true,
+				Computed:         true,
+				DiffSuppressFunc: flex.ApplyOnce,
+				Description:      "The operating system of the workers in the default worker pool.",
 			},
 
 			"secondary_storage": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				ForceNew:    true,
-				Description: "The secondary storage option for the default worker pool.",
+				Type:             schema.TypeString,
+				Optional:         true,
+				Computed:         true,
+				DiffSuppressFunc: flex.ApplyOnce,
+				Description:      "The secondary storage option for the default worker pool.",
 			},
 
 			"taints": {
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Description: "WorkerPool Taints",
+				Type:             schema.TypeSet,
+				Optional:         true,
+				DiffSuppressFunc: flex.ApplyOnce,
+				Description:      "Taints for the default worker pool",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"key": {
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "Key for taint",
+							Type:             schema.TypeString,
+							Required:         true,
+							DiffSuppressFunc: flex.ApplyOnce,
+							Description:      "Key for taint",
 						},
 						"value": {
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "Value for taint.",
+							Type:             schema.TypeString,
+							Required:         true,
+							DiffSuppressFunc: flex.ApplyOnce,
+							Description:      "Value for taint.",
 						},
 						"effect": {
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "Effect for taint. Accepted values are NoSchedule, PreferNoSchedule and NoExecute.",
+							Type:             schema.TypeString,
+							Required:         true,
+							DiffSuppressFunc: flex.ApplyOnce,
+							Description:      "Effect for taint. Accepted values are NoSchedule, PreferNoSchedule and NoExecute.",
 							ValidateFunc: validate.InvokeValidator(
 								"ibm_container_vpc_cluster",
 								"effect"),
@@ -322,6 +341,22 @@ func ResourceIBMContainerVpcCluster() *schema.Resource {
 				RequiredWith:     []string{"kms_instance_id", "crk"},
 			},
 
+			"security_groups": {
+				Type:             schema.TypeSet,
+				Optional:         true,
+				Description:      "Allow user to set which security groups added to their workers",
+				Elem:             &schema.Schema{Type: schema.TypeString},
+				Set:              flex.ResourceIBMVPCHash,
+				DiffSuppressFunc: flex.ApplyOnce,
+			},
+
+			DisableOutboundTrafficProtectionFlag: {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Allow outbound connections to public destinations",
+			},
+
 			//Get Cluster info Request
 			"state": {
 				Type:     schema.TypeString,
@@ -397,6 +432,11 @@ func ResourceIBMContainerVpcCluster() *schema.Resource {
 				Computed: true,
 			},
 
+			"vpe_service_endpoint_url": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
 			"crn": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -421,10 +461,10 @@ func ResourceIBMContainerVpcCluster() *schema.Resource {
 			},
 
 			"host_pool_id": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "The ID of the cluster's associated host pool",
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: flex.ApplyOnce,
+				Description:      "The ID of the default worker pool's associated host pool",
 			},
 
 			flex.ResourceName: {
@@ -567,14 +607,17 @@ func resourceIBMContainerVpcClusterCreate(d *schema.ResourceData, meta interface
 		workerpool.Labels = labels
 	}
 
+	disableOutboundTrafficProtection := d.Get(DisableOutboundTrafficProtectionFlag).(bool)
+
 	params := v2.ClusterCreateRequest{
-		DisablePublicServiceEndpoint: disablePublicServiceEndpoint,
-		Name:                         name,
-		KubeVersion:                  kubeVersion,
-		PodSubnet:                    podSubnet,
-		ServiceSubnet:                serviceSubnet,
-		WorkerPools:                  workerpool,
-		Provider:                     vpcProvider,
+		DisablePublicServiceEndpoint:     disablePublicServiceEndpoint,
+		Name:                             name,
+		KubeVersion:                      kubeVersion,
+		PodSubnet:                        podSubnet,
+		ServiceSubnet:                    serviceSubnet,
+		WorkerPools:                      workerpool,
+		Provider:                         vpcProvider,
+		DisableOutboundTrafficProtection: disableOutboundTrafficProtection,
 	}
 
 	// Update params with Entitlement option if provided
@@ -585,6 +628,11 @@ func resourceIBMContainerVpcClusterCreate(d *schema.ResourceData, meta interface
 	// Update params with Cloud Object Store instance CRN id option if provided
 	if v, ok := d.GetOk("cos_instance_crn"); ok {
 		params.CosInstanceCRN = v.(string)
+	}
+
+	if v, ok := d.GetOk("security_groups"); ok {
+		securityGroups := flex.FlattenSet(v.(*schema.Set))
+		params.SecurityGroupIDs = securityGroups
 	}
 
 	targetEnv, err := getVpcClusterTargetHeader(d, meta)
@@ -634,6 +682,14 @@ func resourceIBMContainerVpcClusterCreate(d *schema.ResourceData, meta interface
 		}
 
 	}
+	var taints []interface{}
+	if taintRes, ok := d.GetOk("taints"); ok {
+		taints = taintRes.(*schema.Set).List()
+	}
+	if err := updateWorkerpoolTaints(d, meta, cls.ID, "default", taints); err != nil {
+		return err
+	}
+
 	return resourceIBMContainerVpcClusterUpdate(d, meta)
 
 }
@@ -670,8 +726,8 @@ func resourceIBMContainerVpcClusterUpdate(d *schema.ResourceData, meta interface
 		kmsConfig := v2.KmsEnableReq{}
 		kmsConfig.Cluster = clusterID
 		targetEnv := v2.ClusterHeader{}
+		var waitForApply bool
 		if kms, ok := d.GetOk("kms_config"); ok {
-
 			kmsConfiglist := kms.([]interface{})
 
 			for _, l := range kmsConfiglist {
@@ -696,16 +752,39 @@ func resourceIBMContainerVpcClusterUpdate(d *schema.ResourceData, meta interface
 					accountid_string := accountid.(string)
 					kmsConfig.AccountID = accountid_string
 				}
+
+				if wait, ok := kmsMap["wait_for_apply"].(bool); ok {
+					waitForApply = wait
+				}
+			}
+
+			err := csClient.Kms().EnableKms(kmsConfig, targetEnv)
+			if err != nil {
+				log.Printf(
+					"An error occured during EnableKms (cluster: %s) error: %s", d.Id(), err)
+				return err
+			}
+			if waitForApply {
+				waitForVpcClusterMasterKMSApply(d, meta)
 			}
 		}
+	}
 
-		err := csClient.Kms().EnableKms(kmsConfig, targetEnv)
+	if d.HasChange(DisableOutboundTrafficProtectionFlag) {
+		outbound_traffic_protection := !d.Get(DisableOutboundTrafficProtectionFlag).(bool)
+		ClusterClient, err := meta.(conns.ClientSession).VpcContainerAPI()
 		if err != nil {
-			log.Printf(
-				"An error occured during EnableKms (cluster: %s) error: %s", d.Id(), err)
 			return err
 		}
 
+		Env, err := getVpcClusterTargetHeader(d, meta)
+		if err != nil {
+			return err
+		}
+
+		if err := ClusterClient.VPCs().SetOutboundTrafficProtection(clusterID, outbound_traffic_protection, Env); err != nil {
+			return err
+		}
 	}
 
 	if (d.HasChange("kube_version") || d.HasChange("update_all_workers") || d.HasChange("patch_version") || d.HasChange("retry_patch_version")) && !d.IsNewResource() {
@@ -824,106 +903,6 @@ func resourceIBMContainerVpcClusterUpdate(d *schema.ResourceData, meta interface
 		}
 	}
 
-	if d.HasChange("worker_labels") && !d.IsNewResource() {
-		labels := make(map[string]string)
-		if l, ok := d.GetOk("worker_labels"); ok {
-			for k, v := range l.(map[string]interface{}) {
-				labels[k] = v.(string)
-			}
-		}
-
-		ClusterClient, err := meta.(conns.ClientSession).ContainerAPI()
-		if err != nil {
-			return err
-		}
-		Env := v1.ClusterTargetHeader{ResourceGroup: targetEnv.ResourceGroup}
-
-		err = ClusterClient.WorkerPools().UpdateLabelsWorkerPool(clusterID, "default", labels, Env)
-		if err != nil {
-			return fmt.Errorf(
-				"[ERROR] Error updating the labels: %s", err)
-		}
-	}
-
-	if d.HasChange("taints") {
-		var taints []interface{}
-		if taintRes, ok := d.GetOk("taints"); ok {
-			taints = taintRes.(*schema.Set).List()
-		}
-		if err := updateWorkerpoolTaints(d, meta, clusterID, "default", taints); err != nil {
-			return err
-		}
-	}
-
-	if d.HasChange("worker_count") && !d.IsNewResource() {
-		count := d.Get("worker_count").(int)
-		ClusterClient, err := meta.(conns.ClientSession).ContainerAPI()
-		if err != nil {
-			return err
-		}
-		Env := v1.ClusterTargetHeader{ResourceGroup: targetEnv.ResourceGroup}
-
-		err = ClusterClient.WorkerPools().ResizeWorkerPool(clusterID, "default", count, Env)
-		if err != nil {
-			return fmt.Errorf(
-				"[ERROR] Error updating the worker_count %d: %s", count, err)
-		}
-	}
-
-	if d.HasChange("zones") && !d.IsNewResource() {
-		oldList, newList := d.GetChange("zones")
-		if oldList == nil {
-			oldList = new(schema.Set)
-		}
-		if newList == nil {
-			newList = new(schema.Set)
-		}
-		os := oldList.(*schema.Set)
-		ns := newList.(*schema.Set)
-		remove := os.Difference(ns).List()
-		add := ns.Difference(os).List()
-		if len(add) > 0 {
-			for _, zone := range add {
-				newZone := zone.(map[string]interface{})
-				zoneParam := v2.WorkerPoolZone{
-					Cluster:      clusterID,
-					Id:           newZone["name"].(string),
-					SubnetID:     newZone["subnet_id"].(string),
-					WorkerPoolID: "default",
-				}
-				err = csClient.WorkerPools().CreateWorkerPoolZone(zoneParam, targetEnv)
-				if err != nil {
-					return fmt.Errorf("[ERROR] Error adding zone to conatiner vpc cluster: %s", err)
-				}
-				_, err = WaitForWorkerPoolAvailable(d, meta, clusterID, "default", d.Timeout(schema.TimeoutCreate), targetEnv)
-				if err != nil {
-					return fmt.Errorf(
-						"[ERROR] Error waiting for workerpool (%s) to become ready: %s", d.Id(), err)
-				}
-
-			}
-		}
-		if len(remove) > 0 {
-			for _, zone := range remove {
-				oldZone := zone.(map[string]interface{})
-				ClusterClient, err := meta.(conns.ClientSession).ContainerAPI()
-				if err != nil {
-					return err
-				}
-				Env := v1.ClusterTargetHeader{ResourceGroup: targetEnv.ResourceGroup}
-				err = ClusterClient.WorkerPools().RemoveZone(clusterID, oldZone["name"].(string), "default", Env)
-				if err != nil {
-					return fmt.Errorf("[ERROR] Error deleting zone to conatiner vpc cluster: %s", err)
-				}
-				_, err = WaitForV2WorkerZoneDeleted(clusterID, "default", oldZone["name"].(string), meta, d.Timeout(schema.TimeoutDelete), targetEnv)
-				if err != nil {
-					return fmt.Errorf(
-						"[ERROR] Error waiting for deleting workers of worker pool (%s) of cluster (%s):  %s", "default", clusterID, err)
-				}
-			}
-		}
-	}
-
 	if d.HasChange("force_delete_storage") {
 		var forceDeleteStorage bool
 		if v, ok := d.GetOk("force_delete_storage"); ok {
@@ -946,6 +925,7 @@ func resourceIBMContainerVpcClusterUpdate(d *schema.ResourceData, meta interface
 
 	return resourceIBMContainerVpcClusterRead(d, meta)
 }
+
 func WaitForV2WorkerZoneDeleted(clusterNameOrID, workerPoolNameOrID, zone string, meta interface{}, timeout time.Duration, target v2.ClusterTargetHeader) (interface{}, error) {
 	csClient, err := meta.(conns.ClientSession).VpcContainerAPI()
 	if err != nil {
@@ -998,28 +978,6 @@ func resourceIBMContainerVpcClusterRead(d *schema.ResourceData, meta interface{}
 		return fmt.Errorf("[ERROR] Error retrieving conatiner vpc cluster: %s", err)
 	}
 
-	workerPool, err := csClient.WorkerPools().GetWorkerPool(clusterID, "default", targetEnv)
-	if err != nil {
-		if apiErr, ok := err.(bmxerror.RequestFailure); ok {
-			if apiErr.StatusCode() != 404 && !strings.Contains(apiErr.Description(), "The specified worker pool could not be found") {
-				return fmt.Errorf("[ERROR] Error retrieving worker pool of the cluster %s: %s", workerPool.ID, err)
-			}
-		}
-	}
-
-	var zones = make([]map[string]interface{}, 0)
-	for _, zone := range workerPool.Zones {
-		for _, subnet := range zone.Subnets {
-			if subnet.Primary {
-				zoneInfo := map[string]interface{}{
-					"name":      zone.ID,
-					"subnet_id": subnet.ID,
-				}
-				zones = append(zones, zoneInfo)
-			}
-		}
-	}
-
 	albs, err := albsAPI.ListClusterAlbs(clusterID, targetEnv)
 	if err != nil && !strings.Contains(err.Error(), "This operation is not supported for your cluster's version.") {
 		return fmt.Errorf("[ERROR] Error retrieving alb's of the cluster %s: %s", clusterID, err)
@@ -1028,22 +986,15 @@ func resourceIBMContainerVpcClusterRead(d *schema.ResourceData, meta interface{}
 	d.Set("name", cls.Name)
 	d.Set("crn", cls.CRN)
 	d.Set("master_status", cls.Lifecycle.MasterStatus)
-	d.Set("zones", zones)
 	if strings.HasSuffix(cls.MasterKubeVersion, "_openshift") {
 		d.Set("kube_version", strings.Split(cls.MasterKubeVersion, "_")[0]+"_openshift")
 	} else {
 		d.Set("kube_version", strings.Split(cls.MasterKubeVersion, "_")[0])
 	}
-	d.Set("worker_count", workerPool.WorkerCount)
-	d.Set("worker_labels", flex.IgnoreSystemLabels(workerPool.Labels))
 	if cls.Vpcs != nil {
 		d.Set("vpc_id", cls.Vpcs[0])
 	}
-	if workerPool.Taints != nil {
-		d.Set("taints", flattenWorkerPoolTaints(workerPool))
-	}
 	d.Set("master_url", cls.MasterURL)
-	d.Set("flavor", workerPool.Flavor)
 	d.Set("service_subnet", cls.ServiceSubnet)
 	d.Set("pod_subnet", cls.PodSubnet)
 	d.Set("state", cls.State)
@@ -1053,17 +1004,13 @@ func resourceIBMContainerVpcClusterRead(d *schema.ResourceData, meta interface{}
 	d.Set("resource_group_id", cls.ResourceGroupID)
 	d.Set("public_service_endpoint_url", cls.ServiceEndpoints.PublicServiceEndpointURL)
 	d.Set("private_service_endpoint_url", cls.ServiceEndpoints.PrivateServiceEndpointURL)
+	d.Set("vpe_service_endpoint_url", cls.VirtualPrivateEndpointURL)
 	if cls.ServiceEndpoints.PublicServiceEndpointEnabled {
 		d.Set("disable_public_service_endpoint", false)
 	} else {
 		d.Set("disable_public_service_endpoint", true)
 	}
 	d.Set("image_security_enforcement", cls.ImageSecurityEnabled)
-	d.Set("host_pool_id", workerPool.HostPoolID)
-	d.Set("operating_system", workerPool.OperatingSystem)
-	if workerPool.SecondaryStorageOption != nil {
-		d.Set("secondary_storage", workerPool.SecondaryStorageOption.Name)
-	}
 
 	tags, err := flex.GetTagsUsingCRN(meta, cls.CRN)
 	if err != nil {
@@ -1080,14 +1027,6 @@ func resourceIBMContainerVpcClusterRead(d *schema.ResourceData, meta interface{}
 	d.Set(flex.ResourceCRN, cls.CRN)
 	d.Set(flex.ResourceStatus, cls.State)
 	d.Set(flex.ResourceGroupName, cls.ResourceGroupName)
-
-	if workerPool.WorkerVolumeEncryption != nil {
-		d.Set("crk", workerPool.WorkerVolumeEncryption.WorkerVolumeCRKID)
-		d.Set("kms_instance_id", workerPool.WorkerVolumeEncryption.KmsInstanceID)
-		if workerPool.WorkerVolumeEncryption.KMSAccountID != "" {
-			d.Set("kms_account_id", workerPool.WorkerVolumeEncryption.KMSAccountID)
-		}
-	}
 
 	return nil
 }
@@ -1134,7 +1073,7 @@ func resourceIBMContainerVpcClusterDelete(d *schema.ResourceData, meta interface
 		listlbOptions := &vpcv1.ListLoadBalancersOptions{}
 		lbs, response, err1 := sess1.ListLoadBalancers(listlbOptions)
 		if err1 != nil {
-			log.Printf("Error Retrieving vpc load balancers: %s\n%s", err, response)
+			log.Printf("Error Retrieving vpc load balancers: %s\n%s", err1, response)
 		}
 		if lbs != nil && lbs.LoadBalancers != nil && len(lbs.LoadBalancers) > 0 {
 			for _, lb := range lbs.LoadBalancers {
@@ -1328,6 +1267,48 @@ func waitForVpcClusterMasterAvailable(d *schema.ResourceData, meta interface{}) 
 		Delay:                     10 * time.Second,
 		MinTimeout:                5 * time.Second,
 		ContinuousTargetOccurence: 5,
+	}
+	return createStateConf.WaitForState()
+}
+
+func waitForVpcClusterMasterKMSApply(d *schema.ResourceData, meta interface{}) (interface{}, error) {
+	log.Printf("[DEBUG] Wait for KMS to apply to master")
+	targetEnv, err := getVpcClusterTargetHeader(d, meta)
+	if err != nil {
+		return nil, err
+	}
+	csClient, err := meta.(conns.ClientSession).VpcContainerAPI()
+	if err != nil {
+		return nil, err
+	}
+	clusterID := d.Id()
+	createStateConf := &resource.StateChangeConf{
+		Pending: []string{deployRequested, deployInProgress},
+		Target:  []string{ready},
+		Refresh: func() (interface{}, string, error) {
+			log.Printf("[DEBUG] Waiting for KMS to apply to master")
+			clusterInfo, clusterInfoErr := csClient.Clusters().GetCluster(clusterID, targetEnv)
+
+			if err != nil || clusterInfoErr != nil {
+				return clusterInfo, deployInProgress, clusterInfoErr
+			}
+			if clusterInfo.Features.KeyProtectEnabled == false {
+				log.Printf("[DEBUG] KeyProtectEnabled still false")
+				return clusterInfo, deployInProgress, nil
+			}
+
+			if clusterInfo.Lifecycle.MasterStatus == ready &&
+				clusterInfo.Lifecycle.MasterState == masterDeployed {
+				log.Printf("[DEBUG] KMS applied to master")
+				return clusterInfo, ready, nil
+			}
+			return clusterInfo, deployInProgress, nil
+
+		},
+		Timeout:                   d.Timeout(schema.TimeoutCreate),
+		Delay:                     10 * time.Second,
+		MinTimeout:                5 * time.Second,
+		ContinuousTargetOccurence: 1,
 	}
 	return createStateConf.WaitForState()
 }

@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2023.
+ * (C) Copyright IBM Corp. 2024.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.80.0-29334a73-20230925-151553
+ * IBM OpenAPI SDK Code Generator Version: 3.84.1-55f6d880-20240110-194020
  */
 
 // Package atrackerv2 : Operations and models for the AtrackerV2 service
@@ -113,30 +113,30 @@ func NewAtrackerV2(options *AtrackerV2Options) (service *AtrackerV2, err error) 
 // GetServiceURLForRegion returns the service URL to be used for the specified region
 func GetServiceURLForRegion(region string) (string, error) {
 	var endpoints = map[string]string{
-		"us-south":         "https://us-south.atracker.cloud.ibm.com",         // The server for IBM Cloud Activity Tracker Service in the us-south region.
+		"us-south": "https://us-south.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the us-south region.
 		"private.us-south": "https://private.us-south.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the us-south region.
-		"us-east":          "https://us-east.atracker.cloud.ibm.com",          // The server for IBM Cloud Activity Tracker Service in the us-east region.
-		"private.us-east":  "https://private.us-east.atracker.cloud.ibm.com",  // The server for IBM Cloud Activity Tracker Service in the us-east region.
-		"eu-de":            "https://eu-de.atracker.cloud.ibm.com",            // The server for IBM Cloud Activity Tracker Service in the eu-de region.
-		"private.eu-de":    "https://private.eu-de.atracker.cloud.ibm.com",    // The server for IBM Cloud Activity Tracker Service in the eu-de region.
-		"eu-gb":            "https://eu-gb.atracker.cloud.ibm.com",            // The server for IBM Cloud Activity Tracker Service in the eu-gb region.
-		"private.eu-gb":    "https://private.eu-gb.atracker.cloud.ibm.com",    // The server for IBM Cloud Activity Tracker Service in the eu-gb region.
-		"eu-es":            "https://eu-es.atracker.cloud.ibm.com",            // The server for IBM Cloud Activity Tracker Service in the eu-es region.
-		"private.eu-es":    "https://private.eu-es.atracker.cloud.ibm.com",    // The server for IBM Cloud Activity Tracker Service in the eu-es region.
-		"au-syd":           "https://au-syd.atracker.cloud.ibm.com",           // The server for IBM Cloud Activity Tracker Service in the au-syd region.
-		"private.au-syd":   "https://private.au-syd.atracker.cloud.ibm.com",   // The server for IBM Cloud Activity Tracker Service in the au-syd region.
-		"ca-tor":           "https://us-east.atracker.cloud.ibm.com",          // The server for IBM Cloud Activity Tracker Service for ca-tor points to the us-east region.
-		"private.ca-tor":   "https://private.us-east.atracker.cloud.ibm.com",  // The server for IBM Cloud Activity Tracker Service for ca-tor points to the us-east region.
-		"br-sao":           "https://us-south.atracker.cloud.ibm.com",         // The server for IBM Cloud Activity Tracker Service for br-sao points to the us-south region.
-		"private.br-sao":   "https://private.us-south.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service for br-sao points to the us-south region.
-		"eu-fr2":           "https://eu-de.atracker.cloud.ibm.com",            // The server for IBM Cloud Activity Tracker Service for eu-fr2 points to the eu-de region.
-		"private.eu-fr2":   "https://private.eu-de.atracker.cloud.ibm.com",    // The server for IBM Cloud Activity Tracker Service for eu-fr2 points to the eu-de region.
-		"jp-tok":           "https://eu-de.atracker.cloud.ibm.com",            // The server for IBM Cloud Activity Tracker Service for jp-tok points to the eu-de region.
-		"private.jp-tok":   "https://private.eu-de.atracker.cloud.ibm.com",    // The server for IBM Cloud Activity Tracker Service for jp-tok points to the eu-de region.
-		"jp-osa":           "https://eu-de.atracker.cloud.ibm.com",            // The server for IBM Cloud Activity Tracker Service for jp-osa points to the eu-de region.
-		"private.jp-osa":   "https://private.eu-de.atracker.cloud.ibm.com",    // The server for IBM Cloud Activity Tracker Service for jp-osa points to the eu-de region.
-		"in-che":           "https://eu-de.atracker.cloud.ibm.com",            // The server for IBM Cloud Activity Tracker Service for in-che points to the eu-de region.
-		"private.in-che":   "https://private.eu-de.atracker.cloud.ibm.com",    // The server for IBM Cloud Activity Tracker Service for in-che points to the eu-de region.
+		"us-east": "https://us-east.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the us-east region.
+		"private.us-east": "https://private.us-east.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the us-east region.
+		"eu-de": "https://eu-de.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the eu-de region.
+		"private.eu-de": "https://private.eu-de.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the eu-de region.
+		"eu-gb": "https://eu-gb.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the eu-gb region.
+		"private.eu-gb": "https://private.eu-gb.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the eu-gb region.
+		"eu-es": "https://eu-es.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the eu-es region.
+		"private.eu-es": "https://private.eu-es.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the eu-es region.
+		"au-syd": "https://au-syd.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the au-syd region.
+		"private.au-syd": "https://private.au-syd.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the au-syd region.
+		"ca-tor": "https://us-east.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service for ca-tor points to the us-east region.
+		"private.ca-tor": "https://private.us-east.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service for ca-tor points to the us-east region.
+		"br-sao": "https://us-south.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service for br-sao points to the us-south region.
+		"private.br-sao": "https://private.us-south.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service for br-sao points to the us-south region.
+		"eu-fr2": "https://eu-de.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service for eu-fr2 points to the eu-de region.
+		"private.eu-fr2": "https://private.eu-de.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service for eu-fr2 points to the eu-de region.
+		"jp-tok": "https://eu-de.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service for jp-tok points to the eu-de region.
+		"private.jp-tok": "https://private.eu-de.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service for jp-tok points to the eu-de region.
+		"jp-osa": "https://eu-de.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service for jp-osa points to the eu-de region.
+		"private.jp-osa": "https://private.eu-de.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service for jp-osa points to the eu-de region.
+		"in-che": "https://eu-de.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service for in-che points to the eu-de region.
+		"private.in-che": "https://private.eu-de.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service for in-che points to the eu-de region.
 	}
 
 	if url, ok := endpoints[region]; ok {
@@ -244,6 +244,9 @@ func (atracker *AtrackerV2) CreateTargetWithContext(ctx context.Context, createT
 	}
 	if createTargetOptions.EventstreamsEndpoint != nil {
 		body["eventstreams_endpoint"] = createTargetOptions.EventstreamsEndpoint
+	}
+	if createTargetOptions.CloudlogsEndpoint != nil {
+		body["cloudlogs_endpoint"] = createTargetOptions.CloudlogsEndpoint
 	}
 	if createTargetOptions.Region != nil {
 		body["region"] = createTargetOptions.Region
@@ -442,6 +445,9 @@ func (atracker *AtrackerV2) ReplaceTargetWithContext(ctx context.Context, replac
 	}
 	if replaceTargetOptions.EventstreamsEndpoint != nil {
 		body["eventstreams_endpoint"] = replaceTargetOptions.EventstreamsEndpoint
+	}
+	if replaceTargetOptions.CloudlogsEndpoint != nil {
+		body["cloudlogs_endpoint"] = replaceTargetOptions.CloudlogsEndpoint
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -1022,6 +1028,49 @@ func (atracker *AtrackerV2) PutSettingsWithContext(ctx context.Context, putSetti
 	return
 }
 
+// CloudLogsEndpoint : Property values for the IBM Cloud Logs endpoint in responses.
+type CloudLogsEndpoint struct {
+	// The CRN of the IBM Cloud Logs instance.
+	TargetCRN *string `json:"target_crn" validate:"required"`
+}
+
+// UnmarshalCloudLogsEndpoint unmarshals an instance of CloudLogsEndpoint from the specified map of raw messages.
+func UnmarshalCloudLogsEndpoint(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(CloudLogsEndpoint)
+	err = core.UnmarshalPrimitive(m, "target_crn", &obj.TargetCRN)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// CloudLogsEndpointPrototype : Property values for an IBM Cloud Logs endpoint in requests.
+type CloudLogsEndpointPrototype struct {
+	// The CRN of the IBM Cloud Logs instance.
+	TargetCRN *string `json:"target_crn" validate:"required"`
+}
+
+// NewCloudLogsEndpointPrototype : Instantiate CloudLogsEndpointPrototype (Generic Model Constructor)
+func (*AtrackerV2) NewCloudLogsEndpointPrototype(targetCRN string) (_model *CloudLogsEndpointPrototype, err error) {
+	_model = &CloudLogsEndpointPrototype{
+		TargetCRN: core.StringPtr(targetCRN),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+// UnmarshalCloudLogsEndpointPrototype unmarshals an instance of CloudLogsEndpointPrototype from the specified map of raw messages.
+func UnmarshalCloudLogsEndpointPrototype(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(CloudLogsEndpointPrototype)
+	err = core.UnmarshalPrimitive(m, "target_crn", &obj.TargetCRN)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // CosEndpoint : Property values for a Cloud Object Storage Endpoint in responses.
 type CosEndpoint struct {
 	// The host name of the Cloud Object Storage endpoint.
@@ -1084,9 +1133,9 @@ type CosEndpointPrototype struct {
 // NewCosEndpointPrototype : Instantiate CosEndpointPrototype (Generic Model Constructor)
 func (*AtrackerV2) NewCosEndpointPrototype(endpoint string, targetCRN string, bucket string) (_model *CosEndpointPrototype, err error) {
 	_model = &CosEndpointPrototype{
-		Endpoint:  core.StringPtr(endpoint),
+		Endpoint: core.StringPtr(endpoint),
 		TargetCRN: core.StringPtr(targetCRN),
-		Bucket:    core.StringPtr(bucket),
+		Bucket: core.StringPtr(bucket),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	return
@@ -1135,7 +1184,7 @@ type CreateRouteOptions struct {
 // NewCreateRouteOptions : Instantiate CreateRouteOptions
 func (*AtrackerV2) NewCreateRouteOptions(name string, rules []RulePrototype) *CreateRouteOptions {
 	return &CreateRouteOptions{
-		Name:  core.StringPtr(name),
+		Name: core.StringPtr(name),
 		Rules: rules,
 	}
 }
@@ -1164,8 +1213,8 @@ type CreateTargetOptions struct {
 	// than `(space) - . _ :`. Do not include any personal identifying information (PII) in any resource names.
 	Name *string `json:"name" validate:"required"`
 
-	// The type of the target. It can be cloud_object_storage, logdna or event_streams. Based on this type you must include
-	// cos_endpoint, logdna_endpoint or eventstreams_endpoint.
+	// The type of the target. It can be cloud_object_storage, logdna, event_streams, or cloud_logs. Based on this type you
+	// must include cos_endpoint, logdna_endpoint, eventstreams_endpoint or cloudlogs_endpoint.
 	TargetType *string `json:"target_type" validate:"required"`
 
 	// Property values for a Cloud Object Storage Endpoint in requests.
@@ -1177,6 +1226,9 @@ type CreateTargetOptions struct {
 	// Property values for an Event Streams Endpoint in requests.
 	EventstreamsEndpoint *EventstreamsEndpointPrototype `json:"eventstreams_endpoint,omitempty"`
 
+	// Property values for an IBM Cloud Logs endpoint in requests.
+	CloudlogsEndpoint *CloudLogsEndpointPrototype `json:"cloudlogs_endpoint,omitempty"`
+
 	// Include this optional field if you want to create a target in a different region other than the one you are
 	// connected.
 	Region *string `json:"region,omitempty"`
@@ -1186,18 +1238,19 @@ type CreateTargetOptions struct {
 }
 
 // Constants associated with the CreateTargetOptions.TargetType property.
-// The type of the target. It can be cloud_object_storage, logdna or event_streams. Based on this type you must include
-// cos_endpoint, logdna_endpoint or eventstreams_endpoint.
+// The type of the target. It can be cloud_object_storage, logdna, event_streams, or cloud_logs. Based on this type you
+// must include cos_endpoint, logdna_endpoint, eventstreams_endpoint or cloudlogs_endpoint.
 const (
+	CreateTargetOptionsTargetTypeCloudLogsConst = "cloud_logs"
 	CreateTargetOptionsTargetTypeCloudObjectStorageConst = "cloud_object_storage"
-	CreateTargetOptionsTargetTypeEventStreamsConst       = "event_streams"
-	CreateTargetOptionsTargetTypeLogdnaConst             = "logdna"
+	CreateTargetOptionsTargetTypeEventStreamsConst = "event_streams"
+	CreateTargetOptionsTargetTypeLogdnaConst = "logdna"
 )
 
 // NewCreateTargetOptions : Instantiate CreateTargetOptions
 func (*AtrackerV2) NewCreateTargetOptions(name string, targetType string) *CreateTargetOptions {
 	return &CreateTargetOptions{
-		Name:       core.StringPtr(name),
+		Name: core.StringPtr(name),
 		TargetType: core.StringPtr(targetType),
 	}
 }
@@ -1229,6 +1282,12 @@ func (_options *CreateTargetOptions) SetLogdnaEndpoint(logdnaEndpoint *LogdnaEnd
 // SetEventstreamsEndpoint : Allow user to set EventstreamsEndpoint
 func (_options *CreateTargetOptions) SetEventstreamsEndpoint(eventstreamsEndpoint *EventstreamsEndpointPrototype) *CreateTargetOptions {
 	_options.EventstreamsEndpoint = eventstreamsEndpoint
+	return _options
+}
+
+// SetCloudlogsEndpoint : Allow user to set CloudlogsEndpoint
+func (_options *CreateTargetOptions) SetCloudlogsEndpoint(cloudlogsEndpoint *CloudLogsEndpointPrototype) *CreateTargetOptions {
+	_options.CloudlogsEndpoint = cloudlogsEndpoint
 	return _options
 }
 
@@ -1357,9 +1416,9 @@ type EventstreamsEndpointPrototype struct {
 func (*AtrackerV2) NewEventstreamsEndpointPrototype(targetCRN string, brokers []string, topic string, apiKey string) (_model *EventstreamsEndpointPrototype, err error) {
 	_model = &EventstreamsEndpointPrototype{
 		TargetCRN: core.StringPtr(targetCRN),
-		Brokers:   brokers,
-		Topic:     core.StringPtr(topic),
-		APIKey:    core.StringPtr(apiKey),
+		Brokers: brokers,
+		Topic: core.StringPtr(topic),
+		APIKey: core.StringPtr(apiKey),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	return
@@ -1535,7 +1594,7 @@ type LogdnaEndpointPrototype struct {
 // NewLogdnaEndpointPrototype : Instantiate LogdnaEndpointPrototype (Generic Model Constructor)
 func (*AtrackerV2) NewLogdnaEndpointPrototype(targetCRN string, ingestionKey string) (_model *LogdnaEndpointPrototype, err error) {
 	_model = &LogdnaEndpointPrototype{
-		TargetCRN:    core.StringPtr(targetCRN),
+		TargetCRN: core.StringPtr(targetCRN),
 		IngestionKey: core.StringPtr(ingestionKey),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -1582,7 +1641,7 @@ type PutSettingsOptions struct {
 // NewPutSettingsOptions : Instantiate PutSettingsOptions
 func (*AtrackerV2) NewPutSettingsOptions(metadataRegionPrimary string, privateAPIEndpointOnly bool) *PutSettingsOptions {
 	return &PutSettingsOptions{
-		MetadataRegionPrimary:  core.StringPtr(metadataRegionPrimary),
+		MetadataRegionPrimary: core.StringPtr(metadataRegionPrimary),
 		PrivateAPIEndpointOnly: core.BoolPtr(privateAPIEndpointOnly),
 	}
 }
@@ -1642,8 +1701,8 @@ type ReplaceRouteOptions struct {
 // NewReplaceRouteOptions : Instantiate ReplaceRouteOptions
 func (*AtrackerV2) NewReplaceRouteOptions(id string, name string, rules []RulePrototype) *ReplaceRouteOptions {
 	return &ReplaceRouteOptions{
-		ID:    core.StringPtr(id),
-		Name:  core.StringPtr(name),
+		ID: core.StringPtr(id),
+		Name: core.StringPtr(name),
 		Rules: rules,
 	}
 }
@@ -1690,6 +1749,9 @@ type ReplaceTargetOptions struct {
 	// Property values for an Event Streams Endpoint in requests.
 	EventstreamsEndpoint *EventstreamsEndpointPrototype `json:"eventstreams_endpoint,omitempty"`
 
+	// Property values for an IBM Cloud Logs endpoint in requests.
+	CloudlogsEndpoint *CloudLogsEndpointPrototype `json:"cloudlogs_endpoint,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
@@ -1728,6 +1790,12 @@ func (_options *ReplaceTargetOptions) SetLogdnaEndpoint(logdnaEndpoint *LogdnaEn
 // SetEventstreamsEndpoint : Allow user to set EventstreamsEndpoint
 func (_options *ReplaceTargetOptions) SetEventstreamsEndpoint(eventstreamsEndpoint *EventstreamsEndpointPrototype) *ReplaceTargetOptions {
 	_options.EventstreamsEndpoint = eventstreamsEndpoint
+	return _options
+}
+
+// SetCloudlogsEndpoint : Allow user to set CloudlogsEndpoint
+func (_options *ReplaceTargetOptions) SetCloudlogsEndpoint(cloudlogsEndpoint *CloudLogsEndpointPrototype) *ReplaceTargetOptions {
+	_options.CloudlogsEndpoint = cloudlogsEndpoint
 	return _options
 }
 
@@ -1977,6 +2045,9 @@ type Target struct {
 	// Property values for the Event Streams Endpoint in responses.
 	EventstreamsEndpoint *EventstreamsEndpoint `json:"eventstreams_endpoint,omitempty"`
 
+	// Property values for the IBM Cloud Logs endpoint in responses.
+	CloudlogsEndpoint *CloudLogsEndpoint `json:"cloudlogs_endpoint,omitempty"`
+
 	// The status of the write attempt to the target with the provided endpoint parameters.
 	WriteStatus *WriteStatus `json:"write_status" validate:"required"`
 
@@ -1996,9 +2067,10 @@ type Target struct {
 // Constants associated with the Target.TargetType property.
 // The type of the target.
 const (
+	TargetTargetTypeCloudLogsConst = "cloud_logs"
 	TargetTargetTypeCloudObjectStorageConst = "cloud_object_storage"
-	TargetTargetTypeEventStreamsConst       = "event_streams"
-	TargetTargetTypeLogdnaConst             = "logdna"
+	TargetTargetTypeEventStreamsConst = "event_streams"
+	TargetTargetTypeLogdnaConst = "logdna"
 )
 
 // UnmarshalTarget unmarshals an instance of Target from the specified map of raw messages.
@@ -2033,6 +2105,10 @@ func UnmarshalTarget(m map[string]json.RawMessage, result interface{}) (err erro
 		return
 	}
 	err = core.UnmarshalModel(m, "eventstreams_endpoint", &obj.EventstreamsEndpoint, UnmarshalEventstreamsEndpoint)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "cloudlogs_endpoint", &obj.CloudlogsEndpoint, UnmarshalCloudLogsEndpoint)
 	if err != nil {
 		return
 	}

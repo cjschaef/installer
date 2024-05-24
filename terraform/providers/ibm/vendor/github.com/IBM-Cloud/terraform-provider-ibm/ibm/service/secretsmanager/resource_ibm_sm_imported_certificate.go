@@ -78,7 +78,6 @@ func ResourceIbmSmImportedCertificate() *schema.Resource {
 			"version_custom_metadata": &schema.Schema{
 				Type:        schema.TypeMap,
 				Optional:    true,
-				Computed:    true,
 				Description: "The secret version metadata that a user can customize.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
@@ -122,12 +121,6 @@ func ResourceIbmSmImportedCertificate() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The Common Name (AKA CN) represents the server name that is protected by the SSL certificate.",
-			},
-			"alt_names": &schema.Schema{
-				Type:        schema.TypeList,
-				Computed:    true,
-				Description: "With the Subject Alternative Name field, you can specify additional host names to be protected by a single SSL certificate.",
-				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"key_algorithm": &schema.Schema{
 				Type:        schema.TypeString,
@@ -387,11 +380,6 @@ func resourceIbmSmImportedCertificateRead(context context.Context, d *schema.Res
 	if err = d.Set("signing_algorithm", secret.SigningAlgorithm); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting signing_algorithm: %s", err))
 	}
-	if secret.AltNames != nil {
-		if err = d.Set("alt_names", secret.AltNames); err != nil {
-			return diag.FromErr(fmt.Errorf("Error setting alt_names: %s", err))
-		}
-	}
 	if err = d.Set("common_name", secret.CommonName); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting common_name: %s", err))
 	}
@@ -537,7 +525,7 @@ func resourceIbmSmImportedCertificateUpdate(context context.Context, d *schema.R
 		// Apply change to version_custom_metadata in current version
 		secretVersionMetadataPatchModel := new(secretsmanagerv2.SecretVersionMetadataPatch)
 		secretVersionMetadataPatchModel.VersionCustomMetadata = d.Get("version_custom_metadata").(map[string]interface{})
-		secretVersionMetadataPatchModelAsPatch, _ := secretVersionMetadataPatchModel.AsPatch()
+		secretVersionMetadataPatchModelAsPatch, _ := secretVersionMetadataAsPatchFunction(secretVersionMetadataPatchModel)
 
 		updateSecretVersionOptions := &secretsmanagerv2.UpdateSecretVersionMetadataOptions{}
 		updateSecretVersionOptions.SetSecretID(secretId)

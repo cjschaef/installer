@@ -14,12 +14,14 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
-	"github.com/IBM/ibm-cos-sdk-go-config/resourceconfigurationv1"
+	"github.com/IBM/go-sdk-core/core"
+	rcsdk "github.com/IBM/ibm-cos-sdk-go-config/v2/resourceconfigurationv1"
 	"github.com/IBM/ibm-cos-sdk-go/aws"
 	"github.com/IBM/ibm-cos-sdk-go/aws/credentials/ibmiam"
 	token "github.com/IBM/ibm-cos-sdk-go/aws/credentials/ibmiam/token"
 	"github.com/IBM/ibm-cos-sdk-go/aws/session"
 	"github.com/IBM/ibm-cos-sdk-go/service/s3"
+	rc "github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -759,6 +761,10 @@ func resourceIBMCOSBucketUpdate(d *schema.ResourceData, meta interface{}) error 
 
 	}
 
+	apiEndpoint = conns.FileFallBack(rsConClient.Config.EndpointsFile, "private", "IBMCLOUD_COS_ENDPOINT", bLocation, apiEndpoint)
+	// HACK(cjschaef): IPI is configured to use either the Public endpoint or Direct endpoint. If an override was provided, set that as Direct endpoint.
+	directApiEndpoint = conns.FileFallBack(rsConClient.Config.EndpointsFile, "private", "IBMCLOUD_COS_ENDPOINT", bLocation, directApiEndpoint)
+
 	authEndpoint, err := rsConClient.Config.EndpointLocator.IAMEndpoint()
 
 	if err != nil {
@@ -767,7 +773,7 @@ func resourceIBMCOSBucketUpdate(d *schema.ResourceData, meta interface{}) error 
 	authEndpointPath := fmt.Sprintf("%s%s", authEndpoint, "/identity/token")
 	apiKey := rsConClient.Config.BluemixAPIKey
 	if apiKey != "" {
-		s3Conf = aws.NewConfig().WithEndpoint(conns.EnvFallBack([]string{"IBMCLOUD_COS_ENDPOINT"}, apiEndpoint)).WithCredentials(ibmiam.NewStaticCredentials(aws.NewConfig(), authEndpointPath, apiKey, serviceID)).WithS3ForcePathStyle(true)
+		s3Conf = aws.NewConfig().WithEndpoint(apiEndpoint).WithCredentials(ibmiam.NewStaticCredentials(aws.NewConfig(), authEndpointPath, apiKey, serviceID)).WithS3ForcePathStyle(true)
 	}
 	iamAccessToken := rsConClient.Config.IAMAccessToken
 	if iamAccessToken != "" {
@@ -780,7 +786,7 @@ func resourceIBMCOSBucketUpdate(d *schema.ResourceData, meta interface{}) error 
 				Expiration:   time.Now().Add(-1 * time.Hour).Unix(),
 			}, nil
 		}
-		s3Conf = aws.NewConfig().WithEndpoint(conns.EnvFallBack([]string{"IBMCLOUD_COS_ENDPOINT"}, apiEndpoint)).WithCredentials(ibmiam.NewCustomInitFuncCredentials(aws.NewConfig(), initFunc, authEndpointPath, serviceID)).WithS3ForcePathStyle(true)
+		s3Conf = aws.NewConfig().WithEndpoint(apiEndpoint).WithCredentials(ibmiam.NewCustomInitFuncCredentials(aws.NewConfig(), initFunc, authEndpointPath, serviceID)).WithS3ForcePathStyle(true)
 	}
 	s3Sess := session.Must(session.NewSession())
 	s3Client := s3.New(s3Sess, s3Conf)
@@ -921,11 +927,15 @@ func resourceIBMCOSBucketUpdate(d *schema.ResourceData, meta interface{}) error 
 	if err != nil {
 		return err
 	}
+	// We will use the session's config options (already loaded) if IBMCLOUD_COS_CONFIG_ENDPOINT was provided.
+	// Otherwise, we assume the user has provided the proper endpoint based on COS endpoint type.
 	if endpointType == "private" {
-		sess.SetServiceURL("https://config.private.cloud-object-storage.cloud.ibm.com/v1")
+		url := conns.FileFallBack(rsConClient.Config.EndpointsFile, "private", "IBMCLOUD_COS_CONFIG_ENDPOINT", bLocation, "https://config.private.cloud-object-storage.cloud.ibm.com/v1")
+		sess.SetServiceURL(url)
 	}
 	if endpointType == "direct" {
-		sess.SetServiceURL("https://config.direct.cloud-object-storage.cloud.ibm.com/v1")
+		url := conns.FileFallBack(rsConClient.Config.EndpointsFile, "private", "IBMCLOUD_COS_CONFIG_ENDPOINT", bLocation, "https://config.direct.cloud-object-storage.cloud.ibm.com/v1")
+		sess.SetServiceURL(url)
 	}
 
 	if apiType == "sl" {
@@ -935,19 +945,18 @@ func resourceIBMCOSBucketUpdate(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	hasChanged := false
-	updateBucketConfigOptions := &resourceconfigurationv1.UpdateBucketConfigOptions{}
 
 	//BucketName
 	bucketName = d.Get("bucket_name").(string)
-	updateBucketConfigOptions.Bucket = &bucketName
-
+	bucketPatchModel := new(rcsdk.BucketPatch)
 	if d.HasChange("hard_quota") {
 		hasChanged = true
-		updateBucketConfigOptions.HardQuota = aws.Int64(int64(d.Get("hard_quota").(int)))
+		bucketPatchModel.HardQuota = core.Int64Ptr(int64(d.Get("hard_quota").(int)))
+
 	}
 
 	if d.HasChange("allowed_ip") {
-		firewall := &resourceconfigurationv1.Firewall{}
+		firewall := &rcsdk.Firewall{}
 		var ips = make([]string, 0)
 		if ip, ok := d.GetOk("allowed_ip"); ok && ip != nil {
 			for _, i := range ip.([]interface{}) {
@@ -958,11 +967,11 @@ func resourceIBMCOSBucketUpdate(d *schema.ResourceData, meta interface{}) error 
 			firewall.AllowedIp = []string{}
 		}
 		hasChanged = true
-		updateBucketConfigOptions.Firewall = firewall
+		bucketPatchModel.Firewall = firewall
 	}
 
 	if d.HasChange("activity_tracking") {
-		activityTracker := &resourceconfigurationv1.ActivityTracking{}
+		activityTracker := &rcsdk.ActivityTracking{}
 		if activity, ok := d.GetOk("activity_tracking"); ok {
 			activitylist := activity.([]interface{})
 			for _, l := range activitylist {
@@ -986,11 +995,12 @@ func resourceIBMCOSBucketUpdate(d *schema.ResourceData, meta interface{}) error 
 			}
 		}
 		hasChanged = true
-		updateBucketConfigOptions.ActivityTracking = activityTracker
+		bucketPatchModel.ActivityTracking = activityTracker
+
 	}
 
 	if d.HasChange("metrics_monitoring") {
-		metricsMonitor := &resourceconfigurationv1.MetricsMonitoring{}
+		metricsMonitoring := &rcsdk.MetricsMonitoring{}
 		if metrics, ok := d.GetOk("metrics_monitoring"); ok {
 			metricslist := metrics.([]interface{})
 			for _, l := range metricslist {
@@ -999,24 +1009,32 @@ func resourceIBMCOSBucketUpdate(d *schema.ResourceData, meta interface{}) error 
 				//metrics enabled - as its optional check for existence
 				if metricsSet := metricsMap["usage_metrics_enabled"]; metricsSet != nil {
 					metrics := metricsSet.(bool)
-					metricsMonitor.UsageMetricsEnabled = &metrics
+					metricsMonitoring.UsageMetricsEnabled = &metrics
 				}
 				// request metrics enabled - as its optional check for existence
 				if metricsSet := metricsMap["request_metrics_enabled"]; metricsSet != nil {
 					metrics := metricsSet.(bool)
-					metricsMonitor.RequestMetricsEnabled = &metrics
+					metricsMonitoring.RequestMetricsEnabled = &metrics
 				}
 				//crn - Required field
 				crn := metricsMap["metrics_monitoring_crn"].(string)
-				metricsMonitor.MetricsMonitoringCrn = &crn
+				metricsMonitoring.MetricsMonitoringCrn = &crn
 			}
 		}
 		hasChanged = true
-		updateBucketConfigOptions.MetricsMonitoring = metricsMonitor
+		bucketPatchModel.MetricsMonitoring = metricsMonitoring
+
 	}
 
 	if hasChanged {
-		response, err := sess.UpdateBucketConfig(updateBucketConfigOptions)
+		bucketPatchModelAsPatch, asPatchErr := bucketPatchModel.AsPatch()
+		if asPatchErr != nil {
+			return fmt.Errorf("[ERROR] Error Update COS Bucket: %s\n%s", err, bucketPatchModelAsPatch)
+		}
+		setOptions := new(rcsdk.UpdateBucketConfigOptions)
+		setOptions.SetBucket(bucketName)
+		setOptions.BucketPatch = bucketPatchModelAsPatch
+		response, err := sess.UpdateBucketConfig(setOptions)
 		if err != nil {
 			return fmt.Errorf("[ERROR] Error Update COS Bucket: %s\n%s", err, response)
 		}
@@ -1064,7 +1082,9 @@ func resourceIBMCOSBucketRead(d *schema.ResourceData, meta interface{}) error {
 
 	}
 
-	apiEndpoint = conns.EnvFallBack([]string{"IBMCLOUD_COS_ENDPOINT"}, apiEndpoint)
+	apiEndpoint = conns.FileFallBack(rsConClient.Config.EndpointsFile, "private", "IBMCLOUD_COS_ENDPOINT", bLocation, apiEndpoint)
+	// HACK(cjschaef): IPI is configured to use either the Public endpoint or Direct endpoint. If an override was provided, set that as Direct endpoint too.
+	directApiEndpoint = conns.FileFallBack(rsConClient.Config.EndpointsFile, "private", "IBMCLOUD_COS_ENDPOINT", bLocation, directApiEndpoint)
 
 	authEndpoint, err := rsConClient.Config.EndpointLocator.IAMEndpoint()
 
@@ -1144,20 +1164,19 @@ func resourceIBMCOSBucketRead(d *schema.ResourceData, meta interface{}) error {
 	if endpointType != "" {
 		d.Set("endpoint_type", endpointType)
 	}
-
-	getBucketConfigOptions := &resourceconfigurationv1.GetBucketConfigOptions{
-		Bucket: &bucketName,
-	}
-
 	sess, err := meta.(conns.ClientSession).CosConfigV1API()
 	if err != nil {
 		return err
 	}
+	// We will use the session's config options (already loaded) if IBMCLOUD_COS_CONFIG_ENDPOINT was provided.
+	// Otherwise, we assume the user has provided the proper endpoint based on the COS endpoint type.
 	if endpointType == "private" {
-		sess.SetServiceURL("https://config.private.cloud-object-storage.cloud.ibm.com/v1")
+		url := conns.FileFallBack(rsConClient.Config.EndpointsFile, "private", "IBMCLOUD_COS_CONFIG_ENDPOINT", bLocation, "https://config.private.cloud-object-storage.cloud.ibm.com/v1")
+		sess.SetServiceURL(url)
 	}
 	if endpointType == "direct" {
-		sess.SetServiceURL("https://config.direct.cloud-object-storage.cloud.ibm.com/v1")
+		url := conns.FileFallBack(rsConClient.Config.EndpointsFile, "private", "IBMCLOUD_COS_CONFIG_ENDPOINT", bLocation, "https://config.direct.cloud-object-storage.cloud.ibm.com/v1")
+		sess.SetServiceURL(url)
 	}
 
 	if apiType == "sl" {
@@ -1167,7 +1186,9 @@ func resourceIBMCOSBucketRead(d *schema.ResourceData, meta interface{}) error {
 		sess.SetServiceURL(satconfig)
 	}
 
-	bucketPtr, response, err := sess.GetBucketConfig(getBucketConfigOptions)
+	getOptions := new(rcsdk.GetBucketConfigOptions)
+	getOptions.SetBucket(bucketName)
+	bucketPtr, response, err := sess.GetBucketConfig(getOptions)
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error in getting bucket info rule: %s\n%s", err, response)
 	}
@@ -1355,7 +1376,9 @@ func resourceIBMCOSBucketCreate(d *schema.ResourceData, meta interface{}) error 
 
 	}
 
-	apiEndpoint = conns.EnvFallBack([]string{"IBMCLOUD_COS_ENDPOINT"}, apiEndpoint)
+	apiEndpoint = conns.FileFallBack(rsConClient.Config.EndpointsFile, "private", "IBMCLOUD_COS_ENDPOINT", bLocation, apiEndpoint)
+	// HACK(cjschaef): IPI is configured to use either the Public endpoint or Direct endpoint. If an override was provided, set that as Direct endpoint.
+	directApiEndpoint = conns.FileFallBack(rsConClient.Config.EndpointsFile, "private", "IBMCLOUD_COS_ENDPOINT", bLocation, directApiEndpoint)
 
 	if apiEndpoint == "" {
 		return fmt.Errorf("[ERROR] The endpoint doesn't exists for given location %s and endpoint type %s", bLocation, endpointType)
@@ -1472,7 +1495,9 @@ func resourceIBMCOSBucketDelete(d *schema.ResourceData, meta interface{}) error 
 
 	}
 
-	apiEndpoint = conns.EnvFallBack([]string{"IBMCLOUD_COS_ENDPOINT"}, apiEndpoint)
+	apiEndpoint = conns.FileFallBack(rsConClient.Config.EndpointsFile, "private", "IBMCLOUD_COS_ENDPOINT", bLocation, apiEndpoint)
+	// HACK(cjschaef): IPI is configured to use either the Public endpoint or Direct endpoint. If an override was provided, set that as Direct endpoint.
+	directApiEndpoint = conns.FileFallBack(rsConClient.Config.EndpointsFile, "private", "IBMCLOUD_COS_ENDPOINT", bLocation, directApiEndpoint)
 
 	if apiEndpoint == "" {
 		return fmt.Errorf("[ERROR] The endpoint doesn't exists for given location %s and endpoint type %s", bLocation, endpointType)
@@ -1550,7 +1575,26 @@ func resourceIBMCOSBucketExists(d *schema.ResourceData, meta interface{}) (bool,
 	if len(bucket_meta) < 2 || len(strings.Split(bucket_meta[1], ":")) < 2 {
 		return false, fmt.Errorf("[ERROR] Error parsing bucket ID. Bucket ID format must be: $CRN:meta:$buckettype:$bucketlocation")
 	}
-
+	resourceInstanceId := strings.Split(d.Id(), ":bucket:")[0]
+	resourceInstanceIdInput := resourceInstanceId + "::"
+	resourceInstanceGet := rc.GetResourceInstanceOptions{
+		ID: &resourceInstanceIdInput,
+	}
+	rsConClientV2, errConf := meta.(conns.ClientSession).ResourceControllerV2API()
+	if errConf != nil {
+		return false, errConf
+	}
+	instance, resp, err := rsConClientV2.GetResourceInstance(&resourceInstanceGet)
+	if err != nil {
+		if resp != nil && resp.StatusCode == 404 {
+			return false, nil
+		}
+		return false, fmt.Errorf("[WARN] Error getting resource instance from cos bucket: %s with resp code: %s", err, resp)
+	}
+	if instance != nil && (strings.Contains(*instance.State, "removed") || strings.Contains(*instance.State, "pending_reclamation")) {
+		log.Printf("[WARN] Removing instance from state because it's in removed or pending_reclamation state from the cos bucket resource")
+		return false, nil
+	}
 	bucketName := parseBucketId(d.Id(), "bucketName")
 	serviceID := parseBucketId(d.Id(), "serviceID")
 
@@ -1581,7 +1625,9 @@ func resourceIBMCOSBucketExists(d *schema.ResourceData, meta interface{}) (bool,
 
 	}
 
-	apiEndpoint = conns.EnvFallBack([]string{"IBMCLOUD_COS_ENDPOINT"}, apiEndpoint)
+	apiEndpoint = conns.FileFallBack(rsConClient.Config.EndpointsFile, "private", "IBMCLOUD_COS_ENDPOINT", bLocation, apiEndpoint)
+	// HACK(cjschaef): IPI is configured to use either the Public endpoint or Direct endpoint. If an override was provided, set that as Direct endpoint.
+	directApiEndpoint = conns.FileFallBack(rsConClient.Config.EndpointsFile, "private", "IBMCLOUD_COS_ENDPOINT", bLocation, directApiEndpoint)
 
 	if apiEndpoint == "" {
 		return false, fmt.Errorf("[ERROR] The endpoint doesn't exists for given endpoint type %s", endpointType)
