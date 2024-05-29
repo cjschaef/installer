@@ -28,7 +28,7 @@ data "ibm_resource_group" "group" {
 resource "ibm_resource_instance" "cos" {
   name              = "${var.cluster_id}-cos"
   service           = "cloud-object-storage"
-  plan              = "lite"
+  plan              = "standard"
   location          = "global"
   resource_group_id = local.resource_group_id
   tags              = local.tags
