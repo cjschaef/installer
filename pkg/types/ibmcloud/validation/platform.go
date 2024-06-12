@@ -93,8 +93,8 @@ func validateServiceEndpoints(endpoints []configv1.IBMCloudServiceEndpoint, fldP
 // schemeRE is used to check whether a string starts with a scheme (URI format).
 var schemeRE = regexp.MustCompile("^([^:]+)://")
 
-// versionPath is the regexp for a trailing API version in URL path ('/v1', '/v22/', etc.)
-var versionPath = regexp.MustCompile(`(/v\d+[/]{0,1})$`)
+// versionPath is the regexp for a trailing 'api' and/or API version in URL path ('/v1', '/v22/', '/api/v1', etc.)
+var versionPath = regexp.MustCompile(`(/api){0,1}(/v\d+){0,1}([/]{0,1})$`)
 
 // validateServiceURL checks that a string meets certain URI expectations.
 func validateServiceURL(uri string) error {
@@ -110,7 +110,7 @@ func validateServiceURL(uri string) error {
 	// verify the endpoint meets the following criteria
 	// 1. contains a hostname
 	// 2. uses 'https' scheme
-	// 3. contains no path or request parameters, except API version paths ('/v1')
+	// 3. contains no path or request parameters, except API version paths ('/v1', '/api/v2', etc.)
 	u, err := url.Parse(endpoint)
 	if err != nil {
 		return err
@@ -122,7 +122,7 @@ func validateServiceURL(uri string) error {
 	if s := u.Scheme; s != httpsScheme {
 		return fmt.Errorf("invalid scheme %s, only https is allowed", s)
 	}
-	// check that the path is empty ('/'), or only contains an API version ('/v1'), by using regexp to replace the API version and should result in empty string
+	// check that the path is empty ('/'), or only contains an API version ('/v1', '/api/v2', etc.), by using regexp to replace the API version and should result in empty string
 	if r := u.RequestURI(); r != "/" && versionPath.ReplaceAllString(r, "") != "" {
 		return fmt.Errorf("no path or request parameters can be provided, %q was provided", r)
 	}

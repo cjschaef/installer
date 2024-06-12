@@ -15,6 +15,7 @@ import (
 	"github.com/IBM/networking-go-sdk/dnssvcsv1"
 	"github.com/IBM/networking-go-sdk/dnszonesv1"
 	"github.com/IBM/networking-go-sdk/zonesv1"
+	"github.com/IBM/platform-services-go-sdk/globalcatalogv1"
 	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
@@ -45,6 +46,7 @@ type API interface {
 	GetEncryptionKey(ctx context.Context, keyCRN string) (*responses.EncryptionKeyResponse, error)
 	GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.ResourceGroup, error)
 	GetResourceGroup(ctx context.Context, nameOrID string) (*resourcemanagerv2.ResourceGroup, error)
+	GetServiceIDByName(ctx context.Context, serviceName string) (string, error)
 	GetSubnet(ctx context.Context, subnetID string) (*vpcv1.Subnet, error)
 	GetSubnetByName(ctx context.Context, subnetName string, region string) (*vpcv1.Subnet, error)
 	GetVSIProfiles(ctx context.Context) ([]vpcv1.InstanceProfile, error)
@@ -77,10 +79,10 @@ const (
 	// DNSInstanceType is a DNS Services InstanceType
 	DNSInstanceType InstanceType = "DNS"
 
-	// cisServiceID is the Cloud Internet Services' catalog service ID.
-	cisServiceID = "75874a60-cb12-11e7-948e-37ac098eb1b9"
-	// dnsServiceID is the DNS Services' catalog service ID.
-	dnsServiceID = "b4ed8a30-936f-11e9-b289-1d079699cbe5"
+	// CISServiceName is the name of Cloud Internet Services as it appears in the Global Catalog.
+	CISServiceName = "internet-svcs"
+	// DNSServiceName is the name of DNS Services as it appears in the Global Catalog.
+	DNSServiceName = "dns-svcs"
 
 	// hyperProtectCRNServiceName is the service name within the IBM Cloud CRN for the Hyper Protect service.
 	hyperProtectCRNServiceName = "hs-crypto"
@@ -339,8 +341,13 @@ func (c *Client) GetDNSZones(ctx context.Context, publish types.PublishingStrate
 }
 
 func (c *Client) getDNSDNSZones(ctx context.Context) ([]responses.DNSZoneResponse, error) {
+	serviceID, err := c.GetServiceIDByName(ctx, DNSServiceName)
+	if err != nil {
+		return nil, err
+	}
+
 	options := c.controllerAPI.NewListResourceInstancesOptions()
-	options.SetResourceID(dnsServiceID)
+	options.SetResourceID(serviceID)
 
 	listResourceInstancesResponse, _, err := c.controllerAPI.ListResourceInstances(options)
 	if err != nil {
@@ -394,8 +401,13 @@ func (c *Client) getDNSDNSZones(ctx context.Context) ([]responses.DNSZoneRespons
 }
 
 func (c *Client) getCISDNSZones(ctx context.Context) ([]responses.DNSZoneResponse, error) {
+	serviceID, err := c.GetServiceIDByName(ctx, CISServiceName)
+	if err != nil {
+		return nil, err
+	}
+
 	options := c.controllerAPI.NewListResourceInstancesOptions()
-	options.SetResourceID(cisServiceID)
+	options.SetResourceID(serviceID)
 
 	listResourceInstancesResponse, _, err := c.controllerAPI.ListResourceInstances(options)
 	if err != nil {
@@ -516,6 +528,66 @@ func (c *Client) GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.Res
 		return nil, err
 	}
 	return listResourceGroupsResponse.Resources, nil
+}
+
+// GetServiceIDByName gets the Serivce ID of an IBM Cloud Service from Global Catalog.
+func (c *Client) GetServiceIDByName(ctx context.Context, serviceName string) (string, error) {
+	authenticator, err := NewIamAuthenticator(c.GetAPIKey(), c.iamServiceEndpointOverride)
+	if err != nil {
+		return "", err
+	}
+
+	options := &globalcatalogv1.GlobalCatalogV1Options{
+		Authenticator: authenticator,
+	}
+
+	// If a Global Catalog service endpoint override was provided, pass it along to override the default Global Catalog endpoint.
+	if overrideURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceGlobalCatalog, c.serviceEndpoints); overrideURL != "" {
+		options.URL = overrideURL
+	}
+	// Isolate Global Catalog service usage within this function.
+	globalCatalog, err := globalcatalogv1.NewGlobalCatalogV1(options)
+	if err != nil {
+		return "", err
+	}
+
+	listOptions := globalCatalog.NewListCatalogEntriesOptions().SetQ(serviceName)
+
+	result, detailedResponse, err := globalCatalog.ListCatalogEntriesWithContext(ctx, listOptions)
+	if err != nil {
+		if detailedResponse != nil {
+			return "", fmt.Errorf("failed listing catalog services: %s", detailedResponse)
+		}
+		return "", fmt.Errorf("failed to list catalog services: %w", err)
+	}
+
+	for _, service := range result.Resources {
+		if *service.Name == serviceName {
+			return *service.ID, nil
+		}
+	}
+
+	// Process through paginated results
+	for result.Next != nil {
+		if result.Offset == nil {
+			return "", fmt.Errorf("next pagination offset is missing")
+		}
+		nextListOptions := globalCatalog.NewListCatalogEntriesOptions().SetOffset(*result.Offset)
+		result, detailedResponse, err = globalCatalog.ListCatalogEntriesWithContext(ctx, nextListOptions)
+		if err != nil {
+			if detailedResponse != nil {
+				return "", fmt.Errorf("failed listing catalog services: %s", detailedResponse)
+			}
+			return "", fmt.Errorf("failed to list catalog services: %w", err)
+		}
+		for _, service := range result.Resources {
+			if *service.Name == serviceName {
+				return *service.ID, nil
+			}
+		}
+	}
+
+	return "", fmt.Errorf("failed to find service ID in catalog for service: %s", serviceName)
 }
 
 // GetSubnet gets a subnet by its ID.

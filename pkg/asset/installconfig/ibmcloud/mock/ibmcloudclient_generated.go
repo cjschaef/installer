@@ -235,6 +235,21 @@ func (mr *MockAPIMockRecorder) GetResourceGroups(ctx interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResourceGroups", reflect.TypeOf((*MockAPI)(nil).GetResourceGroups), ctx)
 }
 
+// GetServiceIDByName mocks base method.
+func (m *MockAPI) GetServiceIDByName(ctx context.Context, serviceName string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetServiceIDByName", ctx, serviceName)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetServiceIDByName indicates an expected call of GetServiceIDByName.
+func (mr *MockAPIMockRecorder) GetServiceIDByName(ctx, serviceName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServiceIDByName", reflect.TypeOf((*MockAPI)(nil).GetServiceIDByName), ctx, serviceName)
+}
+
 // GetSubnet mocks base method.
 func (m *MockAPI) GetSubnet(ctx context.Context, subnetID string) (*vpcv1.Subnet, error) {
 	m.ctrl.T.Helper()

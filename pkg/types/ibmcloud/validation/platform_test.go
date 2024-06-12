@@ -152,6 +152,18 @@ func TestValidatePlatform(t *testing.T) {
 			valid: true,
 		},
 		{
+			name: "valid url (has /api and version path) for service endpoint",
+			platform: func() *ibmcloud.Platform {
+				p := validMinimalPlatform()
+				p.ServiceEndpoints = []configv1.IBMCloudServiceEndpoint{{
+					Name: configv1.IBMCloudServiceIAM,
+					URL:  "https://test-iam.random.local/api/v2",
+				}}
+				return p
+			}(),
+			valid: true,
+		},
+		{
 			name: "invalid url (has request) for service endpoint",
 			platform: func() *ibmcloud.Platform {
 				p := validMinimalPlatform()
