@@ -532,26 +532,27 @@ func (c *Client) GetSubnet(ctx context.Context, subnetID string) (*vpcv1.Subnet,
 
 // GetSubnetByName gets a subnet by its Name.
 func (c *Client) GetSubnetByName(ctx context.Context, subnetName string, region string) (*vpcv1.Subnet, error) {
-	_, cancel := context.WithTimeout(ctx, 1*time.Minute)
-	defer cancel()
-
 	err := c.SetVPCServiceURLForRegion(ctx, region)
 	if err != nil {
 		return nil, err
 	}
 
 	listSubnetsOptions := c.vpcAPI.NewListSubnetsOptions()
-	subnetCollection, detailedResponse, err := c.vpcAPI.ListSubnetsWithContext(ctx, listSubnetsOptions)
+	subnetsPager, err := c.vpcAPI.NewSubnetsPager(listSubnetsOptions)
 	if err != nil {
 		return nil, err
-	} else if detailedResponse.GetStatusCode() == http.StatusNotFound {
-		return nil, &VPCResourceNotFoundError{}
 	}
-	for _, subnet := range subnetCollection.Subnets {
+
+	subnets, err := subnetsPager.GetAllWithContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, subnet := range subnets {
 		if subnetName == *subnet.Name {
 			return &subnet, nil
 		}
 	}
+
 	return nil, &VPCResourceNotFoundError{}
 }
 
