@@ -639,6 +639,23 @@ spec:
                                 type: string
                             type: object
                           type: array
+                        image:
+                          description: Image provides details on an existing VPC Custom
+                            Image to use for machines in the pool.
+                          properties:
+                            crn:
+                              description: CRN is the IBM Cloud CRN of an existing
+                                VPC Custom Image or Catalog Offering.
+                              type: string
+                            id:
+                              description: ID is the id of an existing VPC Custom
+                                Image.
+                              type: string
+                            name:
+                              description: Name is the name of an existing VPC Custom
+                                Image.
+                              type: string
+                          type: object
                         type:
                           description: InstanceType is the VSI machine profile.
                           type: string
@@ -1547,6 +1564,22 @@ spec:
                               type: string
                           type: object
                         type: array
+                      image:
+                        description: Image provides details on an existing VPC Custom
+                          Image to use for machines in the pool.
+                        properties:
+                          crn:
+                            description: CRN is the IBM Cloud CRN of an existing VPC
+                              Custom Image or Catalog Offering.
+                            type: string
+                          id:
+                            description: ID is the id of an existing VPC Custom Image.
+                            type: string
+                          name:
+                            description: Name is the name of an existing VPC Custom
+                              Image.
+                            type: string
+                        type: object
                       type:
                         description: InstanceType is the VSI machine profile.
                         type: string
@@ -3300,6 +3333,22 @@ spec:
                               type: string
                           type: object
                         type: array
+                      image:
+                        description: Image provides details on an existing VPC Custom
+                          Image to use for machines in the pool.
+                        properties:
+                          crn:
+                            description: CRN is the IBM Cloud CRN of an existing VPC
+                              Custom Image or Catalog Offering.
+                            type: string
+                          id:
+                            description: ID is the id of an existing VPC Custom Image.
+                            type: string
+                          name:
+                            description: Name is the name of an existing VPC Custom
+                              Image.
+                            type: string
+                        type: object
                       type:
                         description: InstanceType is the VSI machine profile.
                         type: string

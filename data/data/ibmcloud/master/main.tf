@@ -1,4 +1,8 @@
 locals {
+  # If a catalog offering was supplied for the vpc instances, populate that offering CRN into a list, leaving the image id an empty list
+  control_plane_vsi_image   = var.ibmcloud_vpc_image_offering_crn == "" ? local.control_plane_image_id : null
+  control_plane_offering_crn = var.ibmcloud_vpc_image_offering_crn == "" ? [] : [var.ibmcloud_vpc_image_offering_crn]
+
   # If a boot volume encryption key CRN was supplied, create a list containing that CRN, otherwise an empty list for a dynamic block of boot volumes
   boot_volume_key_crns = var.ibmcloud_control_plane_boot_volume_key == "" ? [] : [var.ibmcloud_control_plane_boot_volume_key]
   prefix               = var.cluster_id
@@ -16,10 +20,17 @@ resource "ibm_is_instance" "master_node" {
   count = var.master_count
 
   name           = "${local.prefix}-master-${count.index}"
-  image          = var.vsi_image_id
+  image          = local.control_plane_vsi_image
   profile        = var.ibmcloud_master_instance_type
   resource_group = var.resource_group_id
   tags           = local.tags
+
+  dynamic "catalog_offering" {
+    for_each = local.control_plane_offering_crn
+    content {
+      offering_crn = catalog_offering.value
+    }
+  }
 
   primary_network_interface {
     name            = "eth0"

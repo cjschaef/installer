@@ -53,5 +53,6 @@ variable "vpc_id" {
 }
 
 variable "vsi_image_id" {
-  type = string
+  type    = string
+  default = null
 }

@@ -29,3 +29,8 @@ variable "cos_resource_instance_crn" {
 variable "endpoint_visibility" {
   type = string
 }
+
+variable "preexisting_image" {
+  type    = bool
+  default = false
+}

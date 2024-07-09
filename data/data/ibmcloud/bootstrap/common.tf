@@ -7,6 +7,8 @@ locals {
     ["kubernetes.io_cluster_${var.cluster_id}:owned"],
     var.ibmcloud_extra_tags
   )
+
+  bootstrap_image_id = var.ibmcloud_preexisting_image ? var.ibmcloud_vpc_image_id : var.vsi_image_id
 }
 
 ############################################

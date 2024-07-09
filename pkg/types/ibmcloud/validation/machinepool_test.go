@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/ptr"
 
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 )
@@ -14,6 +15,8 @@ var (
 	validZones           = []string{"us-east-1", "us-east-2"}
 	validEncryptionKey   = "crn:v1:bluemix:public:kms:global:a/accountid:service:key:keyid"
 	invalidEncryptionKey = "v1:bluemix:kms:global:a/accountid:service:key:keyid"
+	validImageCRN        = "crn:v1:bluemix:public:is:global:a/accountid::image:imageid"
+	invalidImageCRN      = "crn:v1:bluemix:public:is:global:a/accountid::instance:instanceid"
 )
 
 func TestValidateMachinePool(t *testing.T) {
@@ -166,6 +169,82 @@ func TestValidateMachinePool(t *testing.T) {
 				},
 			},
 			valid: false,
+		},
+		{
+			name: "invalid image - no crn, id, or name",
+			machinepool: &ibmcloud.MachinePool{
+				Image: &ibmcloud.MachineImage{},
+			},
+			valid: false,
+		},
+		{
+			name: "invalid image - crn and id",
+			machinepool: &ibmcloud.MachinePool{
+				Image: &ibmcloud.MachineImage{
+					CRN: ptr.To(validImageCRN),
+					ID:  ptr.To("valid-image-id"),
+				},
+			},
+			valid: false,
+		},
+		{
+			name: "invalid image - crn and name",
+			machinepool: &ibmcloud.MachinePool{
+				Image: &ibmcloud.MachineImage{
+					CRN:  ptr.To(validImageCRN),
+					Name: ptr.To("valid-image-name"),
+				},
+			},
+			valid: false,
+		},
+		{
+			name: "invalid image - id and name",
+			machinepool: &ibmcloud.MachinePool{
+				Image: &ibmcloud.MachineImage{
+					ID:   ptr.To("valid-image-id"),
+					Name: ptr.To("valid-image-name"),
+				},
+			},
+			valid: false,
+		},
+		{
+			name: "invalid image - invalid crn",
+			machinepool: &ibmcloud.MachinePool{
+				Image: &ibmcloud.MachineImage{
+					CRN: ptr.To(invalidImageCRN),
+				},
+			},
+			valid: false,
+		},
+		{
+			name: "valid image - crn",
+			machinepool: &ibmcloud.MachinePool{
+				Zones: validZones,
+				Image: &ibmcloud.MachineImage{
+					CRN: ptr.To(validImageCRN),
+				},
+			},
+			valid: true,
+		},
+		{
+			name: "valid image - id",
+			machinepool: &ibmcloud.MachinePool{
+				Zones: validZones,
+				Image: &ibmcloud.MachineImage{
+					ID: ptr.To("valid-image-id"),
+				},
+			},
+			valid: true,
+		},
+		{
+			name: "valid image - name",
+			machinepool: &ibmcloud.MachinePool{
+				Zones: validZones,
+				Image: &ibmcloud.MachineImage{
+					Name: ptr.To("valid-image-name"),
+				},
+			},
+			valid: true,
 		},
 	}
 	for _, tc := range cases {

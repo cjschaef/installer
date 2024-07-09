@@ -30,6 +30,10 @@ func ValidateMachinePool(platform *ibmcloud.Platform, mp *ibmcloud.MachinePool, 
 	if mp.BootVolume != nil {
 		allErrs = append(allErrs, validateBootVolume(mp.BootVolume, path.Child("bootVolume"))...)
 	}
+
+	if mp.Image != nil {
+		allErrs = append(allErrs, validateImage(mp.Image, path.Child("image"))...)
+	}
 	return allErrs
 }
 
@@ -64,6 +68,34 @@ func validateDedicatedHosts(dhosts []ibmcloud.DedicatedHost, itype string, zones
 				allErrs = append(allErrs, field.Invalid(path.Index(i).Child("profile"), dhost.Profile, fmt.Sprintf("profile does not support expected instance type (%s)", itype)))
 			}
 		}
+	}
+
+	return allErrs
+}
+
+func validateImage(image *ibmcloud.MachineImage, path *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if image.CRN == nil && image.ID == nil && image.Name == nil {
+		allErrs = append(allErrs, field.Required(path.Child("crn"), "an image crn, id, or name is required"))
+	}
+
+	if image.CRN != nil {
+		// Validate the supplied CRN is a valid IBM Cloud CRN
+		if _, err := crn.Parse(*image.CRN); err != nil {
+			allErrs = append(allErrs, field.Invalid(path.Child("crn"), image.CRN, fmt.Sprintf("invalid image crn: %s", err)))
+		}
+
+		if image.ID != nil {
+			allErrs = append(allErrs, field.Invalid(path.Child("id"), image.ID, "cannot provide image crn and id"))
+		}
+
+		if image.CRN != nil && image.Name != nil {
+			allErrs = append(allErrs, field.Invalid(path.Child("name"), image.Name, "cannot provide image crn and name"))
+		}
+	}
+	if image.ID != nil && image.Name != nil {
+		allErrs = append(allErrs, field.Invalid(path.Child("name"), image.Name, "cannot provide image id and name"))
 	}
 
 	return allErrs

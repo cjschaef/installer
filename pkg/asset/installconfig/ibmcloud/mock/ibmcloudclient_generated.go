@@ -205,6 +205,36 @@ func (mr *MockAPIMockRecorder) GetEncryptionKey(ctx, keyCRN interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEncryptionKey", reflect.TypeOf((*MockAPI)(nil).GetEncryptionKey), ctx, keyCRN)
 }
 
+// GetImage mocks base method.
+func (m *MockAPI) GetImage(ctx context.Context, imageID string) (*vpcv1.Image, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetImage", ctx, imageID)
+	ret0, _ := ret[0].(*vpcv1.Image)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetImage indicates an expected call of GetImage.
+func (mr *MockAPIMockRecorder) GetImage(ctx, imageID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetImage", reflect.TypeOf((*MockAPI)(nil).GetImage), ctx, imageID)
+}
+
+// GetImageByName mocks base method.
+func (m *MockAPI) GetImageByName(ctx context.Context, imageName string) (*vpcv1.Image, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetImageByName", ctx, imageName)
+	ret0, _ := ret[0].(*vpcv1.Image)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetImageByName indicates an expected call of GetImageByName.
+func (mr *MockAPIMockRecorder) GetImageByName(ctx, imageName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetImageByName", reflect.TypeOf((*MockAPI)(nil).GetImageByName), ctx, imageName)
+}
+
 // GetResourceGroup mocks base method.
 func (m *MockAPI) GetResourceGroup(ctx context.Context, nameOrID string) (*resourcemanagerv2.ResourceGroup, error) {
 	m.ctrl.T.Helper()

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/IBM-Cloud/bluemix-go/crn"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -68,6 +69,10 @@ func validateMachinePool(client API, platform *ibmcloud.Platform, machinePool *i
 
 	if machinePool.BootVolume != nil {
 		allErrs = append(allErrs, validateMachinePoolBootVolume(client, *machinePool.BootVolume, path.Child("bootVolume"))...)
+	}
+
+	if machinePool.Image != nil {
+		allErrs = append(allErrs, validateMachinePoolImage(client, *machinePool.Image, path.Child("image"))...)
 	}
 
 	if len(machinePool.DedicatedHosts) > 0 {
@@ -206,6 +211,75 @@ func validateMachinePoolBootVolume(client API, bootVolume ibmcloud.BootVolume, p
 
 	if key.Deleted != nil && *key.Deleted {
 		allErrs = append(allErrs, field.Invalid(path.Child("encryptionKey"), bootVolume.EncryptionKey, "key has been deleted"))
+	}
+
+	return allErrs
+}
+
+func validateMachinePoolImage(client API, image ibmcloud.MachineImage, path *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if image.CRN == nil && image.ID == nil && image.Name == nil {
+		return field.ErrorList{field.Required(path.Child("name"), "an image crn, id, or name is required")}
+	}
+
+	// Depending on the field set, perform necessary validation.
+
+	if image.CRN != nil {
+		// Only attempt to verify a VPC Custom Image exists, as a Catalog Offering CRN may not be listable (found), but could still be valid and used.
+		crn, err := crn.Parse(*image.CRN)
+		if err != nil {
+			allErrs = append(allErrs, field.InternalError(path.Child("crn"), err))
+		} else {
+			switch crn.ServiceInstance {
+			case "globalcatalog-collection":
+				// TODO(cjschaef): Once IBM Cloud moves to use CAPI instead of TF, we can allow "version" types as well.
+				if crn.ResourceType != "offering" {
+					allErrs = append(allErrs, field.Invalid(path.Child("crn"), image.CRN, "only image catalog offerings are valid"))
+				}
+			case "is":
+				if crn.ResourceType != "image" {
+					allErrs = append(allErrs, field.Invalid(path.Child("crn"), image.CRN, "provided image crn is not for a vpc custom image"))
+				}
+				imageDetails, err := client.GetImage(context.TODO(), crn.Resource)
+				if err != nil {
+					allErrs = append(allErrs, field.InternalError(path.Child("crn"), err))
+				} else if imageDetails == nil {
+					allErrs = append(allErrs, field.NotFound(path, image.CRN))
+				}
+			}
+		}
+	}
+
+	if image.ID != nil {
+		imageDetails, err := client.GetImage(context.TODO(), *image.ID)
+		if err != nil {
+			allErrs = append(allErrs, field.InternalError(path.Child("id"), err))
+		} else if imageDetails == nil {
+			allErrs = append(allErrs, field.NotFound(path, image.ID))
+		}
+		// A CRN and ID cannot be supplied.
+		if image.CRN != nil {
+			allErrs = append(allErrs, field.Invalid(path.Child("id"), image.ID, "cannot provide image crn and id"))
+		}
+	}
+
+	if image.Name != nil {
+		imageDetails, err := client.GetImageByName(context.TODO(), *image.Name)
+		if err != nil {
+			allErrs = append(allErrs, field.InternalError(path.Child("name"), err))
+		} else if imageDetails == nil {
+			allErrs = append(allErrs, field.NotFound(path, image.Name))
+		}
+		// A CRN and name cannot be supplied.
+		if image.CRN != nil {
+			allErrs = append(allErrs, field.Invalid(path.Child("name"), image.Name, "cannot provide image crn and name"))
+		}
+
+		// An ID and name cannot be supplied.
+		if image.ID != nil {
+			allErrs = append(allErrs, field.Invalid(path.Child("name"), image.Name, "cannot provide image id and name"))
+		}
 	}
 
 	return allErrs

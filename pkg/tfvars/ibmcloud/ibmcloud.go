@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/pkg/errors"
+	"github.com/IBM-Cloud/bluemix-go/crn"
 	"github.com/sirupsen/logrus"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -43,12 +43,15 @@ type config struct {
 	MasterInstanceType         string          `json:"ibmcloud_master_instance_type,omitempty"`
 	MasterDedicatedHosts       []DedicatedHost `json:"ibmcloud_master_dedicated_hosts,omitempty"`
 	NetworkResourceGroupName   string          `json:"ibmcloud_network_resource_group_name,omitempty"`
+	PreexistingImage           bool            `json:"ibmcloud_preexisting_image,omitempty"`
 	PreexistingVPC             bool            `json:"ibmcloud_preexisting_vpc,omitempty"`
 	PublishStrategy            string          `json:"ibmcloud_publish_strategy,omitempty"`
 	Region                     string          `json:"ibmcloud_region,omitempty"`
 	ResourceGroupName          string          `json:"ibmcloud_resource_group_name,omitempty"`
 	TerraformPrivateVisibility bool            `json:"ibmcloud_terraform_private_visibility,omitempty"`
 	VPC                        string          `json:"ibmcloud_vpc,omitempty"`
+	VPCImageID                 string          `json:"ibmcloud_vpc_image_id,omitempty"`
+	VPCImageOfferingCRN        string          `json:"ibmcloud_vpc_image_offering_crn,omitempty"`
 	VPCPermitted               bool            `json:"ibmcloud_vpc_permitted,omitempty"`
 	WorkerAvailabilityZones    []string        `json:"ibmcloud_worker_availability_zones"`
 	WorkerDedicatedHosts       []DedicatedHost `json:"ibmcloud_worker_dedicated_hosts,omitempty"`
@@ -64,6 +67,7 @@ type TFVarsSources struct {
 	MasterConfigs              []*ibmcloudprovider.IBMCloudMachineProviderSpec
 	MasterDedicatedHosts       []DedicatedHost
 	NetworkResourceGroupName   string
+	PreexistingImage           bool
 	PreexistingVPC             bool
 	PublishStrategy            types.PublishingStrategy
 	ResourceGroupName          string
@@ -75,11 +79,6 @@ type TFVarsSources struct {
 
 // TFVars generates ibmcloud-specific Terraform variables launching the cluster.
 func TFVars(sources TFVarsSources) ([]byte, error) {
-	cachedImage, err := cache.DownloadImageFile(sources.ImageURL, cache.InstallerApplicationName)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to use cached ibmcloud image")
-	}
-
 	masterConfig := sources.MasterConfigs[0]
 	masterAvailabilityZones := make([]string, len(sources.MasterConfigs))
 	for i, c := range sources.MasterConfigs {
@@ -88,6 +87,37 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	workerAvailabilityZones := make([]string, len(sources.WorkerConfigs))
 	for i, c := range sources.WorkerConfigs {
 		workerAvailabilityZones[i] = c.Zone
+	}
+
+	// If using a pre-existing VPC Image, pull it from the masterConfig to pass to TF.
+	// We expect to see either an existing VPC Image ID, or a VPC Catalog Offering CRN.
+	// We differentiate by parsing the Image as a CRN (Offering CRN versus Image ID).
+	var vpcImageID, vpcImageOfferingCRN, cachedImage string
+	if sources.PreexistingImage && masterConfig.Image != "" {
+		// We parse the Image for a CRN, if that fails we expect it is an Image ID.
+		if crn, err := crn.Parse(masterConfig.Image); err != nil {
+			vpcImageID = masterConfig.Image
+		} else {
+			// Depending on the CRN's Service Instance, we can use a Catalog Offering or VPC Custom Image.
+			if crn.ServiceName == "globalcatalog-collection" && crn.ResourceType == "offering" {
+				vpcImageOfferingCRN = masterConfig.Image
+			} else if crn.ServiceName == "is" && crn.ResourceType == "image" {
+				// Parse the Image Id from the CRN, as we use the ID only.
+				vpcImageID = crn.Resource
+			} else {
+				return nil, fmt.Errorf("unknown service instance crn provided for image: %s", masterConfig.Image)
+			}
+		}
+	} else if sources.PreexistingImage {
+		// If an existing image was flagged for use, but no image was provided, return an error
+		return nil, fmt.Errorf("failed building tfvars, expected to find an existing image for control plane machines")
+	} else {
+		var err error
+		// Only attempt to download and use the cached image if an existing image was not provided.
+		cachedImage, err = cache.DownloadImageFile(sources.ImageURL, cache.InstallerApplicationName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to use cached ibmcloud image: %w", err)
+		}
 	}
 
 	// Set pre-existing network config
@@ -118,12 +148,15 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		MasterDedicatedHosts:       sources.MasterDedicatedHosts,
 		MasterInstanceType:         masterConfig.Profile,
 		NetworkResourceGroupName:   sources.NetworkResourceGroupName,
+		PreexistingImage:           sources.PreexistingImage,
 		PreexistingVPC:             sources.PreexistingVPC,
 		PublishStrategy:            string(sources.PublishStrategy),
 		Region:                     masterConfig.Region,
 		ResourceGroupName:          sources.ResourceGroupName,
 		TerraformPrivateVisibility: sources.TerraformPrivateVisibility,
 		VPC:                        vpc,
+		VPCImageID:                 vpcImageID,
+		VPCImageOfferingCRN:        vpcImageOfferingCRN,
 		VPCPermitted:               sources.VPCPermitted,
 		WorkerAvailabilityZones:    workerAvailabilityZones,
 		WorkerDedicatedHosts:       sources.WorkerDedicatedHosts,

@@ -7,6 +7,10 @@ locals {
   # combine the Control Plane and Compute subnet CIDRs, to create rules for ingress on those CIDR's
   all_subnet_cidrs = local.public_endpoints ? [] : concat(data.ibm_is_subnet.control_plane_subnets[*].ipv4_cidr_block, data.ibm_is_subnet.compute_subnets[*].ipv4_cidr_block)
 
+  # If a catalog offering was supplied for the vpc instances, populate that offering CRN into a list, leaving the image id an empty list
+  bootstrap_vsi_image    = var.ibmcloud_vpc_image_offering_crn == "" ? local.bootstrap_image_id : null
+  bootstrap_offering_crn = var.ibmcloud_vpc_image_offering_crn == "" ? [] : [var.ibmcloud_vpc_image_offering_crn]
+
   # If a boot volume encryption key CRN was supplied, create a list containing that CRN, otherwise an empty list for a dynamic block of boot volumes
   boot_volume_key_crns = var.ibmcloud_control_plane_boot_volume_key == "" ? [] : [var.ibmcloud_control_plane_boot_volume_key]
 }
@@ -32,10 +36,17 @@ data "ibm_is_subnet" "compute_subnets" {
 
 resource "ibm_is_instance" "bootstrap_node" {
   name           = "${local.prefix}-bootstrap"
-  image          = var.vsi_image_id
+  image          = local.bootstrap_vsi_image
   profile        = var.ibmcloud_bootstrap_instance_type
   resource_group = var.resource_group_id
   tags           = local.tags
+
+  dynamic "catalog_offering" {
+    for_each = local.bootstrap_offering_crn
+    content {
+      offering_crn = catalog_offering.value
+    }
+  }
 
   primary_network_interface {
     name            = "eth0"

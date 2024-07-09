@@ -95,6 +95,18 @@ func provider(clusterID string,
 		bootVolume.EncryptionKey = mpool.BootVolume.EncryptionKey
 	}
 
+	// If a VPC Custom Image was provided for the MachinePool, override the default name with the provided name, ID, or CRN (it will be parse properly later).
+	machineImage := fmt.Sprintf("%s-rhcos", clusterID)
+	if mpool.Image != nil {
+		if mpool.Image.CRN != nil {
+			machineImage = *mpool.Image.CRN
+		} else if mpool.Image.ID != nil {
+			machineImage = *mpool.Image.ID
+		} else if mpool.Image.Name != nil {
+			machineImage = *mpool.Image.Name
+		}
+	}
+
 	// Set the ProviderSpec.NetworkResourceGroup if NetworkResourceGroupName was provided
 	var networkResourceGroup string
 	if platform.NetworkResourceGroupName != "" {
@@ -132,7 +144,7 @@ func provider(clusterID string,
 		BootVolume:           bootVolume,
 		DedicatedHost:        dedicatedHost,
 		Tags:                 []ibmcloudprovider.TagSpecs{},
-		Image:                fmt.Sprintf("%s-rhcos", clusterID),
+		Image:                machineImage,
 		NetworkResourceGroup: networkResourceGroup,
 		Profile:              mpool.InstanceType,
 		Region:               platform.Region,

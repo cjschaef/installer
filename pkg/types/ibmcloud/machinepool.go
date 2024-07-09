@@ -16,6 +16,10 @@ type MachinePool struct {
 	// DedicatedHosts is the configuration for the machine's dedicated host and profile.
 	// +optional
 	DedicatedHosts []DedicatedHost `json:"dedicatedHosts,omitempty"`
+
+	// Image provides details on an existing VPC Custom Image to use for machines in the pool.
+	// +optional
+	Image *MachineImage `json:"image,omitempty"`
 }
 
 // BootVolume stores the configuration for an individual machine's boot volume.
@@ -38,6 +42,21 @@ type DedicatedHost struct {
 	// dedicated host will be created for machines.
 	// +optional
 	Profile string `json:"profile,omitempty"`
+}
+
+// MachineImage stores details on an existing VPC Custom Image. This is used in place of generating one for the cluster.
+type MachineImage struct {
+	// CRN is the IBM Cloud CRN of an existing VPC Custom Image or Catalog Offering.
+	// +optional
+	CRN *string `json:"crn,omitempty"`
+
+	// ID is the id of an existing VPC Custom Image.
+	// +optional
+	ID *string `json:"id,omitempty"`
+
+	// Name is the name of an existing VPC Custom Image.
+	// +optional
+	Name *string `json:"name,omitempty"`
 }
 
 // Set sets the values from `required` to `a`.
@@ -65,5 +84,17 @@ func (a *MachinePool) Set(required *MachinePool) {
 
 	if len(required.DedicatedHosts) > 0 {
 		a.DedicatedHosts = required.DedicatedHosts
+	}
+
+	if required.Image != nil {
+		a.Image = setMachineImage(required.Image)
+	}
+}
+
+func setMachineImage(required *MachineImage) *MachineImage {
+	return &MachineImage{
+		CRN:  required.CRN,
+		ID:   required.ID,
+		Name: required.Name,
 	}
 }

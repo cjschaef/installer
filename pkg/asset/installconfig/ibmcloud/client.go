@@ -21,6 +21,7 @@ import (
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"k8s.io/utils/ptr"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig/ibmcloud/responses"
@@ -43,6 +44,8 @@ type API interface {
 	GetDNSZoneIDByName(ctx context.Context, name string, publish types.PublishingStrategy) (string, error)
 	GetDNSZones(ctx context.Context, publish types.PublishingStrategy) ([]responses.DNSZoneResponse, error)
 	GetEncryptionKey(ctx context.Context, keyCRN string) (*responses.EncryptionKeyResponse, error)
+	GetImage(ctx context.Context, imageID string) (*vpcv1.Image, error)
+	GetImageByName(ctx context.Context, imageName string) (*vpcv1.Image, error)
 	GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.ResourceGroup, error)
 	GetResourceGroup(ctx context.Context, nameOrID string) (*resourcemanagerv2.ResourceGroup, error)
 	GetSubnet(ctx context.Context, subnetID string) (*vpcv1.Subnet, error)
@@ -479,6 +482,44 @@ func (c *Client) GetEncryptionKey(ctx context.Context, keyCRN string) (*response
 	}
 
 	return keyResponse, nil
+}
+
+// GetImage gets a VPC Custom Image by its id.
+func (c *Client) GetImage(ctx context.Context, imageID string) (*vpcv1.Image, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	image, detailedResponse, err := c.vpcAPI.GetImageWithContext(localContext, c.vpcAPI.NewGetImageOptions(imageID))
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve image by id: %w", err)
+	} else if detailedResponse != nil {
+		if detailedResponse.GetStatusCode() == http.StatusNotFound {
+			return nil, fmt.Errorf("unable to find image with id: %s", imageID)
+		}
+	}
+	return image, nil
+}
+
+// GetImageByName gets a VPC Custom Image by its name.
+func (c *Client) GetImageByName(ctx context.Context, imageName string) (*vpcv1.Image, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	imageCollection, detailedResponse, err := c.vpcAPI.ListImagesWithContext(localContext, c.vpcAPI.NewListImagesOptions().SetName(imageName))
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve image by name: %w", err)
+	} else if detailedResponse != nil {
+		if detailedResponse.GetStatusCode() == http.StatusNotFound {
+			return nil, fmt.Errorf("unable to find image with name: %s", imageName)
+		}
+	}
+
+	for _, image := range imageCollection.Images {
+		if *image.Name == imageName {
+			return ptr.To(image), nil
+		}
+	}
+	return nil, fmt.Errorf("no images found that match image name: %s", imageName)
 }
 
 // GetResourceGroup gets a resource group by its name or ID.

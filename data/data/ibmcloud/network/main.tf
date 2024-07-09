@@ -49,6 +49,7 @@ module "image" {
   tags                      = local.tags
   cos_resource_instance_crn = ibm_resource_instance.cos.crn
   endpoint_visibility       = local.endpoint_visibility
+  preexisting_image         = var.ibmcloud_preexisting_image
 }
 
 ############################################

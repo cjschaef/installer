@@ -598,6 +598,9 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 		// Set existing network (boolean of whether one is being used)
 		preexistingVPC := installConfig.Config.Platform.IBMCloud.GetVPCName() != ""
 
+		// If the Control Plane or Default MachinePool were provided an existing Image (name, ID, or CRN) from InstallConfig, set the exsisting image flag.
+		preexistingImage := (installConfig.Config.ControlPlane.Platform.IBMCloud.Image != nil && (installConfig.Config.ControlPlane.Platform.IBMCloud.Image.CRN != nil || installConfig.Config.ControlPlane.Platform.IBMCloud.Image.ID != nil || installConfig.Config.ControlPlane.Platform.IBMCloud.Image.Name != nil)) || (installConfig.Config.Platform.IBMCloud.DefaultMachinePlatform.Image != nil && (installConfig.Config.Platform.IBMCloud.DefaultMachinePlatform.Image.CRN != nil || installConfig.Config.Platform.IBMCloud.DefaultMachinePlatform.Image.ID != nil || installConfig.Config.Platform.IBMCloud.DefaultMachinePlatform.Image.Name != nil))
+
 		// Set machine pool info
 		var masterMachinePool ibmcloud.MachinePool
 		var workerMachinePool ibmcloud.MachinePool
@@ -717,6 +720,7 @@ func (t *TerraformVariables) Generate(ctx context.Context, parents asset.Parents
 				MasterConfigs:              masterConfigs,
 				MasterDedicatedHosts:       masterDedicatedHosts,
 				NetworkResourceGroupName:   installConfig.Config.Platform.IBMCloud.NetworkResourceGroupName,
+				PreexistingImage:           preexistingImage,
 				PreexistingVPC:             preexistingVPC,
 				PublishStrategy:            installConfig.Config.Publish,
 				ResourceGroupName:          installConfig.Config.Platform.IBMCloud.ResourceGroupName,
