@@ -696,7 +696,7 @@ func (s *VPCClusterScope) ReconcileVPCCustomImage() (bool, error) {
 		} else if s.IBMVPCCluster.Status.ImageStatus.Name != "" {
 			image, err := s.VPCClient.GetImageByName(s.IBMVPCCluster.Status.ImageStatus.Name)
 			if err != nil {
-				return false, err
+				return false, fmt.Errorf("error checking vpc custom image by name: %w", err)
 			}
 			// If the image was found via name, we should be able to get its ID.
 			if image != nil {
@@ -711,10 +711,10 @@ func (s *VPCClusterScope) ReconcileVPCCustomImage() (bool, error) {
 			ID: imageID,
 		})
 		if err != nil {
-			return false, err
+			return false, fmt.Errorf("error retrieving vpc custom image by id: %w", err)
 		}
 		if image == nil {
-			return false, fmt.Errorf("error failed to get vpc custom image with id %s", *imageID)
+			return false, fmt.Errorf("error failed to retrieve vpc custom image with id %s", *imageID)
 		}
 		s.Info("Found VPC Custom Image with provided id")
 
@@ -740,9 +740,9 @@ func (s *VPCClusterScope) ReconcileVPCCustomImage() (bool, error) {
 	s.Info("Creating a VPC Custom Image")
 	image, err := s.createCustomImage()
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("error failure trying to create vpc custom image: %w", err)
 	} else if image == nil {
-		return false, fmt.Errorf("error failed to create vpc custom image")
+		return false, fmt.Errorf("error no vpc custom image creation results")
 	}
 
 	s.Info("Successfully created VPC Custom Image")
@@ -769,7 +769,7 @@ func (s *VPCClusterScope) createCustomImage() (*vpcv1.Image, error) {
 		} else if s.IBMVPCCluster.Spec.Image.ResourceGroup.Name != nil {
 			id, err := s.ResourceManagerClient.GetResourceGroupByName(*s.IBMVPCCluster.Spec.Image.ResourceGroup.Name)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("error retrieving resource group by name: %w", err)
 			}
 			resourceGroupID = id.ID
 		}
@@ -777,7 +777,7 @@ func (s *VPCClusterScope) createCustomImage() (*vpcv1.Image, error) {
 		// We will use the cluster Resource Group ID, as we expect to create all resources in that Resource Group.
 		id, err := s.GetResourceGroupID()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error retrieving resource group id: %w", err)
 		}
 		resourceGroupID = ptr.To(id)
 	}
@@ -791,14 +791,14 @@ func (s *VPCClusterScope) createCustomImage() (*vpcv1.Image, error) {
 	// Build the COS Object URL using the ImageSpec
 	fileHRef, err := s.buildCOSObjectHRef()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error building vpc custom image file href: %w", err)
 	} else if fileHRef == nil {
 		return nil, fmt.Errorf("error failed to build vpc custom image file href")
 	}
 
 	options := &vpcv1.CreateImageOptions{
 		ImagePrototype: &vpcv1.ImagePrototype{
-			Name: &s.IBMVPCCluster.Spec.Image.Name,
+			Name: s.IBMVPCCluster.Spec.Image.Name,
 			File: &vpcv1.ImageFilePrototype{
 				Href: fileHRef,
 			},
@@ -813,14 +813,14 @@ func (s *VPCClusterScope) createCustomImage() (*vpcv1.Image, error) {
 
 	imageDetails, _, err := s.VPCClient.CreateImage(options)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error unknown failure creating vpc custom image: %w", err)
 	}
 	if imageDetails == nil || imageDetails.ID == nil || imageDetails.Name == nil || imageDetails.CRN == nil {
 		return nil, fmt.Errorf("error failed creating custom image")
 	}
 
 	if err := s.TagResource(s.IBMVPCCluster.Name, *imageDetails.CRN); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error failure tagging vpc custom image: %w", err)
 	}
 	return imageDetails, nil
 }
@@ -1216,7 +1216,10 @@ func (s *VPCClusterScope) reconcileSecurityGroup(securityGroup infrav1beta2.VPCS
 
 		// Otherwise, attempt to lookup the ID by name
 		if securityGroupDetails, err := s.VPCClient.GetSecurityGroupByName(*securityGroup.Name); err != nil {
-			return false, fmt.Errorf("error failed lookup of security group by name: %w", err)
+			// If the Security Group was not found, we expect it doesn't exist yet, otherwise result in an error
+			if _, ok := err.(*vpc.SecurityGroupByNameNotFound); !ok {
+				return false, fmt.Errorf("error failed lookup of security group by name: %w", err)
+			}
 		} else if securityGroupDetails != nil && securityGroupDetails.ID != nil {
 			securityGroupID = securityGroupDetails.ID
 		}
@@ -1243,9 +1246,24 @@ func (s *VPCClusterScope) reconcileSecurityGroup(securityGroup infrav1beta2.VPCS
 	}
 
 	// If we don't have an ID at this point, we assume we need to create the Security Group
-	securityGroupDetails, _, err := s.VPCClient.CreateSecurityGroup(&vpcv1.CreateSecurityGroupOptions{
+	vpcID, err := s.GetVPCID()
+	if err != nil {
+		return false, fmt.Errorf("error retrieving vpc id for security group creation")
+	}
+	resourceGroupID, err := s.GetResourceGroupID()
+	if err != nil {
+		return false, fmt.Errorf("error retrieving resource id for security group creation")
+	}
+	createOptions := &vpcv1.CreateSecurityGroupOptions{
 		Name: securityGroup.Name,
-	})
+		VPC: &vpcv1.VPCIdentityByID{
+			ID: vpcID,
+		},
+		ResourceGroup: &vpcv1.ResourceGroupIdentityByID{
+			ID: ptr.To(resourceGroupID),
+		},
+	}
+	securityGroupDetails, _, err := s.VPCClient.CreateSecurityGroup(createOptions)
 	if err != nil {
 		s.Error(err, "error creating security group", "name", securityGroup.Name)
 		return false, err

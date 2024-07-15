@@ -27,7 +27,13 @@ import (
 )
 
 // SecurityGroupByNameNotFound returns an appropriate error when security group by name not found.
-var SecurityGroupByNameNotFound = func(name string) error { return fmt.Errorf("failed to find security group by name '%s'", name) }
+type SecurityGroupByNameNotFound struct {
+	Name string
+}
+
+func (s *SecurityGroupByNameNotFound) Error() string {
+	return fmt.Sprintf("failed to find security group by name '%s'", s.Name)
+}
 
 // Service holds the VPC Service specific information.
 type Service struct {
@@ -495,7 +501,7 @@ func (s *Service) GetSecurityGroupByName(name string) (*vpcv1.SecurityGroup, err
 		}
 	}
 
-	return nil, SecurityGroupByNameNotFound(name)
+	return nil, &SecurityGroupByNameNotFound{Name: name}
 }
 
 // ListSecurityGroupsPager returns the full list of Security Groups (avoiding pagination).

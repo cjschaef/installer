@@ -448,7 +448,7 @@ type VPCEndpoint struct {
 }
 
 // VPCResource represents a specific VPC resource.
-// +kubebuilder:validation:XValidation:rule="!has(self.id) && !has(self.name)",message="an id or name must be provided"
+// +kubebuilder:validation:XValidation:rule="has(self.id) || has(self.name)",message="an id or name must be provided"
 type VPCResource struct {
 	// id of the resource.
 	// +kubebuilder:validation:MinLength=1

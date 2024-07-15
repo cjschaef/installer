@@ -176,11 +176,16 @@ type VPCLoadBalancerStatus struct {
 }
 
 // ImageSpec defines the desired state of the VPC Custom Image resources for the cluster.
-// +kubebuilder:validation:XValidation:rule="(has(self.cosInstance) || (has(self.cosBucket) || (has(self.cosObject)) && (!has(self.cosInstance) || !has(self.cosBucket) || !has(self.cosObject))",message="if any of cosInstance, cosBucket, or cosObject are specified, all must be specified"
+// +kubebuilder:validation:XValidation:rule="(!has(self.cosInstance) && !has(self.cosBucket) && !has(self.cosObject)) || (has(self.cosInstance) && has(self.cosBucket) && has(self.cosObject))",message="if any of cosInstance, cosBucket, or cosObject are specified, all must be specified"
+// +kubebuilder:validation:XValidation:rule="has(self.name) || has(self.crn) || (has(self.cosInstance) && has(self.cosBucket) && has(self.cosObject))",message="an existing image name or crn must be provided, or to create a new image the cos resources must be provided, with or without a name"
 type ImageSpec struct {
 	// name is the name of the desired VPC Custom Image.
-	// +required
-	Name string `json:"name"`
+	// +optional
+	Name *string `json:"name,omitempty"`
+
+	// crn is the IBM Cloud CRN of the existing VPC Custom Image
+	// +optional
+	CRN *string `json:"crn,omitempty"`
 
 	// cosInstance is the name of the IBM Cloud COS Instance containing the source of the image, if necessary.
 	// +optional
