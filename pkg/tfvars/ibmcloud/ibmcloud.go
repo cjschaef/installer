@@ -3,6 +3,7 @@ package ibmcloud
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -182,12 +183,18 @@ func CreateEndpointJSON(endpoints []configv1.IBMCloudServiceEndpoint, region str
 				},
 			}
 		case configv1.IBMCloudServiceGlobalCatalog:
+			// IBM Cloud Terraform plugin utilizes an old API package for Global Catalog calls (Resource Catalog)
+			// github.com/IBM-Cloud/bluemix-go/api/resource/resourcev1/catalog
+			// Given the endpoint differences between that package and the Global Catalog package, we must
+			// remove any '/api/v*' path in the endpoint
+			// strings.Split will remove the trailing '/api/v*' or leave the endpoint unaffected, in which case we just need the first result
+			trimmedEndpoint := strings.Split(endpoint.URL, "/api/v")[0]
 			endpointContents.IBMCloudEndpointGlobalCatalog = &ibmcloudtypes.EndpointsVisibility{
 				Private: map[string]string{
-					region: endpoint.URL,
+					region: trimmedEndpoint,
 				},
 				Public: map[string]string{
-					region: endpoint.URL,
+					region: trimmedEndpoint,
 				},
 			}
 		case configv1.IBMCloudServiceGlobalSearch:
