@@ -456,10 +456,12 @@ func (s *VPCClusterScope) GetSubnetIDs() ([]string, error) { //nolint: gocyclo
 // getSecurityGroupID returns the Security Group ID from the SecurityGroup resource or attempts to look it up in Status. It does not attempt to find the ID using vpcv1 API calls.
 func (s *VPCClusterScope) getSecurityGroupID(securityGroup infrav1beta2.VPCSecurityGroup) *string {
 	if securityGroup.ID != nil {
+		s.Logger.Info("using existing security group id", "securityGroupID", securityGroup.ID)
 		return securityGroup.ID
 	}
 	// If the Security Group name is not set (nor the ID), that is a problem, but return nil as we only check known information
 	if securityGroup.Name == nil {
+		s.Logger.Info("security group rule missing id and name")
 		return nil
 	}
 	return s.getSecurityGroupIDFromStatus(*securityGroup.Name)
@@ -470,6 +472,10 @@ func (s *VPCClusterScope) getSecurityGroupIDFromStatus(name string) *string {
 	if s.IBMVPCCluster.Status.NetworkStatus != nil && s.IBMVPCCluster.Status.NetworkStatus.SecurityGroups != nil {
 		if sg, ok := s.IBMVPCCluster.Status.NetworkStatus.SecurityGroups[name]; ok {
 			return ptr.To(sg.ID)
+		}
+		s.Logger.Info("didn't find security group in status", "securityGroup", name)
+		for _, sgName := range s.IBMVPCCluster.Status.NetworkStatus.SecurityGroups {
+			s.Logger.Info("found status for security group", "securityGroup", sgName)
 		}
 	}
 	return nil
@@ -1170,6 +1176,7 @@ func (s *VPCClusterScope) ReconcileSecurityGroups() (bool, error) {
 		if requiresRequeue, err := s.reconcileSecurityGroup(securityGroup); err != nil {
 			return false, fmt.Errorf("error failed reonciling security groups: %w", err)
 		} else if requiresRequeue {
+			s.Logger.Info("requeuing for security group creation", "securityGroup", securityGroup.Name)
 			requeue = true
 		}
 	}
@@ -1185,6 +1192,7 @@ func (s *VPCClusterScope) ReconcileSecurityGroups() (bool, error) {
 		if requiresRequeue, err := s.reconcileSecurityGroupRules(securityGroup); err != nil {
 			return false, fmt.Errorf("error failed reconciling security group rules: %w", err)
 		} else if requiresRequeue {
+			s.Logger.Info("requeuing for security group rules", "securityGroup", securityGroup.Name)
 			requeue = true
 		}
 	}
@@ -1227,9 +1235,11 @@ func (s *VPCClusterScope) reconcileSecurityGroup(securityGroup infrav1beta2.VPCS
 
 	// If we have an ID for the SecurityGroup, we can check the status
 	if securityGroupID != nil {
-		if securityGroupDetails, _, err := s.VPCClient.GetSecurityGroup(&vpcv1.GetSecurityGroupOptions{
+		s.Logger.Info("checking security group status", "securityGroup", securityGroup.Name, "securityGroupID", securityGroupID)
+		securityGroupDetails, _, err := s.VPCClient.GetSecurityGroup(&vpcv1.GetSecurityGroupOptions{
 			ID: securityGroupID,
-		}); err != nil {
+		})
+		if err != nil {
 			return false, fmt.Errorf("error failed lookup of security group: %w", err)
 		} else if securityGroupDetails == nil {
 			// The Security Group cannot be found by ID, it was removed or didn't exist
@@ -1240,6 +1250,7 @@ func (s *VPCClusterScope) reconcileSecurityGroup(securityGroup infrav1beta2.VPCS
 		// Security Groups do not have a status, so we assume if it exists, it is ready
 		s.SetVPCResourceStatus(infrav1beta2.ResourceTypeSecurityGroup, infrav1beta2.VPCResourceStatus{
 			ID:    *securityGroupID,
+			Name:  *securityGroupDetails.Name,
 			Ready: true,
 		})
 		return false, nil
@@ -1299,6 +1310,7 @@ func (s *VPCClusterScope) reconcileSecurityGroupRules(securityGroup infrav1beta2
 	// We assume that the securityGroup exists in Status, if it doesn't then it should be re-reconciled
 	securityGroupID := s.getSecurityGroupID(securityGroup)
 	if securityGroupID == nil {
+		s.Logger.Info("security group not found, requeue", "securityGroup", securityGroup.Name)
 		return true, nil
 	}
 
@@ -1310,6 +1322,7 @@ func (s *VPCClusterScope) reconcileSecurityGroupRules(securityGroup infrav1beta2
 	// Reconcile each SecurityGroupRule in the SecurityGroup
 	requeue := false
 	for _, securityGroupRule := range securityGroup.Rules {
+		s.Logger.Info("reconcile security group rule", "securityGroup", securityGroup.Name)
 		if requiresRequeue, err := s.reconcileSecurityGroupRule(*securityGroupID, *securityGroupRule); err != nil {
 			return false, err
 		} else if requiresRequeue {
@@ -1329,7 +1342,7 @@ func (s *VPCClusterScope) reconcileSecurityGroupRule(securityGroupID string, sec
 		return false, fmt.Errorf("error failed listing security group rules during reconcile of security group id=%s: %w", securityGroupID, err)
 	}
 
-	// If the Security Group has no Rules at all, we simply create the Rule
+	// If the Security Group has no Rules at all, we simply create all the Rules
 	if existingSecurityGroupRuleIntfs == nil || existingSecurityGroupRuleIntfs.Rules == nil || len(existingSecurityGroupRuleIntfs.Rules) == 0 {
 		s.Info("Creating security group rules for security group id=%s", securityGroupID)
 		err := s.createSecurityGroupRuleAllRemotes(securityGroupID, securityGroupRule)
@@ -1366,6 +1379,8 @@ func (s *VPCClusterScope) findOrCreateSecurityGroupRule(securityGroupID string, 
 		return false, fmt.Errorf("error unsupported SecurityGroupRuleDirection defined")
 	}
 
+	s.Logger.Info("checking security group rules", "securityGroupID", securityGroupID)
+
 	// Each defined SecurityGroupRule can have multiple Remotes specified, each signifying a separate Security Group Rule (with the same Action, Direction, etc.)
 	allMatch := true
 	for _, remote := range securityGroupRulePrototype.Remotes {
@@ -1378,6 +1393,7 @@ func (s *VPCClusterScope) findOrCreateSecurityGroupRule(securityGroupID string, 
 				if securityGroupRulePrototype.Protocol != infrav1beta2.VPCSecurityGroupRuleProtocolAll {
 					continue
 				}
+				s.Logger.Info("checking protocol all security group rule")
 				existingRule := existingRuleIntf.(*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolAll)
 				// If the Remote doesn't have the same Direction as the Rule, no further checks are necessary
 				if securityGroupRule.Direction != infrav1beta2.VPCSecurityGroupRuleDirection(*existingRule.Direction) {
@@ -1388,14 +1404,17 @@ func (s *VPCClusterScope) findOrCreateSecurityGroupRule(securityGroupID string, 
 				} else if found {
 					// If we found the matching IBM Cloud Security Group Rule for the defined SecurityGroupRule and Remote, we can stop checking IBM Cloud Security Group Rules for this remote and move onto the next remote.
 					// The expectation is that only one IBM Cloud Security Group Rule will match, but if at least one matches the defined SecurityGroupRule, that is sufficient.
+					s.Logger.Info("all protocol rule match found")
 					remoteMatch = true
 					break
 				}
+				s.Logger.Info("all protocol rule does not match desired rule")
 			case infrav1beta2.VPCSecurityGroupRuleProtocolIcmpType:
 				// If our Remote doesn't define ICMP Protocol, we don't need further checks, move on to next Rule
 				if securityGroupRulePrototype.Protocol != infrav1beta2.VPCSecurityGroupRuleProtocolIcmp {
 					continue
 				}
+				s.Logger.Info("checking protocol icmp security group rule")
 				existingRule := existingRuleIntf.(*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolIcmp)
 				// If the Remote doesn't have the same Direction as the Rule, no further checks are necessary
 				if securityGroupRule.Direction != infrav1beta2.VPCSecurityGroupRuleDirection(*existingRule.Direction) {
@@ -1405,26 +1424,35 @@ func (s *VPCClusterScope) findOrCreateSecurityGroupRule(securityGroupID string, 
 					return false, err
 				} else if found {
 					// If we found the matching IBM Cloud Security Group Rule for the defined SecurityGroupRule and Remote, we can stop checking IBM Cloud Security Group Rules for this remote and move onto the next remote.
+					s.Logger.Info("icmp rule match found")
 					remoteMatch = true
 					break
 				}
+				s.Logger.Info("protocol icmp rule does not match desired rule")
 			case infrav1beta2.VPCSecurityGroupRuleProtocolTcpudpType:
 				// If our Remote doesn't define TCP/UDP Protocol, we don't need further checks, move on to next Rule
 				if securityGroupRulePrototype.Protocol != infrav1beta2.VPCSecurityGroupRuleProtocolTCP && securityGroupRulePrototype.Protocol != infrav1beta2.VPCSecurityGroupRuleProtocolUDP {
 					continue
 				}
+				s.Logger.Info("checking protocol tcp/udp security group rule")
 				existingRule := existingRuleIntf.(*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp)
 				// If the Remote doesn't have the same Direction as the Rule, no further checks are necessary
 				if securityGroupRule.Direction != infrav1beta2.VPCSecurityGroupRuleDirection(*existingRule.Direction) {
+					s.Logger.Info("protocol tcp/udp security group rule direction does not match desired rule", "desiredRuleDirection", securityGroupRule.Direction, "existingRuleDirection", *existingRule.Direction)
 					continue
 				}
 				if found, err := s.checkSecurityGroupRuleProtocolTcpudp(securityGroupRulePrototype, remote, existingRule); err != nil {
 					return false, err
 				} else if found {
 					// If we found the matching IBM Cloud Security Group Rule for the defined SecurityGroupRule and Remote, we can stop checking IBM Cloud Security Group Rules for this remote and move onto the next remote.
+					s.Logger.Info("tcp/udp rule match found")
 					remoteMatch = true
 					break
 				}
+				s.Logger.Info("protocol tcp/udp rule does not match desired rule")
+			default:
+				// This is an unexpected IBM Cloud Security Group Rule Prototype, log it and move on
+				s.Logger.Info("unexpected security group rule prototype", "securityGroupRulePrototype", reflect.TypeOf(existingRuleIntf).String())
 			}
 		}
 
@@ -1445,6 +1473,7 @@ func (s *VPCClusterScope) checkSecurityGroupRuleProtocolAll(_ infrav1beta2.VPCSe
 	if exists, err := s.checkSecurityGroupRulePrototypeRemote(securityGroupRuleRemote, existingRule.Remote); err != nil {
 		return false, err
 	} else if exists {
+		s.Logger.Info("all protocols match")
 		return true, nil
 	}
 	return false, nil
@@ -1459,12 +1488,14 @@ func (s *VPCClusterScope) checkSecurityGroupRuleProtocolIcmp(securityGroupRulePr
 	}
 	// If ICMPCode is set, then ICMPType must also be set, via kubebuilder specifications
 	if securityGroupRulePrototype.ICMPCode != nil && securityGroupRulePrototype.ICMPType != nil {
-		// If the existingRule has a Code and Type and they are both equal to the securityGroupRulePrototype's ICMPType and ICMPCode, the existingRule matches our definition for ICMP in securityGroupRulePrototype.
-		if existingRule.Code != nil && existingRule.Type != nil {
-			if *securityGroupRulePrototype.ICMPCode == *existingRule.Code && *securityGroupRulePrototype.ICMPType == *existingRule.Type {
-				return true, nil
-			}
+		// If the existingRule Code and Type are both equal to the securityGroupRulePrototype's ICMPType and ICMPCode, the existingRule matches our definition for ICMP in securityGroupRulePrototype.
+		if *securityGroupRulePrototype.ICMPCode == *existingRule.Code && *securityGroupRulePrototype.ICMPType == *existingRule.Type {
+			s.Logger.Info("icmp code and type match")
+			return true, nil
 		}
+	} else if existingRule.Code == nil && existingRule.Type == nil {
+		s.Logger.Info("icmp unset match")
+		return true, nil
 	}
 	return false, nil
 }
@@ -1472,6 +1503,7 @@ func (s *VPCClusterScope) checkSecurityGroupRuleProtocolIcmp(securityGroupRulePr
 // checkSecurityGroupRuleProtocolTcpudp analyzes an IBM Cloud Security Group Rule designated for either 'tcp' or 'udp' protocols, to verify if the supplied Rule and Remote match the attributes from the existing 'ProtocolTcpudp' Rule.
 func (s *VPCClusterScope) checkSecurityGroupRuleProtocolTcpudp(securityGroupRulePrototype infrav1beta2.VPCSecurityGroupRulePrototype, securityGroupRuleRemote infrav1beta2.VPCSecurityGroupRuleRemote, existingRule *vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp) (bool, error) {
 	// Check the protocol next, either TCP or UDP, to verify it matches
+	s.Logger.Info("comparing protocols", "desiredProtocol", securityGroupRulePrototype.Protocol, "existingProtocol", *existingRule.Protocol)
 	if securityGroupRulePrototype.Protocol != infrav1beta2.VPCSecurityGroupRuleProtocol(*existingRule.Protocol) {
 		return false, nil
 	}
@@ -1482,6 +1514,7 @@ func (s *VPCClusterScope) checkSecurityGroupRuleProtocolTcpudp(securityGroupRule
 		// If PortRange is set, verify whether the MinimumPort and MaximumPort match the existingRule's values, if they are set.
 		if securityGroupRulePrototype.PortRange != nil {
 			if existingRule.PortMin != nil && securityGroupRulePrototype.PortRange.MinimumPort == *existingRule.PortMin && existingRule.PortMax != nil && securityGroupRulePrototype.PortRange.MaximumPort == *existingRule.PortMax {
+				s.Logger.Info("port range matches")
 				return true, nil
 			}
 		}
@@ -1491,77 +1524,101 @@ func (s *VPCClusterScope) checkSecurityGroupRuleProtocolTcpudp(securityGroupRule
 
 func (s *VPCClusterScope) checkSecurityGroupRulePrototypeRemote(securityGroupRuleRemote infrav1beta2.VPCSecurityGroupRuleRemote, existingRemote vpcv1.SecurityGroupRuleRemoteIntf) (bool, error) { //nolint: gocyclo
 	// NOTE(cjschaef): We only currently monitor Remote, not Local, as we don't support defining Local in SecurityGroup/SecurityGroupRule.
-	switch reflect.TypeOf(existingRemote).String() {
-	case infrav1beta2.VPCSecurityGroupRuleRemoteCIDRType:
-		if securityGroupRuleRemote.RemoteType == infrav1beta2.VPCSecurityGroupRuleRemoteTypeCIDR {
-			cidrRule := existingRemote.(*vpcv1.SecurityGroupRuleRemoteCIDR)
-			subnetDetails, err := s.VPCClient.GetVPCSubnetByName(*securityGroupRuleRemote.SecurityGroupName)
-			if err != nil {
-				return false, fmt.Errorf("error failed getting subnet by name for security group rule: %w", err)
-			} else if subnetDetails == nil {
-				return false, fmt.Errorf("error failed getting subnet by name for security group rule")
-			} else if subnetDetails.Ipv4CIDRBlock == nil {
-				return false, fmt.Errorf("error failed getting subnet by name for security group rule, no CIDRBlock")
-			}
-			if *subnetDetails.Ipv4CIDRBlock == *cidrRule.CIDRBlock {
-				return true, nil
-			}
+	s.Logger.Info("checking security group rule remote type")
+	switch securityGroupRuleRemote.RemoteType {
+	case infrav1beta2.VPCSecurityGroupRuleRemoteTypeCIDR:
+		s.Logger.Info("checking cidr security group rule remote")
+		cidrRule := existingRemote.(*vpcv1.SecurityGroupRuleRemote)
+		if cidrRule.CIDRBlock == nil {
+			s.Logger.Info("security group rule remote has no cidr")
+			return false, nil
 		}
-	case infrav1beta2.VPCSecurityGroupRuleRemoteIPType:
-		ipRule := existingRemote.(*vpcv1.SecurityGroupRuleRemoteIP)
-		switch securityGroupRuleRemote.RemoteType {
-		case infrav1beta2.VPCSecurityGroupRuleRemoteTypeAddress:
-			if *securityGroupRuleRemote.Address == *ipRule.Address {
-				return true, nil
-			}
-		case infrav1beta2.VPCSecurityGroupRuleRemoteTypeAny:
-			if *ipRule.Address == infrav1beta2.CIDRBlockAny {
-				return true, nil
-			}
+		subnetDetails, err := s.VPCClient.GetVPCSubnetByName(*securityGroupRuleRemote.CIDRSubnetName)
+		if err != nil {
+			return false, fmt.Errorf("error failed getting subnet by name for security group rule: %w", err)
+		} else if subnetDetails == nil {
+			return false, fmt.Errorf("error failed getting subnet by name for security group rule")
+		} else if subnetDetails.Ipv4CIDRBlock == nil {
+			return false, fmt.Errorf("error failed getting subnet by name for security group rule, no CIDRBlock")
 		}
-	case infrav1beta2.VPCSecurityGroupRuleRemoteSecurityGroupReferenceType:
-		if securityGroupRuleRemote.RemoteType == infrav1beta2.VPCSecurityGroupRuleRemoteTypeSG {
-			sgRule := existingRemote.(*vpcv1.SecurityGroupRuleRemoteSecurityGroupReference)
-			// We can compare the SecurityGroup details from the securityGroupRemote and SecurityGroupRuleRemoteSecurityGroupReference, if those values are available
-			// Option #1. We can compare the Security Group Name (name is manditory for securityGroupRemote)
-			// Option #2. We can compare the Security Group ID (may already have securityGroupRemote ID)
-			// Option #3. We can compare the Security Group CRN (need ot lookup the CRN for securityGroupRemote)
-
-			// Option #1: If the SecurityGroupRuleRemoteSecurityGroupReference has a name assigned, we can shortcut and simply check that
-			if sgRule.Name != nil && *securityGroupRuleRemote.SecurityGroupName == *sgRule.Name {
-				return true, nil
-			}
-			// Try to get the Security Group Id for quick lookup (from NetworkStatus)
-			var securityGroupDetails *vpcv1.SecurityGroup
-			var err error
-			if securityGroupID := s.getSecurityGroupIDFromStatus(*securityGroupRuleRemote.SecurityGroupName); securityGroupID != nil {
-				// Option #2: If the SecurityGroupRuleRemoteSecurityGroupReference has an ID assigned, we can shortcut and simply check that
-				if sgRule.ID != nil && *securityGroupID == *sgRule.ID {
-					return true, nil
-				}
-				securityGroupDetails, _, err = s.VPCClient.GetSecurityGroup(&vpcv1.GetSecurityGroupOptions{
-					ID: securityGroupID,
-				})
-			} else {
-				securityGroupDetails, err = s.VPCClient.GetSecurityGroupByName(*securityGroupRuleRemote.SecurityGroupName)
-			}
-			if err != nil {
-				return false, fmt.Errorf("error failed getting security group by name for security group rule: %w", err)
-			} else if securityGroupDetails == nil {
-				return false, fmt.Errorf("error failed getting security group by name for security group rule")
-			} else if securityGroupDetails.CRN == nil {
-				return false, fmt.Errorf("error failed getting security group by name for security group rule, no CRN")
-			}
-			// Option #3: We check the SecurityGroupRuleRemoteSecurityGroupReference's CRN, if the Name and ID were not available
-			if *securityGroupDetails.CRN == *sgRule.CRN {
-				return true, nil
-			}
-		}
-	default:
-		if securityGroupRuleRemote.RemoteType == infrav1beta2.VPCSecurityGroupRuleRemoteTypeAny {
-			// TODO(cjschaef): determine what to do here, perhaps (??) the following:
+		s.Logger.Info("comparing subnet cidr to rule cidr", "subnetCIDR", *subnetDetails.Ipv4CIDRBlock, "remoteCIDR", *cidrRule.CIDRBlock)
+		if *subnetDetails.Ipv4CIDRBlock == *cidrRule.CIDRBlock {
+			s.Logger.Info("cidr's match")
 			return true, nil
 		}
+	case infrav1beta2.VPCSecurityGroupRuleRemoteTypeAddress:
+		s.Logger.Info("checking ip security group rule remote")
+		ipRule := existingRemote.(*vpcv1.SecurityGroupRuleRemote)
+		if ipRule.Address == nil {
+			s.Logger.Info("security group rule remote has no address")
+			return false, nil
+		}
+		s.Logger.Info("comparing desired address to rule address", "desiredAddress", *securityGroupRuleRemote.Address, "ruleAddress", *ipRule.Address)
+		if *securityGroupRuleRemote.Address == *ipRule.Address {
+			s.Logger.Info("addresses match")
+			return true, nil
+		}
+	case infrav1beta2.VPCSecurityGroupRuleRemoteTypeSG:
+		s.Logger.Info("checking sg security group rule remote")
+		sgRule := existingRemote.(*vpcv1.SecurityGroupRuleRemote)
+		if sgRule.Name == nil {
+			s.Logger.Info("security group rule remote has no security group name")
+			return false, nil
+		}
+		// We can compare the SecurityGroup details from the securityGroupRemote and SecurityGroupRuleRemoteSecurityGroupReference, if those values are available
+		// Option #1. We can compare the Security Group Name (name is manditory for securityGroupRemote)
+		// Option #2. We can compare the Security Group ID (may already have securityGroupRemote ID)
+		// Option #3. We can compare the Security Group CRN (need ot lookup the CRN for securityGroupRemote)
+
+		// Option #1: If the SecurityGroupRuleRemoteSecurityGroupReference has a name assigned, we can shortcut and simply check that
+		if sgRule.Name != nil && *securityGroupRuleRemote.SecurityGroupName == *sgRule.Name {
+			s.Logger.Info("security group rule remote security group name matches", "securityGroupRuleRemoteSecurityGroupName", sgRule.Name)
+			return true, nil
+		}
+		// Try to get the Security Group Id for quick lookup (from NetworkStatus)
+		var securityGroupDetails *vpcv1.SecurityGroup
+		var err error
+		if securityGroupID := s.getSecurityGroupIDFromStatus(*securityGroupRuleRemote.SecurityGroupName); securityGroupID != nil {
+			s.Logger.Info("using security group id from status", "id", securityGroupID)
+			// Option #2: If the SecurityGroupRuleRemoteSecurityGroupReference has an ID assigned, we can shortcut and simply check that
+			if sgRule.ID != nil && *securityGroupID == *sgRule.ID {
+				s.Logger.Info("security group rule remote security group id matches", "securityGroupRuleRemoteSecurityGroupID", sgRule.ID)
+				return true, nil
+			}
+			securityGroupDetails, _, err = s.VPCClient.GetSecurityGroup(&vpcv1.GetSecurityGroupOptions{
+				ID: securityGroupID,
+			})
+		} else {
+			securityGroupDetails, err = s.VPCClient.GetSecurityGroupByName(*securityGroupRuleRemote.SecurityGroupName)
+		}
+		if err != nil {
+			return false, fmt.Errorf("error failed getting security group by name for security group rule: %w", err)
+		} else if securityGroupDetails == nil {
+			return false, fmt.Errorf("error failed getting security group by name for security group rule")
+		} else if securityGroupDetails.CRN == nil {
+			return false, fmt.Errorf("error failed getting security group by name for security group rule, no CRN")
+		}
+		// Option #3: We check the SecurityGroupRuleRemoteSecurityGroupReference's CRN, if the Name and ID were not available
+
+		if *securityGroupDetails.CRN == *sgRule.CRN {
+			s.Logger.Info("security group rule remote security group crn matches", "securityGroupRuleRemoteSecurityGroupCRN", *securityGroupDetails.CRN)
+			return true, nil
+		}
+		s.Logger.Info("sg security group rule remote not match")
+	case infrav1beta2.VPCSecurityGroupRuleRemoteTypeAny:
+		s.Logger.Info("checking any security group rule remote")
+		ipRule := existingRemote.(*vpcv1.SecurityGroupRuleRemote)
+		if ipRule.Address == nil {
+			s.Logger.Info("security group rule remote has no address, defaults to any remote")
+			return true, nil
+		}
+		if *ipRule.Address == infrav1beta2.CIDRBlockAny {
+			s.Logger.Info("address matches 0.0.0.0/0")
+			return true, nil
+		}
+		s.Logger.Info("any security group rule remote does not match")
+	default:
+		s.Logger.Info("unknown security group rule remote")
 	}
 	return false, nil
 }

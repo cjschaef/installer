@@ -294,8 +294,6 @@ func (r *IBMVPCClusterReconciler) reconcileCluster(clusterScope *scope.VPCCluste
 		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
 	}
 
-	// TODO remaining resource monitor/creation
-
 	// Mark VPC Cluster as ready.
 	clusterScope.IBMVPCCluster.Status.Ready = true
 	return ctrl.Result{}, nil
