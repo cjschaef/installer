@@ -310,7 +310,7 @@ replace (
 )
 
 // TODO(cjschaef): Remove once IBM Cloud CAPI API PR's merge
-replace sigs.k8s.io/cluster-api-provider-ibmcloud => github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20240724035320-1cecce52d780
+replace sigs.k8s.io/cluster-api-provider-ibmcloud => github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20240812211640-faa274e46ef9
 
 //replace sigs.k8s.io/cluster-api-provider-ibmcloud => sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0
 replace cloud.google.com/go/storage => cloud.google.com/go/storage v1.40.0

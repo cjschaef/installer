@@ -36,32 +36,40 @@ const (
 	healthMonitorURLReadyz = "/readyz"
 )
 
-func getLoadBalancers(infraID string, publish types.PublishingStrategy) []*capibmcloud.VPCLoadBalancerSpec {
-	loadBalancers := make([]*capibmcloud.VPCLoadBalancerSpec, 0, 2)
-	loadBalancers = append(loadBalancers, buildPrivateLoadBalancer(infraID))
+func getLoadBalancers(infraID string, securityGroups []capibmcloud.VPCResource, subnets []capibmcloud.VPCResource, publish types.PublishingStrategy) []capibmcloud.VPCLoadBalancerSpec {
+	loadBalancers := make([]capibmcloud.VPCLoadBalancerSpec, 0, 2)
+
+	loadBalancers = append(loadBalancers, buildPrivateLoadBalancer(infraID, securityGroups, subnets))
 	if publish == types.ExternalPublishingStrategy {
-		loadBalancers = append(loadBalancers, buildPublicLoadBalancer(infraID))
+		loadBalancers = append(loadBalancers, buildPublicLoadBalancer(infraID, securityGroups, subnets))
 	}
 
 	return loadBalancers
 }
 
-func buildPrivateLoadBalancer(infraID string) *capibmcloud.VPCLoadBalancerSpec {
-	return &capibmcloud.VPCLoadBalancerSpec{
+func buildPrivateLoadBalancer(infraID string, securityGroups []capibmcloud.VPCResource, subnets []capibmcloud.VPCResource) capibmcloud.VPCLoadBalancerSpec {
+	kubeAPIBackendPoolNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, kubernetesAPIPrivatePostfix))
+	machineConfigBackendPoolNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, machineConfigPostfix))
+
+	return capibmcloud.VPCLoadBalancerSpec{
 		Name:   fmt.Sprintf("%s-%s", infraID, kubernetesAPIPrivatePostfix),
 		Public: ptr.To(false),
 		AdditionalListeners: []capibmcloud.AdditionalListenerSpec{
 			{
-				Port: kubernetesAPIPort,
+				DefaultPoolName: kubeAPIBackendPoolNamePtr,
+				Port:            kubernetesAPIPort,
+				Protocol:        ptr.To(protocolTCP),
 			},
 			{
-				Port: machineConfigServerPort,
+				DefaultPoolName: machineConfigBackendPoolNamePtr,
+				Port:            machineConfigServerPort,
+				Protocol:        ptr.To(protocolTCP),
 			},
 		},
 		BackendPools: []capibmcloud.BackendPoolSpec{
 			{
 				// Kubernetes API pool
-				Name:             ptr.To(fmt.Sprintf("%s-%s", infraID, kubernetesAPIPrivatePostfix)),
+				Name:             kubeAPIBackendPoolNamePtr,
 				Algorithm:        algorithmRoundRobin,
 				Protocol:         protocolTCP,
 				HealthDelay:      60,
@@ -72,7 +80,7 @@ func buildPrivateLoadBalancer(infraID string) *capibmcloud.VPCLoadBalancerSpec {
 			},
 			{
 				// Machine Config Server pool
-				Name:             ptr.To(fmt.Sprintf("%s-%s", infraID, machineConfigPostfix)),
+				Name:             machineConfigBackendPoolNamePtr,
 				Algorithm:        algorithmRoundRobin,
 				Protocol:         protocolTCP,
 				HealthDelay:      60,
@@ -82,22 +90,28 @@ func buildPrivateLoadBalancer(infraID string) *capibmcloud.VPCLoadBalancerSpec {
 				HealthMonitorURL: ptr.To(healthMonitorURLReadyz),
 			},
 		},
+		SecurityGroups: securityGroups,
+		Subnets:        subnets,
 	}
 }
 
-func buildPublicLoadBalancer(infraID string) *capibmcloud.VPCLoadBalancerSpec {
-	return &capibmcloud.VPCLoadBalancerSpec{
+func buildPublicLoadBalancer(infraID string, securityGroups []capibmcloud.VPCResource, subnets []capibmcloud.VPCResource) capibmcloud.VPCLoadBalancerSpec {
+	backendPoolNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, kubernetesAPIPublicPostfix))
+
+	return capibmcloud.VPCLoadBalancerSpec{
 		Name:   fmt.Sprintf("%s-%s", infraID, kubernetesAPIPublicPostfix),
 		Public: ptr.To(true),
 		AdditionalListeners: []capibmcloud.AdditionalListenerSpec{
 			{
-				Port: kubernetesAPIPort,
+				DefaultPoolName: backendPoolNamePtr,
+				Port:            kubernetesAPIPort,
+				Protocol:        ptr.To(protocolTCP),
 			},
 		},
 		BackendPools: []capibmcloud.BackendPoolSpec{
 			{
 				// Kubernetes API pool
-				Name:             ptr.To(fmt.Sprintf("%s-%s", infraID, kubernetesAPIPublicPostfix)),
+				Name:             backendPoolNamePtr,
 				Algorithm:        algorithmRoundRobin,
 				Protocol:         protocolTCP,
 				HealthDelay:      60,
@@ -107,5 +121,7 @@ func buildPublicLoadBalancer(infraID string) *capibmcloud.VPCLoadBalancerSpec {
 				HealthMonitorURL: ptr.To(healthMonitorURLReadyz),
 			},
 		},
+		SecurityGroups: securityGroups,
+		Subnets:        subnets,
 	}
 }

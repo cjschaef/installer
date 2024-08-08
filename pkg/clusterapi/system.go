@@ -13,11 +13,11 @@ import (
 	"text/template"
 	"time"
 
-	configv1 "github.com/openshift/api/config/v1"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/cmd/openshift-install/command"
 	"github.com/openshift/installer/data"
 	"github.com/openshift/installer/pkg/asset/cluster/metadata"

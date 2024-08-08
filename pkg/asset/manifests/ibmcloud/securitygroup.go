@@ -29,7 +29,7 @@ func buildClusterWideSecurityGroup(infraID string, allSubnets []capibmcloud.Subn
 	}
 
 	return capibmcloud.VPCSecurityGroup{
-		Name:          clusterWideSGNamePtr,
+		Name: clusterWideSGNamePtr,
 		Rules: []*capibmcloud.VPCSecurityGroupRule{
 			{
 				// SSH inbound cluster-wide
@@ -131,7 +131,7 @@ func buildOpenshiftNetSecurityGroup(infraID string, allSubnets []capibmcloud.Sub
 	}
 
 	return capibmcloud.VPCSecurityGroup{
-		Name:          openshiftNetSGNamePtr,
+		Name: openshiftNetSGNamePtr,
 		Rules: []*capibmcloud.VPCSecurityGroupRule{
 			{
 				// Host level services - TCP
@@ -261,7 +261,7 @@ func buildKubeAPILBSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup {
 	clusterWideSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, clusterWideSGNamePostfix))
 
 	return capibmcloud.VPCSecurityGroup{
-		Name:          kubeAPILBSGNamePtr,
+		Name: kubeAPILBSGNamePtr,
 		Rules: []*capibmcloud.VPCSecurityGroupRule{
 			{
 				// Kubernetes API LB - inbound
@@ -344,7 +344,7 @@ func buildControlPlaneSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup
 	kubeAPILBSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, kubeAPILBSGNamePostfix))
 
 	return capibmcloud.VPCSecurityGroup{
-		Name:          controlPlaneSGNamePtr,
+		Name: controlPlaneSGNamePtr,
 		Rules: []*capibmcloud.VPCSecurityGroupRule{
 			{
 				// Kubernetes API - inbound via cluster
@@ -426,7 +426,7 @@ func buildCPInternalSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup {
 	cpInternalSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, cpInternalSGNamePostfix))
 
 	return capibmcloud.VPCSecurityGroup{
-		Name:          cpInternalSGNamePtr,
+		Name: cpInternalSGNamePtr,
 		Rules: []*capibmcloud.VPCSecurityGroupRule{
 			{
 				// etcd internal traffic

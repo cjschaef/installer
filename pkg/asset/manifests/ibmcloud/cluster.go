@@ -94,7 +94,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		COSBucketRegion: ptr.To(platform.Region),
 		COSObject:       ptr.To(trimmedImageName),
 		OperatingSystem: ptr.To(operatingSystem),
-		ResourceGroup:   &capibmcloud.GenericResourceReference{
+		ResourceGroup: &capibmcloud.GenericResourceReference{
 			Name: ptr.To(resourceGroup),
 		},
 	}
@@ -127,6 +127,13 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		}
 	}
 	capiControlPlaneSubnets := getCAPISubnets(controlPlaneSubnets)
+	// build the Subnets for the Load Balancers.
+	loadBalancerControlPlaneSubnets := make([]capibmcloud.VPCResource, len(capiControlPlaneSubnets))
+	for index, subnet := range capiControlPlaneSubnets {
+		loadBalancerControlPlaneSubnets[index] = capibmcloud.VPCResource{
+			Name: subnet.Name,
+		}
+	}
 
 	computeSubnets, err := metadata.ComputeSubnets(context.TODO())
 	if err != nil {
@@ -159,9 +166,15 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	// Create a consolidated set of all subnets, to use when generating SecurityGroups (this should prevent duplicates that appear in both subnet slices), resulting in duplicate SecurityGroupRules for subnet CIDR's. We may not have CIDR's until Infrastructure creation, so rely on Subnet names, to lookup CIDR's at runtime.
 	capiConsolidatedSubnets := consolidateCAPISubnets(capiControlPlaneSubnets, capiComputeSubnets)
 	vpcSecurityGroups := getVPCSecurityGroups(clusterID.InfraID, capiConsolidatedSubnets)
+	// build the Security Groups for the Load Balancers
+	loadBalancerSecurityGroups := []capibmcloud.VPCResource{
+		{
+			Name: ptr.To(fmt.Sprintf("%s-%s", clusterID.InfraID, kubeAPILBSGNamePostfix)),
+		},
+	}
 
 	// Get the LB's
-	loadBalancers := getLoadBalancers(clusterID.InfraID, installConfig.Config.Publish)
+	loadBalancers := getLoadBalancers(clusterID.InfraID, loadBalancerSecurityGroups, loadBalancerControlPlaneSubnets, installConfig.Config.Publish)
 
 	// Create the IBMVPCCluster manifest
 	ibmcloudCluster := &capibmcloud.IBMVPCCluster{
@@ -181,13 +194,13 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				Host: fmt.Sprintf("api.%s.%s", installConfig.Config.ObjectMeta.Name, installConfig.Config.BaseDomain),
 				Port: 6443,
 			},
-			Image:         imageSpec,
-			LoadBalancers: loadBalancers,
+			Image: imageSpec,
 			Network: &capibmcloud.VPCNetworkSpec{
 				ResourceGroup:       ptr.To(networkResourceGroup),
 				SecurityGroups:      vpcSecurityGroups,
 				WorkerSubnets:       capiComputeSubnets,
 				ControlPlaneSubnets: capiControlPlaneSubnets,
+				LoadBalancers:       loadBalancers,
 				VPC: &capibmcloud.VPCResource{
 					Name: ptr.To(vpcName),
 				},
