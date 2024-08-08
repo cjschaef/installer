@@ -298,12 +298,18 @@ spec:
                           AdditionalListenerSpec defines the desired state of an
                           additional listener on an VPC load balancer.
                         properties:
+                          defaultPoolName:
+                            description: defaultPoolName is the name of a BackendPool.
+                            type: string
                           port:
                             description: Port sets the port for the additional listener.
                             format: int64
                             maximum: 65535
                             minimum: 1
                             type: integer
+                          protocol:
+                            description: protocol is the protocol to use. Use an Enum.
+                            type: string
                         required:
                         - port
                         type: object
@@ -382,6 +388,42 @@ spec:
                       description: public indicates that load balancer is public or
                         private
                       type: boolean
+                    securityGroups:
+                      description: securityGroups defines SG's to attach to the LB
+                      items:
+                        description: VPCResource represents a specific VPC resource.
+                        properties:
+                          id:
+                            description: id of the resource.
+                            minLength: 1
+                            type: string
+                          name:
+                            description: name of the resource.
+                            minLength: 1
+                            type: string
+                        type: object
+                        x-kubernetes-validations:
+                        - message: an id or name must be provided
+                          rule: has(self.id) || has(self.name)
+                      type: array
+                    subnets:
+                      description: subnets defines subnets to attach to the LB
+                      items:
+                        description: VPCResource represents a specific VPC resource.
+                        properties:
+                          id:
+                            description: id of the resource.
+                            minLength: 1
+                            type: string
+                          name:
+                            description: name of the resource.
+                            minLength: 1
+                            type: string
+                        type: object
+                        x-kubernetes-validations:
+                        - message: an id or name must be provided
+                          rule: has(self.id) || has(self.name)
+                      type: array
                   type: object
                 type: array
               network:
@@ -1399,6 +1441,10 @@ spec:
                                   AdditionalListenerSpec defines the desired state of an
                                   additional listener on an VPC load balancer.
                                 properties:
+                                  defaultPoolName:
+                                    description: defaultPoolName is the name of a
+                                      BackendPool.
+                                    type: string
                                   port:
                                     description: Port sets the port for the additional
                                       listener.
@@ -1406,6 +1452,10 @@ spec:
                                     maximum: 65535
                                     minimum: 1
                                     type: integer
+                                  protocol:
+                                    description: protocol is the protocol to use.
+                                      Use an Enum.
+                                    type: string
                                 required:
                                 - port
                                 type: object
@@ -1485,6 +1535,46 @@ spec:
                               description: public indicates that load balancer is
                                 public or private
                               type: boolean
+                            securityGroups:
+                              description: securityGroups defines SG's to attach to
+                                the LB
+                              items:
+                                description: VPCResource represents a specific VPC
+                                  resource.
+                                properties:
+                                  id:
+                                    description: id of the resource.
+                                    minLength: 1
+                                    type: string
+                                  name:
+                                    description: name of the resource.
+                                    minLength: 1
+                                    type: string
+                                type: object
+                                x-kubernetes-validations:
+                                - message: an id or name must be provided
+                                  rule: has(self.id) || has(self.name)
+                              type: array
+                            subnets:
+                              description: subnets defines subnets to attach to the
+                                LB
+                              items:
+                                description: VPCResource represents a specific VPC
+                                  resource.
+                                properties:
+                                  id:
+                                    description: id of the resource.
+                                    minLength: 1
+                                    type: string
+                                  name:
+                                    description: name of the resource.
+                                    minLength: 1
+                                    type: string
+                                type: object
+                                x-kubernetes-validations:
+                                - message: an id or name must be provided
+                                  rule: has(self.id) || has(self.name)
+                              type: array
                           type: object
                         type: array
                       network:
@@ -3676,12 +3766,18 @@ spec:
                         AdditionalListenerSpec defines the desired state of an
                         additional listener on an VPC load balancer.
                       properties:
+                        defaultPoolName:
+                          description: defaultPoolName is the name of a BackendPool.
+                          type: string
                         port:
                           description: Port sets the port for the additional listener.
                           format: int64
                           maximum: 65535
                           minimum: 1
                           type: integer
+                        protocol:
+                          description: protocol is the protocol to use. Use an Enum.
+                          type: string
                       required:
                       - port
                       type: object
@@ -3760,6 +3856,42 @@ spec:
                     description: public indicates that load balancer is public or
                       private
                     type: boolean
+                  securityGroups:
+                    description: securityGroups defines SG's to attach to the LB
+                    items:
+                      description: VPCResource represents a specific VPC resource.
+                      properties:
+                        id:
+                          description: id of the resource.
+                          minLength: 1
+                          type: string
+                        name:
+                          description: name of the resource.
+                          minLength: 1
+                          type: string
+                      type: object
+                      x-kubernetes-validations:
+                      - message: an id or name must be provided
+                        rule: has(self.id) || has(self.name)
+                    type: array
+                  subnets:
+                    description: subnets defines subnets to attach to the LB
+                    items:
+                      description: VPCResource represents a specific VPC resource.
+                      properties:
+                        id:
+                          description: id of the resource.
+                          minLength: 1
+                          type: string
+                        name:
+                          description: name of the resource.
+                          minLength: 1
+                          type: string
+                      type: object
+                      x-kubernetes-validations:
+                      - message: an id or name must be provided
+                        rule: has(self.id) || has(self.name)
+                    type: array
                 type: object
               image:
                 description: image represents the Image details used for the cluster.
@@ -3829,12 +3961,18 @@ spec:
                           AdditionalListenerSpec defines the desired state of an
                           additional listener on an VPC load balancer.
                         properties:
+                          defaultPoolName:
+                            description: defaultPoolName is the name of a BackendPool.
+                            type: string
                           port:
                             description: Port sets the port for the additional listener.
                             format: int64
                             maximum: 65535
                             minimum: 1
                             type: integer
+                          protocol:
+                            description: protocol is the protocol to use. Use an Enum.
+                            type: string
                         required:
                         - port
                         type: object
@@ -3913,6 +4051,42 @@ spec:
                       description: public indicates that load balancer is public or
                         private
                       type: boolean
+                    securityGroups:
+                      description: securityGroups defines SG's to attach to the LB
+                      items:
+                        description: VPCResource represents a specific VPC resource.
+                        properties:
+                          id:
+                            description: id of the resource.
+                            minLength: 1
+                            type: string
+                          name:
+                            description: name of the resource.
+                            minLength: 1
+                            type: string
+                        type: object
+                        x-kubernetes-validations:
+                        - message: an id or name must be provided
+                          rule: has(self.id) || has(self.name)
+                      type: array
+                    subnets:
+                      description: subnets defines subnets to attach to the LB
+                      items:
+                        description: VPCResource represents a specific VPC resource.
+                        properties:
+                          id:
+                            description: id of the resource.
+                            minLength: 1
+                            type: string
+                          name:
+                            description: name of the resource.
+                            minLength: 1
+                            type: string
+                        type: object
+                        x-kubernetes-validations:
+                        - message: an id or name must be provided
+                          rule: has(self.id) || has(self.name)
+                      type: array
                   type: object
                 type: array
               network:
@@ -3940,7 +4114,7 @@ spec:
                           type: string
                       type: object
                     type: array
-                  loadbalancers:
+                  loadBalancers:
                     description: loadBalancers is a set of VPC Load Balancers definition
                       to use for the cluster.
                     items:
@@ -3955,6 +4129,9 @@ spec:
                               AdditionalListenerSpec defines the desired state of an
                               additional listener on an VPC load balancer.
                             properties:
+                              defaultPoolName:
+                                description: defaultPoolName is the name of a BackendPool.
+                                type: string
                               port:
                                 description: Port sets the port for the additional
                                   listener.
@@ -3962,6 +4139,10 @@ spec:
                                 maximum: 65535
                                 minimum: 1
                                 type: integer
+                              protocol:
+                                description: protocol is the protocol to use. Use
+                                  an Enum.
+                                type: string
                             required:
                             - port
                             type: object
@@ -4041,6 +4222,43 @@ spec:
                           description: public indicates that load balancer is public
                             or private
                           type: boolean
+                        securityGroups:
+                          description: securityGroups defines SG's to attach to the
+                            LB
+                          items:
+                            description: VPCResource represents a specific VPC resource.
+                            properties:
+                              id:
+                                description: id of the resource.
+                                minLength: 1
+                                type: string
+                              name:
+                                description: name of the resource.
+                                minLength: 1
+                                type: string
+                            type: object
+                            x-kubernetes-validations:
+                            - message: an id or name must be provided
+                              rule: has(self.id) || has(self.name)
+                          type: array
+                        subnets:
+                          description: subnets defines subnets to attach to the LB
+                          items:
+                            description: VPCResource represents a specific VPC resource.
+                            properties:
+                              id:
+                                description: id of the resource.
+                                minLength: 1
+                                type: string
+                              name:
+                                description: name of the resource.
+                                minLength: 1
+                                type: string
+                            type: object
+                            x-kubernetes-validations:
+                            - message: an id or name must be provided
+                              rule: has(self.id) || has(self.name)
+                          type: array
                       type: object
                     type: array
                   resourceGroup:
@@ -4810,6 +5028,9 @@ spec:
                                 AdditionalListenerSpec defines the desired state of an
                                 additional listener on an VPC load balancer.
                               properties:
+                                defaultPoolName:
+                                  description: defaultPoolName is the name of a BackendPool.
+                                  type: string
                                 port:
                                   description: Port sets the port for the additional
                                     listener.
@@ -4817,6 +5038,10 @@ spec:
                                   maximum: 65535
                                   minimum: 1
                                   type: integer
+                                protocol:
+                                  description: protocol is the protocol to use. Use
+                                    an Enum.
+                                  type: string
                               required:
                               - port
                               type: object
@@ -4896,6 +5121,44 @@ spec:
                             description: public indicates that load balancer is public
                               or private
                             type: boolean
+                          securityGroups:
+                            description: securityGroups defines SG's to attach to
+                              the LB
+                            items:
+                              description: VPCResource represents a specific VPC resource.
+                              properties:
+                                id:
+                                  description: id of the resource.
+                                  minLength: 1
+                                  type: string
+                                name:
+                                  description: name of the resource.
+                                  minLength: 1
+                                  type: string
+                              type: object
+                              x-kubernetes-validations:
+                              - message: an id or name must be provided
+                                rule: has(self.id) || has(self.name)
+                            type: array
+                          subnets:
+                            description: subnets defines subnets to attach to the
+                              LB
+                            items:
+                              description: VPCResource represents a specific VPC resource.
+                              properties:
+                                id:
+                                  description: id of the resource.
+                                  minLength: 1
+                                  type: string
+                                name:
+                                  description: name of the resource.
+                                  minLength: 1
+                                  type: string
+                              type: object
+                              x-kubernetes-validations:
+                              - message: an id or name must be provided
+                                rule: has(self.id) || has(self.name)
+                            type: array
                         type: object
                       image:
                         description: image represents the Image details used for the
@@ -4972,6 +5235,10 @@ spec:
                                   AdditionalListenerSpec defines the desired state of an
                                   additional listener on an VPC load balancer.
                                 properties:
+                                  defaultPoolName:
+                                    description: defaultPoolName is the name of a
+                                      BackendPool.
+                                    type: string
                                   port:
                                     description: Port sets the port for the additional
                                       listener.
@@ -4979,6 +5246,10 @@ spec:
                                     maximum: 65535
                                     minimum: 1
                                     type: integer
+                                  protocol:
+                                    description: protocol is the protocol to use.
+                                      Use an Enum.
+                                    type: string
                                 required:
                                 - port
                                 type: object
@@ -5058,6 +5329,46 @@ spec:
                               description: public indicates that load balancer is
                                 public or private
                               type: boolean
+                            securityGroups:
+                              description: securityGroups defines SG's to attach to
+                                the LB
+                              items:
+                                description: VPCResource represents a specific VPC
+                                  resource.
+                                properties:
+                                  id:
+                                    description: id of the resource.
+                                    minLength: 1
+                                    type: string
+                                  name:
+                                    description: name of the resource.
+                                    minLength: 1
+                                    type: string
+                                type: object
+                                x-kubernetes-validations:
+                                - message: an id or name must be provided
+                                  rule: has(self.id) || has(self.name)
+                              type: array
+                            subnets:
+                              description: subnets defines subnets to attach to the
+                                LB
+                              items:
+                                description: VPCResource represents a specific VPC
+                                  resource.
+                                properties:
+                                  id:
+                                    description: id of the resource.
+                                    minLength: 1
+                                    type: string
+                                  name:
+                                    description: name of the resource.
+                                    minLength: 1
+                                    type: string
+                                type: object
+                                x-kubernetes-validations:
+                                - message: an id or name must be provided
+                                  rule: has(self.id) || has(self.name)
+                              type: array
                           type: object
                         type: array
                       network:
@@ -5086,7 +5397,7 @@ spec:
                                   type: string
                               type: object
                             type: array
-                          loadbalancers:
+                          loadBalancers:
                             description: loadBalancers is a set of VPC Load Balancers
                               definition to use for the cluster.
                             items:
@@ -5101,6 +5412,10 @@ spec:
                                       AdditionalListenerSpec defines the desired state of an
                                       additional listener on an VPC load balancer.
                                     properties:
+                                      defaultPoolName:
+                                        description: defaultPoolName is the name of
+                                          a BackendPool.
+                                        type: string
                                       port:
                                         description: Port sets the port for the additional
                                           listener.
@@ -5108,6 +5423,10 @@ spec:
                                         maximum: 65535
                                         minimum: 1
                                         type: integer
+                                      protocol:
+                                        description: protocol is the protocol to use.
+                                          Use an Enum.
+                                        type: string
                                     required:
                                     - port
                                     type: object
@@ -5190,6 +5509,46 @@ spec:
                                   description: public indicates that load balancer
                                     is public or private
                                   type: boolean
+                                securityGroups:
+                                  description: securityGroups defines SG's to attach
+                                    to the LB
+                                  items:
+                                    description: VPCResource represents a specific
+                                      VPC resource.
+                                    properties:
+                                      id:
+                                        description: id of the resource.
+                                        minLength: 1
+                                        type: string
+                                      name:
+                                        description: name of the resource.
+                                        minLength: 1
+                                        type: string
+                                    type: object
+                                    x-kubernetes-validations:
+                                    - message: an id or name must be provided
+                                      rule: has(self.id) || has(self.name)
+                                  type: array
+                                subnets:
+                                  description: subnets defines subnets to attach to
+                                    the LB
+                                  items:
+                                    description: VPCResource represents a specific
+                                      VPC resource.
+                                    properties:
+                                      id:
+                                        description: id of the resource.
+                                        minLength: 1
+                                        type: string
+                                      name:
+                                        description: name of the resource.
+                                        minLength: 1
+                                        type: string
+                                    type: object
+                                    x-kubernetes-validations:
+                                    - message: an id or name must be provided
+                                      rule: has(self.id) || has(self.name)
+                                  type: array
                               type: object
                             type: array
                           resourceGroup:

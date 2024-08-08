@@ -322,13 +322,6 @@ func (s *VPCClusterScope) SetVPCResourceStatus(resourceType infrav1beta2.Resourc
 	}
 }
 
-/*
-// NetworkSpec returns the cluster NetworkSpec.
-func (s *VPCClusterScope) NetworkSpec() *infrav1beta2.VPCNetworkSpec {
-	return s.IBMVPCCluster.Spec.NetworkSpec
-}.
-*/
-
 // VPC returns the cluster VPC information.
 func (s *VPCClusterScope) VPC() *infrav1beta2.VPCResource {
 	if s.IBMVPCCluster.Spec.Network == nil {
@@ -361,6 +354,25 @@ func (s *VPCClusterScope) GetVPCID() (*string, error) {
 	return nil, nil
 }
 
+// GetSecurityGroupID returns the ID of a security group, provided the name.
+func (s *VPCClusterScope) GetSecurityGroupID(name string) (*string, error) {
+	// Check Status first.
+	if s.IBMVPCCluster.Status.NetworkStatus != nil && s.IBMVPCCluster.Status.NetworkStatus.SecurityGroups != nil {
+		if securityGroup, ok := s.IBMVPCCluster.Status.NetworkStatus.SecurityGroups[name]; ok {
+			return &securityGroup.ID, nil
+		}
+	}
+	// Otherwise, if no Status, or not found, attempt to look it up.
+	securityGroup, err := s.VPCClient.GetSecurityGroupByName(name)
+	if err != nil {
+		return nil, err
+	}
+	if securityGroup == nil {
+		return nil, nil
+	}
+	return securityGroup.ID, nil
+}
+
 // GetSubnetID returns the ID of a subnet, provided the name.
 func (s *VPCClusterScope) GetSubnetID(name string) (*string, error) {
 	// Check Status first
@@ -385,6 +397,43 @@ func (s *VPCClusterScope) GetSubnetID(name string) (*string, error) {
 		return nil, nil
 	}
 	return subnet.ID, nil
+}
+
+// GetControlPlaneSubnetIDs returns all of the Control Plane subnet Id's.
+func (s *VPCClusterScope) GetControlPlaneSubnetIDs() ([]string, error) {
+	subnets := make([]string, 0)
+	// Try to get subnet Id's from Status first, then try Spec for Id's
+	if s.IBMVPCCluster.Status.NetworkStatus != nil {
+		if s.IBMVPCCluster.Status.NetworkStatus.ControlPlaneSubnets != nil {
+			for _, subnet := range s.IBMVPCCluster.Status.NetworkStatus.ControlPlaneSubnets {
+				subnets = append(subnets, subnet.ID)
+			}
+			// NOTE(cjschaef): We assume all Subnets are in Status at this point, we could perhaps reconcile Status with any defined in Spec (preventing duplicates) to be safe.
+			return subnets, nil
+		}
+	}
+
+	// If NetworkStatus.ControlPlaneStatus was empty, attempt to get ID's for Control Plane subnets using details in NetworkSpec.
+	if s.IBMVPCCluster.Spec.Network != nil && s.IBMVPCCluster.Spec.Network.ControlPlaneSubnets != nil {
+		for _, subnet := range s.IBMVPCCluster.Spec.Network.ControlPlaneSubnets {
+			if subnet.ID != nil {
+				subnets = append(subnets, *subnet.ID)
+				continue
+			}
+			// Attempt to lookup the Control Plane subnet by name. If it is not found, raise an error, as we expect to find ALL Control Plane subnet ID's, not just some.
+			if subnet.Name == nil {
+				return nil, fmt.Errorf("network spec control plane subnet has no name or id for lookup")
+			}
+			subnetDetails, err := s.VPCClient.GetVPCSubnetByName(*subnet.Name)
+			if err != nil {
+				return nil, fmt.Errorf("failed subnet id lookup: %w", err)
+			} else if subnetDetails == nil || subnetDetails.ID == nil {
+				return nil, fmt.Errorf("failed to find subnet id for subnet: %s", *subnet.Name)
+			}
+			subnets = append(subnets, *subnet.ID)
+		}
+	}
+	return subnets, nil
 }
 
 // GetSubnetIDs returns all of the subnet Id's, duplicates removed.
@@ -480,72 +529,6 @@ func (s *VPCClusterScope) getSecurityGroupIDFromStatus(name string) *string {
 	}
 	return nil
 }
-
-/*
-// PublicLoadBalancer returns the cluster public loadBalancer information.
-func (s *VPCClusterScope) PublicLoadBalancer() *infrav1beta2.VPCLoadBalancerSpec {
-	// if the user did not specify any loadbalancer then return the public loadbalancer created by the controller.
-	if len(s.IBMVPCCluster.Spec.LoadBalancers) == 0 {
-		return &infrav1beta2.VPCLoadBalancerSpec{
-			Name:   *s.GetServiceName(infrav1beta2.ResourceTypeLoadBalancer),
-			Public: ptr.To(true),
-		}
-	}
-	for _, lb := range s.IBMVPCCluster.Spec.LoadBalancers {
-		if lb.Public != nil && *lb.Public {
-			return &lb
-		}
-	}
-	return nil
-}
-
-// SetLoadBalancerStatus set the loadBalancer id.
-func (s *VPCClusterScope) SetLoadBalancerStatus(name string, loadBalancer infrav1beta2.VPCLoadBalancerStatus) {
-	s.V(3).Info("Setting status", "name", name, "status", loadBalancer)
-	if s.IBMVPCCluster.Status.LoadBalancers == nil {
-		s.IBMVPCCluster.Status.LoadBalancers = make(map[string]infrav1beta2.VPCLoadBalancerStatus)
-	}
-	if val, ok := s.IBMVPCCluster.Status.LoadBalancers[name]; ok {
-		if val.ControllerCreated != nil && *val.ControllerCreated {
-			loadBalancer.ControllerCreated = val.ControllerCreated
-		}
-	}
-	s.IBMVPCCluster.Status.LoadBalancers[name] = loadBalancer
-}
-
-// GetLoadBalancerID returns the loadBalancer.
-func (s *VPCClusterScope) GetLoadBalancerID(loadBalancerName string) *string {
-	if s.IBMVPCCluster.Status.LoadBalancers == nil {
-		return nil
-	}
-	if val, ok := s.IBMVPCCluster.Status.LoadBalancers[loadBalancerName]; ok {
-		return val.ID
-	}
-	return nil
-}
-
-// GetLoadBalancerState will return the state for the load balancer.
-func (s *VPCClusterScope) GetLoadBalancerState(name string) *infrav1beta2.VPCLoadBalancerState {
-	if s.IBMVPCCluster.Status.LoadBalancers == nil {
-		return nil
-	}
-	if val, ok := s.IBMVPCCluster.Status.LoadBalancers[name]; ok {
-		return &val.State
-	}
-	return nil
-}
-
-// GetLoadBalancerHostName will return the hostname of load balancer.
-func (s *VPCClusterScope) GetLoadBalancerHostName(name string) *string {
-	if s.IBMVPCCluster.Status.LoadBalancers == nil {
-		return nil
-	}
-	if val, ok := s.IBMVPCCluster.Status.LoadBalancers[name]; ok {
-		return val.Hostname
-	}
-	return nil
-}.
-*/
 
 // GetNetworkResourceGroupID returns the Resource Group ID, if it is present for the Network Resources. Otherwise, it defaults to the cluster's Resource Group ID.
 func (s *VPCClusterScope) GetNetworkResourceGroupID() (string, error) {
@@ -1344,7 +1327,7 @@ func (s *VPCClusterScope) reconcileSecurityGroupRule(securityGroupID string, sec
 
 	// If the Security Group has no Rules at all, we simply create all the Rules
 	if existingSecurityGroupRuleIntfs == nil || existingSecurityGroupRuleIntfs.Rules == nil || len(existingSecurityGroupRuleIntfs.Rules) == 0 {
-		s.Info("Creating security group rules for security group id=%s", securityGroupID)
+		s.Info("Creating security group rules for security group", "securityGroupID", securityGroupID)
 		err := s.createSecurityGroupRuleAllRemotes(securityGroupID, securityGroupRule)
 		if err != nil {
 			return false, err
@@ -1379,7 +1362,7 @@ func (s *VPCClusterScope) findOrCreateSecurityGroupRule(securityGroupID string, 
 		return false, fmt.Errorf("error unsupported SecurityGroupRuleDirection defined")
 	}
 
-	s.Logger.Info("checking security group rules", "securityGroupID", securityGroupID)
+	s.Logger.Info("checking security group rules for security group", "securityGroupID", securityGroupID)
 
 	// Each defined SecurityGroupRule can have multiple Remotes specified, each signifying a separate Security Group Rule (with the same Action, Direction, etc.)
 	allMatch := true
@@ -1393,7 +1376,6 @@ func (s *VPCClusterScope) findOrCreateSecurityGroupRule(securityGroupID string, 
 				if securityGroupRulePrototype.Protocol != infrav1beta2.VPCSecurityGroupRuleProtocolAll {
 					continue
 				}
-				s.Logger.Info("checking protocol all security group rule")
 				existingRule := existingRuleIntf.(*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolAll)
 				// If the Remote doesn't have the same Direction as the Rule, no further checks are necessary
 				if securityGroupRule.Direction != infrav1beta2.VPCSecurityGroupRuleDirection(*existingRule.Direction) {
@@ -1404,17 +1386,15 @@ func (s *VPCClusterScope) findOrCreateSecurityGroupRule(securityGroupID string, 
 				} else if found {
 					// If we found the matching IBM Cloud Security Group Rule for the defined SecurityGroupRule and Remote, we can stop checking IBM Cloud Security Group Rules for this remote and move onto the next remote.
 					// The expectation is that only one IBM Cloud Security Group Rule will match, but if at least one matches the defined SecurityGroupRule, that is sufficient.
-					s.Logger.Info("all protocol rule match found")
+					s.Logger.Info("security group rule all protocol match found")
 					remoteMatch = true
 					break
 				}
-				s.Logger.Info("all protocol rule does not match desired rule")
 			case infrav1beta2.VPCSecurityGroupRuleProtocolIcmpType:
 				// If our Remote doesn't define ICMP Protocol, we don't need further checks, move on to next Rule
 				if securityGroupRulePrototype.Protocol != infrav1beta2.VPCSecurityGroupRuleProtocolIcmp {
 					continue
 				}
-				s.Logger.Info("checking protocol icmp security group rule")
 				existingRule := existingRuleIntf.(*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolIcmp)
 				// If the Remote doesn't have the same Direction as the Rule, no further checks are necessary
 				if securityGroupRule.Direction != infrav1beta2.VPCSecurityGroupRuleDirection(*existingRule.Direction) {
@@ -1424,32 +1404,28 @@ func (s *VPCClusterScope) findOrCreateSecurityGroupRule(securityGroupID string, 
 					return false, err
 				} else if found {
 					// If we found the matching IBM Cloud Security Group Rule for the defined SecurityGroupRule and Remote, we can stop checking IBM Cloud Security Group Rules for this remote and move onto the next remote.
-					s.Logger.Info("icmp rule match found")
+					s.Logger.Info("security group rule icmp match found")
 					remoteMatch = true
 					break
 				}
-				s.Logger.Info("protocol icmp rule does not match desired rule")
 			case infrav1beta2.VPCSecurityGroupRuleProtocolTcpudpType:
 				// If our Remote doesn't define TCP/UDP Protocol, we don't need further checks, move on to next Rule
 				if securityGroupRulePrototype.Protocol != infrav1beta2.VPCSecurityGroupRuleProtocolTCP && securityGroupRulePrototype.Protocol != infrav1beta2.VPCSecurityGroupRuleProtocolUDP {
 					continue
 				}
-				s.Logger.Info("checking protocol tcp/udp security group rule")
 				existingRule := existingRuleIntf.(*vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp)
 				// If the Remote doesn't have the same Direction as the Rule, no further checks are necessary
 				if securityGroupRule.Direction != infrav1beta2.VPCSecurityGroupRuleDirection(*existingRule.Direction) {
-					s.Logger.Info("protocol tcp/udp security group rule direction does not match desired rule", "desiredRuleDirection", securityGroupRule.Direction, "existingRuleDirection", *existingRule.Direction)
 					continue
 				}
 				if found, err := s.checkSecurityGroupRuleProtocolTcpudp(securityGroupRulePrototype, remote, existingRule); err != nil {
 					return false, err
 				} else if found {
 					// If we found the matching IBM Cloud Security Group Rule for the defined SecurityGroupRule and Remote, we can stop checking IBM Cloud Security Group Rules for this remote and move onto the next remote.
-					s.Logger.Info("tcp/udp rule match found")
+					s.Logger.Info("security group rule tcp/udp match found")
 					remoteMatch = true
 					break
 				}
-				s.Logger.Info("protocol tcp/udp rule does not match desired rule")
 			default:
 				// This is an unexpected IBM Cloud Security Group Rule Prototype, log it and move on
 				s.Logger.Info("unexpected security group rule prototype", "securityGroupRulePrototype", reflect.TypeOf(existingRuleIntf).String())
@@ -1473,7 +1449,7 @@ func (s *VPCClusterScope) checkSecurityGroupRuleProtocolAll(_ infrav1beta2.VPCSe
 	if exists, err := s.checkSecurityGroupRulePrototypeRemote(securityGroupRuleRemote, existingRule.Remote); err != nil {
 		return false, err
 	} else if exists {
-		s.Logger.Info("all protocols match")
+		s.Logger.Info("security group rule all protocols match")
 		return true, nil
 	}
 	return false, nil
@@ -1490,11 +1466,11 @@ func (s *VPCClusterScope) checkSecurityGroupRuleProtocolIcmp(securityGroupRulePr
 	if securityGroupRulePrototype.ICMPCode != nil && securityGroupRulePrototype.ICMPType != nil {
 		// If the existingRule Code and Type are both equal to the securityGroupRulePrototype's ICMPType and ICMPCode, the existingRule matches our definition for ICMP in securityGroupRulePrototype.
 		if *securityGroupRulePrototype.ICMPCode == *existingRule.Code && *securityGroupRulePrototype.ICMPType == *existingRule.Type {
-			s.Logger.Info("icmp code and type match")
+			s.Logger.Info("security group rule icmp code and type match")
 			return true, nil
 		}
 	} else if existingRule.Code == nil && existingRule.Type == nil {
-		s.Logger.Info("icmp unset match")
+		s.Logger.Info("security group rule unset icmp matches")
 		return true, nil
 	}
 	return false, nil
@@ -1503,7 +1479,6 @@ func (s *VPCClusterScope) checkSecurityGroupRuleProtocolIcmp(securityGroupRulePr
 // checkSecurityGroupRuleProtocolTcpudp analyzes an IBM Cloud Security Group Rule designated for either 'tcp' or 'udp' protocols, to verify if the supplied Rule and Remote match the attributes from the existing 'ProtocolTcpudp' Rule.
 func (s *VPCClusterScope) checkSecurityGroupRuleProtocolTcpudp(securityGroupRulePrototype infrav1beta2.VPCSecurityGroupRulePrototype, securityGroupRuleRemote infrav1beta2.VPCSecurityGroupRuleRemote, existingRule *vpcv1.SecurityGroupRuleSecurityGroupRuleProtocolTcpudp) (bool, error) {
 	// Check the protocol next, either TCP or UDP, to verify it matches
-	s.Logger.Info("comparing protocols", "desiredProtocol", securityGroupRulePrototype.Protocol, "existingProtocol", *existingRule.Protocol)
 	if securityGroupRulePrototype.Protocol != infrav1beta2.VPCSecurityGroupRuleProtocol(*existingRule.Protocol) {
 		return false, nil
 	}
@@ -1514,7 +1489,7 @@ func (s *VPCClusterScope) checkSecurityGroupRuleProtocolTcpudp(securityGroupRule
 		// If PortRange is set, verify whether the MinimumPort and MaximumPort match the existingRule's values, if they are set.
 		if securityGroupRulePrototype.PortRange != nil {
 			if existingRule.PortMin != nil && securityGroupRulePrototype.PortRange.MinimumPort == *existingRule.PortMin && existingRule.PortMax != nil && securityGroupRulePrototype.PortRange.MaximumPort == *existingRule.PortMax {
-				s.Logger.Info("port range matches")
+				s.Logger.Info("security group rule port range matches")
 				return true, nil
 			}
 		}
@@ -1524,13 +1499,10 @@ func (s *VPCClusterScope) checkSecurityGroupRuleProtocolTcpudp(securityGroupRule
 
 func (s *VPCClusterScope) checkSecurityGroupRulePrototypeRemote(securityGroupRuleRemote infrav1beta2.VPCSecurityGroupRuleRemote, existingRemote vpcv1.SecurityGroupRuleRemoteIntf) (bool, error) { //nolint: gocyclo
 	// NOTE(cjschaef): We only currently monitor Remote, not Local, as we don't support defining Local in SecurityGroup/SecurityGroupRule.
-	s.Logger.Info("checking security group rule remote type")
 	switch securityGroupRuleRemote.RemoteType {
 	case infrav1beta2.VPCSecurityGroupRuleRemoteTypeCIDR:
-		s.Logger.Info("checking cidr security group rule remote")
 		cidrRule := existingRemote.(*vpcv1.SecurityGroupRuleRemote)
 		if cidrRule.CIDRBlock == nil {
-			s.Logger.Info("security group rule remote has no cidr")
 			return false, nil
 		}
 		subnetDetails, err := s.VPCClient.GetVPCSubnetByName(*securityGroupRuleRemote.CIDRSubnetName)
@@ -1541,28 +1513,22 @@ func (s *VPCClusterScope) checkSecurityGroupRulePrototypeRemote(securityGroupRul
 		} else if subnetDetails.Ipv4CIDRBlock == nil {
 			return false, fmt.Errorf("error failed getting subnet by name for security group rule, no CIDRBlock")
 		}
-		s.Logger.Info("comparing subnet cidr to rule cidr", "subnetCIDR", *subnetDetails.Ipv4CIDRBlock, "remoteCIDR", *cidrRule.CIDRBlock)
 		if *subnetDetails.Ipv4CIDRBlock == *cidrRule.CIDRBlock {
-			s.Logger.Info("cidr's match")
+			s.Logger.Info("security group rule remote cidr's match")
 			return true, nil
 		}
 	case infrav1beta2.VPCSecurityGroupRuleRemoteTypeAddress:
-		s.Logger.Info("checking ip security group rule remote")
 		ipRule := existingRemote.(*vpcv1.SecurityGroupRuleRemote)
 		if ipRule.Address == nil {
-			s.Logger.Info("security group rule remote has no address")
 			return false, nil
 		}
-		s.Logger.Info("comparing desired address to rule address", "desiredAddress", *securityGroupRuleRemote.Address, "ruleAddress", *ipRule.Address)
 		if *securityGroupRuleRemote.Address == *ipRule.Address {
-			s.Logger.Info("addresses match")
+			s.Logger.Info("security group rule remote addresses match")
 			return true, nil
 		}
 	case infrav1beta2.VPCSecurityGroupRuleRemoteTypeSG:
-		s.Logger.Info("checking sg security group rule remote")
 		sgRule := existingRemote.(*vpcv1.SecurityGroupRuleRemote)
 		if sgRule.Name == nil {
-			s.Logger.Info("security group rule remote has no security group name")
 			return false, nil
 		}
 		// We can compare the SecurityGroup details from the securityGroupRemote and SecurityGroupRuleRemoteSecurityGroupReference, if those values are available
@@ -1579,7 +1545,6 @@ func (s *VPCClusterScope) checkSecurityGroupRulePrototypeRemote(securityGroupRul
 		var securityGroupDetails *vpcv1.SecurityGroup
 		var err error
 		if securityGroupID := s.getSecurityGroupIDFromStatus(*securityGroupRuleRemote.SecurityGroupName); securityGroupID != nil {
-			s.Logger.Info("using security group id from status", "id", securityGroupID)
 			// Option #2: If the SecurityGroupRuleRemoteSecurityGroupReference has an ID assigned, we can shortcut and simply check that
 			if sgRule.ID != nil && *securityGroupID == *sgRule.ID {
 				s.Logger.Info("security group rule remote security group id matches", "securityGroupRuleRemoteSecurityGroupID", sgRule.ID)
@@ -1604,19 +1569,16 @@ func (s *VPCClusterScope) checkSecurityGroupRulePrototypeRemote(securityGroupRul
 			s.Logger.Info("security group rule remote security group crn matches", "securityGroupRuleRemoteSecurityGroupCRN", *securityGroupDetails.CRN)
 			return true, nil
 		}
-		s.Logger.Info("sg security group rule remote not match")
 	case infrav1beta2.VPCSecurityGroupRuleRemoteTypeAny:
-		s.Logger.Info("checking any security group rule remote")
 		ipRule := existingRemote.(*vpcv1.SecurityGroupRuleRemote)
 		if ipRule.Address == nil {
 			s.Logger.Info("security group rule remote has no address, defaults to any remote")
 			return true, nil
 		}
 		if *ipRule.Address == infrav1beta2.CIDRBlockAny {
-			s.Logger.Info("address matches 0.0.0.0/0")
+			s.Logger.Info("security group rule remote address matches 0.0.0.0/0")
 			return true, nil
 		}
-		s.Logger.Info("any security group rule remote does not match")
 	default:
 		s.Logger.Info("unknown security group rule remote")
 	}
@@ -1760,11 +1722,13 @@ func (s *VPCClusterScope) createSecurityGroupRuleRemote(remote infrav1beta2.VPCS
 
 // ReconcileLoadBalancers reconciles Load Balancers.
 func (s *VPCClusterScope) ReconcileLoadBalancers() (bool, error) {
-	if len(s.IBMVPCCluster.Spec.Network.LoadBalancers) == 0 {
+	// TODO(cjschaef): Determine if we want to use default LB configuration or require at least one is defined in Cluster spec.
+	if s.IBMVPCCluster.Spec.Network.LoadBalancers == nil || len(s.IBMVPCCluster.Spec.Network.LoadBalancers) == 0 {
 		// We currently don't support any default LB configuration, they must be specified within the Cluster Spec
 		return false, fmt.Errorf("error no load balancers specified for cluster")
 	}
 
+	requeue := false
 	for _, loadBalancer := range s.IBMVPCCluster.Spec.Network.LoadBalancers {
 		var loadBalancerID *string
 		if loadBalancer.ID != nil {
@@ -1775,7 +1739,7 @@ func (s *VPCClusterScope) ReconcileLoadBalancers() (bool, error) {
 			}
 			lbDetails, err := s.VPCClient.GetLoadBalancerByName(loadBalancer.Name)
 			if err != nil {
-				return false, err
+				return false, fmt.Errorf("error retrieving load balancer by name: %w", err)
 			}
 			if lbDetails != nil {
 				loadBalancerID = lbDetails.ID
@@ -1783,23 +1747,28 @@ func (s *VPCClusterScope) ReconcileLoadBalancers() (bool, error) {
 		}
 
 		if loadBalancerID != nil {
-			// Check Cluster Status for Load Balancer
+			// Check Cluster status for Load Balancer
 			if s.IBMVPCCluster.Status.NetworkStatus != nil {
-				// If the load balancer is found and the state is active, we can shortcut reconcile logic on this load balancer and move on to the next one.
+				// If the Load Balancer is found and the state is active, we can shortcut reconcile logic on this Load Balancer and move on to the next one.
 				if status, ok := s.IBMVPCCluster.Status.NetworkStatus.LoadBalancers[*loadBalancerID]; ok && status.State == infrav1beta2.VPCLoadBalancerStateActive {
+					s.Info(fmt.Sprintf("load balancer reports as '%s'", infrav1beta2.VPCLoadBalancerStateActive), "loadbalancerID", *loadBalancerID)
 					continue
 				}
 			}
-			s.Info("LoadBalancer ID is set, fetching loadbalancer details", "loadbalancerid", *loadBalancerID)
+			s.Info("load balancer ID is set, fetching load balancer details", "loadbalancerID", *loadBalancerID)
 			loadBalancer, _, err := s.VPCClient.GetLoadBalancer(&vpcv1.GetLoadBalancerOptions{
 				ID: loadBalancerID,
 			})
 			if err != nil {
-				return false, err
+				return false, fmt.Errorf("error retrieving load balancer details: %w", err)
+			} else if loadBalancer == nil || loadBalancer.ProvisioningStatus == nil || loadBalancer.Hostname == nil {
+				return false, fmt.Errorf("error missing load balancer details")
 			}
 
-			if requeue := s.checkLoadBalancerStatus(loadBalancer.ProvisioningStatus); requeue {
-				return requeue, nil
+			if s.checkLoadBalancerStatus(loadBalancer.ProvisioningStatus) {
+				s.Info("load balancer not ready", "provisioningStatus", loadBalancer.ProvisioningStatus)
+				requeue = true
+				continue
 			}
 
 			loadBalancerStatus := infrav1beta2.VPCLoadBalancerStatus{
@@ -1807,49 +1776,55 @@ func (s *VPCClusterScope) ReconcileLoadBalancers() (bool, error) {
 				State:    infrav1beta2.VPCLoadBalancerState(*loadBalancer.ProvisioningStatus),
 				Hostname: loadBalancer.Hostname,
 			}
+			s.Info("updating status of load balancer", "loadBalancerID", *loadBalancerID, "loadBalancerStatus", loadBalancerStatus)
+			// Update status and flag for requeue
 			s.SetLoadBalancerStatus(loadBalancerStatus)
+			requeue = true
 			continue
 		}
-		// check VPC load balancer exist in cloud
-		loadBalancerStatus, err := s.checkLoadBalancer(loadBalancer)
+		// Check if the Load Balancer exists.
+		loadBalancerStatus, err := s.getLoadBalancer(loadBalancer)
 		if err != nil {
-			return false, err
+			return false, fmt.Errorf("error checking for load balancer: %w", err)
 		}
 		if loadBalancerStatus != nil {
+			s.Info("updating status of load balancer", "loadBalancerID", *loadBalancerStatus.ID, "loadBalancerStatus", loadBalancerStatus)
+			// Update status and flag for requeue
 			s.SetLoadBalancerStatus(*loadBalancerStatus)
+			requeue = true
 			continue
 		}
-		// create loadBalancer
+		// Create the Load Balancer.
 		loadBalancerStatus, err = s.createLoadBalancer(loadBalancer)
 		if err != nil {
 			return false, err
 		}
-		s.Info("Created VPC load balancer", "id", loadBalancerStatus.ID)
+		s.Info("Created load balancer", "loadBalancerID", loadBalancerStatus.ID)
 		s.SetLoadBalancerStatus(*loadBalancerStatus)
-
-		// tag
-
-		return true, nil
+		requeue = true
 	}
-	return false, nil
+	return requeue, nil
 }
 
-// checkLoadBalancerStatus checks the state of a VPC load balancer.
+// checkLoadBalancerStatus checks the state of a Load Balancer.
 // If state is pending, true is returned indicating a requeue for reconciliation.
 // In all other cases, it returns false.
 func (s *VPCClusterScope) checkLoadBalancerStatus(status *string) bool {
 	switch *status {
 	case string(infrav1beta2.VPCLoadBalancerStateActive):
-		s.Info("VPC load balancer is in active state")
+		s.Info("load balancer is in active state")
 	case string(infrav1beta2.VPCLoadBalancerStateCreatePending):
-		s.Info("VPC load balancer is in create pending state")
+		s.Info("load balancer is in create pending state")
+		return true
+	default:
+		s.Info("load balancer is in unexpected state", "status", *status)
 		return true
 	}
 	return false
 }
 
-// checkLoadBalancer checks loadBalancer in cloud.
-func (s *VPCClusterScope) checkLoadBalancer(lb infrav1beta2.VPCLoadBalancerSpec) (*infrav1beta2.VPCLoadBalancerStatus, error) {
+// getLoadBalancer attempts to retrieve the Load Balancer, otherwise returns nil if it doesn't exist.
+func (s *VPCClusterScope) getLoadBalancer(lb infrav1beta2.VPCLoadBalancerSpec) (*infrav1beta2.VPCLoadBalancerStatus, error) {
 	loadBalancer, err := s.VPCClient.GetLoadBalancerByName(lb.Name)
 	if err != nil {
 		return nil, err
@@ -1864,131 +1839,227 @@ func (s *VPCClusterScope) checkLoadBalancer(lb infrav1beta2.VPCLoadBalancerSpec)
 	}, nil
 }
 
-// createLoadBalancer creates loadBalancer.
-func (s *VPCClusterScope) createLoadBalancer(lb infrav1beta2.VPCLoadBalancerSpec) (*infrav1beta2.VPCLoadBalancerStatus, error) {
+// createLoadBalancer creates a Load Balancer.
+func (s *VPCClusterScope) createLoadBalancer(loadBalancer infrav1beta2.VPCLoadBalancerSpec) (*infrav1beta2.VPCLoadBalancerStatus, error) {
 	options := &vpcv1.CreateLoadBalancerOptions{}
-	// TODO(karthik-k-n): consider moving resource group id to clusterscope
-	// fetch resource group id
 	resourceGroupID, err := s.GetResourceGroupID()
 	if err != nil {
 		return nil, err
 	}
 	if resourceGroupID == "" {
-		s.Info("failed to create load balancer, failed to fetch resource group id")
 		return nil, fmt.Errorf("error getting resource group id for resource group %v, id is empty", s.ResourceGroup())
 	}
 
-	var isPublic bool
-	if lb.Public != nil && *lb.Public {
-		isPublic = true
+	isPublic := true
+	// Load Balancer is private if defined that way (defaults to Public)
+	if loadBalancer.Public != nil && !*loadBalancer.Public {
+		isPublic = false
 	}
+
 	options.SetIsPublic(isPublic)
-	options.SetName(lb.Name)
+	options.SetName(loadBalancer.Name)
 	options.SetResourceGroup(&vpcv1.ResourceGroupIdentity{
 		ID: &resourceGroupID,
 	})
 
-	subnetIDs, err := s.GetSubnetIDs()
+	// Build the load balancer's subnets, requiring subnet ID's.
+	subnetIDs, err := s.getLoadBalancerSubnetIDs(loadBalancer)
 	if err != nil {
-		return nil, fmt.Errorf("error collecting subnet IDs for load balancer creation")
-	} else if subnetIDs == nil {
-		return nil, fmt.Errorf("error subnet required for load balancer creation")
+		return nil, fmt.Errorf("error collecting load balancer subnets: %w", err)
 	}
+	s.Info("collected subnet ids", "subnetIDs", subnetIDs)
 	for _, subnetID := range subnetIDs {
-		subnet := &vpcv1.SubnetIdentity{
+		subnet := &vpcv1.SubnetIdentityByID{
 			ID: ptr.To(subnetID),
 		}
+		s.Info("adding subnet to load balancer", "loadBalancerName", loadBalancer.Name, "subnetID", subnetID)
 		options.Subnets = append(options.Subnets, subnet)
 	}
-	// TODO(cjschaef): Determine if this Pool should be auto generated or required from Spec
-	options.SetPools([]vpcv1.LoadBalancerPoolPrototype{
-		{
-			Algorithm:     core.StringPtr("round_robin"),
-			HealthMonitor: &vpcv1.LoadBalancerPoolHealthMonitorPrototype{Delay: core.Int64Ptr(5), MaxRetries: core.Int64Ptr(2), Timeout: core.Int64Ptr(2), Type: core.StringPtr("tcp")},
-			// Note: Appending port number to the name, it will be referenced to set target port while adding new pool member
-			Name:     core.StringPtr(fmt.Sprintf("%s-pool-%d", lb.Name, s.APIServerPort())),
-			Protocol: core.StringPtr("tcp"),
-		},
-	})
 
-	// TODO(cjschaef): Determine if this Listener should be auto applied or required from Spec
-	options.SetListeners([]vpcv1.LoadBalancerListenerPrototypeLoadBalancerContext{
-		{
-			Protocol: core.StringPtr("tcp"),
-			Port:     core.Int64Ptr(int64(s.APIServerPort())),
-			DefaultPool: &vpcv1.LoadBalancerPoolIdentityByName{
-				Name: core.StringPtr(fmt.Sprintf("%s-pool-%d", lb.Name, s.APIServerPort())),
-			},
-		},
-	})
-
-	if lb.AdditionalListeners != nil {
-		for _, additionalListeners := range lb.AdditionalListeners {
-			pool := vpcv1.LoadBalancerPoolPrototype{
-				Algorithm:     core.StringPtr("round_robin"),
-				HealthMonitor: &vpcv1.LoadBalancerPoolHealthMonitorPrototype{Delay: core.Int64Ptr(5), MaxRetries: core.Int64Ptr(2), Timeout: core.Int64Ptr(2), Type: core.StringPtr("tcp")},
-				// Note: Appending port number to the name, it will be referenced to set target port while adding new pool member
-				Name:     ptr.To(fmt.Sprintf("additional-pool-%d", additionalListeners.Port)),
-				Protocol: core.StringPtr("tcp"),
-			}
-			options.Pools = append(options.Pools, pool)
-
-			listener := vpcv1.LoadBalancerListenerPrototypeLoadBalancerContext{
-				Protocol: core.StringPtr("tcp"),
-				Port:     core.Int64Ptr(additionalListeners.Port),
-				DefaultPool: &vpcv1.LoadBalancerPoolIdentityByName{
-					Name: ptr.To(fmt.Sprintf("additional-pool-%d", additionalListeners.Port)),
-				},
-			}
-			options.Listeners = append(options.Listeners, listener)
-		}
-	}
-
-	loadBalancer, _, err := s.VPCClient.CreateLoadBalancer(options)
+	// Build the load balancer's security groups, requiring security group ID's.
+	securityGroupIDs, err := s.getLoadBalancerSecurityGroupIDs(loadBalancer)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error collecting load balancer security groups: %w", err)
 	}
-	lbState := infrav1beta2.VPCLoadBalancerState(*loadBalancer.ProvisioningStatus)
+	for _, securityGroupID := range securityGroupIDs {
+		sg := &vpcv1.SecurityGroupIdentityByID{
+			ID: ptr.To(securityGroupID),
+		}
+		options.SecurityGroups = append(options.SecurityGroups, sg)
+	}
+
+	// Build the load balancer's backend pools.
+	backendPools := make([]vpcv1.LoadBalancerPoolPrototype, 0)
+	// If BackendPools is populated, use those. Otherwise, use default.
+	// TODO(cjschaef): Determine if a default Pool should be auto generated, or allow "empty" pools for LB's.
+	if loadBalancer.BackendPools != nil {
+		for _, pool := range loadBalancer.BackendPools {
+			monitor := &vpcv1.LoadBalancerPoolHealthMonitorPrototype{
+				Delay:      ptr.To(pool.HealthDelay),
+				MaxRetries: ptr.To(pool.HealthRetries),
+				Timeout:    ptr.To(pool.HealthTimeout),
+				Type:       ptr.To(pool.HealthType),
+			}
+			if pool.HealthMonitorPort != nil {
+				monitor.Port = pool.HealthMonitorPort
+			}
+			if pool.HealthMonitorURL != nil {
+				monitor.URLPath = pool.HealthMonitorURL
+			}
+			backendPool := vpcv1.LoadBalancerPoolPrototype{
+				Algorithm:     ptr.To(pool.Algorithm),
+				HealthMonitor: monitor,
+				Protocol:      ptr.To(pool.Protocol),
+			}
+			// Only apply a name if one was provided (otherwise rely on generated name from VPC service).
+			if pool.Name != nil {
+				backendPool.Name = pool.Name
+			}
+
+			s.Info("added pool to load balancer", "loadBalancerName", loadBalancer.Name, "backendPoolName", pool.Name)
+			backendPools = append(backendPools, backendPool)
+		}
+	} else {
+		s.Info("using default backend pools for load balancer", "loadBalancerName", loadBalancer.Name)
+		backendPools = s.getDefaultLoadBalancerBackendPools()
+	}
+	options.SetPools(backendPools)
+
+	// Build the load balancer's listeners.
+	listeners := make([]vpcv1.LoadBalancerListenerPrototypeLoadBalancerContext, 0)
+	// If AdditionalListeners is populated, use those. Otherwise, use default.
+	// TODO(cjschaef): Determine if a default Listener should be auto generated or allow "empty" listeners for LB's.
+	if loadBalancer.AdditionalListeners != nil {
+		for _, additionalListener := range loadBalancer.AdditionalListeners {
+			listener := vpcv1.LoadBalancerListenerPrototypeLoadBalancerContext{
+				Port:     ptr.To(additionalListener.Port),
+				Protocol: ptr.To("tcp"),
+			}
+			if additionalListener.Protocol != nil {
+				listener.Protocol = additionalListener.Protocol
+			}
+			if additionalListener.DefaultPoolName != nil {
+				listener.DefaultPool = &vpcv1.LoadBalancerPoolIdentityByName{
+					Name: additionalListener.DefaultPoolName,
+				}
+			}
+			s.Info("addd listener to load balancer", "loadBalancerName", loadBalancer.Name, "listenerPort", listener.Port)
+			listeners = append(listeners, listener)
+		}
+	} else {
+		s.Info("using default listeners for load balancer", "loadBalancerName", loadBalancer.Name)
+		listeners = s.getDefaultLoadBalancerListeners(loadBalancer.BackendPools == nil)
+	}
+	options.SetListeners(listeners)
+
+	// Create the load balancer.
+	loadBalancerDetails, _, err := s.VPCClient.CreateLoadBalancer(options)
+	if err != nil {
+		return nil, fmt.Errorf("error creating load balancer: %w", err)
+	}
+
+	if err = s.TagResource(s.IBMVPCCluster.Name, *loadBalancerDetails.CRN); err != nil {
+		return nil, fmt.Errorf("error tagging load balancer: %w", err)
+	}
+
 	return &infrav1beta2.VPCLoadBalancerStatus{
-		ID:                loadBalancer.ID,
-		State:             lbState,
-		Hostname:          loadBalancer.Hostname,
+		ID:                loadBalancerDetails.ID,
+		State:             infrav1beta2.VPCLoadBalancerState(*loadBalancerDetails.ProvisioningStatus),
+		Hostname:          loadBalancerDetails.Hostname,
 		ControllerCreated: ptr.To(true),
 	}, nil
 }
 
-/*
-// getVPCRegion returns region associated with VPC zone.
-func (s *VPCClusterScope) getVPCRegion() *string {
-	if s.IBMVPCCluster.Spec.VPC != nil {
-		return s.IBMVPCCluster.Spec.VPC.Region
+// getLoadBalancerSubnetIDs builds the set of subnet ID's for a load balancer, or defaults to the Control Plane subnet ID's if no subnets were provided. This will attempt to transform subnet names into their respective ID's.
+func (s *VPCClusterScope) getLoadBalancerSubnetIDs(loadBalancer infrav1beta2.VPCLoadBalancerSpec) ([]string, error) {
+	subnetIDs := make([]string, 0)
+	// If Subnets were provided for the load balancer, find ID's, if necessary, and use them.
+	// Otherwise, default to trying to use the Control Plane subnets.
+	if loadBalancer.Subnets != nil {
+		for _, subnet := range loadBalancer.Subnets {
+			if subnet.ID != nil {
+				subnetIDs = append(subnetIDs, *subnet.ID)
+			} else if subnet.Name != nil {
+				subnetID, err := s.GetSubnetID(*subnet.Name)
+				if err != nil {
+					return nil, fmt.Errorf("error looking up load balancer subnet by name: %s", *subnet.Name)
+				} else if subnetID == nil {
+					return nil, fmt.Errorf("error load balancer subnet not found: %s", *subnet.Name)
+				}
+				subnetIDs = append(subnetIDs, *subnetID)
+			} else {
+				return nil, fmt.Errorf("error parsing load balancer subnet, no id or name provided: %s", loadBalancer.Name)
+			}
+		}
+	} else {
+		subnetIDs, err := s.GetControlPlaneSubnetIDs()
+		if err != nil {
+			return nil, fmt.Errorf("error collecting subnet IDs for load balancer creation")
+		} else if subnetIDs == nil {
+			return nil, fmt.Errorf("error subnet required for load balancer creation")
+		}
 	}
-	// if vpc region is not set try to fetch corresponding region from power vs zone
-	zone := s.Zone()
-	if zone == nil {
-		s.Info("powervs zone is not set")
-		return nil
-	}
-	region := endpoints.ConstructRegionFromZone(*zone)
-	vpcRegion, err := genUtil.VPCRegionForPowerVSRegion(region)
-	if err != nil {
-		s.Error(err, fmt.Sprintf("failed to fetch vpc region associated with powervs region %s", region))
-		return nil
-	}
-	return &vpcRegion
+	return subnetIDs, nil
 }
 
-// fetchVPCCRN returns VPC CRN.
-func (s *VPCClusterScope) fetchVPCCRN() (*string, error) {
-	vpcDetails, _, err := s.IBMVPCClient.GetVPC(&vpcv1.GetVPCOptions{
-		ID: s.GetVPCID(),
-	})
-	if err != nil {
-		return nil, err
+func (s *VPCClusterScope) getLoadBalancerSecurityGroupIDs(loadBalancer infrav1beta2.VPCLoadBalancerSpec) ([]string, error) {
+	securityGroupIDs := make([]string, 0)
+	// If SecurityGroups were provided for the load balancer, find ID's, if necessary, and use them.
+	if loadBalancer.SecurityGroups != nil {
+		for _, securityGroup := range loadBalancer.SecurityGroups {
+			if securityGroup.ID != nil {
+				securityGroupIDs = append(securityGroupIDs, *securityGroup.ID)
+			} else if securityGroup.Name != nil {
+				securityGroupID, err := s.GetSecurityGroupID(*securityGroup.Name)
+				if err != nil {
+					return nil, fmt.Errorf("error looking up load balancer security group by name: %s", *securityGroup.Name)
+				} else if securityGroupID == nil {
+					return nil, fmt.Errorf("error load balancer security group not found: %s", *securityGroup.Name)
+				}
+				securityGroupIDs = append(securityGroupIDs, *securityGroupID)
+			} else {
+				return nil, fmt.Errorf("error parsing load balancer security group, no id or name provided: %s", loadBalancer.Name)
+			}
+		}
 	}
-	return vpcDetails.CRN, nil
-}.
-*/
+	return securityGroupIDs, nil
+}
+
+// getDefaultBalancerBackendPools returns a list of default Load Balancer Backend Pools for a Load Balancer.
+func (s *VPCClusterScope) getDefaultLoadBalancerBackendPools() []vpcv1.LoadBalancerPoolPrototype {
+	return []vpcv1.LoadBalancerPoolPrototype{
+		{
+			Algorithm: ptr.To("round_robin"),
+			HealthMonitor: &vpcv1.LoadBalancerPoolHealthMonitorPrototype{
+				Delay:      ptr.To(int64(5)),
+				MaxRetries: ptr.To(int64(2)),
+				Timeout:    ptr.To(int64(2)),
+				Type:       ptr.To("tcp"),
+			},
+			// Use the default backend pool service name.
+			Name:     s.GetServiceName(infrav1beta2.ResourceTypeLoadBalancerBackendPool),
+			Protocol: ptr.To("tcp"),
+		},
+	}
+}
+
+// getDefaultLoadBalancerListeners returns a list of default Load Balancer Listeners for a Load Balancer.
+func (s *VPCClusterScope) getDefaultLoadBalancerListeners(defaultBackendPool bool) []vpcv1.LoadBalancerListenerPrototypeLoadBalancerContext {
+	listeners := make([]vpcv1.LoadBalancerListenerPrototypeLoadBalancerContext, 1)
+	defaultListener := vpcv1.LoadBalancerListenerPrototypeLoadBalancerContext{
+		Protocol: ptr.To("tcp"),
+		Port:     ptr.To(int64(s.APIServerPort())),
+	}
+	// If no backend pool was provided, a default backend pool gets created, set that for the default listener's default pool.
+	if defaultBackendPool {
+		defaultListener.DefaultPool = &vpcv1.LoadBalancerPoolIdentityByName{
+			Name: s.GetServiceName(infrav1beta2.ResourceTypeLoadBalancerBackendPool),
+		}
+	}
+	// Add defaultListener to slice, then return.
+	listeners = append(listeners, defaultListener)
+	return listeners
+}
 
 // GetServiceName returns name of given service type from spec or generate a name for it.
 func (s *VPCClusterScope) GetServiceName(resourceType infrav1beta2.ResourceType) *string {
@@ -2003,115 +2074,13 @@ func (s *VPCClusterScope) GetServiceName(resourceType infrav1beta2.ResourceType)
 		return ptr.To(fmt.Sprintf("%s-subnet", s.IBMVPCCluster.Name))
 	case infrav1beta2.ResourceTypePublicGateway:
 		return ptr.To(fmt.Sprintf("%s-pgateway", s.IBMVPCCluster.Name))
+	case infrav1beta2.ResourceTypeLoadBalancerBackendPool:
+		return ptr.To(fmt.Sprintf("%s-apiserver-backend-pool", s.IBMVPCCluster.Name))
 	default:
 		s.Info("unsupported resource type")
 	}
 	return nil
 }
-
-/*
-// DeleteLoadBalancer deletes loadBalancer.
-func (s *VPCClusterScope) DeleteLoadBalancer() (bool, error) {
-	for _, lb := range s.IBMVPCCluster.Status.LoadBalancers {
-		if lb.ID == nil || lb.ControllerCreated == nil || !*lb.ControllerCreated {
-			continue
-		}
-
-		lb, _, err := s.IBMVPCClient.GetLoadBalancer(&vpcv1.GetLoadBalancerOptions{
-			ID: lb.ID,
-		})
-
-		if err != nil {
-			if strings.Contains(err.Error(), "cannot be found") {
-				s.Info("VPC load balancer successfully deleted")
-				return false, nil
-			}
-			return false, fmt.Errorf("error fetching the load balancer: %w", err)
-		}
-
-		if lb != nil && lb.ProvisioningStatus != nil && *lb.ProvisioningStatus == string(infrav1beta2.VPCLoadBalancerStateDeletePending) {
-			s.Info("VPC load balancer is currently being deleted")
-			return true, nil
-		}
-
-		if _, err = s.IBMVPCClient.DeleteLoadBalancer(&vpcv1.DeleteLoadBalancerOptions{
-			ID: lb.ID,
-		}); err != nil {
-			s.Error(err, "error deleting the load balancer")
-			return false, err
-		}
-		return true, nil
-	}
-	return false, nil
-}
-
-// DeleteVPCSubnet deletes VPC subnet.
-func (s *VPCClusterScope) DeleteVPCSubnet() (bool, error) {
-	for _, subnet := range s.IBMVPCCluster.Status.VPCSubnet {
-		if subnet.ID == nil || subnet.ControllerCreated == nil || !*subnet.ControllerCreated {
-			continue
-		}
-
-		net, _, err := s.IBMVPCClient.GetSubnet(&vpcv1.GetSubnetOptions{
-			ID: subnet.ID,
-		})
-
-		if err != nil {
-			if strings.Contains(err.Error(), "Subnet not found") {
-				s.Info("VPC subnet successfully deleted")
-				return false, nil
-			}
-			return false, fmt.Errorf("error fetching the subnet: %w", err)
-		}
-
-		if net != nil && net.Status != nil && *net.Status == string(infrav1beta2.VPCSubnetStateDeleting) {
-			return true, nil
-		}
-
-		if _, err = s.IBMVPCClient.DeleteSubnet(&vpcv1.DeleteSubnetOptions{
-			ID: net.ID,
-		}); err != nil {
-			return false, fmt.Errorf("error deleting VPC subnet: %w", err)
-		}
-		return true, nil
-	}
-	return false, nil
-}
-
-// DeleteVPC deletes VPC.
-func (s *VPCClusterScope) DeleteVPC() (bool, error) {
-	if !s.isResourceCreatedByController(infrav1beta2.ResourceTypeVPC) {
-		return false, nil
-	}
-
-	if s.IBMVPCCluster.Status.VPC.ID == nil {
-		return false, nil
-	}
-
-	vpc, _, err := s.IBMVPCClient.GetVPC(&vpcv1.GetVPCOptions{
-		ID: s.IBMVPCCluster.Status.VPC.ID,
-	})
-
-	if err != nil {
-		if strings.Contains(err.Error(), "VPC not found") {
-			s.Info("VPC successfully deleted")
-			return false, nil
-		}
-		return false, fmt.Errorf("error fetching the VPC: %w", err)
-	}
-
-	if vpc != nil && vpc.Status != nil && *vpc.Status == string(infrav1beta2.VPCStateDeleting) {
-		return true, nil
-	}
-
-	if _, err = s.IBMVPCClient.DeleteVPC(&vpcv1.DeleteVPCOptions{
-		ID: vpc.ID,
-	}); err != nil {
-		return false, fmt.Errorf("error deleting VPC: %w", err)
-	}
-	return true, nil
-}.
-*/
 
 // CheckTagExists checks whether a user Tag already exists.
 func (s *VPCClusterScope) CheckTagExists(tagName string) (bool, error) {

@@ -3,10 +3,13 @@ package clusterapi
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/url"
 	"os"
 	"path/filepath"
 	"time"
+
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	ibmcloudic "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
@@ -84,9 +87,26 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 		if err != nil {
 			return fmt.Errorf("failed creating new resource group: %w", err)
 		}
-		// Retrieve the newly created resource group
-		resourceGroup, err = client.GetResourceGroup(ctx, resourceGroupName)
+		// Retrieve the newly created resource group.
+		// Use retry logic to wait for the new resource group if necessary.
+		backoff := wait.Backoff{
+			Duration: 10 * time.Second,
+			Factor:   1.1,
+			Cap:      leftInContext(ctx),
+			Steps:    math.MaxInt32,
+		}
+		var lastErr error
+		err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
+			resourceGroup, lastErr = client.GetResourceGroup(ctx, resourceGroupName)
+			if lastErr == nil {
+				return true, nil
+			}
+			return false, nil
+		})
 		if err != nil {
+			if lastErr != nil {
+				err = lastErr
+			}
 			return fmt.Errorf("failed retrieving new resource group: %w", err)
 		}
 	}
@@ -177,4 +197,12 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	}
 
 	return ignShim, nil
+}
+
+func leftInContext(ctx context.Context) time.Duration {
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		return math.MaxInt64
+	}
+	return time.Until(deadline)
 }

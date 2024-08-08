@@ -99,15 +99,31 @@ type VPCLoadBalancerSpec struct {
 	// backendPools defines the LB's backend pools.
 	// +optional
 	BackendPools []BackendPoolSpec `json:"backendPools,omitempty"`
+
+	// securityGroups defines SG's to attach to the LB
+	// +optional
+	SecurityGroups []VPCResource `json:"securityGroups,omitempty"`
+
+	// subnets defines subnets to attach to the LB
+	// +optional
+	Subnets []VPCResource `json:"subnets,omitempty"`
 }
 
 // AdditionalListenerSpec defines the desired state of an
 // additional listener on an VPC load balancer.
 type AdditionalListenerSpec struct {
+	// defaultPoolName is the name of a BackendPool.
+	// +optional
+	DefaultPoolName *string `json:"defaultPoolName,omitempty"`
+
 	// Port sets the port for the additional listener.
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=65535
 	Port int64 `json:"port"`
+
+	// protocol is the protocol to use. Use an Enum.
+	// +optional
+	Protocol *string `json:"protocol,omitempty"`
 }
 
 // BackendPoolSpec defines the desired configuration of a VPC Load Balancer Backend Pool.
@@ -224,7 +240,7 @@ type VPCNetworkSpec struct {
 
 	// loadBalancers is a set of VPC Load Balancers definition to use for the cluster.
 	// +optional
-	LoadBalancers []VPCLoadBalancerSpec `json:"loadbalancers,omitempty"`
+	LoadBalancers []VPCLoadBalancerSpec `json:"loadBalancers,omitempty"`
 
 	// resourceGroup is the name of the Resource Group containing all of the newtork resources.
 	// This can be different than the Resource Group containing the remaining cluster resources.

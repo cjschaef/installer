@@ -10,102 +10,116 @@ import (
 )
 
 const (
-	// kubernetesAPIPort is the Kubernetes API port.
-	kubernetesAPIPort = 6443
+	// KubernetesAPIPort is the Kubernetes API port.
+	KubernetesAPIPort = 6443
 
-	// kubernetesAPIPrivatePostfix is the name postfix for Kubernetes API Private LB resources.
-	kubernetesAPIPrivatePostfix = "kubernetes-api-private"
+	// KubernetesAPIPrivatePostfix is the name postfix for Kubernetes API Private LB resources.
+	KubernetesAPIPrivatePostfix = "kubernetes-api-private"
 
-	// kubernetesAPIPublicPostfix is the name postfix for Kubernetes API Public LB resources.
-	kubernetesAPIPublicPostfix = "kubernetes-api-public"
+	// KubernetesAPIPublicPostfix is the name postfix for Kubernetes API Public LB resources.
+	KubernetesAPIPublicPostfix = "kubernetes-api-public"
 
-	// machineConfigPostfix is the name postfix for Machine Config Server LB resources.
-	machineConfigPostfix = "machine-config"
+	// MachineConfigPostfix is the name postfix for Machine Config Server LB resources.
+	MachineConfigPostfix = "machine-config"
 
-	// machineConfigServerPort is the Machine Config Server port.
-	machineConfigServerPort = 22623
-
-	// algorithmRoundRobin is the Round-Robin distribution algorithm for LB Backend Pools.
-	algorithmRoundRobin = "round_robin"
-
-	// protocolTCP is the TCP protocol type for LB Backend Pools.
-	protocolTCP = "tcp"
-
-	healthTypeHTTPS = "https"
+	// MachineConfigServerPort is the Machine Config Server port.
+	MachineConfigServerPort = 22623
 
 	healthMonitorURLReadyz = "/readyz"
 )
 
-func getLoadBalancers(infraID string, publish types.PublishingStrategy) []*capibmcloud.VPCLoadBalancerSpec {
-	loadBalancers := make([]*capibmcloud.VPCLoadBalancerSpec, 0, 2)
-	loadBalancers = append(loadBalancers, buildPrivateLoadBalancer(infraID))
+func getLoadBalancers(infraID string, securityGroups []capibmcloud.VPCResource, subnets []capibmcloud.VPCResource, publish types.PublishingStrategy) []capibmcloud.VPCLoadBalancerSpec {
+	loadBalancers := make([]capibmcloud.VPCLoadBalancerSpec, 0, 2)
+
+	loadBalancers = append(loadBalancers, buildPrivateLoadBalancer(infraID, securityGroups, subnets))
 	if publish == types.ExternalPublishingStrategy {
-		loadBalancers = append(loadBalancers, buildPublicLoadBalancer(infraID))
+		loadBalancers = append(loadBalancers, buildPublicLoadBalancer(infraID, securityGroups, subnets))
 	}
 
 	return loadBalancers
 }
 
-func buildPrivateLoadBalancer(infraID string) *capibmcloud.VPCLoadBalancerSpec {
-	return &capibmcloud.VPCLoadBalancerSpec{
-		Name:   fmt.Sprintf("%s-%s", infraID, kubernetesAPIPrivatePostfix),
+func buildPrivateLoadBalancer(infraID string, securityGroups []capibmcloud.VPCResource, subnets []capibmcloud.VPCResource) capibmcloud.VPCLoadBalancerSpec {
+	kubeAPIBackendPoolNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, KubernetesAPIPrivatePostfix))
+	machineConfigBackendPoolNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, MachineConfigPostfix))
+
+	return capibmcloud.VPCLoadBalancerSpec{
+		Name:   fmt.Sprintf("%s-%s", infraID, KubernetesAPIPrivatePostfix),
 		Public: ptr.To(false),
 		AdditionalListeners: []capibmcloud.AdditionalListenerSpec{
 			{
-				Port: kubernetesAPIPort,
+				DefaultPoolName: kubeAPIBackendPoolNamePtr,
+				Port:            KubernetesAPIPort,
+				Protocol:        &capibmcloud.VPCLoadBalancerListenerProtocolTCP,
 			},
 			{
-				Port: machineConfigServerPort,
+				DefaultPoolName: machineConfigBackendPoolNamePtr,
+				Port:            MachineConfigServerPort,
+				Protocol:        &capibmcloud.VPCLoadBalancerListenerProtocolTCP,
 			},
 		},
-		BackendPools: []capibmcloud.BackendPoolSpec{
+		BackendPools: []capibmcloud.VPCLoadBalancerBackendPoolSpec{
 			{
 				// Kubernetes API pool
-				Name:             ptr.To(fmt.Sprintf("%s-%s", infraID, kubernetesAPIPrivatePostfix)),
-				Algorithm:        algorithmRoundRobin,
-				Protocol:         protocolTCP,
-				HealthDelay:      60,
-				HealthRetries:    5,
-				HealthTimeout:    30,
-				HealthType:       healthTypeHTTPS,
-				HealthMonitorURL: ptr.To(healthMonitorURLReadyz),
+				Name:      kubeAPIBackendPoolNamePtr,
+				Algorithm: capibmcloud.VPCLoadBalancerBackendPoolAlgorithmRoundRobin,
+				Protocol:  capibmcloud.VPCLoadBalancerBackendPoolProtocolTCP,
+				HealthMonitor: capibmcloud.VPCLoadBalancerHealthMonitorSpec{
+					Delay:   60,
+					Retries: 5,
+					Timeout: 30,
+					Type:    capibmcloud.VPCLoadBalancerBackendPoolHealthMonitorTypeHTTPS,
+					URLPath: ptr.To(healthMonitorURLReadyz),
+				},
 			},
 			{
 				// Machine Config Server pool
-				Name:             ptr.To(fmt.Sprintf("%s-%s", infraID, machineConfigPostfix)),
-				Algorithm:        algorithmRoundRobin,
-				Protocol:         protocolTCP,
-				HealthDelay:      60,
-				HealthRetries:    5,
-				HealthTimeout:    30,
-				HealthType:       healthTypeHTTPS,
-				HealthMonitorURL: ptr.To(healthMonitorURLReadyz),
+				Name:      machineConfigBackendPoolNamePtr,
+				Algorithm: capibmcloud.VPCLoadBalancerBackendPoolAlgorithmRoundRobin,
+				Protocol:  capibmcloud.VPCLoadBalancerBackendPoolProtocolTCP,
+				HealthMonitor: capibmcloud.VPCLoadBalancerHealthMonitorSpec{
+					Delay:   60,
+					Retries: 5,
+					Timeout: 30,
+					Type:    capibmcloud.VPCLoadBalancerBackendPoolHealthMonitorTypeHTTPS,
+					URLPath: ptr.To(healthMonitorURLReadyz),
+				},
 			},
 		},
+		SecurityGroups: securityGroups,
+		Subnets:        subnets,
 	}
 }
 
-func buildPublicLoadBalancer(infraID string) *capibmcloud.VPCLoadBalancerSpec {
-	return &capibmcloud.VPCLoadBalancerSpec{
-		Name:   fmt.Sprintf("%s-%s", infraID, kubernetesAPIPublicPostfix),
+func buildPublicLoadBalancer(infraID string, securityGroups []capibmcloud.VPCResource, subnets []capibmcloud.VPCResource) capibmcloud.VPCLoadBalancerSpec {
+	backendPoolNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, KubernetesAPIPublicPostfix))
+
+	return capibmcloud.VPCLoadBalancerSpec{
+		Name:   fmt.Sprintf("%s-%s", infraID, KubernetesAPIPublicPostfix),
 		Public: ptr.To(true),
 		AdditionalListeners: []capibmcloud.AdditionalListenerSpec{
 			{
-				Port: kubernetesAPIPort,
+				DefaultPoolName: backendPoolNamePtr,
+				Port:            KubernetesAPIPort,
+				Protocol:        &capibmcloud.VPCLoadBalancerListenerProtocolTCP,
 			},
 		},
-		BackendPools: []capibmcloud.BackendPoolSpec{
+		BackendPools: []capibmcloud.VPCLoadBalancerBackendPoolSpec{
 			{
 				// Kubernetes API pool
-				Name:             ptr.To(fmt.Sprintf("%s-%s", infraID, kubernetesAPIPublicPostfix)),
-				Algorithm:        algorithmRoundRobin,
-				Protocol:         protocolTCP,
-				HealthDelay:      60,
-				HealthRetries:    5,
-				HealthTimeout:    30,
-				HealthType:       healthTypeHTTPS,
-				HealthMonitorURL: ptr.To(healthMonitorURLReadyz),
+				Name:      backendPoolNamePtr,
+				Algorithm: capibmcloud.VPCLoadBalancerBackendPoolAlgorithmRoundRobin,
+				Protocol:  capibmcloud.VPCLoadBalancerBackendPoolProtocolTCP,
+				HealthMonitor: capibmcloud.VPCLoadBalancerHealthMonitorSpec{
+					Delay:   60,
+					Retries: 5,
+					Timeout: 30,
+					Type:    capibmcloud.VPCLoadBalancerBackendPoolHealthMonitorTypeHTTPS,
+					URLPath: ptr.To(healthMonitorURLReadyz),
+				},
 			},
 		},
+		SecurityGroups: securityGroups,
+		Subnets:        subnets,
 	}
 }

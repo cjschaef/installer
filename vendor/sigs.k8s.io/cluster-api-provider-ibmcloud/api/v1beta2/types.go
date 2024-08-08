@@ -184,6 +184,8 @@ var (
 	ResourceTypeDHCPServer = ResourceType("dhcpServer")
 	// ResourceTypeLoadBalancer VPC loadBalancer resource.
 	ResourceTypeLoadBalancer = ResourceType("loadBalancer")
+	// ResourceTypeLoadBalancerBackendPool VPC Load Balancer Backend Pool resource.
+	ResourceTypeLoadBalancerBackendPool = ResourceType("loadBalancerBackendPool")
 	// ResourceTypeTransitGateway is transit gateway resource.
 	ResourceTypeTransitGateway = ResourceType("transitGateway")
 	// ResourceTypeVPC is Power VS network resource.
