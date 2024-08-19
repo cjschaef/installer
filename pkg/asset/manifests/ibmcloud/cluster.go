@@ -72,9 +72,13 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	if platform.ResourceGroupName != "" {
 		resourceGroup = platform.ResourceGroupName
 	}
-	networkResourceGroup := resourceGroup
+
+	// Default Network Resource Group to cluster Resource Group Name, override if a Network Resource Group name was provided.
+	networkResourceGroup := &capibmcloud.IBMCloudResourceReference{
+		Name: ptr.To(resourceGroup),
+	}
 	if platform.NetworkResourceGroupName != "" {
-		networkResourceGroup = platform.NetworkResourceGroupName
+		networkResourceGroup.Name = ptr.To(platform.NetworkResourceGroupName)
 	}
 	vpcName := platform.GetVPCName()
 	if vpcName == "" {
@@ -94,7 +98,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		COSBucketRegion: ptr.To(platform.Region),
 		COSObject:       ptr.To(trimmedImageName),
 		OperatingSystem: ptr.To(operatingSystem),
-		ResourceGroup: &capibmcloud.GenericResourceReference{
+		ResourceGroup: &capibmcloud.IBMCloudResourceReference{
 			Name: ptr.To(resourceGroup),
 		},
 	}
@@ -196,7 +200,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 			Image: imageSpec,
 			Network: &capibmcloud.VPCNetworkSpec{
-				ResourceGroup:       ptr.To(networkResourceGroup),
+				ResourceGroup:       networkResourceGroup,
 				SecurityGroups:      vpcSecurityGroups,
 				WorkerSubnets:       capiComputeSubnets,
 				ControlPlaneSubnets: capiControlPlaneSubnets,

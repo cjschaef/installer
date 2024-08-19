@@ -14,15 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//go:generate ../../../../hack/tools/bin/mockgen -source=./vpc.go -destination=./mock/vpc_generated.go -package=mock
-//go:generate /usr/bin/env bash -c "cat ../../../../hack/boilerplate/boilerplate.generatego.txt ./mock/vpc_generated.go > ./mock/_vpc_generated.go && mv ./mock/_vpc_generated.go ./mock/vpc_generated.go"
-
 package vpc
 
 import (
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 )
+
+//go:generate ../../../../hack/tools/bin/mockgen -source=./vpc.go -destination=./mock/vpc_generated.go -package=mock
+//go:generate /usr/bin/env bash -c "cat ../../../../hack/boilerplate/boilerplate.generatego.txt ./mock/vpc_generated.go > ./mock/_vpc_generated.go && mv ./mock/_vpc_generated.go ./mock/vpc_generated.go"
 
 // Vpc interface defines methods that a Cluster API IBMCLOUD object should implement.
 type Vpc interface {
@@ -33,19 +33,16 @@ type Vpc interface {
 	CreateVPC(options *vpcv1.CreateVPCOptions) (*vpcv1.VPC, *core.DetailedResponse, error)
 	DeleteVPC(options *vpcv1.DeleteVPCOptions) (response *core.DetailedResponse, err error)
 	ListVpcs(options *vpcv1.ListVpcsOptions) (*vpcv1.VPCCollection, *core.DetailedResponse, error)
-	ListVpcsPager(options *vpcv1.ListVpcsOptions) ([]vpcv1.VPC, error)
 	CreateSubnet(options *vpcv1.CreateSubnetOptions) (*vpcv1.Subnet, *core.DetailedResponse, error)
 	DeleteSubnet(options *vpcv1.DeleteSubnetOptions) (*core.DetailedResponse, error)
 	ListSubnets(options *vpcv1.ListSubnetsOptions) (*vpcv1.SubnetCollection, *core.DetailedResponse, error)
-	ListSubnetsPager(options *vpcv1.ListSubnetsOptions) ([]vpcv1.Subnet, error)
 	GetSubnetPublicGateway(options *vpcv1.GetSubnetPublicGatewayOptions) (*vpcv1.PublicGateway, *core.DetailedResponse, error)
 	SetSubnetPublicGateway(options *vpcv1.SetSubnetPublicGatewayOptions) (*vpcv1.PublicGateway, *core.DetailedResponse, error)
 	UnsetSubnetPublicGateway(options *vpcv1.UnsetSubnetPublicGatewayOptions) (*core.DetailedResponse, error)
 	CreatePublicGateway(options *vpcv1.CreatePublicGatewayOptions) (*vpcv1.PublicGateway, *core.DetailedResponse, error)
 	DeletePublicGateway(options *vpcv1.DeletePublicGatewayOptions) (*core.DetailedResponse, error)
-	GetPublicGateway(options *vpcv1.GetPublicGatewayOptions) (*vpcv1.PublicGateway, *core.DetailedResponse, error)
-	GetPublicGatewayByName(name string, resourceGroupID string) (*vpcv1.PublicGateway, error)
 	ListVPCAddressPrefixes(options *vpcv1.ListVPCAddressPrefixesOptions) (*vpcv1.AddressPrefixCollection, *core.DetailedResponse, error)
+	CreateSecurityGroupRule(options *vpcv1.CreateSecurityGroupRuleOptions) (vpcv1.SecurityGroupRuleIntf, *core.DetailedResponse, error)
 	CreateLoadBalancer(options *vpcv1.CreateLoadBalancerOptions) (*vpcv1.LoadBalancer, *core.DetailedResponse, error)
 	DeleteLoadBalancer(options *vpcv1.DeleteLoadBalancerOptions) (*core.DetailedResponse, error)
 	ListLoadBalancers(options *vpcv1.ListLoadBalancersOptions) (*vpcv1.LoadBalancerCollection, *core.DetailedResponse, error)
@@ -54,10 +51,6 @@ type Vpc interface {
 	DeleteLoadBalancerPoolMember(options *vpcv1.DeleteLoadBalancerPoolMemberOptions) (*core.DetailedResponse, error)
 	ListLoadBalancerPoolMembers(options *vpcv1.ListLoadBalancerPoolMembersOptions) (*vpcv1.LoadBalancerPoolMemberCollection, *core.DetailedResponse, error)
 	ListKeys(options *vpcv1.ListKeysOptions) (*vpcv1.KeyCollection, *core.DetailedResponse, error)
-	CreateImage(options *vpcv1.CreateImageOptions) (*vpcv1.Image, *core.DetailedResponse, error)
-	DeleteImage(options *vpcv1.DeleteImageOptions) (*core.DetailedResponse, error)
-	GetImage(options *vpcv1.GetImageOptions) (*vpcv1.Image, *core.DetailedResponse, error)
-	GetImageByName(name string) (*vpcv1.Image, error)
 	ListImages(options *vpcv1.ListImagesOptions) (*vpcv1.ImageCollection, *core.DetailedResponse, error)
 	GetInstanceProfile(options *vpcv1.GetInstanceProfileOptions) (*vpcv1.InstanceProfile, *core.DetailedResponse, error)
 	GetVPC(*vpcv1.GetVPCOptions) (*vpcv1.VPC, *core.DetailedResponse, error)
@@ -69,11 +62,7 @@ type Vpc interface {
 	CreateSecurityGroup(options *vpcv1.CreateSecurityGroupOptions) (*vpcv1.SecurityGroup, *core.DetailedResponse, error)
 	DeleteSecurityGroup(options *vpcv1.DeleteSecurityGroupOptions) (*core.DetailedResponse, error)
 	ListSecurityGroups(options *vpcv1.ListSecurityGroupsOptions) (*vpcv1.SecurityGroupCollection, *core.DetailedResponse, error)
-	ListSecurityGroupsPager(options *vpcv1.ListSecurityGroupsOptions) ([]vpcv1.SecurityGroup, error)
 	GetSecurityGroup(options *vpcv1.GetSecurityGroupOptions) (*vpcv1.SecurityGroup, *core.DetailedResponse, error)
 	GetSecurityGroupByName(name string) (*vpcv1.SecurityGroup, error)
-	CreateSecurityGroupRule(options *vpcv1.CreateSecurityGroupRuleOptions) (vpcv1.SecurityGroupRuleIntf, *core.DetailedResponse, error)
 	GetSecurityGroupRule(options *vpcv1.GetSecurityGroupRuleOptions) (vpcv1.SecurityGroupRuleIntf, *core.DetailedResponse, error)
-	ListSecurityGroupRules(options *vpcv1.ListSecurityGroupRulesOptions) (*vpcv1.SecurityGroupRuleCollection, *core.DetailedResponse, error)
-	GetZonesByRegion(string) ([]string, error)
 }

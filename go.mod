@@ -30,8 +30,8 @@ require (
 	github.com/IBM/ibm-cos-sdk-go v1.11.0
 	github.com/IBM/keyprotect-go-client v0.12.2
 	github.com/IBM/networking-go-sdk v0.45.0
-	github.com/IBM/platform-services-go-sdk v0.65.0
-	github.com/IBM/vpc-go-sdk v0.54.0
+	github.com/IBM/platform-services-go-sdk v0.65.1
+	github.com/IBM/vpc-go-sdk v0.56.0
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
 	github.com/aws/aws-sdk-go v1.53.5
@@ -101,11 +101,11 @@ require (
 	github.com/ulikunitz/xz v0.5.12
 	github.com/vincent-petithory/dataurl v1.0.0
 	github.com/vmware/govmomi v0.37.2
-	golang.org/x/crypto v0.25.0
+	golang.org/x/crypto v0.26.0
 	golang.org/x/oauth2 v0.21.0
-	golang.org/x/sync v0.7.0
-	golang.org/x/sys v0.22.0
-	golang.org/x/term v0.22.0
+	golang.org/x/sync v0.8.0
+	golang.org/x/sys v0.23.0
+	golang.org/x/term v0.23.0
 	google.golang.org/api v0.184.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20240604185151-ef581f913117
 	google.golang.org/grpc v1.64.0
@@ -272,8 +272,8 @@ require (
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
 	golang.org/x/mod v0.18.0 // indirect
-	golang.org/x/net v0.27.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/net v0.28.0 // indirect
+	golang.org/x/text v0.17.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
@@ -310,7 +310,7 @@ replace (
 )
 
 // TODO(cjschaef): Remove once IBM Cloud CAPI API PR's merge
-replace sigs.k8s.io/cluster-api-provider-ibmcloud => github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20240812211640-faa274e46ef9
+replace sigs.k8s.io/cluster-api-provider-ibmcloud => github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20240819163350-4012d7ccba8f
 
 //replace sigs.k8s.io/cluster-api-provider-ibmcloud => sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0
 replace cloud.google.com/go/storage => cloud.google.com/go/storage v1.40.0

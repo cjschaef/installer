@@ -295,14 +295,14 @@ github.com/IBM/networking-go-sdk/dnszonesv1
 github.com/IBM/networking-go-sdk/resourcerecordsv1
 github.com/IBM/networking-go-sdk/transitgatewayapisv1
 github.com/IBM/networking-go-sdk/zonesv1
-# github.com/IBM/platform-services-go-sdk v0.65.0
+# github.com/IBM/platform-services-go-sdk v0.65.1
 ## explicit; go 1.20
 github.com/IBM/platform-services-go-sdk/common
 github.com/IBM/platform-services-go-sdk/iamidentityv1
 github.com/IBM/platform-services-go-sdk/iampolicymanagementv1
 github.com/IBM/platform-services-go-sdk/resourcecontrollerv2
 github.com/IBM/platform-services-go-sdk/resourcemanagerv2
-# github.com/IBM/vpc-go-sdk v0.54.0
+# github.com/IBM/vpc-go-sdk v0.56.0
 ## explicit; go 1.20
 github.com/IBM/vpc-go-sdk/common
 github.com/IBM/vpc-go-sdk/vpcv1
@@ -1426,7 +1426,7 @@ go.uber.org/zap/internal/exit
 go.uber.org/zap/internal/pool
 go.uber.org/zap/internal/stacktrace
 go.uber.org/zap/zapcore
-# golang.org/x/crypto v0.25.0
+# golang.org/x/crypto v0.26.0
 ## explicit; go 1.20
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
@@ -1456,7 +1456,7 @@ golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/modfile
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.27.0
+# golang.org/x/net v0.28.0
 ## explicit; go 1.18
 golang.org/x/net/html
 golang.org/x/net/html/atom
@@ -1481,20 +1481,20 @@ golang.org/x/oauth2/google/internal/stsexchange
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
-# golang.org/x/sync v0.7.0
+# golang.org/x/sync v0.8.0
 ## explicit; go 1.18
 golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.22.0
+# golang.org/x/sys v0.23.0
 ## explicit; go 1.18
 golang.org/x/sys/cpu
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.22.0
+# golang.org/x/term v0.23.0
 ## explicit; go 1.18
 golang.org/x/term
-# golang.org/x/text v0.16.0
+# golang.org/x/text v0.17.0
 ## explicit; go 1.18
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
@@ -2204,7 +2204,7 @@ sigs.k8s.io/cluster-api-provider-azure/util/webhook
 # sigs.k8s.io/cluster-api-provider-gcp v1.7.0
 ## explicit; go 1.21
 sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1
-# sigs.k8s.io/cluster-api-provider-ibmcloud v0.7.0 => github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20240812211640-faa274e46ef9
+# sigs.k8s.io/cluster-api-provider-ibmcloud v0.7.0 => github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20240819163350-4012d7ccba8f
 ## explicit; go 1.21
 sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2
 sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/endpoints
@@ -2385,7 +2385,7 @@ sigs.k8s.io/yaml/goyaml.v3
 # github.com/metal3-io/baremetal-operator/apis => github.com/openshift/baremetal-operator/apis v0.0.0-20231128154154-6736c9b9c6c8
 # github.com/metal3-io/baremetal-operator/pkg/hardwareutils => github.com/openshift/baremetal-operator/pkg/hardwareutils v0.0.0-20231128154154-6736c9b9c6c8
 # k8s.io/cloud-provider-vsphere => github.com/openshift/cloud-provider-vsphere v1.19.1-0.20211222185833-7829863d0558
-# sigs.k8s.io/cluster-api-provider-ibmcloud => github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20240812211640-faa274e46ef9
+# sigs.k8s.io/cluster-api-provider-ibmcloud => github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20240819163350-4012d7ccba8f
 # cloud.google.com/go/storage => cloud.google.com/go/storage v1.40.0
 # github.com/openshift/assisted-service/api => github.com/openshift/assisted-service/api v0.0.0-20230831114549-1922eda29cf8
 # github.com/openshift/assisted-service/client => github.com/openshift/assisted-service/client v0.0.0-20230831114549-1922eda29cf8
