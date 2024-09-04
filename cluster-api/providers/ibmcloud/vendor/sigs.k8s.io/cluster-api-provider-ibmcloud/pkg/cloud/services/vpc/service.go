@@ -27,13 +27,7 @@ import (
 )
 
 // SecurityGroupByNameNotFound returns an appropriate error when security group by name not found.
-type SecurityGroupByNameNotFound struct {
-	Name string
-}
-
-func (s *SecurityGroupByNameNotFound) Error() string {
-	return fmt.Sprintf("failed to find security group by name '%s'", s.Name)
-}
+var SecurityGroupByNameNotFound = func(name string) error { return fmt.Errorf("failed to find security group by name '%s'", name) }
 
 // Service holds the VPC Service specific information.
 type Service struct {
@@ -75,15 +69,6 @@ func (s *Service) ListVpcs(options *vpcv1.ListVpcsOptions) (*vpcv1.VPCCollection
 	return s.vpcService.ListVpcs(options)
 }
 
-// ListVpcsPager returns the full list of VPCs (avoiding pagnation) in a region.
-func (s *Service) ListVpcsPager(options *vpcv1.ListVpcsOptions) ([]vpcv1.VPC, error) {
-	pager, err := s.vpcService.NewVpcsPager(options)
-	if err != nil {
-		return nil, err
-	}
-	return pager.GetAll()
-}
-
 // CreateSubnet creates a subnet.
 func (s *Service) CreateSubnet(options *vpcv1.CreateSubnetOptions) (*vpcv1.Subnet, *core.DetailedResponse, error) {
 	return s.vpcService.CreateSubnet(options)
@@ -99,28 +84,9 @@ func (s *Service) ListSubnets(options *vpcv1.ListSubnetsOptions) (*vpcv1.SubnetC
 	return s.vpcService.ListSubnets(options)
 }
 
-// ListSubnetsPager returns the full list of subnets (avoiding pagnation) in a region.
-func (s *Service) ListSubnetsPager(options *vpcv1.ListSubnetsOptions) ([]vpcv1.Subnet, error) {
-	pager, err := s.vpcService.NewSubnetsPager(options)
-	if err != nil {
-		return nil, err
-	}
-	return pager.GetAll()
-}
-
 // GetSubnetPublicGateway returns a public gateway attached to the subnet.
 func (s *Service) GetSubnetPublicGateway(options *vpcv1.GetSubnetPublicGatewayOptions) (*vpcv1.PublicGateway, *core.DetailedResponse, error) {
 	return s.vpcService.GetSubnetPublicGateway(options)
-}
-
-// UnsetSubnetPublicGateway detaches a public gateway from the subnet.
-func (s *Service) UnsetSubnetPublicGateway(options *vpcv1.UnsetSubnetPublicGatewayOptions) (*core.DetailedResponse, error) {
-	return s.vpcService.UnsetSubnetPublicGateway(options)
-}
-
-// SetSubnetPublicGateway attaches a public gateway to the subnet.
-func (s *Service) SetSubnetPublicGateway(options *vpcv1.SetSubnetPublicGatewayOptions) (*vpcv1.PublicGateway, *core.DetailedResponse, error) {
-	return s.vpcService.SetSubnetPublicGateway(options)
 }
 
 // CreatePublicGateway creates a public gateway for the VPC.
@@ -133,53 +99,24 @@ func (s *Service) DeletePublicGateway(options *vpcv1.DeletePublicGatewayOptions)
 	return s.vpcService.DeletePublicGateway(options)
 }
 
-// GetPublicGateway returns a public gateway.
-func (s *Service) GetPublicGateway(options *vpcv1.GetPublicGatewayOptions) (*vpcv1.PublicGateway, *core.DetailedResponse, error) {
-	return s.vpcService.GetPublicGateway(options)
+// UnsetSubnetPublicGateway detaches a public gateway from the subnet.
+func (s *Service) UnsetSubnetPublicGateway(options *vpcv1.UnsetSubnetPublicGatewayOptions) (*core.DetailedResponse, error) {
+	return s.vpcService.UnsetSubnetPublicGateway(options)
 }
 
-// GetPublicGatewayByName returns a public gateway by name.
-func (s *Service) GetPublicGatewayByName(name string, resourceGroupID string) (*vpcv1.PublicGateway, error) {
-	var publicGateway *vpcv1.PublicGateway
-	f := func(start string) (bool, string, error) {
-		// check for existing Public Gateways
-		listPublicGatewaysOptions := s.vpcService.NewListPublicGatewaysOptions().SetResourceGroupID(resourceGroupID)
-		if start != "" {
-			listPublicGatewaysOptions.Start = &start
-		}
-
-		publicGatewaysList, _, err := s.vpcService.ListPublicGateways(listPublicGatewaysOptions)
-		if err != nil {
-			return false, "", err
-		}
-
-		if publicGatewaysList == nil {
-			return false, "", fmt.Errorf("public gateways list returned is nil")
-		}
-
-		for index, pg := range publicGatewaysList.PublicGateways {
-			if (*pg.Name) == name {
-				publicGateway = &publicGatewaysList.PublicGateways[index]
-				return true, "", nil
-			}
-		}
-
-		if publicGatewaysList.Next != nil && *publicGatewaysList.Next.Href != "" {
-			return false, *publicGatewaysList.Next.Href, nil
-		}
-		return true, "", nil
-	}
-
-	if err := utils.PagingHelper(f); err != nil {
-		return nil, err
-	}
-
-	return publicGateway, nil
+// SetSubnetPublicGateway attaches a public gateway to the subnet.
+func (s *Service) SetSubnetPublicGateway(options *vpcv1.SetSubnetPublicGatewayOptions) (*vpcv1.PublicGateway, *core.DetailedResponse, error) {
+	return s.vpcService.SetSubnetPublicGateway(options)
 }
 
 // ListVPCAddressPrefixes returns list of all address prefixes for a VPC.
 func (s *Service) ListVPCAddressPrefixes(options *vpcv1.ListVPCAddressPrefixesOptions) (*vpcv1.AddressPrefixCollection, *core.DetailedResponse, error) {
 	return s.vpcService.ListVPCAddressPrefixes(options)
+}
+
+// CreateSecurityGroupRule creates a rule for a security group.
+func (s *Service) CreateSecurityGroupRule(options *vpcv1.CreateSecurityGroupRuleOptions) (vpcv1.SecurityGroupRuleIntf, *core.DetailedResponse, error) {
+	return s.vpcService.CreateSecurityGroupRule(options)
 }
 
 // CreateLoadBalancer creates a new load balancer.
@@ -222,63 +159,19 @@ func (s *Service) ListKeys(options *vpcv1.ListKeysOptions) (*vpcv1.KeyCollection
 	return s.vpcService.ListKeys(options)
 }
 
-// CreateImage creates a VPC Custom Image.
+// CreateImage creates a new VPC Custom Image.
 func (s *Service) CreateImage(options *vpcv1.CreateImageOptions) (*vpcv1.Image, *core.DetailedResponse, error) {
 	return s.vpcService.CreateImage(options)
-}
-
-// DeleteImage deletes a VPC Custom Image.
-func (s *Service) DeleteImage(options *vpcv1.DeleteImageOptions) (*core.DetailedResponse, error) {
-	return s.vpcService.DeleteImage(options)
-}
-
-// GetImage returns a VPC Custom Image.
-func (s *Service) GetImage(options *vpcv1.GetImageOptions) (*vpcv1.Image, *core.DetailedResponse, error) {
-	return s.vpcService.GetImage(options)
-}
-
-// GetImageByName returns the VPC Custom Image with given name. If not found, returns nil.
-func (s *Service) GetImageByName(name string) (*vpcv1.Image, error) {
-	var image *vpcv1.Image
-	f := func(start string) (bool, string, error) {
-		// check for existing Images
-		listImagesOptions := s.vpcService.NewListImagesOptions()
-		if start != "" {
-			listImagesOptions.Start = &start
-		}
-
-		imagesList, _, err := s.ListImages(listImagesOptions)
-		if err != nil {
-			return false, "", err
-		}
-
-		if imagesList == nil {
-			return false, "", fmt.Errorf("image list returned is nil")
-		}
-
-		for index, im := range imagesList.Images {
-			if (*im.Name) == name {
-				image = &imagesList.Images[index]
-				return true, "", nil
-			}
-		}
-
-		if imagesList.Next != nil && *imagesList.Next.Href != "" {
-			return false, *imagesList.Next.Href, nil
-		}
-		return true, "", nil
-	}
-
-	if err := utils.PagingHelper(f); err != nil {
-		return nil, err
-	}
-
-	return image, nil
 }
 
 // ListImages returns list of images in a region.
 func (s *Service) ListImages(options *vpcv1.ListImagesOptions) (*vpcv1.ImageCollection, *core.DetailedResponse, error) {
 	return s.vpcService.ListImages(options)
+}
+
+// GetImage returns a VPC Custom image.
+func (s *Service) GetImage(options *vpcv1.GetImageOptions) (*vpcv1.Image, *core.DetailedResponse, error) {
+	return s.vpcService.GetImage(options)
 }
 
 // GetInstanceProfile returns instance profile.
@@ -328,6 +221,45 @@ func (s *Service) GetVPCByName(vpcName string) (*vpcv1.VPC, error) {
 	}
 
 	return vpc, nil
+}
+
+// GetImageByName returns the VPC Custom Image with given name. If not found, returns nil.
+func (s *Service) GetImageByName(imageName string) (*vpcv1.Image, error) {
+	var image *vpcv1.Image
+	f := func(start string) (bool, string, error) {
+		// check for existing images
+		listImagesOptions := &vpcv1.ListImagesOptions{}
+		if start != "" {
+			listImagesOptions.Start = &start
+		}
+
+		imagesList, _, err := s.ListImages(listImagesOptions)
+		if err != nil {
+			return false, "", err
+		}
+
+		if imagesList == nil {
+			return false, "", fmt.Errorf("image list returned is nil")
+		}
+
+		for i, v := range imagesList.Images {
+			if (*v.Name) == imageName {
+				image = &imagesList.Images[i]
+				return true, "", nil
+			}
+		}
+
+		if imagesList.Next != nil && *imagesList.Next.Href != "" {
+			return false, *imagesList.Next.Href, nil
+		}
+		return true, "", nil
+	}
+
+	if err := utils.PagingHelper(f); err != nil {
+		return nil, err
+	}
+
+	return image, nil
 }
 
 // GetSubnet return subnet.
@@ -501,45 +433,12 @@ func (s *Service) GetSecurityGroupByName(name string) (*vpcv1.SecurityGroup, err
 		}
 	}
 
-	return nil, &SecurityGroupByNameNotFound{Name: name}
-}
-
-// ListSecurityGroupsPager returns the full list of Security Groups (avoiding pagination).
-func (s *Service) ListSecurityGroupsPager(options *vpcv1.ListSecurityGroupsOptions) ([]vpcv1.SecurityGroup, error) {
-	pager, err := s.vpcService.NewSecurityGroupsPager(options)
-	if err != nil {
-		return nil, err
-	}
-	return pager.GetAll()
-}
-
-// CreateSecurityGroupRule creates a rule for a security group.
-func (s *Service) CreateSecurityGroupRule(options *vpcv1.CreateSecurityGroupRuleOptions) (vpcv1.SecurityGroupRuleIntf, *core.DetailedResponse, error) {
-	return s.vpcService.CreateSecurityGroupRule(options)
+	return nil, SecurityGroupByNameNotFound(name)
 }
 
 // GetSecurityGroupRule gets a specific security group rule.
 func (s *Service) GetSecurityGroupRule(options *vpcv1.GetSecurityGroupRuleOptions) (vpcv1.SecurityGroupRuleIntf, *core.DetailedResponse, error) {
 	return s.vpcService.GetSecurityGroupRule(options)
-}
-
-// ListSecurityGroupRules returns a list of security group rules.
-func (s *Service) ListSecurityGroupRules(options *vpcv1.ListSecurityGroupRulesOptions) (*vpcv1.SecurityGroupRuleCollection, *core.DetailedResponse, error) {
-	return s.vpcService.ListSecurityGroupRules(options)
-}
-
-// GetZonesByRegion returns the set of VPC Availability Zones in an IBM Cloud Region.
-func (s *Service) GetZonesByRegion(region string) ([]string, error) {
-	zones := make([]string, 0)
-	options := s.vpcService.NewListRegionZonesOptions(region)
-	result, _, err := s.vpcService.ListRegionZones(options)
-	if err != nil {
-		return zones, err
-	}
-	for _, zone := range result.Zones {
-		zones = append(zones, *zone.Name)
-	}
-	return zones, nil
 }
 
 // NewService returns a new VPC Service.

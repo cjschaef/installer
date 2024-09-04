@@ -21,16 +21,14 @@ import (
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 )
 
+//go:generate ../../../../hack/tools/bin/mockgen -source=./resourcemanager.go -destination=./mock/resourcemanager_generated.go -package=mock
+//go:generate /usr/bin/env bash -c "cat ../../../../hack/boilerplate/boilerplate.generatego.txt ./mock/resourcemanager_generated.go > ./mock/_resourcemanager_generated.go && mv ./mock/_resourcemanager_generated.go ./mock/resourcemanager_generated.go"
+
 // ResourceManager interface defines a method that a IBMCLOUD service object should implement in order to
 // use the manage lifecycle of cloud resource groups using Resource Manager APIs.
 type ResourceManager interface {
-	ListResourceGroups(*resourcemanagerv2.ListResourceGroupsOptions) (*resourcemanagerv2.ResourceGroupList, *core.DetailedResponse, error)
 	GetResourceGroup(*resourcemanagerv2.GetResourceGroupOptions) (*resourcemanagerv2.ResourceGroup, *core.DetailedResponse, error)
-	CreateResourceGroup(*resourcemanagerv2.CreateResourceGroupOptions) (*resourcemanagerv2.ResCreateResourceGroup, *core.DetailedResponse, error)
-	DeleteResourceGroup(*resourcemanagerv2.DeleteResourceGroupOptions) (*core.DetailedResponse, error)
+	ListResourceGroups(*resourcemanagerv2.ListResourceGroupsOptions) (*resourcemanagerv2.ResourceGroupList, *core.DetailedResponse, error)
 
 	GetResourceGroupByName(string) (*resourcemanagerv2.ResourceGroup, error)
-
-	SetServiceURL(string) error
-	GetServiceURL() string
 }

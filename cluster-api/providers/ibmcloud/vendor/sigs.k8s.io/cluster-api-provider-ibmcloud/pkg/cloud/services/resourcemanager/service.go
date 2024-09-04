@@ -53,31 +53,21 @@ func NewService(options *resourcemanagerv2.ResourceManagerV2Options) (ResourceMa
 	}, nil
 }
 
+// GetResourceGroup returns a Resource Group.
+func (s *Service) GetResourceGroup(getResourceGroupOptions *resourcemanagerv2.GetResourceGroupOptions) (*resourcemanagerv2.ResourceGroup, *core.DetailedResponse, error) {
+	return s.client.GetResourceGroup(getResourceGroupOptions)
+}
+
 // ListResourceGroups lists the resource groups.
 func (s *Service) ListResourceGroups(listResourceGroupsOptions *resourcemanagerv2.ListResourceGroupsOptions) (result *resourcemanagerv2.ResourceGroupList, response *core.DetailedResponse, err error) {
 	return s.client.ListResourceGroups(listResourceGroupsOptions)
-}
-
-// GetResourceGroup will get the Resource Group.
-func (s *Service) GetResourceGroup(options *resourcemanagerv2.GetResourceGroupOptions) (*resourcemanagerv2.ResourceGroup, *core.DetailedResponse, error) {
-	return s.client.GetResourceGroup(options)
-}
-
-// CreateResourceGroup creates a new Resource Group.
-func (s *Service) CreateResourceGroup(options *resourcemanagerv2.CreateResourceGroupOptions) (*resourcemanagerv2.ResCreateResourceGroup, *core.DetailedResponse, error) {
-	return s.client.CreateResourceGroup(options)
-}
-
-// DeleteResourceGroup deletes the Resource Group.
-func (s *Service) DeleteResourceGroup(options *resourcemanagerv2.DeleteResourceGroupOptions) (*core.DetailedResponse, error) {
-	return s.client.DeleteResourceGroup(options)
 }
 
 // GetResourceGroupByName returns the Resource Group with the provided name, if found.
 func (s *Service) GetResourceGroupByName(rgName string) (*resourcemanagerv2.ResourceGroup, error) {
 	accountID, err := utils.GetAccountID()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed getting account id for resource group lookup: %w", err)
 	}
 
 	listOptions := s.client.NewListResourceGroupsOptions()
@@ -92,14 +82,4 @@ func (s *Service) GetResourceGroupByName(rgName string) (*resourcemanagerv2.Reso
 		return nil, fmt.Errorf("failed to find Resource Group")
 	}
 	return &result.Resources[0], nil
-}
-
-// GetServiceURL will get the service URL.
-func (s *Service) GetServiceURL() string {
-	return s.client.GetServiceURL()
-}
-
-// SetServiceURL sets the service URL.
-func (s *Service) SetServiceURL(url string) error {
-	return s.client.SetServiceURL(url)
 }

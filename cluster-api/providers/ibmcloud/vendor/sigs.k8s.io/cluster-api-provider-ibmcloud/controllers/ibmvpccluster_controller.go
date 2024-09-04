@@ -235,20 +235,20 @@ func (r *IBMVPCClusterReconciler) reconcileCluster(clusterScope *scope.VPCCluste
 		return ctrl.Result{}, nil
 	}
 
-	// Reconcile the cluster's VPC
+	// Reconcile the cluster's VPC.
 	clusterScope.Info("Reconciling VPC")
 	if requeue, err := clusterScope.ReconcileVPC(); err != nil {
 		clusterScope.Error(err, "failed to reconcile VPC")
 		conditions.MarkFalse(clusterScope.IBMVPCCluster, infrav1beta2.VPCReadyCondition, infrav1beta2.VPCReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
 		return reconcile.Result{}, err
 	} else if requeue {
-		clusterScope.Info("VPC creation is pending, requeueing")
+		clusterScope.Info("VPC creation is pending, requeuing")
 		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
 	}
 	clusterScope.Info("Reconciliation of VPC complete")
 	conditions.MarkTrue(clusterScope.IBMVPCCluster, infrav1beta2.VPCReadyCondition)
 
-	// Reconile the cluster's VPC Custom Image
+	// Reconcile the cluster's VPC Custom Image.
 	clusterScope.Info("Reconciling VPC Custom Image")
 	if requeue, err := clusterScope.ReconcileVPCCustomImage(); err != nil {
 		clusterScope.Error(err, "failed to reconcile VPC Custom Image")
@@ -258,50 +258,12 @@ func (r *IBMVPCClusterReconciler) reconcileCluster(clusterScope *scope.VPCCluste
 		clusterScope.Info("VPC Custom Image creation is pending, requeueing")
 		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
 	}
-	clusterScope.Info("Reconciliation of Custom Image complete")
+	clusterScope.Info("Reconciliation of VPC Custom Image complete")
 	conditions.MarkTrue(clusterScope.IBMVPCCluster, infrav1beta2.ImageReadyCondition)
 
-	// Reconcile the cluster's Subnets
-	clusterScope.Info("Reconciling Subnets")
-	if requeue, err := clusterScope.ReconcileSubnets(); err != nil {
-		clusterScope.Error(err, "failed to reconcile Subnets")
-		conditions.MarkFalse(clusterScope.IBMVPCCluster, infrav1beta2.VPCSubnetReadyCondition, infrav1beta2.VPCSubnetReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
-		return reconcile.Result{}, err
-	} else if requeue {
-		clusterScope.Info("Subnets creation is pending, requeueing")
-		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
-	}
-	clusterScope.Info("Reconciliation of Subnets complete")
-	conditions.MarkTrue(clusterScope.IBMVPCCluster, infrav1beta2.VPCSubnetReadyCondition)
+	// TODO(cjschaef): add remaining resource reconciliation.
 
-	// Reconcile the cluster's Security Groups (and Security Group Rules)
-	clusterScope.Info("Reconciling Security Groups")
-	if requeue, err := clusterScope.ReconcileSecurityGroups(); err != nil {
-		clusterScope.Error(err, "failed to reconcile Security Groups")
-		conditions.MarkFalse(clusterScope.IBMVPCCluster, infrav1beta2.VPCSecurityGroupReadyCondition, infrav1beta2.VPCSecurityGroupReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
-		return reconcile.Result{}, err
-	} else if requeue {
-		clusterScope.Info("Security Groups creation is pending, requeueing")
-		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
-	}
-	clusterScope.Info("Reconciliation of Security Groups complete")
-	conditions.MarkTrue(clusterScope.IBMVPCCluster, infrav1beta2.VPCSecurityGroupReadyCondition)
-
-	// Reconcile the cluster's Load Balancers
-	clusterScope.Info("Reconciling Load Balancers")
-	if requeue, err := clusterScope.ReconcileLoadBalancers(); err != nil {
-		clusterScope.Error(err, "failed to reconcile Load Balancers")
-		conditions.MarkFalse(clusterScope.IBMVPCCluster, infrav1beta2.LoadBalancerReadyCondition, infrav1beta2.LoadBalancerReconciliationFailedReason, capiv1beta1.ConditionSeverityError, err.Error())
-		return reconcile.Result{}, err
-	} else if requeue {
-		clusterScope.Info("Load Balancers creation is pending, requeueing")
-		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
-	}
-	clusterScope.Info("Reconciliation of Load Balancers complete")
-	conditions.MarkTrue(clusterScope.IBMVPCCluster, infrav1beta2.LoadBalancerReadyCondition)
-
-	// Mark VPC Cluster as ready.
-	clusterScope.Info("cluster infrastructure is now ready for cluster", "clusterName", clusterScope.IBMVPCCluster.Name)
+	// Mark cluster as ready.
 	clusterScope.IBMVPCCluster.Status.Ready = true
 	return ctrl.Result{}, nil
 }
