@@ -25,14 +25,6 @@ const (
 	// machineConfigServerPort is the Machine Config Server port.
 	machineConfigServerPort = 22623
 
-	// algorithmRoundRobin is the Round-Robin distribution algorithm for LB Backend Pools.
-	algorithmRoundRobin = "round_robin"
-
-	// protocolTCP is the TCP protocol type for LB Backend Pools.
-	protocolTCP = "tcp"
-
-	healthTypeHTTPS = "https"
-
 	healthMonitorURLReadyz = "/readyz"
 )
 
@@ -58,36 +50,40 @@ func buildPrivateLoadBalancer(infraID string, securityGroups []capibmcloud.VPCRe
 			{
 				DefaultPoolName: kubeAPIBackendPoolNamePtr,
 				Port:            kubernetesAPIPort,
-				Protocol:        ptr.To(protocolTCP),
+				Protocol:        &capibmcloud.VPCLoadBalancerListenerProtocolTCP,
 			},
 			{
 				DefaultPoolName: machineConfigBackendPoolNamePtr,
 				Port:            machineConfigServerPort,
-				Protocol:        ptr.To(protocolTCP),
+				Protocol:        &capibmcloud.VPCLoadBalancerListenerProtocolTCP,
 			},
 		},
-		BackendPools: []capibmcloud.BackendPoolSpec{
+		BackendPools: []capibmcloud.VPCLoadBalancerBackendPoolSpec{
 			{
 				// Kubernetes API pool
-				Name:             kubeAPIBackendPoolNamePtr,
-				Algorithm:        algorithmRoundRobin,
-				Protocol:         protocolTCP,
-				HealthDelay:      60,
-				HealthRetries:    5,
-				HealthTimeout:    30,
-				HealthType:       healthTypeHTTPS,
-				HealthMonitorURL: ptr.To(healthMonitorURLReadyz),
+				Name:      kubeAPIBackendPoolNamePtr,
+				Algorithm: capibmcloud.VPCLoadBalancerBackendPoolAlgorithmRoundRobin,
+				Protocol:  capibmcloud.VPCLoadBalancerBackendPoolProtocolTCP,
+				HealthMonitor: capibmcloud.VPCLoadBalancerHealthMonitorSpec{
+					Delay:   60,
+					Retries: 5,
+					Timeout: 30,
+					Type:    capibmcloud.VPCLoadBalancerBackendPoolHealthMonitorTypeHTTPS,
+					URLPath: ptr.To(healthMonitorURLReadyz),
+				},
 			},
 			{
 				// Machine Config Server pool
-				Name:             machineConfigBackendPoolNamePtr,
-				Algorithm:        algorithmRoundRobin,
-				Protocol:         protocolTCP,
-				HealthDelay:      60,
-				HealthRetries:    5,
-				HealthTimeout:    30,
-				HealthType:       healthTypeHTTPS,
-				HealthMonitorURL: ptr.To(healthMonitorURLReadyz),
+				Name:      machineConfigBackendPoolNamePtr,
+				Algorithm: capibmcloud.VPCLoadBalancerBackendPoolAlgorithmRoundRobin,
+				Protocol:  capibmcloud.VPCLoadBalancerBackendPoolProtocolTCP,
+				HealthMonitor: capibmcloud.VPCLoadBalancerHealthMonitorSpec{
+					Delay:   60,
+					Retries: 5,
+					Timeout: 30,
+					Type:    capibmcloud.VPCLoadBalancerBackendPoolHealthMonitorTypeHTTPS,
+					URLPath: ptr.To(healthMonitorURLReadyz),
+				},
 			},
 		},
 		SecurityGroups: securityGroups,
@@ -105,20 +101,22 @@ func buildPublicLoadBalancer(infraID string, securityGroups []capibmcloud.VPCRes
 			{
 				DefaultPoolName: backendPoolNamePtr,
 				Port:            kubernetesAPIPort,
-				Protocol:        ptr.To(protocolTCP),
+				Protocol:        &capibmcloud.VPCLoadBalancerListenerProtocolTCP,
 			},
 		},
-		BackendPools: []capibmcloud.BackendPoolSpec{
+		BackendPools: []capibmcloud.VPCLoadBalancerBackendPoolSpec{
 			{
 				// Kubernetes API pool
-				Name:             backendPoolNamePtr,
-				Algorithm:        algorithmRoundRobin,
-				Protocol:         protocolTCP,
-				HealthDelay:      60,
-				HealthRetries:    5,
-				HealthTimeout:    30,
-				HealthType:       healthTypeHTTPS,
-				HealthMonitorURL: ptr.To(healthMonitorURLReadyz),
+				Name:      backendPoolNamePtr,
+				Algorithm: capibmcloud.VPCLoadBalancerBackendPoolAlgorithmRoundRobin,
+				Protocol:  capibmcloud.VPCLoadBalancerBackendPoolProtocolTCP,
+				HealthMonitor: capibmcloud.VPCLoadBalancerHealthMonitorSpec{
+					Delay:   60,
+					Retries: 5,
+					Timeout: 30,
+					Type:    capibmcloud.VPCLoadBalancerBackendPoolHealthMonitorTypeHTTPS,
+					URLPath: ptr.To(healthMonitorURLReadyz),
+				},
 			},
 		},
 		SecurityGroups: securityGroups,

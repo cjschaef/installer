@@ -94,7 +94,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		COSBucketRegion: ptr.To(platform.Region),
 		COSObject:       ptr.To(trimmedImageName),
 		OperatingSystem: ptr.To(operatingSystem),
-		ResourceGroup: &capibmcloud.GenericResourceReference{
+		ResourceGroup: &capibmcloud.IBMCloudResourceReference{
 			Name: ptr.To(resourceGroup),
 		},
 	}
@@ -196,7 +196,9 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 			Image: imageSpec,
 			Network: &capibmcloud.VPCNetworkSpec{
-				ResourceGroup:       ptr.To(networkResourceGroup),
+				ResourceGroup: &capibmcloud.IBMCloudResourceReference{
+					Name: ptr.To(networkResourceGroup),
+				},
 				SecurityGroups:      vpcSecurityGroups,
 				WorkerSubnets:       capiComputeSubnets,
 				ControlPlaneSubnets: capiControlPlaneSubnets,
