@@ -334,26 +334,37 @@ func parseBucketReplId(id string, info string) string {
 	return parseBucketId(bucketCRN, info)
 }
 
-func getCosEndpointType(bucketLocation string, endpointType string) string {
+func getCosEndpointType(bucketLocation string, endpointType string, test bool) string {
+
 	if bucketLocation != "" {
+		hostUrl := "cloud-object-storage.appdomain.cloud"
+		if test {
+			hostUrl = "cloud-object-storage.test.appdomain.cloud"
+		}
 		switch endpointType {
 		case "public":
-			return fmt.Sprintf("s3.%s.cloud-object-storage.appdomain.cloud", bucketLocation)
+			return fmt.Sprintf("s3.%s.%s", bucketLocation, hostUrl)
 		case "private":
-			return fmt.Sprintf("s3.private.%s.cloud-object-storage.appdomain.cloud", bucketLocation)
+			return fmt.Sprintf("s3.private.%s.%s", bucketLocation, hostUrl)
 		case "direct":
-			return fmt.Sprintf("s3.direct.%s.cloud-object-storage.appdomain.cloud", bucketLocation)
+			return fmt.Sprintf("s3.direct.%s.%s", bucketLocation, hostUrl)
 		default:
-			return fmt.Sprintf("s3.%s.cloud-object-storage.appdomain.cloud", bucketLocation)
+			return fmt.Sprintf("s3.%s.%s", bucketLocation, hostUrl)
 		}
 	}
+
 	return ""
 }
 
 func getS3ClientSession(bxSession *bxsession.Session, bucketLocation string, endpointType string, instanceCRN string) (*s3.S3, error) {
 	var s3Conf *aws.Config
 
-	apiEndpoint := getCosEndpointType(bucketLocation, endpointType)
+	visibility := endpointType
+	if endpointType == "direct" {
+		visibility = "private"
+	}
+	apiEndpoint := getCosEndpointType(bucketLocation, endpointType, false)
+	apiEndpoint = conns.FileFallBack(bxSession.Config.EndpointsFile, visibility, "IBMCLOUD_COS_ENDPOINT", bucketLocation, apiEndpoint)
 	apiEndpoint = conns.EnvFallBack([]string{"IBMCLOUD_COS_ENDPOINT"}, apiEndpoint)
 	if apiEndpoint == "" {
 		return nil, fmt.Errorf("the endpoint doesn't exists for given location %s and endpoint type %s", bucketLocation, endpointType)

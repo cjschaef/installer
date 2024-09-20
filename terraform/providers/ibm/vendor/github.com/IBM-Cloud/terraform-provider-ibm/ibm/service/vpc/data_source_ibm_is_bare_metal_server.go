@@ -382,6 +382,40 @@ func DataSourceIBMIsBareMetalServer() *schema.Resource {
 								},
 							},
 						},
+						"virtual_network_interface": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The virtual network interface for this bare metal server network attachment.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"crn": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The CRN for this virtual network interface.",
+									},
+									"href": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The URL for this virtual network interface.",
+									},
+									"id": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The unique identifier for this virtual network interface.",
+									},
+									"name": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The name for this virtual network interface. The name is unique across all virtual network interfaces in the VPC.",
+									},
+									"resource_type": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The resource type.",
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -592,6 +626,40 @@ func DataSourceIBMIsBareMetalServer() *schema.Resource {
 								},
 							},
 						},
+						"virtual_network_interface": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The virtual network interface for this bare metal server network attachment.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"crn": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The CRN for this virtual network interface.",
+									},
+									"href": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The URL for this virtual network interface.",
+									},
+									"id": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The unique identifier for this virtual network interface.",
+									},
+									"name": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The name for this virtual network interface. The name is unique across all virtual network interfaces in the VPC.",
+									},
+									"resource_type": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The resource type.",
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -608,6 +676,11 @@ func DataSourceIBMIsBareMetalServer() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "image name",
+			},
+			isBareMetalServerFirmwareUpdateTypeAvailable: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The type of firmware update available",
 			},
 			isBareMetalServerProfile: {
 				Type:        schema.TypeString,
@@ -816,6 +889,11 @@ func dataSourceIBMISBareMetalServerRead(context context.Context, d *schema.Resou
 	}
 	if err = d.Set("identifier", *bms.ID); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting identifier: %s", err))
+	}
+	if bms.Firmware != nil && bms.Firmware.Update != nil {
+		if err = d.Set(isBareMetalServerFirmwareUpdateTypeAvailable, *bms.Firmware.Update); err != nil {
+			return diag.FromErr(fmt.Errorf("[ERROR] Error setting availble firmware update type: %s", err))
+		}
 	}
 
 	//enable secure boot
@@ -1109,10 +1187,25 @@ func dataSourceIBMIsBareMetalServerBareMetalServerNetworkAttachmentReferenceToMa
 		return modelMap, err
 	}
 	modelMap["subnet"] = []map[string]interface{}{subnetMap}
+	virtualNetworkInterfaceMap, err := dataSourceIBMIsBareMetalServerVirtualNetworkInterfaceReferenceAttachmentContextToMap(model.VirtualNetworkInterface)
+	if err != nil {
+		return modelMap, err
+	}
+	modelMap["virtual_network_interface"] = []map[string]interface{}{virtualNetworkInterfaceMap}
 	return modelMap, nil
 }
 
-func dataSourceIBMIsBareMetalServerBareMetalServerNetworkAttachmentReferenceDeletedToMap(model *vpcv1.BareMetalServerNetworkAttachmentReferenceDeleted) (map[string]interface{}, error) {
+func dataSourceIBMIsBareMetalServerVirtualNetworkInterfaceReferenceAttachmentContextToMap(model *vpcv1.VirtualNetworkInterfaceReferenceAttachmentContext) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["crn"] = model.CRN
+	modelMap["href"] = model.Href
+	modelMap["id"] = model.ID
+	modelMap["name"] = model.Name
+	modelMap["resource_type"] = model.ResourceType
+	return modelMap, nil
+}
+
+func dataSourceIBMIsBareMetalServerBareMetalServerNetworkAttachmentReferenceDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	modelMap["more_info"] = model.MoreInfo
 	return modelMap, nil
@@ -1135,7 +1228,7 @@ func dataSourceIBMIsBareMetalServerReservedIPReferenceToMap(model *vpcv1.Reserve
 	return modelMap, nil
 }
 
-func dataSourceIBMIsBareMetalServerReservedIPReferenceDeletedToMap(model *vpcv1.ReservedIPReferenceDeleted) (map[string]interface{}, error) {
+func dataSourceIBMIsBareMetalServerReservedIPReferenceDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	modelMap["more_info"] = model.MoreInfo
 	return modelMap, nil
@@ -1158,7 +1251,7 @@ func dataSourceIBMIsBareMetalServerSubnetReferenceToMap(model *vpcv1.SubnetRefer
 	return modelMap, nil
 }
 
-func dataSourceIBMIsBareMetalServerSubnetReferenceDeletedToMap(model *vpcv1.SubnetReferenceDeleted) (map[string]interface{}, error) {
+func dataSourceIBMIsBareMetalServerSubnetReferenceDeletedToMap(model *vpcv1.Deleted) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	modelMap["more_info"] = model.MoreInfo
 	return modelMap, nil

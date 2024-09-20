@@ -85,5 +85,5 @@ func GetSystemInfo() string {
 
 func GetComponentInfo() *core.ProblemComponent {
 	// This should match the module name in go.mod.
-	return core.NewProblemComponent("github.com/logs-go-sdk", Version)
+	return core.NewProblemComponent("github.com/IBM/logs-go-sdk", Version)
 }

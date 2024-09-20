@@ -1,6 +1,6 @@
 # cloud.google.com/go/iam v0.13.0
 ## explicit; go 1.19
-# github.com/IBM-Cloud/bluemix-go v0.0.0-20240423071914-9e96525baef4
+# github.com/IBM-Cloud/bluemix-go v0.0.0-20240719075425-078fcb3a55be
 ## explicit; go 1.13
 github.com/IBM-Cloud/bluemix-go
 github.com/IBM-Cloud/bluemix-go/api/account/accountv1
@@ -34,13 +34,13 @@ github.com/IBM-Cloud/bluemix-go/rest
 github.com/IBM-Cloud/bluemix-go/session
 github.com/IBM-Cloud/bluemix-go/trace
 github.com/IBM-Cloud/bluemix-go/utils
-# github.com/IBM-Cloud/container-services-go-sdk v0.0.0-20240216115622-a311507b4b5b
+# github.com/IBM-Cloud/container-services-go-sdk v0.0.0-20240725064144-454a2ae23113
 ## explicit; go 1.16
 github.com/IBM-Cloud/container-services-go-sdk/common
 github.com/IBM-Cloud/container-services-go-sdk/kubernetesserviceapiv1
 github.com/IBM-Cloud/container-services-go-sdk/satellitelinkv1
-# github.com/IBM-Cloud/power-go-client v1.6.0
-## explicit; go 1.20
+# github.com/IBM-Cloud/power-go-client v1.7.0
+## explicit; go 1.22
 github.com/IBM-Cloud/power-go-client/clients/instance
 github.com/IBM-Cloud/power-go-client/errors
 github.com/IBM-Cloud/power-go-client/helpers
@@ -51,6 +51,7 @@ github.com/IBM-Cloud/power-go-client/power/client/bluemix_service_instances
 github.com/IBM-Cloud/power-go-client/power/client/catalog
 github.com/IBM-Cloud/power-go-client/power/client/datacenters
 github.com/IBM-Cloud/power-go-client/power/client/hardware_platforms
+github.com/IBM-Cloud/power-go-client/power/client/host_groups
 github.com/IBM-Cloud/power-go-client/power/client/iaas_service_broker
 github.com/IBM-Cloud/power-go-client/power/client/internal_power_v_s_instances
 github.com/IBM-Cloud/power-go-client/power/client/internal_power_v_s_locations
@@ -83,14 +84,16 @@ github.com/IBM-Cloud/power-go-client/power/client/p_cloud_v_p_n_policies
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_volume_groups
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_volume_onboarding
 github.com/IBM-Cloud/power-go-client/power/client/p_cloud_volumes
+github.com/IBM-Cloud/power-go-client/power/client/power_edge_router
 github.com/IBM-Cloud/power-go-client/power/client/service_bindings
 github.com/IBM-Cloud/power-go-client/power/client/service_instances
+github.com/IBM-Cloud/power-go-client/power/client/snapshots
 github.com/IBM-Cloud/power-go-client/power/client/storage_types
 github.com/IBM-Cloud/power-go-client/power/client/swagger_spec
 github.com/IBM-Cloud/power-go-client/power/client/workspaces
 github.com/IBM-Cloud/power-go-client/power/models
-# github.com/IBM-Cloud/terraform-provider-ibm v1.61.0 => github.com/cjschaef/terraform-provider-ibm v0.0.0-20240529030233-1c5127e2c6e7
-## explicit; go 1.22.2
+# github.com/IBM-Cloud/terraform-provider-ibm v1.61.0 => github.com/IBM-Cloud/terraform-provider-ibm v1.69.2-0.20240920062921-9e19ec47fad3
+## explicit; go 1.22.4
 github.com/IBM-Cloud/terraform-provider-ibm
 github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns
 github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex
@@ -126,9 +129,11 @@ github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/kms
 github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/kubernetes
 github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/kubernetes/utils/softwaredefinedstorage
 github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/logs
+github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/logsrouting
 github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/metricsrouter
 github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/mqcloud
 github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/pag
+github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/partnercentersell
 github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/power
 github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/project
 github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/pushnotification
@@ -161,25 +166,26 @@ github.com/IBM/appid-management-go-sdk/common
 ## explicit; go 1.19
 github.com/IBM/cloud-databases-go-sdk/clouddatabasesv5
 github.com/IBM/cloud-databases-go-sdk/common
-# github.com/IBM/cloudant-go-sdk v0.0.43
-## explicit; go 1.16
+# github.com/IBM/cloudant-go-sdk v0.8.0
+## explicit; go 1.21
 github.com/IBM/cloudant-go-sdk/auth
+github.com/IBM/cloudant-go-sdk/base
 github.com/IBM/cloudant-go-sdk/cloudantv1
 github.com/IBM/cloudant-go-sdk/common
-# github.com/IBM/code-engine-go-sdk v0.0.0-20231106200405-99e81b3ee752
-## explicit; go 1.18
+# github.com/IBM/code-engine-go-sdk v0.0.0-20240808131715-b9d168602dac
+## explicit; go 1.21
 github.com/IBM/code-engine-go-sdk/codeenginev2
 github.com/IBM/code-engine-go-sdk/common
 # github.com/IBM/container-registry-go-sdk v1.1.0
 ## explicit; go 1.18
 github.com/IBM/container-registry-go-sdk/common
 github.com/IBM/container-registry-go-sdk/containerregistryv1
-# github.com/IBM/continuous-delivery-go-sdk v1.5.0
+# github.com/IBM/continuous-delivery-go-sdk v1.6.0
 ## explicit; go 1.20
 github.com/IBM/continuous-delivery-go-sdk/cdtektonpipelinev2
 github.com/IBM/continuous-delivery-go-sdk/cdtoolchainv2
 github.com/IBM/continuous-delivery-go-sdk/common
-# github.com/IBM/event-notifications-go-admin-sdk v0.6.1
+# github.com/IBM/event-notifications-go-admin-sdk v0.9.0
 ## explicit; go 1.18
 github.com/IBM/event-notifications-go-admin-sdk/common
 github.com/IBM/event-notifications-go-admin-sdk/eventnotificationsv1
@@ -193,11 +199,11 @@ github.com/IBM/go-sdk-core/core
 # github.com/IBM/go-sdk-core/v3 v3.2.4
 ## explicit; go 1.12
 github.com/IBM/go-sdk-core/v3/core
-# github.com/IBM/go-sdk-core/v5 v5.17.0
+# github.com/IBM/go-sdk-core/v5 v5.17.4
 ## explicit; go 1.20
 github.com/IBM/go-sdk-core/v5/core
-# github.com/IBM/ibm-cos-sdk-go v1.10.1
-## explicit; go 1.11
+# github.com/IBM/ibm-cos-sdk-go v1.10.3
+## explicit; go 1.19
 github.com/IBM/ibm-cos-sdk-go/aws
 github.com/IBM/ibm-cos-sdk-go/aws/arn
 github.com/IBM/ibm-cos-sdk-go/aws/awserr
@@ -237,7 +243,7 @@ github.com/IBM/ibm-cos-sdk-go/private/protocol/rest
 github.com/IBM/ibm-cos-sdk-go/private/protocol/restxml
 github.com/IBM/ibm-cos-sdk-go/private/protocol/xml/xmlutil
 github.com/IBM/ibm-cos-sdk-go/service/s3
-# github.com/IBM/ibm-cos-sdk-go-config/v2 v2.0.4
+# github.com/IBM/ibm-cos-sdk-go-config/v2 v2.1.0
 ## explicit; go 1.19
 github.com/IBM/ibm-cos-sdk-go-config/v2/common
 github.com/IBM/ibm-cos-sdk-go-config/v2/resourceconfigurationv1
@@ -251,20 +257,24 @@ github.com/IBM/ibm-hpcs-tke-sdk/tkesdk
 ## explicit; go 1.16
 github.com/IBM/ibm-hpcs-uko-sdk/common
 github.com/IBM/ibm-hpcs-uko-sdk/ukov4
-# github.com/IBM/keyprotect-go-client v0.14.0
+# github.com/IBM/keyprotect-go-client v0.15.1
 ## explicit; go 1.15
 github.com/IBM/keyprotect-go-client
 github.com/IBM/keyprotect-go-client/iam
-# github.com/IBM/logs-go-sdk v0.1.1
+# github.com/IBM/logs-go-sdk v0.3.0
 ## explicit; go 1.19
 github.com/IBM/logs-go-sdk/common
 github.com/IBM/logs-go-sdk/logsv0
-# github.com/IBM/mqcloud-go-sdk v0.0.4
+# github.com/IBM/logs-router-go-sdk v1.0.5
+## explicit; go 1.20
+github.com/IBM/logs-router-go-sdk/common
+github.com/IBM/logs-router-go-sdk/ibmcloudlogsroutingv0
+# github.com/IBM/mqcloud-go-sdk v0.1.0
 ## explicit; go 1.20
 github.com/IBM/mqcloud-go-sdk/common
 github.com/IBM/mqcloud-go-sdk/mqcloudv1
-# github.com/IBM/networking-go-sdk v0.46.1
-## explicit; go 1.22.2
+# github.com/IBM/networking-go-sdk v0.49.0
+## explicit; go 1.22.4
 github.com/IBM/networking-go-sdk/alertsv1
 github.com/IBM/networking-go-sdk/authenticatedoriginpullapiv1
 github.com/IBM/networking-go-sdk/botanalyticsv1
@@ -302,7 +312,7 @@ github.com/IBM/networking-go-sdk/zonelockdownv1
 github.com/IBM/networking-go-sdk/zoneratelimitsv1
 github.com/IBM/networking-go-sdk/zonessettingsv1
 github.com/IBM/networking-go-sdk/zonesv1
-# github.com/IBM/platform-services-go-sdk v0.62.11
+# github.com/IBM/platform-services-go-sdk v0.68.1
 ## explicit; go 1.20
 github.com/IBM/platform-services-go-sdk/atrackerv2
 github.com/IBM/platform-services-go-sdk/catalogmanagementv1
@@ -316,10 +326,11 @@ github.com/IBM/platform-services-go-sdk/iamidentityv1
 github.com/IBM/platform-services-go-sdk/iampolicymanagementv1
 github.com/IBM/platform-services-go-sdk/ibmcloudshellv1
 github.com/IBM/platform-services-go-sdk/metricsrouterv3
+github.com/IBM/platform-services-go-sdk/partnercentersellv1
 github.com/IBM/platform-services-go-sdk/resourcecontrollerv2
 github.com/IBM/platform-services-go-sdk/resourcemanagerv2
 github.com/IBM/platform-services-go-sdk/usagereportsv4
-# github.com/IBM/project-go-sdk v0.3.0
+# github.com/IBM/project-go-sdk v0.3.5
 ## explicit; go 1.18
 github.com/IBM/project-go-sdk/common
 github.com/IBM/project-go-sdk/projectv1
@@ -330,7 +341,7 @@ github.com/IBM/push-notifications-go-sdk/pushservicev1
 # github.com/IBM/sarama v1.41.2
 ## explicit; go 1.17
 github.com/IBM/sarama
-# github.com/IBM/scc-go-sdk/v5 v5.1.6
+# github.com/IBM/scc-go-sdk/v5 v5.4.1
 ## explicit; go 1.14
 github.com/IBM/scc-go-sdk/v5/common
 github.com/IBM/scc-go-sdk/v5/securityandcompliancecenterapiv3
@@ -338,8 +349,8 @@ github.com/IBM/scc-go-sdk/v5/securityandcompliancecenterapiv3
 ## explicit; go 1.15
 github.com/IBM/schematics-go-sdk/common
 github.com/IBM/schematics-go-sdk/schematicsv1
-# github.com/IBM/secrets-manager-go-sdk/v2 v2.0.4
-## explicit; go 1.19
+# github.com/IBM/secrets-manager-go-sdk/v2 v2.0.6
+## explicit; go 1.21
 github.com/IBM/secrets-manager-go-sdk/v2/common
 github.com/IBM/secrets-manager-go-sdk/v2/secretsmanagerv2
 # github.com/IBM/vmware-go-sdk v0.1.2
@@ -350,8 +361,8 @@ github.com/IBM/vmware-go-sdk/vmwarev1
 ## explicit; go 1.18
 github.com/IBM/vpc-beta-go-sdk/common
 github.com/IBM/vpc-beta-go-sdk/vpcbetav1
-# github.com/IBM/vpc-go-sdk v0.50.0
-## explicit; go 1.18
+# github.com/IBM/vpc-go-sdk v0.58.0
+## explicit; go 1.20
 github.com/IBM/vpc-go-sdk/common
 github.com/IBM/vpc-go-sdk/vpcv1
 # github.com/Logicalis/asn1 v0.0.0-20190312173541-d60463189a56
@@ -494,7 +505,7 @@ github.com/go-jose/go-jose/v3
 github.com/go-jose/go-jose/v3/cipher
 github.com/go-jose/go-jose/v3/json
 github.com/go-jose/go-jose/v3/jwt
-# github.com/go-logr/logr v1.3.0
+# github.com/go-logr/logr v1.4.1
 ## explicit; go 1.18
 github.com/go-logr/logr
 github.com/go-logr/logr/funcr
@@ -556,7 +567,7 @@ github.com/go-playground/locales/currency
 # github.com/go-playground/universal-translator v0.18.1
 ## explicit; go 1.18
 github.com/go-playground/universal-translator
-# github.com/go-playground/validator/v10 v10.19.0
+# github.com/go-playground/validator/v10 v10.22.0
 ## explicit; go 1.18
 github.com/go-playground/validator/v10
 # github.com/gogo/protobuf v1.3.2
@@ -1041,7 +1052,7 @@ github.com/zclconf/go-cty/cty/function/stdlib
 github.com/zclconf/go-cty/cty/gocty
 github.com/zclconf/go-cty/cty/json
 github.com/zclconf/go-cty/cty/set
-# go.mongodb.org/mongo-driver v1.15.0
+# go.mongodb.org/mongo-driver v1.16.0
 ## explicit; go 1.18
 go.mongodb.org/mongo-driver/bson
 go.mongodb.org/mongo-driver/bson/bsoncodec
@@ -1069,15 +1080,14 @@ go.opentelemetry.io/otel/trace
 # go.uber.org/ratelimit v0.2.0
 ## explicit; go 1.14
 go.uber.org/ratelimit
-# golang.org/x/crypto v0.22.0
-## explicit; go 1.18
+# golang.org/x/crypto v0.25.0
+## explicit; go 1.20
 golang.org/x/crypto/argon2
 golang.org/x/crypto/blake2b
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/cast5
 golang.org/x/crypto/chacha20
 golang.org/x/crypto/curve25519
-golang.org/x/crypto/curve25519/internal/field
 golang.org/x/crypto/ed25519
 golang.org/x/crypto/hkdf
 golang.org/x/crypto/internal/alias
@@ -1087,13 +1097,13 @@ golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/sha3
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
-# golang.org/x/mod v0.14.0
+# golang.org/x/mod v0.17.0
 ## explicit; go 1.18
 golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/modfile
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.24.0
+# golang.org/x/net v0.27.0
 ## explicit; go 1.18
 golang.org/x/net/context
 golang.org/x/net/html
@@ -1105,22 +1115,23 @@ golang.org/x/net/idna
 golang.org/x/net/internal/socks
 golang.org/x/net/internal/timeseries
 golang.org/x/net/proxy
+golang.org/x/net/publicsuffix
 golang.org/x/net/trace
 golang.org/x/net/websocket
 # golang.org/x/oauth2 v0.7.0
 ## explicit; go 1.17
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.20.0
+# golang.org/x/sys v0.22.0
 ## explicit; go 1.18
 golang.org/x/sys/cpu
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.19.0
+# golang.org/x/term v0.22.0
 ## explicit; go 1.18
 golang.org/x/term
-# golang.org/x/text v0.14.0
+# golang.org/x/text v0.16.0
 ## explicit; go 1.18
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
@@ -1569,5 +1580,5 @@ sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.3.0
 ## explicit; go 1.12
 sigs.k8s.io/yaml
-# github.com/IBM-Cloud/terraform-provider-ibm => github.com/cjschaef/terraform-provider-ibm v0.0.0-20240529030233-1c5127e2c6e7
+# github.com/IBM-Cloud/terraform-provider-ibm => github.com/IBM-Cloud/terraform-provider-ibm v1.69.2-0.20240920062921-9e19ec47fad3
 # github.com/portworx/sched-ops v0.0.0-20200831185134-3e8010dc7056 => github.com/portworx/sched-ops v0.20.4-openstorage-rc3

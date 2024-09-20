@@ -7,14 +7,23 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/platform-services-go-sdk/iampolicymanagementv1"
+)
+
+const (
+	InProgress = "in_progress"
+	complete   = "complete"
+	failed     = "failed"
 )
 
 func ResourceIBMIAMPolicyAssignment() *schema.Resource {
@@ -24,7 +33,11 @@ func ResourceIBMIAMPolicyAssignment() *schema.Resource {
 		UpdateContext: resourceIBMPolicyAssignmentUpdate,
 		DeleteContext: resourceIBMPolicyAssignmentDelete,
 		Importer:      &schema.ResourceImporter{},
-
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(30 * time.Minute),
+			Update: schema.DefaultTimeout(30 * time.Minute),
+			Delete: schema.DefaultTimeout(30 * time.Minute),
+		},
 		Schema: map[string]*schema.Schema{
 			"version": {
 				Type:        schema.TypeString,
@@ -62,54 +75,6 @@ func ResourceIBMIAMPolicyAssignment() *schema.Resource {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "policy template version.",
-						},
-					},
-				},
-			},
-			"options": {
-				Type:        schema.TypeList,
-				MinItems:    1,
-				MaxItems:    1,
-				Required:    true,
-				Description: "The set of properties required for a policy assignment.",
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"root": {
-							Type:     schema.TypeList,
-							MinItems: 1,
-							MaxItems: 1,
-							Required: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"requester_id": {
-										Type:     schema.TypeString,
-										Required: true,
-									},
-									"assignment_id": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: "Passed in value to correlate with other assignments.",
-									},
-									"template": {
-										Type:     schema.TypeList,
-										Optional: true,
-										Elem: &schema.Resource{
-											Schema: map[string]*schema.Schema{
-												"id": {
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: "The template id where this policy is being assigned from.",
-												},
-												"version": {
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: "The template version where this policy is being assigned from.",
-												},
-											},
-										},
-									},
-								},
-							},
 						},
 					},
 				},
@@ -299,16 +264,11 @@ func resourceIBMPolicyAssignmentCreate(context context.Context, d *schema.Resour
 	createPolicyTemplateAssignmentOptions := &iampolicymanagementv1.CreatePolicyTemplateAssignmentOptions{}
 
 	createPolicyTemplateAssignmentOptions.SetVersion(d.Get("version").(string))
-	targetModel, err := ResourceIBMPolicyAssignmentMapToAssignmentTargetDetails(d.Get("target").(map[string]interface{}))
-	if err != nil {
-		return diag.FromErr(err)
+	targetModel, diags := GetTargetModel(d)
+	if diags.HasError() {
+		return diags
 	}
 	createPolicyTemplateAssignmentOptions.SetTarget(targetModel)
-	optionsModel, err := ResourceIBMPolicyAssignmentMapToPolicyAssignmentV1Options(d.Get("options.0").(map[string]interface{}))
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	createPolicyTemplateAssignmentOptions.SetOptions(optionsModel)
 	var templates []iampolicymanagementv1.AssignmentTemplateDetails
 	for _, v := range d.Get("templates").([]interface{}) {
 		value := v.(map[string]interface{})
@@ -331,6 +291,14 @@ func resourceIBMPolicyAssignmentCreate(context context.Context, d *schema.Resour
 
 	d.SetId(*policyAssignmentV1Collection.Assignments[0].ID)
 
+	if targetModel.Type != nil && (*targetModel.Type == "Account") {
+		log.Printf("[DEBUG] Skipping waitForAssignment for target type: %s", *targetModel.Type)
+	} else {
+		_, err = waitForAssignment(d.Timeout(schema.TimeoutCreate), meta, d, isAccessPolicyAssigned)
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("error assigning: %s", err))
+		}
+	}
 	return resourceIBMPolicyAssignmentRead(context, d, meta)
 }
 
@@ -367,13 +335,6 @@ func resourceIBMPolicyAssignmentRead(context context.Context, d *schema.Resource
 
 	if err = d.Set("target", targetMap); err != nil {
 		return diag.FromErr(fmt.Errorf("error setting target: %s", err))
-	}
-	optionsMap, err := ResourceIBMPolicyAssignmentPolicyAssignmentV1OptionsToMap(assignmentDetails.Options)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if err = d.Set("options", []map[string]interface{}{optionsMap}); err != nil {
-		return diag.FromErr(fmt.Errorf("error setting options: %s", err))
 	}
 	if !core.IsNil(assignmentDetails.AccountID) {
 		if err = d.Set("account_id", assignmentDetails.AccountID); err != nil {
@@ -445,6 +406,12 @@ func resourceIBMPolicyAssignmentUpdate(context context.Context, d *schema.Resour
 
 	updatePolicyAssignmentOptions.SetAssignmentID(d.Id())
 
+	targetModel, diags := GetTargetModel(d)
+
+	if diags.HasError() {
+		return diags
+	}
+
 	hasChange := false
 
 	if d.HasChange("template_version") {
@@ -476,6 +443,16 @@ func resourceIBMPolicyAssignmentUpdate(context context.Context, d *schema.Resour
 			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
 			return tfErr.GetDiag()
 		}
+
+		if targetModel.Type != nil && (*targetModel.Type == "Account") {
+			log.Printf("[DEBUG] Skipping waitForAssignment for target type: %s", *targetModel.Type)
+		} else {
+			_, err = waitForAssignment(d.Timeout(schema.TimeoutUpdate), meta, d, isAccessPolicyAssigned)
+			if err != nil {
+				return diag.FromErr(fmt.Errorf("error assigning: %s", err))
+			}
+		}
+
 	}
 
 	return resourceIBMPolicyAssignmentRead(context, d, meta)
@@ -493,11 +470,33 @@ func resourceIBMPolicyAssignmentDelete(context context.Context, d *schema.Resour
 
 	deletePolicyAssignmentOptions.SetAssignmentID(d.Id())
 
-	_, err = iamPolicyManagementClient.DeletePolicyAssignmentWithContext(context, deletePolicyAssignmentOptions)
+	response, err := iamPolicyManagementClient.DeletePolicyAssignmentWithContext(context, deletePolicyAssignmentOptions)
 	if err != nil {
-		tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeletePolicyAssignmentWithContext failed: %s", err.Error()), "ibm_policy_assignment", "delete")
-		log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
-		return tfErr.GetDiag()
+		if response != nil && response.StatusCode == 404 {
+			return nil
+		} else {
+			tfErr := flex.TerraformErrorf(err, fmt.Sprintf("DeletePolicyAssignmentWithContext failed: %s", err.Error()), "ibm_policy_assignment", "delete")
+			log.Printf("[DEBUG]\n%s", tfErr.GetDebugMessage())
+			return tfErr.GetDiag()
+		}
+	}
+
+	targetModel, diags := GetTargetModel(d)
+	if diags.HasError() {
+		return diags
+	}
+
+	if targetModel.Type != nil && (*targetModel.Type == "Account") {
+		log.Printf("[DEBUG] Skipping waitForAssignment for target type: %s", *targetModel.Type)
+	} else {
+		_, err = waitForAssignment(d.Timeout(schema.TimeoutDelete), meta, d, isAccessPolicyAssignedDeleted)
+		if err != nil {
+			if strings.Contains(err.Error(), "not found") {
+				return nil
+			} else {
+				return diag.FromErr(fmt.Errorf("error assigning: %s", err))
+			}
+		}
 	}
 
 	d.SetId("")
@@ -512,45 +511,6 @@ func ResourceIBMPolicyAssignmentMapToAssignmentTargetDetails(modelMap map[string
 	}
 	if modelMap["id"] != nil && modelMap["id"].(string) != "" {
 		model.ID = core.StringPtr(modelMap["id"].(string))
-	}
-	return model, nil
-}
-
-func ResourceIBMPolicyAssignmentMapToPolicyAssignmentV1Options(modelMap map[string]interface{}) (*iampolicymanagementv1.PolicyAssignmentV1Options, error) {
-	model := &iampolicymanagementv1.PolicyAssignmentV1Options{}
-	RootModel, err := ResourceIBMPolicyAssignmentMapToPolicyAssignmentV1OptionsRoot(modelMap["root"].([]interface{})[0].(map[string]interface{}))
-	if err != nil {
-		return model, err
-	}
-	model.Root = RootModel
-	return model, nil
-}
-
-func ResourceIBMPolicyAssignmentMapToPolicyAssignmentV1OptionsRoot(modelMap map[string]interface{}) (*iampolicymanagementv1.PolicyAssignmentV1OptionsRoot, error) {
-	model := &iampolicymanagementv1.PolicyAssignmentV1OptionsRoot{}
-	if modelMap["requester_id"] != nil && modelMap["requester_id"].(string) != "" {
-		model.RequesterID = core.StringPtr(modelMap["requester_id"].(string))
-	}
-	if modelMap["assignment_id"] != nil && modelMap["assignment_id"].(string) != "" {
-		model.AssignmentID = core.StringPtr(modelMap["assignment_id"].(string))
-	}
-	if modelMap["template"] != nil && len(modelMap["template"].([]interface{})) > 0 {
-		TemplateModel, err := ResourceIBMPolicyAssignmentMapToPolicyAssignmentV1OptionsRootTemplate(modelMap["template"].([]interface{})[0].(map[string]interface{}))
-		if err != nil {
-			return model, err
-		}
-		model.Template = TemplateModel
-	}
-	return model, nil
-}
-
-func ResourceIBMPolicyAssignmentMapToPolicyAssignmentV1OptionsRootTemplate(modelMap map[string]interface{}) (*iampolicymanagementv1.PolicyAssignmentV1OptionsRootTemplate, error) {
-	model := &iampolicymanagementv1.PolicyAssignmentV1OptionsRootTemplate{}
-	if modelMap["id"] != nil && modelMap["id"].(string) != "" {
-		model.ID = core.StringPtr(modelMap["id"].(string))
-	}
-	if modelMap["version"] != nil && modelMap["version"].(string) != "" {
-		model.Version = core.StringPtr(modelMap["version"].(string))
 	}
 	return model, nil
 }
@@ -575,4 +535,120 @@ func ResourceIBMPolicyAssignmentAssignmentTemplateDetailsToMap(model *iampolicym
 		modelMap["version"] = *model.Version
 	}
 	return modelMap, nil
+}
+
+func GetTargetModel(d *schema.ResourceData) (*iampolicymanagementv1.AssignmentTargetDetails, diag.Diagnostics) {
+	targetModel, err := ResourceIBMPolicyAssignmentMapToAssignmentTargetDetails(d.Get("target").(map[string]interface{}))
+
+	if err != nil {
+		return targetModel, diag.FromErr(err)
+	}
+
+	return targetModel, nil
+}
+
+func waitForAssignment(timeout time.Duration, meta interface{}, d *schema.ResourceData, refreshFn func(string, interface{}) resource.StateRefreshFunc) (interface{}, error) {
+
+	stateConf := &resource.StateChangeConf{
+		Pending:      []string{InProgress},
+		Target:       []string{complete},
+		Refresh:      refreshFn(d.Id(), meta),
+		Delay:        30 * time.Second,
+		PollInterval: time.Minute,
+		Timeout:      timeout,
+	}
+
+	return stateConf.WaitForState()
+}
+
+func isAccessPolicyAssigned(id string, meta interface{}) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		iamPolicyManagementClient, err := meta.(conns.ClientSession).IAMPolicyManagementV1API()
+		if err != nil {
+			return nil, failed, err
+		}
+
+		getAssignmentPolicyOptions := &iampolicymanagementv1.GetPolicyAssignmentOptions{
+			AssignmentID: core.StringPtr(id),
+			Version:      core.StringPtr("1.0"),
+		}
+
+		getAssignmentPolicyOptions.SetAssignmentID(id)
+
+		assignmentDetails, response, err := iamPolicyManagementClient.GetPolicyAssignment(getAssignmentPolicyOptions)
+
+		if err != nil {
+			if response != nil && response.StatusCode == 404 {
+				return nil, failed, err
+			}
+			return nil, failed, err
+		}
+
+		assignment, ok := assignmentDetails.(*iampolicymanagementv1.GetPolicyAssignmentResponse)
+
+		if !ok {
+			return nil, failed, fmt.Errorf("[ERROR] Type assertion failed for assignment details : %s", id)
+		}
+
+		if assignment != nil {
+			if *assignment.Status == "accepted" || *assignment.Status == "in_progress" {
+				log.Printf("Assignment still in progress\n")
+				return assignment, InProgress, nil
+			}
+
+			if *assignment.Status == "succeeded" {
+				return assignment, complete, nil
+			}
+
+			if *assignment.Status == "failed" {
+				return assignment, failed, fmt.Errorf("[ERROR] The assignment %s did not complete successfully and has a 'failed' status. Please check assignment resource for detailed errors: %s\n", id, response)
+			}
+		}
+
+		return assignment, failed, fmt.Errorf("[ERROR] Unexpected status reached for assignment %s.: %s\n", id, response)
+	}
+}
+
+func isAccessPolicyAssignedDeleted(id string, meta interface{}) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		iamPolicyManagementClient, err := meta.(conns.ClientSession).IAMPolicyManagementV1API()
+		if err != nil {
+			return nil, failed, err
+		}
+
+		getAssignmentPolicyOptions := &iampolicymanagementv1.GetPolicyAssignmentOptions{
+			AssignmentID: core.StringPtr(id),
+			Version:      core.StringPtr("1.0"),
+		}
+
+		getAssignmentPolicyOptions.SetAssignmentID(id)
+
+		assignmentDetails, response, err := iamPolicyManagementClient.GetPolicyAssignment(getAssignmentPolicyOptions)
+
+		if err != nil {
+			if response != nil && response.StatusCode == 404 {
+				return nil, failed, err
+			}
+			return nil, failed, err
+		}
+
+		assignment, ok := assignmentDetails.(*iampolicymanagementv1.GetPolicyAssignmentResponse)
+
+		if !ok {
+			return nil, failed, fmt.Errorf("[ERROR] Type assertion failed for assignment details : %s", id)
+		}
+
+		if assignment != nil {
+			if *assignment.Status == "accepted" || *assignment.Status == "in_progress" {
+				log.Printf("Assignment still in progress\n")
+				return assignment, InProgress, nil
+			}
+
+			if *assignment.Status == "failed" {
+				return assignment, failed, fmt.Errorf("[ERROR] The assignment %s did not complete successfully and has a 'failed' status. Please check assignment resource for detailed errors: %s\n", id, response)
+			}
+		}
+
+		return assignment, failed, fmt.Errorf("[ERROR] Unexpected status reached for assignment %s.: %s\n", id, response)
+	}
 }

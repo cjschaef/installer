@@ -26,6 +26,7 @@ type KMIPObject struct {
 	DestroyedByCertID string     `json:"destroyed_by_kmip_client_cert_id,omitempty"`
 	DestroyedBy       string     `json:"destroyed_by,omitempty"`
 	DestroyedAt       *time.Time `json:"destroyed_at,omitempty"`
+	Recoverable       *bool      `json:"recoverable,omitempty"`
 }
 
 type KMIPObjects struct {
@@ -92,11 +93,15 @@ func (c *Client) GetKMIPObject(ctx context.Context, adapter_id, object_id string
 	return unwrapKMIPObject(objects), nil
 }
 
-func (c *Client) DeleteKMIPObject(ctx context.Context, adapter_id, object_id string) error {
+func (c *Client) DeleteKMIPObject(ctx context.Context, adapter_id, object_id string, opts ...RequestOpt) error {
 	req, err := c.newRequest("DELETE", fmt.Sprintf("%s/%s/%s/%s",
 		kmipAdapterPath, adapter_id, kmipObjectSubPath, object_id), nil)
 	if err != nil {
 		return err
+	}
+
+	for _, opt := range opts {
+		opt(req)
 	}
 
 	_, err = c.do(ctx, req, nil)

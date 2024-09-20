@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.84.1-55f6d880-20240110-194020
+ * IBM OpenAPI SDK Code Generator Version: 3.91.0-d9755c53-20240605-153412
  */
 
 // Package resourceconfigurationv1 : Operations and models for the ResourceConfigurationV1 service
@@ -63,22 +63,26 @@ func NewResourceConfigurationV1UsingExternalConfig(options *ResourceConfiguratio
 	if options.Authenticator == nil {
 		options.Authenticator, err = core.GetAuthenticatorFromEnvironment(options.ServiceName)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "env-auth-error", common.GetComponentInfo())
 			return
 		}
 	}
 
 	resourceConfiguration, err = NewResourceConfigurationV1(options)
+	err = core.RepurposeSDKProblem(err, "new-client-error")
 	if err != nil {
 		return
 	}
 
 	err = resourceConfiguration.Service.ConfigureService(options.ServiceName)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "client-config-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = resourceConfiguration.Service.SetServiceURL(options.URL)
+		err = core.RepurposeSDKProblem(err, "url-set-error")
 	}
 	return
 }
@@ -92,12 +96,14 @@ func NewResourceConfigurationV1(options *ResourceConfigurationV1Options) (servic
 
 	baseService, err := core.NewBaseService(serviceOptions)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "new-base-error", common.GetComponentInfo())
 		return
 	}
 
 	if options.URL != "" {
 		err = baseService.SetServiceURL(options.URL)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "set-url-error", common.GetComponentInfo())
 			return
 		}
 	}
@@ -111,7 +117,7 @@ func NewResourceConfigurationV1(options *ResourceConfigurationV1Options) (servic
 
 // GetServiceURLForRegion returns the service URL to be used for the specified region
 func GetServiceURLForRegion(region string) (string, error) {
-	return "", fmt.Errorf("service does not support regional URLs")
+	return "", core.SDKErrorf(nil, "service does not support regional URLs", "no-regional-support", common.GetComponentInfo())
 }
 
 // Clone makes a copy of "resourceConfiguration" suitable for processing requests.
@@ -126,7 +132,11 @@ func (resourceConfiguration *ResourceConfigurationV1) Clone() *ResourceConfigura
 
 // SetServiceURL sets the service URL
 func (resourceConfiguration *ResourceConfigurationV1) SetServiceURL(url string) error {
-	return resourceConfiguration.Service.SetServiceURL(url)
+	err := resourceConfiguration.Service.SetServiceURL(url)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-set-error", common.GetComponentInfo())
+	}
+	return err
 }
 
 // GetServiceURL returns the service URL
@@ -163,17 +173,21 @@ func (resourceConfiguration *ResourceConfigurationV1) DisableRetries() {
 // GetBucketConfig : Returns metadata for the specified bucket
 // Returns metadata for the specified bucket.
 func (resourceConfiguration *ResourceConfigurationV1) GetBucketConfig(getBucketConfigOptions *GetBucketConfigOptions) (result *Bucket, response *core.DetailedResponse, err error) {
-	return resourceConfiguration.GetBucketConfigWithContext(context.Background(), getBucketConfigOptions)
+	result, response, err = resourceConfiguration.GetBucketConfigWithContext(context.Background(), getBucketConfigOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // GetBucketConfigWithContext is an alternate form of the GetBucketConfig method which supports a Context parameter
 func (resourceConfiguration *ResourceConfigurationV1) GetBucketConfigWithContext(ctx context.Context, getBucketConfigOptions *GetBucketConfigOptions) (result *Bucket, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(getBucketConfigOptions, "getBucketConfigOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(getBucketConfigOptions, "getBucketConfigOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -186,6 +200,7 @@ func (resourceConfiguration *ResourceConfigurationV1) GetBucketConfigWithContext
 	builder.EnableGzipCompression = resourceConfiguration.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(resourceConfiguration.Service.Options.URL, `/b/{bucket}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -201,17 +216,21 @@ func (resourceConfiguration *ResourceConfigurationV1) GetBucketConfigWithContext
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	var rawResponse map[string]json.RawMessage
 	response, err = resourceConfiguration.Service.Request(request, &rawResponse)
 	if err != nil {
+		core.EnrichHTTPProblem(err, "getBucketConfig", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalBucket)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
 		}
 		response.Result = result
@@ -228,17 +247,21 @@ func (resourceConfiguration *ResourceConfigurationV1) GetBucketConfigWithContext
 // fields. Please don't use `PATCH` trying to update the number of objects in a bucket, any timestamps, or other
 // non-mutable fields.
 func (resourceConfiguration *ResourceConfigurationV1) UpdateBucketConfig(updateBucketConfigOptions *UpdateBucketConfigOptions) (response *core.DetailedResponse, err error) {
-	return resourceConfiguration.UpdateBucketConfigWithContext(context.Background(), updateBucketConfigOptions)
+	response, err = resourceConfiguration.UpdateBucketConfigWithContext(context.Background(), updateBucketConfigOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
 }
 
 // UpdateBucketConfigWithContext is an alternate form of the UpdateBucketConfig method which supports a Context parameter
 func (resourceConfiguration *ResourceConfigurationV1) UpdateBucketConfigWithContext(ctx context.Context, updateBucketConfigOptions *UpdateBucketConfigOptions) (response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(updateBucketConfigOptions, "updateBucketConfigOptions cannot be nil")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
 	err = core.ValidateStruct(updateBucketConfigOptions, "updateBucketConfigOptions")
 	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
@@ -251,6 +274,7 @@ func (resourceConfiguration *ResourceConfigurationV1) UpdateBucketConfigWithCont
 	builder.EnableGzipCompression = resourceConfiguration.GetEnableGzipCompression()
 	_, err = builder.ResolveRequestURL(resourceConfiguration.Service.Options.URL, `/b/{bucket}`, pathParamsMap)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
@@ -264,39 +288,57 @@ func (resourceConfiguration *ResourceConfigurationV1) UpdateBucketConfigWithCont
 	}
 	builder.AddHeader("Content-Type", "application/merge-patch+json")
 	if updateBucketConfigOptions.IfMatch != nil {
-		builder.AddHeader("if-match", fmt.Sprint(*updateBucketConfigOptions.IfMatch))
+		builder.AddHeader("If-Match", fmt.Sprint(*updateBucketConfigOptions.IfMatch))
 	}
 
 	if updateBucketConfigOptions.BucketPatch != nil {
 		_, err = builder.SetBodyContentJSON(updateBucketConfigOptions.BucketPatch)
 		if err != nil {
+			err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
 			return
 		}
 	}
 
 	request, err := builder.Build()
 	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
 		return
 	}
 
 	response, err = resourceConfiguration.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "updateBucketConfig", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
 
 	return
 }
+func getServiceComponentInfo() *core.ProblemComponent {
+	return core.NewProblemComponent(DefaultServiceName, "1.0.0")
+}
 
-// ActivityTracking : Enables sending log data to IBM Cloud Activity Tracker to provide visibility into object read and write events. All
-// object events are sent to the activity tracker instance defined in the `activity_tracker_crn` field.
+// ActivityTracking : Enables sending log data to IBM Cloud Activity Tracker Event Routing to provide visibility into bucket management,
+// object read and write events. (Recommended) When the `activity_tracker_crn` is not populated, then enabled events are
+// sent to the Activity Tracker Event Routing instance at the container's location unless otherwise specified in the
+// Activity Tracker Event Routing Event Routing service configuration. (Legacy) When the `activity_tracker_crn` is
+// populated, then enabled events are sent to the Activity Tracker Event Routing instance specified.
 type ActivityTracking struct {
-	// If set to `true`, all object read events (i.e. downloads) will be sent to Activity Tracker.
+	// If set to `true`, all object read events (i.e. downloads) will be sent to Activity Tracker Event Routing.
 	ReadDataEvents *bool `json:"read_data_events,omitempty"`
 
-	// If set to `true`, all object write events (i.e. uploads) will be sent to Activity Tracker.
+	// If set to `true`, all object write events (i.e. uploads) will be sent to Activity Tracker Event Routing.
 	WriteDataEvents *bool `json:"write_data_events,omitempty"`
 
-	// Required the first time `activity_tracking` is configured. The instance of Activity Tracker that will receive object
-	// event data. The format is "crn:v1:bluemix:public:logdnaat:{bucket location}:a/{storage account}:{activity tracker
-	// service instance}::".
+	// When the `activity_tracker_crn` is not populated, then enabled events are sent to the Activity Tracker Event Routing
+	// instance associated to the container's location unless otherwise specified in the Activity Tracker Event Routing
+	// Event Routing service configuration. If `activity_tracker_crn` is populated, then enabled events are sent to the
+	// Activity Tracker Event Routing instance specified and bucket management events are always enabled.
 	ActivityTrackerCrn *string `json:"activity_tracker_crn,omitempty"`
+
+	// This field only applies if `activity_tracker_crn` is not populated. If set to `true`, all bucket management events
+	// will be sent to Activity Tracker Event Routing.
+	ManagementEvents *bool `json:"management_events,omitempty"`
 }
 
 // UnmarshalActivityTracking unmarshals an instance of ActivityTracking from the specified map of raw messages.
@@ -304,14 +346,22 @@ func UnmarshalActivityTracking(m map[string]json.RawMessage, result interface{})
 	obj := new(ActivityTracking)
 	err = core.UnmarshalPrimitive(m, "read_data_events", &obj.ReadDataEvents)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "read_data_events-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "write_data_events", &obj.WriteDataEvents)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "write_data_events-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "activity_tracker_crn", &obj.ActivityTrackerCrn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "activity_tracker_crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "management_events", &obj.ManagementEvents)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "management_events-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -359,12 +409,18 @@ type Bucket struct {
 	// requester to have the `manager` role.
 	Firewall *Firewall `json:"firewall,omitempty"`
 
-	// Enables sending log data to IBM Cloud Activity Tracker to provide visibility into object read and write events. All
-	// object events are sent to the activity tracker instance defined in the `activity_tracker_crn` field.
+	// Enables sending log data to IBM Cloud Activity Tracker Event Routing to provide visibility into bucket management,
+	// object read and write events. (Recommended) When the `activity_tracker_crn` is not populated, then enabled events
+	// are sent to the Activity Tracker Event Routing instance at the container's location unless otherwise specified in
+	// the Activity Tracker Event Routing Event Routing service configuration. (Legacy) When the `activity_tracker_crn` is
+	// populated, then enabled events are sent to the Activity Tracker Event Routing instance specified.
 	ActivityTracking *ActivityTracking `json:"activity_tracking,omitempty"`
 
-	// Enables sending metrics to IBM Cloud Monitoring. All metrics are sent to the IBM Cloud Monitoring instance defined
-	// in the `monitoring_crn` field.
+	// Enables sending metrics to IBM Cloud Monitoring.  All metrics are opt-in. (Recommended) When the
+	// `metrics_monitoring_crn` is not populated, then enabled metrics are sent to the Monitoring instance at the
+	// container's location unless otherwise specified in the Metrics Router service configuration. (Legacy) When the
+	// `metrics_monitoring_crn` is populated, then enabled metrics are sent to the Monitoring instance defined in the
+	// `metrics_monitoring_crn` field.
 	MetricsMonitoring *MetricsMonitoring `json:"metrics_monitoring,omitempty"`
 
 	// Maximum bytes for this bucket.
@@ -379,66 +435,82 @@ func UnmarshalBucket(m map[string]json.RawMessage, result interface{}) (err erro
 	obj := new(Bucket)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "crn", &obj.Crn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "service_instance_id", &obj.ServiceInstanceID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "service_instance_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "service_instance_crn", &obj.ServiceInstanceCrn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "service_instance_crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "time_created", &obj.TimeCreated)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "time_created-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "time_updated", &obj.TimeUpdated)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "time_updated-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "object_count", &obj.ObjectCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "object_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "bytes_used", &obj.BytesUsed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "bytes_used-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "noncurrent_object_count", &obj.NoncurrentObjectCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "noncurrent_object_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "noncurrent_bytes_used", &obj.NoncurrentBytesUsed)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "noncurrent_bytes_used-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "delete_marker_count", &obj.DeleteMarkerCount)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "delete_marker_count-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "firewall", &obj.Firewall, UnmarshalFirewall)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "firewall-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "activity_tracking", &obj.ActivityTracking, UnmarshalActivityTracking)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "activity_tracking-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "metrics_monitoring", &obj.MetricsMonitoring, UnmarshalMetricsMonitoring)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "metrics_monitoring-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "hard_quota", &obj.HardQuota)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "hard_quota-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "protection_management", &obj.ProtectionManagement, UnmarshalProtectionManagementResponse)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "protection_management-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -453,12 +525,18 @@ type BucketPatch struct {
 	// requester to have the `manager` role.
 	Firewall *Firewall `json:"firewall,omitempty"`
 
-	// Enables sending log data to IBM Cloud Activity Tracker to provide visibility into object read and write events. All
-	// object events are sent to the activity tracker instance defined in the `activity_tracker_crn` field.
+	// Enables sending log data to IBM Cloud Activity Tracker Event Routing to provide visibility into bucket management,
+	// object read and write events. (Recommended) When the `activity_tracker_crn` is not populated, then enabled events
+	// are sent to the Activity Tracker Event Routing instance at the container's location unless otherwise specified in
+	// the Activity Tracker Event Routing Event Routing service configuration. (Legacy) When the `activity_tracker_crn` is
+	// populated, then enabled events are sent to the Activity Tracker Event Routing instance specified.
 	ActivityTracking *ActivityTracking `json:"activity_tracking,omitempty"`
 
-	// Enables sending metrics to IBM Cloud Monitoring. All metrics are sent to the IBM Cloud Monitoring instance defined
-	// in the `monitoring_crn` field.
+	// Enables sending metrics to IBM Cloud Monitoring.  All metrics are opt-in. (Recommended) When the
+	// `metrics_monitoring_crn` is not populated, then enabled metrics are sent to the Monitoring instance at the
+	// container's location unless otherwise specified in the Metrics Router service configuration. (Legacy) When the
+	// `metrics_monitoring_crn` is populated, then enabled metrics are sent to the Monitoring instance defined in the
+	// `metrics_monitoring_crn` field.
 	MetricsMonitoring *MetricsMonitoring `json:"metrics_monitoring,omitempty"`
 
 	// Maximum bytes for this bucket.
@@ -473,22 +551,27 @@ func UnmarshalBucketPatch(m map[string]json.RawMessage, result interface{}) (err
 	obj := new(BucketPatch)
 	err = core.UnmarshalModel(m, "firewall", &obj.Firewall, UnmarshalFirewall)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "firewall-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "activity_tracking", &obj.ActivityTracking, UnmarshalActivityTracking)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "activity_tracking-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "metrics_monitoring", &obj.MetricsMonitoring, UnmarshalMetricsMonitoring)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "metrics_monitoring-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "hard_quota", &obj.HardQuota)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "hard_quota-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "protection_management", &obj.ProtectionManagement, UnmarshalProtectionManagement)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "protection_management-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -501,6 +584,9 @@ func (bucketPatch *BucketPatch) AsPatch() (_patch map[string]interface{}, err er
 	jsonData, err = json.Marshal(bucketPatch)
 	if err == nil {
 		err = json.Unmarshal(jsonData, &_patch)
+	}
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unmarshal-patch-data-error", common.GetComponentInfo())
 	}
 	return
 }
@@ -555,8 +641,11 @@ func (options *GetBucketConfigOptions) SetHeaders(param map[string]string) *GetB
 	return options
 }
 
-// MetricsMonitoring : Enables sending metrics to IBM Cloud Monitoring. All metrics are sent to the IBM Cloud Monitoring instance defined in
-// the `monitoring_crn` field.
+// MetricsMonitoring : Enables sending metrics to IBM Cloud Monitoring.  All metrics are opt-in. (Recommended) When the
+// `metrics_monitoring_crn` is not populated, then enabled metrics are sent to the Monitoring instance at the
+// container's location unless otherwise specified in the Metrics Router service configuration. (Legacy) When the
+// `metrics_monitoring_crn` is populated, then enabled metrics are sent to the Monitoring instance defined in the
+// `metrics_monitoring_crn` field.
 type MetricsMonitoring struct {
 	// If set to `true`, all usage metrics (i.e. `bytes_used`) will be sent to the monitoring service.
 	UsageMetricsEnabled *bool `json:"usage_metrics_enabled,omitempty"`
@@ -564,9 +653,9 @@ type MetricsMonitoring struct {
 	// If set to `true`, all request metrics (i.e. `rest.object.head`) will be sent to the monitoring service.
 	RequestMetricsEnabled *bool `json:"request_metrics_enabled,omitempty"`
 
-	// Required the first time `metrics_monitoring` is configured. The instance of IBM Cloud Monitoring that will receive
-	// the bucket metrics. The format is "crn:v1:bluemix:public:logdnaat:{bucket location}:a/{storage account}:{monitoring
-	// service instance}::".
+	// When the `metrics_monitoring_crn` is not populated, then enabled metrics are sent to the monitoring instance
+	// associated to the container's location unless otherwise specified in the Metrics Router service configuration. If
+	// `metrics_monitoring_crn` is populated, then enabled events are sent to the Metrics Monitoring instance specified.
 	MetricsMonitoringCrn *string `json:"metrics_monitoring_crn,omitempty"`
 }
 
@@ -575,14 +664,17 @@ func UnmarshalMetricsMonitoring(m map[string]json.RawMessage, result interface{}
 	obj := new(MetricsMonitoring)
 	err = core.UnmarshalPrimitive(m, "usage_metrics_enabled", &obj.UsageMetricsEnabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "usage_metrics_enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "request_metrics_enabled", &obj.RequestMetricsEnabled)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "request_metrics_enabled-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "metrics_monitoring_crn", &obj.MetricsMonitoringCrn)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "metrics_monitoring_crn-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -611,10 +703,12 @@ func UnmarshalProtectionManagement(m map[string]json.RawMessage, result interfac
 	obj := new(ProtectionManagement)
 	err = core.UnmarshalPrimitive(m, "requested_state", &obj.RequestedState)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "requested_state-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "protection_management_token", &obj.ProtectionManagementToken)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "protection_management_token-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -636,10 +730,12 @@ func UnmarshalProtectionManagementResponse(m map[string]json.RawMessage, result 
 	obj := new(ProtectionManagementResponse)
 	err = core.UnmarshalPrimitive(m, "token_applied_counter", &obj.TokenAppliedCounter)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "token_applied_counter-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "token_entries", &obj.TokenEntries, UnmarshalProtectionManagementResponseTokenEntry)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "token_entries-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -668,30 +764,37 @@ func UnmarshalProtectionManagementResponseTokenEntry(m map[string]json.RawMessag
 	obj := new(ProtectionManagementResponseTokenEntry)
 	err = core.UnmarshalPrimitive(m, "token_id", &obj.TokenID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "token_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "token_expiration_time", &obj.TokenExpirationTime)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "token_expiration_time-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "token_reference_id", &obj.TokenReferenceID)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "token_reference_id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "applied_time", &obj.AppliedTime)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "applied_time-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "invalidated_time", &obj.InvalidatedTime)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "invalidated_time-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "expiration_time", &obj.ExpirationTime)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "expiration_time-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "shorten_retention_flag", &obj.ShortenRetentionFlag)
 	if err != nil {
+		err = core.SDKErrorf(err, "", "shorten_retention_flag-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -708,7 +811,7 @@ type UpdateBucketConfigOptions struct {
 
 	// An Etag previously returned in a header when fetching or updating a bucket's metadata. If this value does not match
 	// the active Etag, the request will fail.
-	IfMatch *string `json:"if-match,omitempty"`
+	IfMatch *string `json:"If-Match,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string

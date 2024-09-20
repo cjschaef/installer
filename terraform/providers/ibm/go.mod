@@ -1,37 +1,37 @@
 module github.com/openshift/installer/terraform/providers/ibm
 
-go 1.22.2
+go 1.22.4
 
 toolchain go1.22.6
 
 require github.com/IBM-Cloud/terraform-provider-ibm v1.61.0
 
 require (
-	github.com/IBM-Cloud/bluemix-go v0.0.0-20240423071914-9e96525baef4 // indirect
-	github.com/IBM-Cloud/container-services-go-sdk v0.0.0-20240216115622-a311507b4b5b // indirect
-	github.com/IBM-Cloud/power-go-client v1.6.0 // indirect
+	github.com/IBM-Cloud/bluemix-go v0.0.0-20240719075425-078fcb3a55be // indirect
+	github.com/IBM-Cloud/container-services-go-sdk v0.0.0-20240725064144-454a2ae23113 // indirect
+	github.com/IBM-Cloud/power-go-client v1.7.0 // indirect
 	github.com/IBM/apigateway-go-sdk v0.0.0-20210714141226-a5d5d49caaca // indirect
 	github.com/IBM/appconfiguration-go-admin-sdk v0.3.0 // indirect
 	github.com/IBM/appid-management-go-sdk v0.0.0-20210908164609-dd0e0eaf732f // indirect
 	github.com/IBM/cloud-databases-go-sdk v0.7.0 // indirect
-	github.com/IBM/cloudant-go-sdk v0.0.43 // indirect
-	github.com/IBM/code-engine-go-sdk v0.0.0-20231106200405-99e81b3ee752 // indirect
+	github.com/IBM/cloudant-go-sdk v0.8.0 // indirect
+	github.com/IBM/code-engine-go-sdk v0.0.0-20240808131715-b9d168602dac // indirect
 	github.com/IBM/container-registry-go-sdk v1.1.0 // indirect
-	github.com/IBM/continuous-delivery-go-sdk v1.5.0 // indirect
-	github.com/IBM/event-notifications-go-admin-sdk v0.6.1 // indirect
+	github.com/IBM/continuous-delivery-go-sdk v1.6.0 // indirect
+	github.com/IBM/event-notifications-go-admin-sdk v0.9.0 // indirect
 	github.com/IBM/eventstreams-go-sdk v1.4.0 // indirect
-	github.com/IBM/go-sdk-core/v5 v5.17.0 // indirect
-	github.com/IBM/ibm-cos-sdk-go v1.10.1 // indirect
+	github.com/IBM/go-sdk-core/v5 v5.17.4 // indirect
+	github.com/IBM/ibm-cos-sdk-go v1.10.3 // indirect
 	github.com/IBM/ibm-hpcs-tke-sdk v0.0.0-20211109141421-a4b61b05f7d1 // indirect
 	github.com/IBM/ibm-hpcs-uko-sdk v0.0.20-beta // indirect
-	github.com/IBM/keyprotect-go-client v0.14.0 // indirect
-	github.com/IBM/networking-go-sdk v0.46.1 // indirect
-	github.com/IBM/platform-services-go-sdk v0.62.11 // indirect
+	github.com/IBM/keyprotect-go-client v0.15.1 // indirect
+	github.com/IBM/networking-go-sdk v0.49.0 // indirect
+	github.com/IBM/platform-services-go-sdk v0.68.1 // indirect
 	github.com/IBM/push-notifications-go-sdk v0.0.0-20210310100607-5790b96c47f5 // indirect
 	github.com/IBM/schematics-go-sdk v0.2.3 // indirect
-	github.com/IBM/secrets-manager-go-sdk/v2 v2.0.4 // indirect
+	github.com/IBM/secrets-manager-go-sdk/v2 v2.0.6 // indirect
 	github.com/IBM/vpc-beta-go-sdk v0.6.0 // indirect
-	github.com/IBM/vpc-go-sdk v0.50.0 // indirect
+	github.com/IBM/vpc-go-sdk v0.58.0 // indirect
 	github.com/ScaleFT/sshkeys v0.0.0-20200327173127-6142f742bca5 // indirect
 	github.com/apache/openwhisk-client-go v0.0.0-20200201143223-a804fb82d105 // indirect
 	github.com/apparentlymart/go-cidr v1.1.0 // indirect
@@ -50,8 +50,8 @@ require (
 	github.com/openshift/api v0.0.0-20230329202819-04d4fb776982 // indirect
 	github.com/openshift/client-go v0.0.0-20230324103026-3f1513df25e0 // indirect
 	github.com/softlayer/softlayer-go v1.0.3 // indirect
-	go.mongodb.org/mongo-driver v1.15.0 // indirect
-	golang.org/x/crypto v0.22.0 // indirect
+	go.mongodb.org/mongo-driver v1.16.0 // indirect
+	golang.org/x/crypto v0.25.0 // indirect
 	k8s.io/api v0.26.3 // indirect
 	k8s.io/apimachinery v0.26.3 // indirect
 	k8s.io/client-go v0.26.1 // indirect
@@ -91,12 +91,13 @@ require (
 	cloud.google.com/go/iam v0.13.0 // indirect
 	github.com/IBM/go-sdk-core v1.1.0 // indirect
 	github.com/IBM/go-sdk-core/v3 v3.2.4 // indirect
-	github.com/IBM/ibm-cos-sdk-go-config/v2 v2.0.4 // indirect
-	github.com/IBM/logs-go-sdk v0.1.1 // indirect
-	github.com/IBM/mqcloud-go-sdk v0.0.4 // indirect
-	github.com/IBM/project-go-sdk v0.3.0 // indirect
+	github.com/IBM/ibm-cos-sdk-go-config/v2 v2.1.0 // indirect
+	github.com/IBM/logs-go-sdk v0.3.0 // indirect
+	github.com/IBM/logs-router-go-sdk v1.0.5 // indirect
+	github.com/IBM/mqcloud-go-sdk v0.1.0 // indirect
+	github.com/IBM/project-go-sdk v0.3.5 // indirect
 	github.com/IBM/sarama v1.41.2 // indirect
-	github.com/IBM/scc-go-sdk/v5 v5.1.6 // indirect
+	github.com/IBM/scc-go-sdk/v5 v5.4.1 // indirect
 	github.com/IBM/vmware-go-sdk v0.1.2 // indirect
 	github.com/Logicalis/asn1 v0.0.0-20190312173541-d60463189a56 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230828082145-3c4c8a2d2371 // indirect
@@ -120,7 +121,7 @@ require (
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.3 // indirect
-	github.com/go-logr/logr v1.3.0 // indirect
+	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/analysis v0.21.5 // indirect
 	github.com/go-openapi/jsonpointer v0.20.1 // indirect
@@ -133,7 +134,7 @@ require (
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/go-playground/validator/v10 v10.19.0 // indirect
+	github.com/go-playground/validator/v10 v10.22.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
@@ -206,12 +207,12 @@ require (
 	go.opentelemetry.io/otel v1.14.0 // indirect
 	go.opentelemetry.io/otel/trace v1.14.0 // indirect
 	go.uber.org/ratelimit v0.2.0 // indirect
-	golang.org/x/mod v0.14.0 // indirect
-	golang.org/x/net v0.24.0 // indirect
+	golang.org/x/mod v0.17.0 // indirect
+	golang.org/x/net v0.27.0 // indirect
 	golang.org/x/oauth2 v0.7.0 // indirect
-	golang.org/x/sys v0.20.0 // indirect
-	golang.org/x/term v0.19.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/sys v0.22.0 // indirect
+	golang.org/x/term v0.22.0 // indirect
+	golang.org/x/text v0.16.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230525234030-28d5490b6b19 // indirect
@@ -231,7 +232,7 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
-replace github.com/IBM-Cloud/terraform-provider-ibm => github.com/cjschaef/terraform-provider-ibm v0.0.0-20240529030233-1c5127e2c6e7
+replace github.com/IBM-Cloud/terraform-provider-ibm => github.com/IBM-Cloud/terraform-provider-ibm v1.69.2-0.20240920062921-9e19ec47fad3
 
 replace github.com/softlayer/softlayer-go v1.0.3 => github.com/IBM-Cloud/softlayer-go v1.0.5-tf
 
