@@ -13,6 +13,9 @@ const (
 	kubeAPILBSGNamePostfix    = "sg-kube-api-lb"
 	controlPlaneSGNamePostfix = "sg-control-plane"
 	cpInternalSGNamePostfix   = "sg-cp-internal"
+
+	// BootstrapSGNamePostfix is the postfix value to append for the bootstrap VPC Security Group name.
+	BootstrapSGNamePostfix = "security-group-bootstrap"
 )
 
 func buildClusterWideSecurityGroup(infraID string, allSubnets []capibmcloud.Subnet) capibmcloud.VPCSecurityGroup {
@@ -450,6 +453,15 @@ func buildCPInternalSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup {
 	}
 }
 
+func buildBootstrapSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup {
+	bootstrapSGNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, BootstrapSGNamePostfix))
+
+	return capibmcloud.VPCSecurityGroup{
+		Name:  bootstrapSGNamePtr,
+		Rules: []*capibmcloud.VPCSecurityGroupRule{},
+	}
+}
+
 func getVPCSecurityGroups(infraID string, allSubnets []capibmcloud.Subnet) []capibmcloud.VPCSecurityGroup {
 	// IBM Cloud currently relies on 5 SecurityGroups to manage traffic
 	securityGroups := make([]capibmcloud.VPCSecurityGroup, 0, 5)
@@ -458,5 +470,6 @@ func getVPCSecurityGroups(infraID string, allSubnets []capibmcloud.Subnet) []cap
 	securityGroups = append(securityGroups, buildKubeAPILBSecurityGroup(infraID))
 	securityGroups = append(securityGroups, buildControlPlaneSecurityGroup(infraID))
 	securityGroups = append(securityGroups, buildCPInternalSecurityGroup(infraID))
+	securityGroups = append(securityGroups, buildBootstrapSecurityGroup(infraID))
 	return securityGroups
 }

@@ -1409,7 +1409,10 @@ func autoConvert_v1beta1_IBMVPCMachineSpec_To_v1beta2_IBMVPCMachineSpec(in *IBMV
 
 func autoConvert_v1beta2_IBMVPCMachineSpec_To_v1beta1_IBMVPCMachineSpec(in *v1beta2.IBMVPCMachineSpec, out *IBMVPCMachineSpec, s conversion.Scope) error {
 	out.Name = in.Name
+	// WARNING: in.CatalogOffering requires manual conversion: does not exist in peer-type
+	// WARNING: in.DedicatedHost requires manual conversion: does not exist in peer-type
 	// WARNING: in.Image requires manual conversion: inconvertible types (*sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2.IBMVPCResourceReference vs string)
+	// WARNING: in.LoadBalancerPoolMembers requires manual conversion: does not exist in peer-type
 	out.Zone = in.Zone
 	out.Profile = in.Profile
 	out.BootVolume = (*VPCVolume)(unsafe.Pointer(in.BootVolume))
@@ -1441,6 +1444,7 @@ func autoConvert_v1beta2_IBMVPCMachineStatus_To_v1beta1_IBMVPCMachineStatus(in *
 	out.Ready = in.Ready
 	out.Addresses = *(*[]v1.NodeAddress)(unsafe.Pointer(&in.Addresses))
 	out.InstanceStatus = in.InstanceStatus
+	// INFO: in.LoadBalancerPoolMembers opted out of conversion generation
 	return nil
 }
 
@@ -1596,6 +1600,7 @@ func Convert_v1beta1_NetworkInterface_To_v1beta2_NetworkInterface(in *NetworkInt
 }
 
 func autoConvert_v1beta2_NetworkInterface_To_v1beta1_NetworkInterface(in *v1beta2.NetworkInterface, out *NetworkInterface, s conversion.Scope) error {
+	// INFO: in.SecurityGroups opted out of conversion generation
 	out.Subnet = in.Subnet
 	return nil
 }

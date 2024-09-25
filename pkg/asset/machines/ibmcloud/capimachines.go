@@ -12,6 +12,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
+	ibmcloudmanifests "github.com/openshift/installer/pkg/asset/manifests/ibmcloud"
 	"github.com/openshift/installer/pkg/types"
 	ibmcloudprovider "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
 )
@@ -37,24 +38,92 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 		if providerSpec.BootVolume.EncryptionKey != "" {
 			bootVolume.EncryptionKeyCRN = providerSpec.BootVolume.EncryptionKey
 		}
-		//dedicatedHost := capibmcloudv1.IBMVPCResourceReference{
-		//	Name: ptr.To(providerSpec.DedicatedHost),
-		//}
+
+		// Potentially move this to after capibmcloudMachine defining.
+		var dedicatedHost *capibmcloud.VPCResource
+		if providerSpec.DedicatedHost != "" {
+			dedicatedHost = &capibmcloud.VPCResource{
+				Name: ptr.To(providerSpec.DedicatedHost),
+			}
+		}
 		image := &capibmcloud.IBMVPCResourceReference{
 			Name: ptr.To(imageName),
 		}
-		/*securityGroups := []*capibmcloudv1.IBMVPCResourceReference{}
-		for _, sg := range providerSpec.PrimaryNetworkInterface.SecurityGroups{
-			securityGroups = append(securityGroups, &capibmcloudv1.IBMVPCResourceReference{
-				Name: ptr.To(sg),
-			})
-		}*/
-		networkInterface := capibmcloud.NetworkInterface{
-			// SecurityGroups: securityGroups,
-			Subnet: providerSpec.PrimaryNetworkInterface.Subnet,
+
+		// If these are Control Plane nodes, make sure they are included in the various LB backend pool members.
+		var loadBalancerPoolMembers []capibmcloud.VPCLoadBalancerBackendPoolMember
+		if role == "master" {
+			kubeAPIBackendPoolNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, ibmcloudmanifests.KubernetesAPIPrivatePostfix))
+			machineConfigBackendPoolNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, ibmcloudmanifests.MachineConfigPostfix))
+
+			// Populate the Machine's LB Pool details.
+			loadBalancerPoolMembers = []capibmcloud.VPCLoadBalancerBackendPoolMember{
+				// Kubernetes API private pool.
+				{
+					LoadBalancer: capibmcloud.VPCResource{
+						// LB and Pool have the same name format.
+						Name: kubeAPIBackendPoolNamePtr,
+					},
+					Pool: capibmcloud.VPCResource{
+						Name: kubeAPIBackendPoolNamePtr,
+					},
+					Port: ibmcloudmanifests.KubernetesAPIPort,
+				},
+				// Machine Config Server pool.
+				{
+					LoadBalancer: capibmcloud.VPCResource{
+						Name: kubeAPIBackendPoolNamePtr,
+					},
+					Pool: capibmcloud.VPCResource{
+						Name: machineConfigBackendPoolNamePtr,
+					},
+					Port: ibmcloudmanifests.MachineConfigServerPort,
+				},
+			}
+
+			// If using External/Public cluster, add the Kubernetes API public pool as well.
+			if config.Publish == types.ExternalPublishingStrategy {
+				kubeAPIPublicBackendPoolNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, ibmcloudmanifests.KubernetesAPIPublicPostfix))
+				loadBalancerPoolMembers = append(loadBalancerPoolMembers, capibmcloud.VPCLoadBalancerBackendPoolMember{
+					LoadBalancer: capibmcloud.VPCResource{
+						Name: kubeAPIPublicBackendPoolNamePtr,
+					},
+					Pool: capibmcloud.VPCResource{
+						Name: kubeAPIPublicBackendPoolNamePtr,
+					},
+					Port: ibmcloudmanifests.KubernetesAPIPort,
+				})
+			}
 		}
-		// TODO(cjschaef): See if we can lookup the IBM Cloud VPC SSH key (Name or ID) via the public key from InstallConfig
-		// sshKeys := ...
+
+		// Compile the list of security groups for machine.
+		var securityGroups []capibmcloud.VPCResource
+		if providerSpec.PrimaryNetworkInterface.SecurityGroups != nil && len(providerSpec.PrimaryNetworkInterface.SecurityGroups) > 0 {
+			securityGroups = make([]capibmcloud.VPCResource, 0, len(providerSpec.PrimaryNetworkInterface.SecurityGroups))
+			for _, securityGroupName := range providerSpec.PrimaryNetworkInterface.SecurityGroups {
+				securityGroups = append(securityGroups, capibmcloud.VPCResource{
+					Name: ptr.To(securityGroupName),
+				})
+			}
+		}
+		networkInterface := capibmcloud.NetworkInterface{
+			SecurityGroups: securityGroups,
+			Subnet:         providerSpec.PrimaryNetworkInterface.Subnet,
+		}
+
+		// TODO(cjschaef): Test SSH Key lookup
+		/* var sshkeys []*capibmcloud.IBMVPCResourceReference
+		sshkey, err := FindSSHKey(config.SSHKey, config.IBMCloud.Region, config.IBMCloud.ServiceEndpoints)
+		if err != nil {
+			return nil, fmt.Errorf("failure attempting to find sshkey for %s machines: %w", role, err)
+		} else if sshkey != nil {
+			sshkeys = []*capibmcloud.IBMVPCResourceReference{
+				{
+					ID: sshkey.ID,
+				},
+			}
+		}
+		.*/
 
 		capibmcloudMachine := &capibmcloud.IBMVPCMachine{
 			TypeMeta: metav1.TypeMeta{
@@ -69,17 +138,14 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 				},
 			},
 			Spec: capibmcloud.IBMVPCMachineSpec{
-				BootVolume: bootVolume,
-				// DedicatedHost:           dedicatedHost,
-				Image: image,
-				Name:  machine.Name,
-				// NetworkResourceGroup:    providerSpec.NetworkResourceGroup,
+				BootVolume:              bootVolume,
+				DedicatedHost:           dedicatedHost,
+				Image:                   image,
+				LoadBalancerPoolMembers: loadBalancerPoolMembers,
+				Name:                    machine.Name,
 				PrimaryNetworkInterface: networkInterface,
 				Profile:                 providerSpec.Profile,
-				// Region:                  providerSpec.Region,
-				// ResourceGroup:           providerSpec.ResourceGroup,
-				// SSHKeys:                 sshKeys,
-				// UserDataSecret:          fmt.Sprintf("%s-user-data", role),
+				// SSHKeys:                 sshkeys,
 				Zone: providerSpec.Zone,
 			},
 		}
@@ -123,6 +189,11 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 	if role == "master" {
 		// Simply use the first Control Plane machine for bootstrap spec
 		bootstrapSpec := capibmcloudMachines[0].Spec
+		// Add bootstrap Security Group to PrimaryNetworkInterface.
+		bootstrapSpec.PrimaryNetworkInterface.SecurityGroups = append(bootstrapSpec.PrimaryNetworkInterface.SecurityGroups, capibmcloud.VPCResource{
+			Name: ptr.To(fmt.Sprintf("%s-%s", infraID, ibmcloudmanifests.BootstrapSGNamePostfix)),
+		})
+
 		bootstrapMachine := &capibmcloud.IBMVPCMachine{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: capiutils.GenerateBoostrapMachineName(infraID),

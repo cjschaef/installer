@@ -299,10 +299,47 @@ type GenericResourceReference struct {
 	Name *string `json:"name,omitempty"`
 }
 
+// IBMCloudCatalogOffering represents an IBM Cloud Catalog Offering resource.
+// +kubebuilder:validation:XValidation:rule="(has(self.offeringCRN) && !has(self.versionCRN)) || (!has(self.offeringCRN) && has(self.versionCRN))",message="either offeringCRN or version CRN must be provided, not both"
+type IBMCloudCatalogOffering struct {
+	// OfferingCRN
+	OfferingCRN *string `json:"offeringCRN,omitempty"`
+
+	// PlanCRN
+	PlanCRN *string `json:"planCRN,omitempty"`
+
+	// VersionCRN
+	VersionCRN *string `json:"versionCRN,omitempty"`
+}
+
 // NetworkInterface holds the network interface information like subnet id.
 type NetworkInterface struct {
+	// SecurityGroups defines a set of IBM Cloud VPC Security Groups to attach to the network interface.
+	// +optional
+	// +k8s:conversion-gen=false
+	SecurityGroups []VPCResource `json:"securityGroups,omitempty"`
+
 	// Subnet ID of the network interface.
 	Subnet string `json:"subnet,omitempty"`
+}
+
+// VPCLoadBalancerBackendPoolMember represents a VPC Load Balancer Backend Pool Member.
+type VPCLoadBalancerBackendPoolMember struct {
+	// LoadBalancer defines the Load Balancer the Pool Member is for.
+	// +required
+	LoadBalancer VPCResource `json:"loadBalancer"`
+
+	// Pool defines the Load Balancer Pool the Pool Member should be in.
+	// +required
+	Pool VPCResource `json:"pool"`
+
+	// Port defines the Port the Load Balancer Pool Member listens for traffic.
+	// +required
+	Port int64 `json:"port"`
+
+	// Weight of the service member. Only applicable if the pool algorithm is "weighted_round_robin".
+	// +optional
+	Weight *int64 `json:"weight,omitempty"`
 }
 
 // VPCSecurityGroupPortRange represents a range of ports, minimum to maximum.

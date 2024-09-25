@@ -10,20 +10,20 @@ import (
 )
 
 const (
-	// kubernetesAPIPort is the Kubernetes API port.
-	kubernetesAPIPort = 6443
+	// KubernetesAPIPort is the Kubernetes API port.
+	KubernetesAPIPort = 6443
 
-	// kubernetesAPIPrivatePostfix is the name postfix for Kubernetes API Private LB resources.
-	kubernetesAPIPrivatePostfix = "kubernetes-api-private"
+	// KubernetesAPIPrivatePostfix is the name postfix for Kubernetes API Private LB resources.
+	KubernetesAPIPrivatePostfix = "kubernetes-api-private"
 
-	// kubernetesAPIPublicPostfix is the name postfix for Kubernetes API Public LB resources.
-	kubernetesAPIPublicPostfix = "kubernetes-api-public"
+	// KubernetesAPIPublicPostfix is the name postfix for Kubernetes API Public LB resources.
+	KubernetesAPIPublicPostfix = "kubernetes-api-public"
 
-	// machineConfigPostfix is the name postfix for Machine Config Server LB resources.
-	machineConfigPostfix = "machine-config"
+	// MachineConfigPostfix is the name postfix for Machine Config Server LB resources.
+	MachineConfigPostfix = "machine-config"
 
-	// machineConfigServerPort is the Machine Config Server port.
-	machineConfigServerPort = 22623
+	// MachineConfigServerPort is the Machine Config Server port.
+	MachineConfigServerPort = 22623
 
 	// algorithmRoundRobin is the Round-Robin distribution algorithm for LB Backend Pools.
 	algorithmRoundRobin = "round_robin"
@@ -48,21 +48,21 @@ func getLoadBalancers(infraID string, securityGroups []capibmcloud.VPCResource, 
 }
 
 func buildPrivateLoadBalancer(infraID string, securityGroups []capibmcloud.VPCResource, subnets []capibmcloud.VPCResource) capibmcloud.VPCLoadBalancerSpec {
-	kubeAPIBackendPoolNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, kubernetesAPIPrivatePostfix))
-	machineConfigBackendPoolNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, machineConfigPostfix))
+	kubeAPIBackendPoolNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, KubernetesAPIPrivatePostfix))
+	machineConfigBackendPoolNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, MachineConfigPostfix))
 
 	return capibmcloud.VPCLoadBalancerSpec{
-		Name:   fmt.Sprintf("%s-%s", infraID, kubernetesAPIPrivatePostfix),
+		Name:   fmt.Sprintf("%s-%s", infraID, KubernetesAPIPrivatePostfix),
 		Public: ptr.To(false),
 		AdditionalListeners: []capibmcloud.AdditionalListenerSpec{
 			{
 				DefaultPoolName: kubeAPIBackendPoolNamePtr,
-				Port:            kubernetesAPIPort,
+				Port:            KubernetesAPIPort,
 				Protocol:        ptr.To(protocolTCP),
 			},
 			{
 				DefaultPoolName: machineConfigBackendPoolNamePtr,
-				Port:            machineConfigServerPort,
+				Port:            MachineConfigServerPort,
 				Protocol:        ptr.To(protocolTCP),
 			},
 		},
@@ -96,15 +96,15 @@ func buildPrivateLoadBalancer(infraID string, securityGroups []capibmcloud.VPCRe
 }
 
 func buildPublicLoadBalancer(infraID string, securityGroups []capibmcloud.VPCResource, subnets []capibmcloud.VPCResource) capibmcloud.VPCLoadBalancerSpec {
-	backendPoolNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, kubernetesAPIPublicPostfix))
+	backendPoolNamePtr := ptr.To(fmt.Sprintf("%s-%s", infraID, KubernetesAPIPublicPostfix))
 
 	return capibmcloud.VPCLoadBalancerSpec{
-		Name:   fmt.Sprintf("%s-%s", infraID, kubernetesAPIPublicPostfix),
+		Name:   fmt.Sprintf("%s-%s", infraID, KubernetesAPIPublicPostfix),
 		Public: ptr.To(true),
 		AdditionalListeners: []capibmcloud.AdditionalListenerSpec{
 			{
 				DefaultPoolName: backendPoolNamePtr,
-				Port:            kubernetesAPIPort,
+				Port:            KubernetesAPIPort,
 				Protocol:        ptr.To(protocolTCP),
 			},
 		},

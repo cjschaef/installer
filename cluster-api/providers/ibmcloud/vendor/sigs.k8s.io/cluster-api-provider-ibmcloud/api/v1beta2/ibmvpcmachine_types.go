@@ -36,9 +36,22 @@ type IBMVPCMachineSpec struct {
 	// Name of the instance.
 	Name string `json:"name,omitempty"`
 
+	// CatalogOffering is the Catalog Offering OS image which would be installed on the instance.
+	// An OfferingCRN or VersionCRN is required, the PlanCRN is optional.
+	// +optional
+	CatalogOffering *IBMCloudCatalogOffering `json:"catalogOffering,omitempty"`
+
+	// DedicatedHost is the name of the underlying provisioned host in the VPC on which the instance will be created.
+	// +optional
+	DedicatedHost *VPCResource `json:"dedicatedHost,omitempty"`
+
 	// Image is the OS image which would be install on the instance.
 	// ID will take higher precedence over Name if both specified.
 	Image *IBMVPCResourceReference `json:"image"`
+
+	// LoadBalancerPoolMembers is the set of IBM Cloud VPC Load Balancer Backend Pools the machine should be added to as a member.
+	// +optional
+	LoadBalancerPoolMembers []VPCLoadBalancerBackendPoolMember `json:"loadBalancerPoolMembers,omitempty"`
 
 	// Zone is the place where the instance should be created. Example: us-south-3
 	// TODO: Actually zone is transparent to user. The field user can access is location. Example: Dallas 2
@@ -132,12 +145,17 @@ type IBMVPCMachineStatus struct {
 	// +optional
 	Ready bool `json:"ready"`
 
-	// Addresses contains the GCP instance associated addresses.
+	// Addresses contains the IBM Cloud instance associated addresses.
 	Addresses []corev1.NodeAddress `json:"addresses,omitempty"`
 
-	// InstanceStatus is the status of the GCP instance for this machine.
+	// InstanceStatus is the status of the IBM Cloud instance for this machine.
 	// +optional
 	InstanceStatus string `json:"instanceState,omitempty"`
+
+	// LoadBalancerPoolMembers is the status of IBM Cloud VPC Load Balancer Backend Pools the machine is a member.
+	// +optional
+	// +k8s:conversion-gen=false
+	LoadBalancerPoolMembers []VPCLoadBalancerBackendPoolMember `json:"loadBalancerPoolMembers,omitempty"`
 }
 
 // +kubebuilder:object:root=true

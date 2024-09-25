@@ -1095,15 +1095,8 @@ func (s *VPCClusterScope) createSubnet(subnet infrav1beta2.Subnet) (*vpcv1.Subne
 	// We currnetly only support IPv4
 	ipVersion := "ipv4"
 
-	// Find or create a Public Gateway in this zone for the subnet, only one Public Gateway is required for each zone, for this cluster.
-	// NOTE(cjschaef): We may wish to add support to not attach Public Gateways to subnets.
-	publicGateway, err := s.findOrCreatePublicGateway(*subnet.Zone)
-	if err != nil {
-		return nil, err
-	}
-
 	options := &vpcv1.CreateSubnetOptions{}
-	options.SetSubnetPrototype(&vpcv1.SubnetPrototype{
+	subnetPrototype := &vpcv1.SubnetPrototype{
 		IPVersion:             ptr.To(ipVersion),
 		TotalIpv4AddressCount: ptr.To(ipCount),
 		Name:                  subnet.Name,
@@ -1116,10 +1109,18 @@ func (s *VPCClusterScope) createSubnet(subnet infrav1beta2.Subnet) (*vpcv1.Subne
 		ResourceGroup: &vpcv1.ResourceGroupIdentity{
 			ID: ptr.To(resourceGroupID),
 		},
-		PublicGateway: &vpcv1.PublicGatewayIdentity{
-			ID: publicGateway.ID,
-		},
-	})
+	}
+
+	// Find or create a Public Gateway in this zone for the subnet, only one Public Gateway is required for each zone, for this cluster.
+	// NOTE(cjschaef): We may wish to add support to not attach Public Gateways to subnets.
+	publicGateway, err := s.findOrCreatePublicGateway(*subnet.Zone)
+	if err != nil {
+		return nil, err
+	}
+	subnetPrototype.PublicGateway = &vpcv1.PublicGatewayIdentityPublicGatewayIdentityByID{
+		ID: publicGateway.ID,
+	}
+	options.SetSubnetPrototype(subnetPrototype)
 
 	// Create subnet.
 	subnetDetails, _, err := s.VPCClient.CreateSubnet(options)
@@ -1766,7 +1767,7 @@ func (s *VPCClusterScope) ReconcileLoadBalancers() (bool, error) {
 			}
 
 			if s.checkLoadBalancerStatus(loadBalancer.ProvisioningStatus) {
-				s.Info("load balancer not ready", "provisioningStatus", loadBalancer.ProvisioningStatus)
+				s.Info("load balancer not ready", "loadBalancerID", *loadBalancerID, "provisioningStatus", loadBalancer.ProvisioningStatus)
 				requeue = true
 				continue
 			}
@@ -1801,6 +1802,7 @@ func (s *VPCClusterScope) ReconcileLoadBalancers() (bool, error) {
 		}
 		s.Info("Created load balancer", "loadBalancerID", loadBalancerStatus.ID)
 		s.SetLoadBalancerStatus(*loadBalancerStatus)
+		// Flag to requeue, but continue to any additional LB creations.
 		requeue = true
 	}
 	return requeue, nil

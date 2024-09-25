@@ -59,6 +59,7 @@ type API interface {
 	GetEncryptionKey(ctx context.Context, keyCRN string) (*responses.EncryptionKeyResponse, error)
 	GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.ResourceGroup, error)
 	GetResourceGroup(ctx context.Context, nameOrID string) (*resourcemanagerv2.ResourceGroup, error)
+	GetSSHKeyByPublicKey(ctx context.Context, publicSSHKey string, region string) (*vpcv1.Key, error)
 	GetSubnet(ctx context.Context, subnetID string) (*vpcv1.Subnet, error)
 	GetSubnetByName(ctx context.Context, subnetName string, region string) (*vpcv1.Subnet, error)
 	GetVSIProfiles(ctx context.Context) ([]vpcv1.InstanceProfile, error)
@@ -778,6 +779,33 @@ func (c *Client) GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.Res
 		return nil, err
 	}
 	return listResourceGroupsResponse.Resources, nil
+}
+
+// GetSSHKeyByPublicKey gets an IBM Cloud VPC SSH Key that matches the provided public key. If multiple exist, the first available key is returned.
+func (c *Client) GetSSHKeyByPublicKey(ctx context.Context, publicSSHKey string, region string) (*vpcv1.Key, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	if err := c.SetVPCServiceURLForRegion(ctx, region); err != nil {
+		return nil, err
+	}
+
+	listKeysOptions := c.vpcAPI.NewListKeysOptions()
+	keysPager, err := c.vpcAPI.NewKeysPager(listKeysOptions)
+	if err != nil {
+		return nil, err
+	}
+	keys, err := keysPager.GetAllWithContext(localContext)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, key := range keys {
+		if *key.PublicKey == publicSSHKey {
+			return ptr.To(key), nil
+		}
+	}
+	return nil, nil
 }
 
 // GetSubnet gets a subnet by its ID.

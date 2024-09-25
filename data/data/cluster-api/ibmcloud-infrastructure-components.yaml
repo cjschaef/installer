@@ -6248,6 +6248,42 @@ spec:
                     format: int64
                     type: integer
                 type: object
+              catalogOffering:
+                description: |-
+                  CatalogOffering is the Catalog Offering OS image which would be installed on the instance.
+                  An OfferingCRN or VersionCRN is required, the PlanCRN is optional.
+                properties:
+                  offeringCRN:
+                    description: OfferingCRN
+                    type: string
+                  planCRN:
+                    description: PlanCRN
+                    type: string
+                  versionCRN:
+                    description: VersionCRN
+                    type: string
+                type: object
+                x-kubernetes-validations:
+                - message: either offeringCRN or version CRN must be provided, not
+                    both
+                  rule: (has(self.offeringCRN) && !has(self.versionCRN)) || (!has(self.offeringCRN)
+                    && has(self.versionCRN))
+              dedicatedHost:
+                description: DedicatedHost is the name of the underlying provisioned
+                  host in the VPC on which the instance will be created.
+                properties:
+                  id:
+                    description: id of the resource.
+                    minLength: 1
+                    type: string
+                  name:
+                    description: name of the resource.
+                    minLength: 1
+                    type: string
+                type: object
+                x-kubernetes-validations:
+                - message: an id or name must be provided
+                  rule: has(self.id) || has(self.name)
               image:
                 description: |-
                   Image is the OS image which would be install on the instance.
@@ -6262,12 +6298,86 @@ spec:
                     minLength: 1
                     type: string
                 type: object
+              loadBalancerPoolMembers:
+                description: LoadBalancerPoolMembers is the set of IBM Cloud VPC Load
+                  Balancer Backend Pools the machine should be added to as a member.
+                items:
+                  description: VPCLoadBalancerBackendPoolMember represents a VPC Load
+                    Balancer Backend Pool Member.
+                  properties:
+                    loadBalancer:
+                      description: LoadBalancer defines the Load Balancer the Pool
+                        Member is for.
+                      properties:
+                        id:
+                          description: id of the resource.
+                          minLength: 1
+                          type: string
+                        name:
+                          description: name of the resource.
+                          minLength: 1
+                          type: string
+                      type: object
+                      x-kubernetes-validations:
+                      - message: an id or name must be provided
+                        rule: has(self.id) || has(self.name)
+                    pool:
+                      description: Pool defines the Load Balancer Pool the Pool Member
+                        should be in.
+                      properties:
+                        id:
+                          description: id of the resource.
+                          minLength: 1
+                          type: string
+                        name:
+                          description: name of the resource.
+                          minLength: 1
+                          type: string
+                      type: object
+                      x-kubernetes-validations:
+                      - message: an id or name must be provided
+                        rule: has(self.id) || has(self.name)
+                    port:
+                      description: Port defines the Port the Load Balancer Pool Member
+                        listens for traffic.
+                      format: int64
+                      type: integer
+                    weight:
+                      description: Weight of the service member. Only applicable if
+                        the pool algorithm is "weighted_round_robin".
+                      format: int64
+                      type: integer
+                  required:
+                  - loadBalancer
+                  - pool
+                  - port
+                  type: object
+                type: array
               name:
                 description: Name of the instance.
                 type: string
               primaryNetworkInterface:
                 description: PrimaryNetworkInterface is required to specify subnet.
                 properties:
+                  securityGroups:
+                    description: SecurityGroups defines a set of IBM Cloud VPC Security
+                      Groups to attach to the network interface.
+                    items:
+                      description: VPCResource represents a specific VPC resource.
+                      properties:
+                        id:
+                          description: id of the resource.
+                          minLength: 1
+                          type: string
+                        name:
+                          description: name of the resource.
+                          minLength: 1
+                          type: string
+                      type: object
+                      x-kubernetes-validations:
+                      - message: an id or name must be provided
+                        rule: has(self.id) || has(self.name)
+                    type: array
                   subnet:
                     description: Subnet ID of the network interface.
                     type: string
@@ -6313,7 +6423,8 @@ spec:
             description: IBMVPCMachineStatus defines the observed state of IBMVPCMachine.
             properties:
               addresses:
-                description: Addresses contains the GCP instance associated addresses.
+                description: Addresses contains the IBM Cloud instance associated
+                  addresses.
                 items:
                   description: NodeAddress contains information for the node's address.
                   properties:
@@ -6332,9 +6443,64 @@ spec:
               instanceID:
                 type: string
               instanceState:
-                description: InstanceStatus is the status of the GCP instance for
-                  this machine.
+                description: InstanceStatus is the status of the IBM Cloud instance
+                  for this machine.
                 type: string
+              loadBalancerPoolMembers:
+                description: LoadBalancerPoolMembers is the status of IBM Cloud VPC
+                  Load Balancer Backend Pools the machine is a member.
+                items:
+                  description: VPCLoadBalancerBackendPoolMember represents a VPC Load
+                    Balancer Backend Pool Member.
+                  properties:
+                    loadBalancer:
+                      description: LoadBalancer defines the Load Balancer the Pool
+                        Member is for.
+                      properties:
+                        id:
+                          description: id of the resource.
+                          minLength: 1
+                          type: string
+                        name:
+                          description: name of the resource.
+                          minLength: 1
+                          type: string
+                      type: object
+                      x-kubernetes-validations:
+                      - message: an id or name must be provided
+                        rule: has(self.id) || has(self.name)
+                    pool:
+                      description: Pool defines the Load Balancer Pool the Pool Member
+                        should be in.
+                      properties:
+                        id:
+                          description: id of the resource.
+                          minLength: 1
+                          type: string
+                        name:
+                          description: name of the resource.
+                          minLength: 1
+                          type: string
+                      type: object
+                      x-kubernetes-validations:
+                      - message: an id or name must be provided
+                        rule: has(self.id) || has(self.name)
+                    port:
+                      description: Port defines the Port the Load Balancer Pool Member
+                        listens for traffic.
+                      format: int64
+                      type: integer
+                    weight:
+                      description: Weight of the service member. Only applicable if
+                        the pool algorithm is "weighted_round_robin".
+                      format: int64
+                      type: integer
+                  required:
+                  - loadBalancer
+                  - pool
+                  - port
+                  type: object
+                type: array
               ready:
                 description: Ready is true when the provider resource is ready.
                 type: boolean
@@ -6606,6 +6772,42 @@ spec:
                             format: int64
                             type: integer
                         type: object
+                      catalogOffering:
+                        description: |-
+                          CatalogOffering is the Catalog Offering OS image which would be installed on the instance.
+                          An OfferingCRN or VersionCRN is required, the PlanCRN is optional.
+                        properties:
+                          offeringCRN:
+                            description: OfferingCRN
+                            type: string
+                          planCRN:
+                            description: PlanCRN
+                            type: string
+                          versionCRN:
+                            description: VersionCRN
+                            type: string
+                        type: object
+                        x-kubernetes-validations:
+                        - message: either offeringCRN or version CRN must be provided,
+                            not both
+                          rule: (has(self.offeringCRN) && !has(self.versionCRN)) ||
+                            (!has(self.offeringCRN) && has(self.versionCRN))
+                      dedicatedHost:
+                        description: DedicatedHost is the name of the underlying provisioned
+                          host in the VPC on which the instance will be created.
+                        properties:
+                          id:
+                            description: id of the resource.
+                            minLength: 1
+                            type: string
+                          name:
+                            description: name of the resource.
+                            minLength: 1
+                            type: string
+                        type: object
+                        x-kubernetes-validations:
+                        - message: an id or name must be provided
+                          rule: has(self.id) || has(self.name)
                       image:
                         description: |-
                           Image is the OS image which would be install on the instance.
@@ -6620,6 +6822,62 @@ spec:
                             minLength: 1
                             type: string
                         type: object
+                      loadBalancerPoolMembers:
+                        description: LoadBalancerPoolMembers is the set of IBM Cloud
+                          VPC Load Balancer Backend Pools the machine should be added
+                          to as a member.
+                        items:
+                          description: VPCLoadBalancerBackendPoolMember represents
+                            a VPC Load Balancer Backend Pool Member.
+                          properties:
+                            loadBalancer:
+                              description: LoadBalancer defines the Load Balancer
+                                the Pool Member is for.
+                              properties:
+                                id:
+                                  description: id of the resource.
+                                  minLength: 1
+                                  type: string
+                                name:
+                                  description: name of the resource.
+                                  minLength: 1
+                                  type: string
+                              type: object
+                              x-kubernetes-validations:
+                              - message: an id or name must be provided
+                                rule: has(self.id) || has(self.name)
+                            pool:
+                              description: Pool defines the Load Balancer Pool the
+                                Pool Member should be in.
+                              properties:
+                                id:
+                                  description: id of the resource.
+                                  minLength: 1
+                                  type: string
+                                name:
+                                  description: name of the resource.
+                                  minLength: 1
+                                  type: string
+                              type: object
+                              x-kubernetes-validations:
+                              - message: an id or name must be provided
+                                rule: has(self.id) || has(self.name)
+                            port:
+                              description: Port defines the Port the Load Balancer
+                                Pool Member listens for traffic.
+                              format: int64
+                              type: integer
+                            weight:
+                              description: Weight of the service member. Only applicable
+                                if the pool algorithm is "weighted_round_robin".
+                              format: int64
+                              type: integer
+                          required:
+                          - loadBalancer
+                          - pool
+                          - port
+                          type: object
+                        type: array
                       name:
                         description: Name of the instance.
                         type: string
@@ -6627,6 +6885,25 @@ spec:
                         description: PrimaryNetworkInterface is required to specify
                           subnet.
                         properties:
+                          securityGroups:
+                            description: SecurityGroups defines a set of IBM Cloud
+                              VPC Security Groups to attach to the network interface.
+                            items:
+                              description: VPCResource represents a specific VPC resource.
+                              properties:
+                                id:
+                                  description: id of the resource.
+                                  minLength: 1
+                                  type: string
+                                name:
+                                  description: name of the resource.
+                                  minLength: 1
+                                  type: string
+                              type: object
+                              x-kubernetes-validations:
+                              - message: an id or name must be provided
+                                rule: has(self.id) || has(self.name)
+                            type: array
                           subnet:
                             description: Subnet ID of the network interface.
                             type: string

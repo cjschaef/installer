@@ -126,4 +126,4 @@ require (
 )
 
 // TODO(cjschaef): Remove once IBM Cloud CAPI API PR's merge
-replace sigs.k8s.io/cluster-api-provider-ibmcloud => github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20240812211640-faa274e46ef9
+replace sigs.k8s.io/cluster-api-provider-ibmcloud => github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20240926143658-525b3d9e516f
