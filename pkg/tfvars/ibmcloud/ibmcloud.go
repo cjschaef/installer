@@ -147,7 +147,23 @@ func CreateEndpointJSON(endpoints []configv1.IBMCloudServiceEndpoint, region str
 		switch endpoint.Name {
 		// COS endpoint is not used in Terraform
 		case configv1.IBMCloudServiceCOS:
-			continue
+			endpointContents.IBMCloudEndpointCOS = &ibmcloudtypes.EndpointsVisibility{
+				Private: map[string]string{
+					region: endpoint.URL,
+				},
+				Public: map[string]string{
+					region: endpoint.URL,
+				},
+			}
+		case configv1.IBMCloudServiceCOSConfig:
+			endpointContents.IBMCloudEndpointCOSConfig = &ibmcloudtypes.EndpointsVisibility{
+				Private: map[string]string{
+					region: endpoint.URL,
+				},
+				Public: map[string]string{
+					region: endpoint.URL,
+				},
+			}
 		case configv1.IBMCloudServiceCIS:
 			endpointContents.IBMCloudEndpointCIS = &ibmcloudtypes.EndpointsVisibility{
 				Private: map[string]string{
@@ -159,6 +175,15 @@ func CreateEndpointJSON(endpoints []configv1.IBMCloudServiceEndpoint, region str
 			}
 		case configv1.IBMCloudServiceDNSServices:
 			endpointContents.IBMCloudEndpointDNSServices = &ibmcloudtypes.EndpointsVisibility{
+				Private: map[string]string{
+					region: endpoint.URL,
+				},
+				Public: map[string]string{
+					region: endpoint.URL,
+				},
+			}
+		case configv1.IBMCloudServiceGlobalCatalog:
+			endpointContents.IBMCloudEndpointGlobalCatalog = &ibmcloudtypes.EndpointsVisibility{
 				Private: map[string]string{
 					region: endpoint.URL,
 				},
