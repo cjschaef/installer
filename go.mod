@@ -30,8 +30,8 @@ require (
 	github.com/IBM/ibm-cos-sdk-go v1.11.1
 	github.com/IBM/keyprotect-go-client v0.12.2
 	github.com/IBM/networking-go-sdk v0.45.0
-	github.com/IBM/platform-services-go-sdk v0.69.1
-	github.com/IBM/vpc-go-sdk v0.58.0
+	github.com/IBM/platform-services-go-sdk v0.69.2
+	github.com/IBM/vpc-go-sdk v0.60.0
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
 	github.com/aws/aws-sdk-go v1.53.5
@@ -101,11 +101,11 @@ require (
 	github.com/ulikunitz/xz v0.5.12
 	github.com/vincent-petithory/dataurl v1.0.0
 	github.com/vmware/govmomi v0.37.2
-	golang.org/x/crypto v0.27.0
+	golang.org/x/crypto v0.28.0
 	golang.org/x/oauth2 v0.21.0
 	golang.org/x/sync v0.8.0
-	golang.org/x/sys v0.25.0
-	golang.org/x/term v0.24.0
+	golang.org/x/sys v0.26.0
+	golang.org/x/term v0.25.0
 	google.golang.org/api v0.184.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20240604185151-ef581f913117
 	google.golang.org/grpc v1.64.0
@@ -120,7 +120,7 @@ require (
 	k8s.io/klog/v2 v2.120.1
 	k8s.io/utils v0.0.0-20240310230437-4693a0247e57
 	libvirt.org/go/libvirtxml v1.10002.0
-	sigs.k8s.io/cluster-api v1.8.3
+	sigs.k8s.io/cluster-api v1.8.4
 	sigs.k8s.io/cluster-api-provider-aws/v2 v2.4.2-0.20240613114012-888c6596e3a1
 	sigs.k8s.io/cluster-api-provider-azure v1.15.1-0.20240617212811-a52056dfb88c
 	sigs.k8s.io/cluster-api-provider-gcp v1.7.0
@@ -272,8 +272,8 @@ require (
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
 	golang.org/x/mod v0.18.0 // indirect
-	golang.org/x/net v0.29.0 // indirect
-	golang.org/x/text v0.18.0 // indirect
+	golang.org/x/net v0.30.0 // indirect
+	golang.org/x/text v0.19.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
@@ -310,7 +310,7 @@ replace (
 )
 
 // TODO(cjschaef): Remove once IBM Cloud CAPI API PR's merge
-replace sigs.k8s.io/cluster-api-provider-ibmcloud => github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20240923210506-baa81c851d05
+replace sigs.k8s.io/cluster-api-provider-ibmcloud => github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20241016151218-d34184ea09fb
 
 //replace sigs.k8s.io/cluster-api-provider-ibmcloud => sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0
 replace cloud.google.com/go/storage => cloud.google.com/go/storage v1.40.0
