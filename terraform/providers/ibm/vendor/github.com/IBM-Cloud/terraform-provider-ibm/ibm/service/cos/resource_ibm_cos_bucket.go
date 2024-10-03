@@ -1685,21 +1685,25 @@ func resourceIBMCOSBucketExists(d *schema.ResourceData, meta interface{}) (bool,
 		serviceID = bucketsatcrn
 	}
 
-	var apiEndpoint, apiEndpointPrivate, directApiEndpoint string
+	var apiEndpoint, apiEndpointPrivate, directApiEndpoint, visibility string
 	if apiType == "sl" {
 
 		apiEndpoint = SelectSatlocCosApi(apiType, serviceID, bLocation)
 
 	} else {
 		apiEndpoint, apiEndpointPrivate, directApiEndpoint = SelectCosApi(apiType, bLocation, false)
+		visibility = endpointType
 		if endpointType == "private" {
 			apiEndpoint = apiEndpointPrivate
 		}
 		if endpointType == "direct" {
 			apiEndpoint = directApiEndpoint
+			// visibility type "direct" is not supported in endpoints file.
+			visibility = "private"
 		}
 	}
 
+	apiEndpoint = conns.FileFallBack(rsConClient.Config.EndpointsFile, visibility, "IBMCLOUD_COS_ENDPOINT", bLocation, apiEndpoint)
 	apiEndpoint = conns.EnvFallBack([]string{"IBMCLOUD_COS_ENDPOINT"}, apiEndpoint)
 
 	if apiEndpoint == "" {
