@@ -38,7 +38,7 @@ import (
 // VpcV1 : The IBM Cloud Virtual Private Cloud (VPC) API can be used to programmatically provision and manage virtual
 // server instances, along with subnets, volumes, load balancers, and more.
 //
-// API Version: 2024-10-04
+// API Version: 2024-10-17
 type VpcV1 struct {
 	Service *core.BaseService
 
@@ -47,7 +47,7 @@ type VpcV1 struct {
 	Generation *int64
 
 	// The API version, in format `YYYY-MM-DD`. For the API behavior documented here, specify any date between `2024-04-30`
-	// and `2024-10-04`.
+	// and `2024-10-17`.
 	Version *string
 }
 
@@ -68,7 +68,7 @@ type VpcV1Options struct {
 	Generation *int64
 
 	// The API version, in format `YYYY-MM-DD`. For the API behavior documented here, specify any date between `2024-04-30`
-	// and `2024-10-04`.
+	// and `2024-10-17`.
 	Version *string
 }
 
@@ -133,7 +133,7 @@ func NewVpcV1(options *VpcV1Options) (service *VpcV1, err error) {
 	}
 
 	if options.Version == nil {
-		options.Version = core.StringPtr("2024-10-01")
+		options.Version = core.StringPtr("2024-10-15")
 	}
 	service = &VpcV1{
 		Service:    baseService,
@@ -31388,7 +31388,7 @@ func (vpc *VpcV1) UnpublishPrivatePathServiceGatewayWithContext(ctx context.Cont
 	return
 }
 func getServiceComponentInfo() *core.ProblemComponent {
-	return core.NewProblemComponent(DefaultServiceName, "2024-10-01")
+	return core.NewProblemComponent(DefaultServiceName, "2024-10-15")
 }
 
 // AccountIdentity : Identifies an account by a unique property.
@@ -34330,10 +34330,10 @@ type BareMetalServerDisk struct {
 	// The unique identifier for this bare metal server disk.
 	ID *string `json:"id" validate:"required"`
 
-	// The disk interface used for attaching the disk:
-	// - `fcp`: Attached using Fiber Channel Protocol
-	// - `sata`: Attached using Serial Advanced Technology Attachment
-	// - `nvme`: Attached using Non-Volatile Memory Express
+	// The disk attachment interface used:
+	// - `fcp`: Fiber Channel Protocol
+	// - `sata`: Serial Advanced Technology Attachment
+	// - `nvme`: Non-Volatile Memory Express
 	//
 	// The enumerated values for this property may
 	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
@@ -34350,10 +34350,10 @@ type BareMetalServerDisk struct {
 }
 
 // Constants associated with the BareMetalServerDisk.InterfaceType property.
-// The disk interface used for attaching the disk:
-// - `fcp`: Attached using Fiber Channel Protocol
-// - `sata`: Attached using Serial Advanced Technology Attachment
-// - `nvme`: Attached using Non-Volatile Memory Express
+// The disk attachment interface used:
+// - `fcp`: Fiber Channel Protocol
+// - `sata`: Serial Advanced Technology Attachment
+// - `nvme`: Non-Volatile Memory Express
 //
 // The enumerated values for this property may
 // [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
@@ -34463,11 +34463,17 @@ func (bareMetalServerDiskPatch *BareMetalServerDiskPatch) AsPatch() (_patch map[
 // BareMetalServerFirmware : Firmware information for the bare metal server.
 type BareMetalServerFirmware struct {
 	// The type of update available.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Update *string `json:"update" validate:"required"`
 }
 
 // Constants associated with the BareMetalServerFirmware.Update property.
 // The type of update available.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	BareMetalServerFirmwareUpdateNoneConst     = "none"
 	BareMetalServerFirmwareUpdateOptionalConst = "optional"
@@ -34737,6 +34743,9 @@ type BareMetalServerNetworkAttachment struct {
 	Subnet *SubnetReference `json:"subnet" validate:"required"`
 
 	// The bare metal server network attachment type.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Type *string `json:"type" validate:"required"`
 
 	// The virtual network interface for this bare metal server network attachment.
@@ -34800,6 +34809,9 @@ const (
 
 // Constants associated with the BareMetalServerNetworkAttachment.Type property.
 // The bare metal server network attachment type.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	BareMetalServerNetworkAttachmentTypePrimaryConst   = "primary"
 	BareMetalServerNetworkAttachmentTypeSecondaryConst = "secondary"
@@ -35506,7 +35518,7 @@ type BareMetalServerNetworkInterface struct {
 	InterfaceType *string `json:"interface_type" validate:"required"`
 
 	// The MAC address of this bare metal server network interface. If the MAC address has not yet been selected, the value
-	// will be an empty string.
+	// will be empty.
 	//
 	// If this bare metal server has network attachments, this network interface is a
 	// [read-only representation](https://cloud.ibm.com/docs/vpc?topic=vpc-vni-about#vni-old-api-clients) of its
@@ -37090,13 +37102,7 @@ func UnmarshalBareMetalServerProfileDiskSize(m map[string]json.RawMessage, resul
 
 // BareMetalServerProfileDiskSupportedInterfaces : BareMetalServerProfileDiskSupportedInterfaces struct
 type BareMetalServerProfileDiskSupportedInterfaces struct {
-	// The disk interface used for attaching the disk:
-	// - `fcp`: Attached using Fiber Channel Protocol
-	// - `sata`: Attached using Serial Advanced Technology Attachment
-	// - `nvme`: Attached using Non-Volatile Memory Express
-	//
-	// The enumerated values for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	// The default value for this profile field.
 	Default *string `json:"default" validate:"required"`
 
 	// The type for this profile field.
@@ -37107,13 +37113,7 @@ type BareMetalServerProfileDiskSupportedInterfaces struct {
 }
 
 // Constants associated with the BareMetalServerProfileDiskSupportedInterfaces.Default property.
-// The disk interface used for attaching the disk:
-// - `fcp`: Attached using Fiber Channel Protocol
-// - `sata`: Attached using Serial Advanced Technology Attachment
-// - `nvme`: Attached using Non-Volatile Memory Express
-//
-// The enumerated values for this property may
-// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+// The default value for this profile field.
 const (
 	BareMetalServerProfileDiskSupportedInterfacesDefaultFcpConst  = "fcp"
 	BareMetalServerProfileDiskSupportedInterfacesDefaultNvmeConst = "nvme"
@@ -37127,10 +37127,10 @@ const (
 )
 
 // Constants associated with the BareMetalServerProfileDiskSupportedInterfaces.Values property.
-// The disk interface used for attaching the disk:
-// - `fcp`: Attached using Fiber Channel Protocol
-// - `sata`: Attached using Serial Advanced Technology Attachment
-// - `nvme`: Attached using Non-Volatile Memory Express
+// The disk attachment interface used:
+// - `fcp`: Fiber Channel Protocol
+// - `sata`: Serial Advanced Technology Attachment
+// - `nvme`: Non-Volatile Memory Express
 //
 // The enumerated values for this property may
 // [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
@@ -39647,18 +39647,23 @@ func (options *CreateInstanceVolumeAttachmentOptions) SetHeaders(param map[strin
 type CreateIpsecPolicyOptions struct {
 	// The authentication algorithm
 	//
-	// Must be `disabled` if and only if the `encryption_algorithm` is
-	// `aes128gcm16`, `aes192gcm16`, or `aes256gcm16`.
+	// Must be `disabled` if and only if the `encryption_algorithm` is `aes128gcm16`,
+	// `aes192gcm16`, or `aes256gcm16`
+	//
+	// The `md5` and `sha1` algorithms have been deprecated.
 	AuthenticationAlgorithm *string `json:"authentication_algorithm" validate:"required"`
 
 	// The encryption algorithm
 	//
 	// The `authentication_algorithm` must be `disabled` if and only if
-	// `encryption_algorithm` is `aes128gcm16`, `aes192gcm16`, or
-	// `aes256gcm16`.
+	// `encryption_algorithm` is `aes128gcm16`, `aes192gcm16`, or `aes256gcm16`
+	//
+	// The `triple_des` algorithm has been deprecated.
 	EncryptionAlgorithm *string `json:"encryption_algorithm" validate:"required"`
 
-	// Perfect Forward Secrecy.
+	// The Perfect Forward Secrecy group.
+	//
+	// Groups `group_2` and `group_5` have been deprecated.
 	Pfs *string `json:"pfs" validate:"required"`
 
 	// The key lifetime in seconds.
@@ -39679,8 +39684,10 @@ type CreateIpsecPolicyOptions struct {
 // Constants associated with the CreateIpsecPolicyOptions.AuthenticationAlgorithm property.
 // The authentication algorithm
 //
-// Must be `disabled` if and only if the `encryption_algorithm` is
-// `aes128gcm16`, `aes192gcm16`, or `aes256gcm16`.
+// Must be `disabled` if and only if the `encryption_algorithm` is `aes128gcm16`,
+// `aes192gcm16`, or `aes256gcm16`
+//
+// The `md5` and `sha1` algorithms have been deprecated.
 const (
 	CreateIpsecPolicyOptionsAuthenticationAlgorithmDisabledConst = "disabled"
 	CreateIpsecPolicyOptionsAuthenticationAlgorithmSha256Const   = "sha256"
@@ -39692,8 +39699,9 @@ const (
 // The encryption algorithm
 //
 // The `authentication_algorithm` must be `disabled` if and only if
-// `encryption_algorithm` is `aes128gcm16`, `aes192gcm16`, or
-// `aes256gcm16`.
+// `encryption_algorithm` is `aes128gcm16`, `aes192gcm16`, or `aes256gcm16`
+//
+// The `triple_des` algorithm has been deprecated.
 const (
 	CreateIpsecPolicyOptionsEncryptionAlgorithmAes128Const      = "aes128"
 	CreateIpsecPolicyOptionsEncryptionAlgorithmAes128gcm16Const = "aes128gcm16"
@@ -39704,7 +39712,9 @@ const (
 )
 
 // Constants associated with the CreateIpsecPolicyOptions.Pfs property.
-// Perfect Forward Secrecy.
+// The Perfect Forward Secrecy group.
+//
+// Groups `group_2` and `group_5` have been deprecated.
 const (
 	CreateIpsecPolicyOptionsPfsDisabledConst = "disabled"
 	CreateIpsecPolicyOptionsPfsGroup14Const  = "group_14"
@@ -39790,7 +39800,7 @@ type CreateKeyOptions struct {
 	// group](https://cloud.ibm.com/apidocs/resource-manager#introduction) will be used.
 	ResourceGroup ResourceGroupIdentityIntf `json:"resource_group,omitempty"`
 
-	// The crypto-system used by this key.
+	// The crypto-system for this key.
 	Type *string `json:"type,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -39798,7 +39808,7 @@ type CreateKeyOptions struct {
 }
 
 // Constants associated with the CreateKeyOptions.Type property.
-// The crypto-system used by this key.
+// The crypto-system for this key.
 const (
 	CreateKeyOptionsTypeEd25519Const = "ed25519"
 	CreateKeyOptionsTypeRsaConst     = "rsa"
@@ -40044,17 +40054,13 @@ type CreateLoadBalancerListenerPolicyOptions struct {
 	// The listener identifier.
 	ListenerID *string `json:"listener_id" validate:"required,ne="`
 
-	// The policy action.
-	//
+	// The policy action:
 	// - `forward`: Requests will be forwarded to the specified `target` pool
 	// - `https_redirect`: Requests will be redirected to the specified target listener. The
 	//   listener must have a `protocol` of `http`, and the target listener must have a
 	//   `protocol` of `https`
 	// - `redirect`: Requests will be redirected to the specified `target.url`
-	// - `reject`: Requests will be rejected with a `403` status code
-	//
-	// The enumerated values for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	// - `reject`: Requests will be rejected with a `403` status code.
 	Action *string `json:"action" validate:"required"`
 
 	// Priority of the policy. The priority is unique across all policies for this load balancer listener. Lower value
@@ -40079,17 +40085,13 @@ type CreateLoadBalancerListenerPolicyOptions struct {
 }
 
 // Constants associated with the CreateLoadBalancerListenerPolicyOptions.Action property.
-// The policy action.
-//
+// The policy action:
 //   - `forward`: Requests will be forwarded to the specified `target` pool
 //   - `https_redirect`: Requests will be redirected to the specified target listener. The
 //     listener must have a `protocol` of `http`, and the target listener must have a
 //     `protocol` of `https`
 //   - `redirect`: Requests will be redirected to the specified `target.url`
-//   - `reject`: Requests will be rejected with a `403` status code
-//
-// The enumerated values for this property may
-// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+//   - `reject`: Requests will be rejected with a `403` status code.
 const (
 	CreateLoadBalancerListenerPolicyOptionsActionForwardConst       = "forward"
 	CreateLoadBalancerListenerPolicyOptionsActionHTTPSRedirectConst = "https_redirect"
@@ -40166,12 +40168,11 @@ type CreateLoadBalancerListenerPolicyRuleOptions struct {
 	// The policy identifier.
 	PolicyID *string `json:"policy_id" validate:"required,ne="`
 
-	// The condition of the rule.
+	// The condition for the rule.
 	Condition *string `json:"condition" validate:"required"`
 
-	// The type of the rule.
-	//
-	// Body rules are applied to form-encoded request bodies using the `UTF-8` character set.
+	// The type of the rule. Body rules are applied to form-encoded request bodies using the
+	// `UTF-8` character set.
 	Type *string `json:"type" validate:"required"`
 
 	// The value to be matched for the rule condition.
@@ -40191,7 +40192,7 @@ type CreateLoadBalancerListenerPolicyRuleOptions struct {
 }
 
 // Constants associated with the CreateLoadBalancerListenerPolicyRuleOptions.Condition property.
-// The condition of the rule.
+// The condition for the rule.
 const (
 	CreateLoadBalancerListenerPolicyRuleOptionsConditionContainsConst     = "contains"
 	CreateLoadBalancerListenerPolicyRuleOptionsConditionEqualsConst       = "equals"
@@ -40199,9 +40200,8 @@ const (
 )
 
 // Constants associated with the CreateLoadBalancerListenerPolicyRuleOptions.Type property.
-// The type of the rule.
-//
-// Body rules are applied to form-encoded request bodies using the `UTF-8` character set.
+// The type of the rule. Body rules are applied to form-encoded request bodies using the
+// `UTF-8` character set.
 const (
 	CreateLoadBalancerListenerPolicyRuleOptionsTypeBodyConst     = "body"
 	CreateLoadBalancerListenerPolicyRuleOptionsTypeHeaderConst   = "header"
@@ -40535,7 +40535,7 @@ type CreateLoadBalancerPoolOptions struct {
 	// - `v2`: Enabled with version 2 (binary header format)
 	// - `disabled`: Disabled
 	//
-	// Supported by load balancers in the `application` family (otherwise always `disabled`).
+	// For load balancers in the `network` family, this property must be `disabled`.
 	ProxyProtocol *string `json:"proxy_protocol,omitempty"`
 
 	// The session persistence of this pool. If specified, the load balancer must have
@@ -40574,7 +40574,7 @@ const (
 // - `v2`: Enabled with version 2 (binary header format)
 // - `disabled`: Disabled
 //
-// Supported by load balancers in the `application` family (otherwise always `disabled`).
+// For load balancers in the `network` family, this property must be `disabled`.
 const (
 	CreateLoadBalancerPoolOptionsProxyProtocolDisabledConst = "disabled"
 	CreateLoadBalancerPoolOptionsProxyProtocolV1Const       = "v1"
@@ -40715,10 +40715,7 @@ func (options *CreateNetworkACLRuleOptions) SetHeaders(param map[string]string) 
 type CreatePlacementGroupOptions struct {
 	// The strategy for this placement group:
 	// - `host_spread`: place on different compute hosts
-	// - `power_spread`: place on compute hosts that use different power sources
-	//
-	// The enumerated values for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	// - `power_spread`: place on compute hosts that use different power sources.
 	Strategy *string `json:"strategy" validate:"required"`
 
 	// The name for this placement group. The name must not be used by another placement group in the region. If
@@ -40736,10 +40733,7 @@ type CreatePlacementGroupOptions struct {
 // Constants associated with the CreatePlacementGroupOptions.Strategy property.
 // The strategy for this placement group:
 // - `host_spread`: place on different compute hosts
-// - `power_spread`: place on compute hosts that use different power sources
-//
-// The enumerated values for this property may
-// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+// - `power_spread`: place on compute hosts that use different power sources.
 const (
 	CreatePlacementGroupOptionsStrategyHostSpreadConst  = "host_spread"
 	CreatePlacementGroupOptionsStrategyPowerSpreadConst = "power_spread"
@@ -42708,26 +42702,11 @@ func UnmarshalDnsServer(m map[string]json.RawMessage, result interface{}) (err e
 
 // DnsServerPrototype : DnsServerPrototype struct
 type DnsServerPrototype struct {
-	// The IP address.
-	//
-	// This property may [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) to support IPv6 addresses in
-	// the future.
-	Address *string `json:"address" validate:"required"`
+	// The DNS server IPv4 address.
+	Address *string `json:"address,omitempty"`
 
 	// DHCP configuration for the specified zone will have this DNS server listed first.
 	ZoneAffinity ZoneIdentityIntf `json:"zone_affinity,omitempty"`
-}
-
-// NewDnsServerPrototype : Instantiate DnsServerPrototype (Generic Model Constructor)
-func (*VpcV1) NewDnsServerPrototype(address string) (_model *DnsServerPrototype, err error) {
-	_model = &DnsServerPrototype{
-		Address: core.StringPtr(address),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
-	}
-	return
 }
 
 // UnmarshalDnsServerPrototype unmarshals an instance of DnsServerPrototype from the specified map of raw messages.
@@ -43138,10 +43117,7 @@ type DedicatedHostDisk struct {
 	// Instance disks that are on this dedicated host disk.
 	InstanceDisks []InstanceDiskReference `json:"instance_disks" validate:"required"`
 
-	// The disk interface used for attaching the disk
-	//
-	// The enumerated values for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	// The disk interface used for attaching the disk.
 	InterfaceType *string `json:"interface_type" validate:"required"`
 
 	// The lifecycle state of this dedicated host disk.
@@ -43160,14 +43136,14 @@ type DedicatedHostDisk struct {
 	Size *int64 `json:"size" validate:"required"`
 
 	// The instance disk interfaces supported for this dedicated host disk.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	SupportedInstanceInterfaceTypes []string `json:"supported_instance_interface_types" validate:"required"`
 }
 
 // Constants associated with the DedicatedHostDisk.InterfaceType property.
-// The disk interface used for attaching the disk
-//
-// The enumerated values for this property may
-// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+// The disk interface used for attaching the disk.
 const (
 	DedicatedHostDiskInterfaceTypeNvmeConst = "nvme"
 )
@@ -48311,14 +48287,14 @@ func UnmarshalEndpointGatewayTarget(m map[string]json.RawMessage, result interfa
 //
 // Models which "extend" this model:
 // - EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypePrivatePathServiceGatewayPrototype
-// - EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderInfrastructureServicePrototype
 // - EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderCloudServicePrototype
+// - EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderInfrastructureServicePrototype
 type EndpointGatewayTargetPrototype struct {
+	// The type of target for this endpoint gateway.
+	ResourceType *string `json:"resource_type" validate:"required"`
+
 	// The CRN for this private path service gateway.
 	CRN *string `json:"crn,omitempty"`
-
-	// The target resource type for this endpoint gateway.
-	ResourceType *string `json:"resource_type,omitempty"`
 
 	// The name of a provider infrastructure service. Must be:
 	// - `ibm-ntp-server`: An NTP (Network Time Protocol) server provided by IBM.
@@ -48326,9 +48302,11 @@ type EndpointGatewayTargetPrototype struct {
 }
 
 // Constants associated with the EndpointGatewayTargetPrototype.ResourceType property.
-// The target resource type for this endpoint gateway.
+// The type of target for this endpoint gateway.
 const (
-	EndpointGatewayTargetPrototypeResourceTypePrivatePathServiceGatewayConst = "private_path_service_gateway"
+	EndpointGatewayTargetPrototypeResourceTypePrivatePathServiceGatewayConst     = "private_path_service_gateway"
+	EndpointGatewayTargetPrototypeResourceTypeProviderCloudServiceConst          = "provider_cloud_service"
+	EndpointGatewayTargetPrototypeResourceTypeProviderInfrastructureServiceConst = "provider_infrastructure_service"
 )
 
 func (*EndpointGatewayTargetPrototype) isaEndpointGatewayTargetPrototype() bool {
@@ -48342,14 +48320,14 @@ type EndpointGatewayTargetPrototypeIntf interface {
 // UnmarshalEndpointGatewayTargetPrototype unmarshals an instance of EndpointGatewayTargetPrototype from the specified map of raw messages.
 func UnmarshalEndpointGatewayTargetPrototype(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(EndpointGatewayTargetPrototype)
-	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
-		return
-	}
 	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
@@ -48450,6 +48428,9 @@ type FloatingIP struct {
 	ResourceGroup *ResourceGroupReference `json:"resource_group" validate:"required"`
 
 	// The status of the floating IP.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 
 	// The target of this floating IP.
@@ -48461,6 +48442,9 @@ type FloatingIP struct {
 
 // Constants associated with the FloatingIP.Status property.
 // The status of the floating IP.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	FloatingIPStatusAvailableConst = "available"
 	FloatingIPStatusDeletingConst  = "deleting"
@@ -52817,9 +52801,12 @@ func (options *GetVPNServerRouteOptions) SetHeaders(param map[string]string) *Ge
 
 // IkePolicy : IkePolicy struct
 type IkePolicy struct {
-	// The authentication algorithm
+	// The authentication algorithm.
 	//
 	// The `md5` and `sha1` algorithms have been deprecated.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	AuthenticationAlgorithm *string `json:"authentication_algorithm" validate:"required"`
 
 	// The VPN gateway connections that use this IKE policy.
@@ -52833,9 +52820,12 @@ type IkePolicy struct {
 	// Groups `2` and `5` have been deprecated.
 	DhGroup *int64 `json:"dh_group" validate:"required"`
 
-	// The encryption algorithm
+	// The encryption algorithm.
 	//
 	// The `triple_des` algorithm has been deprecated.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	EncryptionAlgorithm *string `json:"encryption_algorithm" validate:"required"`
 
 	// The URL for this IKE policy.
@@ -52853,7 +52843,10 @@ type IkePolicy struct {
 	// The name for this IKE policy. The name is unique across all IKE policies in the region.
 	Name *string `json:"name" validate:"required"`
 
-	// The IKE negotiation mode. Only `main` is supported.
+	// The IKE negotiation mode.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	NegotiationMode *string `json:"negotiation_mode" validate:"required"`
 
 	// The resource group for this IKE policy.
@@ -52864,9 +52857,12 @@ type IkePolicy struct {
 }
 
 // Constants associated with the IkePolicy.AuthenticationAlgorithm property.
-// The authentication algorithm
+// The authentication algorithm.
 //
 // The `md5` and `sha1` algorithms have been deprecated.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	IkePolicyAuthenticationAlgorithmMd5Const    = "md5"
 	IkePolicyAuthenticationAlgorithmSha1Const   = "sha1"
@@ -52876,9 +52872,12 @@ const (
 )
 
 // Constants associated with the IkePolicy.EncryptionAlgorithm property.
-// The encryption algorithm
+// The encryption algorithm.
 //
 // The `triple_des` algorithm has been deprecated.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	IkePolicyEncryptionAlgorithmAes128Const    = "aes128"
 	IkePolicyEncryptionAlgorithmAes192Const    = "aes192"
@@ -52887,7 +52886,10 @@ const (
 )
 
 // Constants associated with the IkePolicy.NegotiationMode property.
-// The IKE negotiation mode. Only `main` is supported.
+// The IKE negotiation mode.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	IkePolicyNegotiationModeMainConst = "main"
 )
@@ -53285,8 +53287,8 @@ type IPsecPolicy struct {
 	//
 	// The `md5` and `sha1` algorithms have been deprecated
 	//
-	// Must be `disabled` if and only if the `encryption_algorithm` is
-	// `aes128gcm16`, `aes192gcm16`, or `aes256gcm16`.
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	AuthenticationAlgorithm *string `json:"authentication_algorithm" validate:"required"`
 
 	// The VPN gateway connections that use this IPsec policy.
@@ -53295,16 +53297,18 @@ type IPsecPolicy struct {
 	// The date and time that this IPsec policy was created.
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
-	// The encapsulation mode used. Only `tunnel` is supported.
+	// The encapsulation mode used.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	EncapsulationMode *string `json:"encapsulation_mode" validate:"required"`
 
 	// The encryption algorithm
 	//
 	// The `triple_des` algorithm has been deprecated
 	//
-	// The `authentication_algorithm` must be `disabled` if and only if
-	// `encryption_algorithm` is `aes128gcm16`, `aes192gcm16`, or
-	// `aes256gcm16`.
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	EncryptionAlgorithm *string `json:"encryption_algorithm" validate:"required"`
 
 	// The URL for this IPsec policy.
@@ -53319,9 +53323,12 @@ type IPsecPolicy struct {
 	// The name for this IPsec policy. The name is unique across all IPsec policies in the region.
 	Name *string `json:"name" validate:"required"`
 
-	// Perfect Forward Secrecy
+	// The Perfect Forward Secrecy group
 	//
-	// Groups `group_2` and `group_5` have been deprecated.
+	// Groups `group_2` and `group_5` have been deprecated
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Pfs *string `json:"pfs" validate:"required"`
 
 	// The resource group for this IPsec policy.
@@ -53330,7 +53337,10 @@ type IPsecPolicy struct {
 	// The resource type.
 	ResourceType *string `json:"resource_type" validate:"required"`
 
-	// The transform protocol used. Only `esp` is supported.
+	// The transform protocol used.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	TransformProtocol *string `json:"transform_protocol" validate:"required"`
 }
 
@@ -53339,8 +53349,8 @@ type IPsecPolicy struct {
 //
 // # The `md5` and `sha1` algorithms have been deprecated
 //
-// Must be `disabled` if and only if the `encryption_algorithm` is
-// `aes128gcm16`, `aes192gcm16`, or `aes256gcm16`.
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	IPsecPolicyAuthenticationAlgorithmDisabledConst = "disabled"
 	IPsecPolicyAuthenticationAlgorithmMd5Const      = "md5"
@@ -53351,7 +53361,10 @@ const (
 )
 
 // Constants associated with the IPsecPolicy.EncapsulationMode property.
-// The encapsulation mode used. Only `tunnel` is supported.
+// The encapsulation mode used.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	IPsecPolicyEncapsulationModeTunnelConst = "tunnel"
 )
@@ -53361,9 +53374,8 @@ const (
 //
 // The `triple_des` algorithm has been deprecated
 //
-// The `authentication_algorithm` must be `disabled` if and only if
-// `encryption_algorithm` is `aes128gcm16`, `aes192gcm16`, or
-// `aes256gcm16`.
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	IPsecPolicyEncryptionAlgorithmAes128Const      = "aes128"
 	IPsecPolicyEncryptionAlgorithmAes128gcm16Const = "aes128gcm16"
@@ -53375,9 +53387,12 @@ const (
 )
 
 // Constants associated with the IPsecPolicy.Pfs property.
-// Perfect Forward Secrecy
+// The Perfect Forward Secrecy group
 //
-// Groups `group_2` and `group_5` have been deprecated.
+// Groups `group_2` and `group_5` have been deprecated
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	IPsecPolicyPfsDisabledConst = "disabled"
 	IPsecPolicyPfsGroup14Const  = "group_14"
@@ -53403,7 +53418,10 @@ const (
 )
 
 // Constants associated with the IPsecPolicy.TransformProtocol property.
-// The transform protocol used. Only `esp` is supported.
+// The transform protocol used.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	IPsecPolicyTransformProtocolEspConst = "esp"
 )
@@ -53688,15 +53706,18 @@ func UnmarshalIPsecPolicyConnectionCollectionNext(m map[string]json.RawMessage, 
 type IPsecPolicyPatch struct {
 	// The authentication algorithm
 	//
-	// Must be `disabled` if and only if the `encryption_algorithm` is
-	// `aes128gcm16`, `aes192gcm16`, or `aes256gcm16`.
+	// Must be `disabled` if and only if the `encryption_algorithm` is `aes128gcm16`,
+	// `aes192gcm16`, or `aes256gcm16`
+	//
+	// The `md5` and `sha1` algorithms have been deprecated.
 	AuthenticationAlgorithm *string `json:"authentication_algorithm,omitempty"`
 
 	// The encryption algorithm
 	//
 	// The `authentication_algorithm` must be `disabled` if and only if
-	// `encryption_algorithm` is `aes128gcm16`, `aes192gcm16`, or
-	// `aes256gcm16`.
+	// `encryption_algorithm` is `aes128gcm16`, `aes192gcm16`, or `aes256gcm16`
+	//
+	// The `triple_des` algorithm has been deprecated.
 	EncryptionAlgorithm *string `json:"encryption_algorithm,omitempty"`
 
 	// The key lifetime in seconds.
@@ -53705,15 +53726,19 @@ type IPsecPolicyPatch struct {
 	// The name for this IPsec policy. The name must not be used by another IPsec policy in the region.
 	Name *string `json:"name,omitempty"`
 
-	// Perfect Forward Secrecy.
+	// The Perfect Forward Secrecy group.
+	//
+	// Groups `group_2` and `group_5` have been deprecated.
 	Pfs *string `json:"pfs,omitempty"`
 }
 
 // Constants associated with the IPsecPolicyPatch.AuthenticationAlgorithm property.
 // The authentication algorithm
 //
-// Must be `disabled` if and only if the `encryption_algorithm` is
-// `aes128gcm16`, `aes192gcm16`, or `aes256gcm16`.
+// Must be `disabled` if and only if the `encryption_algorithm` is `aes128gcm16`,
+// `aes192gcm16`, or `aes256gcm16`
+//
+// The `md5` and `sha1` algorithms have been deprecated.
 const (
 	IPsecPolicyPatchAuthenticationAlgorithmDisabledConst = "disabled"
 	IPsecPolicyPatchAuthenticationAlgorithmSha256Const   = "sha256"
@@ -53725,8 +53750,9 @@ const (
 // The encryption algorithm
 //
 // The `authentication_algorithm` must be `disabled` if and only if
-// `encryption_algorithm` is `aes128gcm16`, `aes192gcm16`, or
-// `aes256gcm16`.
+// `encryption_algorithm` is `aes128gcm16`, `aes192gcm16`, or `aes256gcm16`
+//
+// The `triple_des` algorithm has been deprecated.
 const (
 	IPsecPolicyPatchEncryptionAlgorithmAes128Const      = "aes128"
 	IPsecPolicyPatchEncryptionAlgorithmAes128gcm16Const = "aes128gcm16"
@@ -53737,7 +53763,9 @@ const (
 )
 
 // Constants associated with the IPsecPolicyPatch.Pfs property.
-// Perfect Forward Secrecy.
+// The Perfect Forward Secrecy group.
+//
+// Groups `group_2` and `group_5` have been deprecated.
 const (
 	IPsecPolicyPatchPfsDisabledConst = "disabled"
 	IPsecPolicyPatchPfsGroup14Const  = "group_14"
@@ -54350,7 +54378,7 @@ type ImageExportJob struct {
 	// `storage_object.name`, or `storage_href` values.
 	Name *string `json:"name" validate:"required"`
 
-	// The type of resource referenced.
+	// The resource type.
 	ResourceType *string `json:"resource_type" validate:"required"`
 
 	// The date and time that the image export job started running.
@@ -54366,6 +54394,9 @@ type ImageExportJob struct {
 	// - `succeeded`: Export job was completed successfully
 	//
 	// The exported image object is automatically deleted for `failed` jobs.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 
 	// The reasons for the current status (if any).
@@ -54394,7 +54425,7 @@ const (
 )
 
 // Constants associated with the ImageExportJob.ResourceType property.
-// The type of resource referenced.
+// The resource type.
 const (
 	ImageExportJobResourceTypeImageExportJobConst = "image_export_job"
 )
@@ -54408,6 +54439,9 @@ const (
 // - `succeeded`: Export job was completed successfully
 //
 // The exported image object is automatically deleted for `failed` jobs.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	ImageExportJobStatusDeletingConst  = "deleting"
 	ImageExportJobStatusFailedConst    = "failed"
@@ -56293,7 +56327,10 @@ type InstanceGroup struct {
 	// - `healthy`: Group has `membership_count` instances
 	// - `scaling`: Instances in the group are being created or deleted to reach
 	//              `membership_count`
-	// - `unhealthy`: Group is unable to reach `membership_count` instances.
+	// - `unhealthy`: Group is unable to reach `membership_count` instances
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 
 	// The subnets to use when creating new instances.
@@ -56324,7 +56361,10 @@ const (
 //   - `healthy`: Group has `membership_count` instances
 //   - `scaling`: Instances in the group are being created or deleted to reach
 //     `membership_count`
-//   - `unhealthy`: Group is unable to reach `membership_count` instances.
+//   - `unhealthy`: Group is unable to reach `membership_count` instances
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	InstanceGroupStatusDeletingConst  = "deleting"
 	InstanceGroupStatusHealthyConst   = "healthy"
@@ -56743,7 +56783,10 @@ type InstanceGroupManagerAction struct {
 	// - `completed`: Action was completed successfully
 	// - `failed`: Action could not be completed successfully
 	// - `incompatible`: Action parameters are not compatible with the group or manager
-	// - `omitted`: Action was not applied because this action's manager was disabled.
+	// - `omitted`: Action was not applied because this action's manager was disabled
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 
 	// The date and time that the instance group manager action was updated.
@@ -56780,7 +56823,10 @@ const (
 // - `completed`: Action was completed successfully
 // - `failed`: Action could not be completed successfully
 // - `incompatible`: Action parameters are not compatible with the group or manager
-// - `omitted`: Action was not applied because this action's manager was disabled.
+// - `omitted`: Action was not applied because this action's manager was disabled
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	InstanceGroupManagerActionStatusActiveConst       = "active"
 	InstanceGroupManagerActionStatusCompletedConst    = "completed"
@@ -57423,18 +57469,27 @@ type InstanceGroupManagerPolicy struct {
 	// The date and time that the instance group manager policy was updated.
 	UpdatedAt *strfmt.DateTime `json:"updated_at" validate:"required"`
 
-	// The type of metric to be evaluated.
+	// The type of metric to be evaluated
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	MetricType *string `json:"metric_type,omitempty"`
 
 	// The metric value to be evaluated.
 	MetricValue *int64 `json:"metric_value,omitempty"`
 
-	// The type of policy for the instance group.
+	// The type of policy for the instance group
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	PolicyType *string `json:"policy_type,omitempty"`
 }
 
 // Constants associated with the InstanceGroupManagerPolicy.MetricType property.
-// The type of metric to be evaluated.
+// The type of metric to be evaluated
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	InstanceGroupManagerPolicyMetricTypeCpuConst        = "cpu"
 	InstanceGroupManagerPolicyMetricTypeMemoryConst     = "memory"
@@ -57443,7 +57498,10 @@ const (
 )
 
 // Constants associated with the InstanceGroupManagerPolicy.PolicyType property.
-// The type of policy for the instance group.
+// The type of policy for the instance group
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	InstanceGroupManagerPolicyPolicyTypeTargetConst = "target"
 )
@@ -58098,7 +58156,10 @@ type InstanceGroupMembership struct {
 	// - `failed`: Membership was unable to maintain dependent resources
 	// - `healthy`: Membership is active and serving in the group
 	// - `pending`: Membership is waiting for dependent resources
-	// - `unhealthy`: Membership has unhealthy dependent resources.
+	// - `unhealthy`: Membership has unhealthy dependent resources
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 
 	// The date and time that the instance group membership was updated.
@@ -58111,7 +58172,10 @@ type InstanceGroupMembership struct {
 // - `failed`: Membership was unable to maintain dependent resources
 // - `healthy`: Membership is active and serving in the group
 // - `pending`: Membership is waiting for dependent resources
-// - `unhealthy`: Membership has unhealthy dependent resources.
+// - `unhealthy`: Membership has unhealthy dependent resources
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	InstanceGroupMembershipStatusDeletingConst  = "deleting"
 	InstanceGroupMembershipStatusFailedConst    = "failed"
@@ -59329,9 +59393,8 @@ type InstancePatch struct {
 	// region. Changing the name will not affect the system hostname.
 	Name *string `json:"name,omitempty"`
 
-	// The placement restrictions to use for the virtual server instance. For the placement
-	// restrictions to be changed, the instance `status` must be `stopping` or `stopped`.
-	//
+	// The placement restrictions to use for the virtual server instance. For the placement restrictions to be changed, the
+	// instance `status` must be `stopping` or `stopped`.
 	// If set, `reservation_affinity.policy` must be `disabled`.
 	PlacementTarget InstancePlacementTargetPatchIntf `json:"placement_target,omitempty"`
 
@@ -62577,12 +62640,18 @@ type Key struct {
 	// The resource group for this key.
 	ResourceGroup *ResourceGroupReference `json:"resource_group" validate:"required"`
 
-	// The crypto-system used by this key.
+	// The crypto-system for this key.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Type *string `json:"type" validate:"required"`
 }
 
 // Constants associated with the Key.Type property.
-// The crypto-system used by this key.
+// The crypto-system for this key.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	KeyTypeEd25519Const = "ed25519"
 	KeyTypeRsaConst     = "rsa"
@@ -67914,6 +67983,9 @@ type LoadBalancer struct {
 	Name *string `json:"name" validate:"required"`
 
 	// The operating status of this load balancer.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	OperatingStatus *string `json:"operating_status" validate:"required"`
 
 	// The pools of this load balancer.
@@ -68007,6 +68079,9 @@ const (
 
 // Constants associated with the LoadBalancer.OperatingStatus property.
 // The operating status of this load balancer.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	LoadBalancerOperatingStatusOfflineConst = "offline"
 	LoadBalancerOperatingStatusOnlineConst  = "online"
@@ -69014,8 +69089,7 @@ func (loadBalancerListenerPatch *LoadBalancerListenerPatch) AsPatch() (_patch ma
 
 // LoadBalancerListenerPolicy : LoadBalancerListenerPolicy struct
 type LoadBalancerListenerPolicy struct {
-	// The policy action.
-	//
+	// The policy action:
 	// - `forward`: Requests will be forwarded to the specified `target` pool
 	// - `https_redirect`: Requests will be redirected to the specified target listener. The
 	//   listener must have a `protocol` of `http`, and the target listener must have a
@@ -69061,8 +69135,7 @@ type LoadBalancerListenerPolicy struct {
 }
 
 // Constants associated with the LoadBalancerListenerPolicy.Action property.
-// The policy action.
-//
+// The policy action:
 //   - `forward`: Requests will be forwarded to the specified `target` pool
 //   - `https_redirect`: Requests will be redirected to the specified target listener. The
 //     listener must have a `protocol` of `http`, and the target listener must have a
@@ -69215,17 +69288,13 @@ func (loadBalancerListenerPolicyPatch *LoadBalancerListenerPolicyPatch) AsPatch(
 
 // LoadBalancerListenerPolicyPrototype : LoadBalancerListenerPolicyPrototype struct
 type LoadBalancerListenerPolicyPrototype struct {
-	// The policy action.
-	//
+	// The policy action:
 	// - `forward`: Requests will be forwarded to the specified `target` pool
 	// - `https_redirect`: Requests will be redirected to the specified target listener. The
 	//   listener must have a `protocol` of `http`, and the target listener must have a
 	//   `protocol` of `https`
 	// - `redirect`: Requests will be redirected to the specified `target.url`
-	// - `reject`: Requests will be rejected with a `403` status code
-	//
-	// The enumerated values for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	// - `reject`: Requests will be rejected with a `403` status code.
 	Action *string `json:"action" validate:"required"`
 
 	// The name for this policy. The name must not be used by another policy for the load balancer listener. If
@@ -69247,17 +69316,13 @@ type LoadBalancerListenerPolicyPrototype struct {
 }
 
 // Constants associated with the LoadBalancerListenerPolicyPrototype.Action property.
-// The policy action.
-//
+// The policy action:
 //   - `forward`: Requests will be forwarded to the specified `target` pool
 //   - `https_redirect`: Requests will be redirected to the specified target listener. The
 //     listener must have a `protocol` of `http`, and the target listener must have a
 //     `protocol` of `https`
 //   - `redirect`: Requests will be redirected to the specified `target.url`
-//   - `reject`: Requests will be rejected with a `403` status code
-//
-// The enumerated values for this property may
-// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+//   - `reject`: Requests will be rejected with a `403` status code.
 const (
 	LoadBalancerListenerPolicyPrototypeActionForwardConst       = "forward"
 	LoadBalancerListenerPolicyPrototypeActionHTTPSRedirectConst = "https_redirect"
@@ -69356,7 +69421,10 @@ func UnmarshalLoadBalancerListenerPolicyReference(m map[string]json.RawMessage, 
 
 // LoadBalancerListenerPolicyRule : LoadBalancerListenerPolicyRule struct
 type LoadBalancerListenerPolicyRule struct {
-	// The condition of the rule.
+	// The condition for the rule.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Condition *string `json:"condition" validate:"required"`
 
 	// The date and time that this rule was created.
@@ -69377,9 +69445,11 @@ type LoadBalancerListenerPolicyRule struct {
 	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	ProvisioningStatus *string `json:"provisioning_status" validate:"required"`
 
-	// The type of the rule.
+	// The type of the rule. Body rules are applied to form-encoded request bodies using the
+	// `UTF-8` character set.
 	//
-	// Body rules are applied to form-encoded request bodies using the `UTF-8` character set.
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Type *string `json:"type" validate:"required"`
 
 	// The value to be matched for the rule condition.
@@ -69389,7 +69459,10 @@ type LoadBalancerListenerPolicyRule struct {
 }
 
 // Constants associated with the LoadBalancerListenerPolicyRule.Condition property.
-// The condition of the rule.
+// The condition for the rule.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	LoadBalancerListenerPolicyRuleConditionContainsConst     = "contains"
 	LoadBalancerListenerPolicyRuleConditionEqualsConst       = "equals"
@@ -69410,9 +69483,11 @@ const (
 )
 
 // Constants associated with the LoadBalancerListenerPolicyRule.Type property.
-// The type of the rule.
+// The type of the rule. Body rules are applied to form-encoded request bodies using the
+// `UTF-8` character set.
 //
-// Body rules are applied to form-encoded request bodies using the `UTF-8` character set.
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	LoadBalancerListenerPolicyRuleTypeBodyConst     = "body"
 	LoadBalancerListenerPolicyRuleTypeHeaderConst   = "header"
@@ -69488,7 +69563,7 @@ func UnmarshalLoadBalancerListenerPolicyRuleCollection(m map[string]json.RawMess
 
 // LoadBalancerListenerPolicyRulePatch : LoadBalancerListenerPolicyRulePatch struct
 type LoadBalancerListenerPolicyRulePatch struct {
-	// The condition of the rule.
+	// The condition for the rule.
 	Condition *string `json:"condition,omitempty"`
 
 	// The field to match for this rule. This property must be specified if the rule type is
@@ -69498,9 +69573,8 @@ type LoadBalancerListenerPolicyRulePatch struct {
 	// If the rule condition is not `matches_regex`, the value must be percent-encoded.
 	Field *string `json:"field,omitempty"`
 
-	// The type of the rule.
-	//
-	// Body rules are applied to form-encoded request bodies using the `UTF-8` character set.
+	// The type of the rule. Body rules are applied to form-encoded request bodies using the
+	// `UTF-8` character set.
 	Type *string `json:"type,omitempty"`
 
 	// The value to be matched for the rule condition.
@@ -69510,7 +69584,7 @@ type LoadBalancerListenerPolicyRulePatch struct {
 }
 
 // Constants associated with the LoadBalancerListenerPolicyRulePatch.Condition property.
-// The condition of the rule.
+// The condition for the rule.
 const (
 	LoadBalancerListenerPolicyRulePatchConditionContainsConst     = "contains"
 	LoadBalancerListenerPolicyRulePatchConditionEqualsConst       = "equals"
@@ -69518,9 +69592,8 @@ const (
 )
 
 // Constants associated with the LoadBalancerListenerPolicyRulePatch.Type property.
-// The type of the rule.
-//
-// Body rules are applied to form-encoded request bodies using the `UTF-8` character set.
+// The type of the rule. Body rules are applied to form-encoded request bodies using the
+// `UTF-8` character set.
 const (
 	LoadBalancerListenerPolicyRulePatchTypeBodyConst     = "body"
 	LoadBalancerListenerPolicyRulePatchTypeHeaderConst   = "header"
@@ -69571,7 +69644,7 @@ func (loadBalancerListenerPolicyRulePatch *LoadBalancerListenerPolicyRulePatch) 
 
 // LoadBalancerListenerPolicyRulePrototype : LoadBalancerListenerPolicyRulePrototype struct
 type LoadBalancerListenerPolicyRulePrototype struct {
-	// The condition of the rule.
+	// The condition for the rule.
 	Condition *string `json:"condition" validate:"required"`
 
 	// The field to match for this rule. This property must be specified if the rule type is
@@ -69581,9 +69654,8 @@ type LoadBalancerListenerPolicyRulePrototype struct {
 	// If the rule condition is not `matches_regex`, the value must be percent-encoded.
 	Field *string `json:"field,omitempty"`
 
-	// The type of the rule.
-	//
-	// Body rules are applied to form-encoded request bodies using the `UTF-8` character set.
+	// The type of the rule. Body rules are applied to form-encoded request bodies using the
+	// `UTF-8` character set.
 	Type *string `json:"type" validate:"required"`
 
 	// The value to be matched for the rule condition.
@@ -69593,7 +69665,7 @@ type LoadBalancerListenerPolicyRulePrototype struct {
 }
 
 // Constants associated with the LoadBalancerListenerPolicyRulePrototype.Condition property.
-// The condition of the rule.
+// The condition for the rule.
 const (
 	LoadBalancerListenerPolicyRulePrototypeConditionContainsConst     = "contains"
 	LoadBalancerListenerPolicyRulePrototypeConditionEqualsConst       = "equals"
@@ -69601,9 +69673,8 @@ const (
 )
 
 // Constants associated with the LoadBalancerListenerPolicyRulePrototype.Type property.
-// The type of the rule.
-//
-// Body rules are applied to form-encoded request bodies using the `UTF-8` character set.
+// The type of the rule. Body rules are applied to form-encoded request bodies using the
+// `UTF-8` character set.
 const (
 	LoadBalancerListenerPolicyRulePrototypeTypeBodyConst     = "body"
 	LoadBalancerListenerPolicyRulePrototypeTypeHeaderConst   = "header"
@@ -70353,6 +70424,9 @@ func (loadBalancerPatch *LoadBalancerPatch) AsPatch() (_patch map[string]interfa
 // LoadBalancerPool : LoadBalancerPool struct
 type LoadBalancerPool struct {
 	// The load balancing algorithm.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Algorithm *string `json:"algorithm" validate:"required"`
 
 	// The date and time that this pool was created.
@@ -70393,7 +70467,8 @@ type LoadBalancerPool struct {
 	// - `v2`: Enabled with version 2 (binary header format)
 	// - `disabled`: Disabled
 	//
-	// Supported by load balancers in the `application` family (otherwise always `disabled`).
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	ProxyProtocol *string `json:"proxy_protocol" validate:"required"`
 
 	// The session persistence of this pool.
@@ -70405,6 +70480,9 @@ type LoadBalancerPool struct {
 
 // Constants associated with the LoadBalancerPool.Algorithm property.
 // The load balancing algorithm.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	LoadBalancerPoolAlgorithmLeastConnectionsConst   = "least_connections"
 	LoadBalancerPoolAlgorithmRoundRobinConst         = "round_robin"
@@ -70442,7 +70520,8 @@ const (
 // - `v2`: Enabled with version 2 (binary header format)
 // - `disabled`: Disabled
 //
-// Supported by load balancers in the `application` family (otherwise always `disabled`).
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	LoadBalancerPoolProxyProtocolDisabledConst = "disabled"
 	LoadBalancerPoolProxyProtocolV1Const       = "v1"
@@ -70866,6 +70945,9 @@ type LoadBalancerPoolMember struct {
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
 	// Health of the server member in the pool.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Health *string `json:"health" validate:"required"`
 
 	// The URL for this load balancer pool member.
@@ -70902,6 +70984,9 @@ type LoadBalancerPoolMember struct {
 
 // Constants associated with the LoadBalancerPoolMember.Health property.
 // Health of the server member in the pool.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	LoadBalancerPoolMemberHealthFaultedConst = "faulted"
 	LoadBalancerPoolMemberHealthOkConst      = "ok"
@@ -71298,7 +71383,7 @@ type LoadBalancerPoolPatch struct {
 	// - `v2`: Enabled with version 2 (binary header format)
 	// - `disabled`: Disabled
 	//
-	// Supported by load balancers in the `application` family (otherwise always `disabled`).
+	// For load balancers in the `network` family, this property must be `disabled`.
 	ProxyProtocol *string `json:"proxy_protocol,omitempty"`
 
 	// The session persistence of this pool.
@@ -71335,7 +71420,7 @@ const (
 // - `v2`: Enabled with version 2 (binary header format)
 // - `disabled`: Disabled
 //
-// Supported by load balancers in the `application` family (otherwise always `disabled`).
+// For load balancers in the `network` family, this property must be `disabled`.
 const (
 	LoadBalancerPoolPatchProxyProtocolDisabledConst = "disabled"
 	LoadBalancerPoolPatchProxyProtocolV1Const       = "v1"
@@ -71419,7 +71504,7 @@ type LoadBalancerPoolPrototype struct {
 	// - `v2`: Enabled with version 2 (binary header format)
 	// - `disabled`: Disabled
 	//
-	// Supported by load balancers in the `application` family (otherwise always `disabled`).
+	// For load balancers in the `network` family, this property must be `disabled`.
 	ProxyProtocol *string `json:"proxy_protocol,omitempty"`
 
 	// The session persistence of this pool. If specified, the load balancer must have
@@ -71455,7 +71540,7 @@ const (
 // - `v2`: Enabled with version 2 (binary header format)
 // - `disabled`: Disabled
 //
-// Supported by load balancers in the `application` family (otherwise always `disabled`).
+// For load balancers in the `network` family, this property must be `disabled`.
 const (
 	LoadBalancerPoolPrototypeProxyProtocolDisabledConst = "disabled"
 	LoadBalancerPoolPrototypeProxyProtocolV1Const       = "v1"
@@ -72858,7 +72943,7 @@ type NetworkACLRule struct {
 	// The name for this network ACL rule. The name is unique across all rules for the network ACL.
 	Name *string `json:"name" validate:"required"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
@@ -72908,7 +72993,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRule.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRuleProtocolAllConst  = "all"
 	NetworkACLRuleProtocolIcmpConst = "icmp"
@@ -73179,7 +73264,7 @@ type NetworkACLRuleItem struct {
 	// The name for this network ACL rule. The name is unique across all rules for the network ACL.
 	Name *string `json:"name" validate:"required"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
@@ -73229,7 +73314,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRuleItem.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRuleItemProtocolAllConst  = "all"
 	NetworkACLRuleItemProtocolIcmpConst = "icmp"
@@ -73316,7 +73401,7 @@ type NetworkACLRulePatch struct {
 	// The name for this network ACL rule. The name must not be used by another rule for the network ACL.
 	Name *string `json:"name,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol,omitempty"`
 
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
@@ -73349,7 +73434,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePatch.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRulePatchProtocolAllConst  = "all"
 	NetworkACLRulePatchProtocolIcmpConst = "icmp"
@@ -73469,7 +73554,7 @@ type NetworkACLRulePrototype struct {
 	// the name will be a hyphenated list of randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
@@ -73519,7 +73604,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePrototype.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRulePrototypeProtocolAllConst  = "all"
 	NetworkACLRulePrototypeProtocolIcmpConst = "icmp"
@@ -73598,7 +73683,7 @@ type NetworkACLRulePrototypeNetworkACLContext struct {
 	// the name will be a hyphenated list of randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
@@ -73648,7 +73733,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePrototypeNetworkACLContext.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRulePrototypeNetworkACLContextProtocolAllConst  = "all"
 	NetworkACLRulePrototypeNetworkACLContextProtocolIcmpConst = "icmp"
@@ -76274,11 +76359,17 @@ type Region struct {
 	Name *string `json:"name" validate:"required"`
 
 	// The availability status of this region.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 }
 
 // Constants associated with the Region.Status property.
 // The availability status of this region.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	RegionStatusAvailableConst   = "available"
 	RegionStatusUnavailableConst = "unavailable"
@@ -77367,9 +77458,6 @@ type ReservationCommittedUsePatch struct {
 	// - `release`: Release any available capacity and let the reservation expire.
 	// - `renew`: Renew for another term, provided the term remains listed in the
 	//   `reservation_terms` for the profile. Otherwise, let the reservation expire.
-	//
-	// The enumerated values for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	ExpirationPolicy *string `json:"expiration_policy,omitempty"`
 
 	// The term for this committed use reservation:
@@ -77387,9 +77475,6 @@ type ReservationCommittedUsePatch struct {
 //   - `release`: Release any available capacity and let the reservation expire.
 //   - `renew`: Renew for another term, provided the term remains listed in the
 //     `reservation_terms` for the profile. Otherwise, let the reservation expire.
-//
-// The enumerated values for this property may
-// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	ReservationCommittedUsePatchExpirationPolicyReleaseConst = "release"
 	ReservationCommittedUsePatchExpirationPolicyRenewConst   = "renew"
@@ -77418,9 +77503,6 @@ type ReservationCommittedUsePrototype struct {
 	// - `release`: Release any available capacity and let the reservation expire.
 	// - `renew`: Renew for another term, provided the term remains listed in the
 	//   `reservation_terms` for the profile. Otherwise, let the reservation expire.
-	//
-	// The enumerated values for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	ExpirationPolicy *string `json:"expiration_policy,omitempty"`
 
 	// The term for this committed use reservation:
@@ -77436,9 +77518,6 @@ type ReservationCommittedUsePrototype struct {
 //   - `release`: Release any available capacity and let the reservation expire.
 //   - `renew`: Renew for another term, provided the term remains listed in the
 //     `reservation_terms` for the profile. Otherwise, let the reservation expire.
-//
-// The enumerated values for this property may
-// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	ReservationCommittedUsePrototypeExpirationPolicyReleaseConst = "release"
 	ReservationCommittedUsePrototypeExpirationPolicyRenewConst   = "renew"
@@ -77836,6 +77915,9 @@ type ReservedIP struct {
 	Name *string `json:"name" validate:"required"`
 
 	// The owner of the reserved IP.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Owner *string `json:"owner" validate:"required"`
 
 	// The resource type.
@@ -77861,6 +77943,9 @@ const (
 
 // Constants associated with the ReservedIP.Owner property.
 // The owner of the reserved IP.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	ReservedIPOwnerProviderConst = "provider"
 	ReservedIPOwnerUserConst     = "user"
@@ -78823,7 +78908,10 @@ type Route struct {
 	// - `delegate`: delegate to system-provided routes
 	// - `delegate_vpc`: delegate to system-provided routes, ignoring Internet-bound routes
 	// - `deliver`: deliver the packet to the specified `next_hop`
-	// - `drop`: drop the packet.
+	// - `drop`: drop the packet
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Action *string `json:"action" validate:"required"`
 
 	// Indicates whether this route will be advertised to the ingress sources specified by the `advertise_routes_to`
@@ -78863,7 +78951,7 @@ type Route struct {
 	//
 	// The enumerated values for this property may
 	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
-	Origin *string `json:"origin,omitempty"`
+	Origin *string `json:"origin" validate:"required"`
 
 	// The priority of this route. Smaller values have higher priority.
 	//
@@ -78887,7 +78975,10 @@ type Route struct {
 // - `delegate`: delegate to system-provided routes
 // - `delegate_vpc`: delegate to system-provided routes, ignoring Internet-bound routes
 // - `deliver`: deliver the packet to the specified `next_hop`
-// - `drop`: drop the packet.
+// - `drop`: drop the packet
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	RouteActionDelegateConst    = "delegate"
 	RouteActionDelegateVPCConst = "delegate_vpc"
@@ -79201,7 +79292,10 @@ type RouteCollectionVPCContextRoutesItem struct {
 	// - `delegate`: delegate to system-provided routes
 	// - `delegate_vpc`: delegate to system-provided routes, ignoring Internet-bound routes
 	// - `deliver`: deliver the packet to the specified `next_hop`
-	// - `drop`: drop the packet.
+	// - `drop`: drop the packet
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Action *string `json:"action" validate:"required"`
 
 	// Indicates whether this route will be advertised to the ingress sources specified by the `advertise_routes_to`
@@ -79241,7 +79335,7 @@ type RouteCollectionVPCContextRoutesItem struct {
 	//
 	// The enumerated values for this property may
 	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
-	Origin *string `json:"origin,omitempty"`
+	Origin *string `json:"origin" validate:"required"`
 
 	// The priority of this route. Smaller values have higher priority.
 	//
@@ -79265,7 +79359,10 @@ type RouteCollectionVPCContextRoutesItem struct {
 // - `delegate`: delegate to system-provided routes
 // - `delegate_vpc`: delegate to system-provided routes, ignoring Internet-bound routes
 // - `deliver`: deliver the packet to the specified `next_hop`
-// - `drop`: drop the packet.
+// - `drop`: drop the packet
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	RouteCollectionVPCContextRoutesItemActionDelegateConst    = "delegate"
 	RouteCollectionVPCContextRoutesItemActionDelegateVPCConst = "delegate_vpc"
@@ -80736,7 +80833,7 @@ func UnmarshalSecurityGroupReference(m map[string]json.RawMessage, result interf
 // - SecurityGroupRuleSecurityGroupRuleProtocolIcmp
 // - SecurityGroupRuleSecurityGroupRuleProtocolTcpudp
 type SecurityGroupRule struct {
-	// The direction of traffic to enforce.
+	// The direction of traffic to allow.
 	Direction *string `json:"direction" validate:"required"`
 
 	// The URL for this security group rule.
@@ -80745,11 +80842,11 @@ type SecurityGroupRule struct {
 	// The unique identifier for this security group rule.
 	ID *string `json:"id" validate:"required"`
 
-	// The IP version to enforce. The format of `local.address`, `remote.address`,
+	// The IP version to allow. The format of `local.address`, `remote.address`,
 	// `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 	//
-	// If `remote` references a security group, then this rule only applies to IP addresses
-	// (network interfaces) in that group matching this IP version.
+	// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+	// version.
 	IPVersion *string `json:"ip_version" validate:"required"`
 
 	// The local IP address or range of local IP addresses to which this rule will allow inbound
@@ -80757,7 +80854,10 @@ type SecurityGroupRule struct {
 	// to all local IP addresses (or from all local IP addresses, for outbound rules).
 	Local SecurityGroupRuleLocalIntf `json:"local" validate:"required"`
 
-	// The protocol to enforce.
+	// The protocol to allow.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The remote IP addresses or security groups from which this rule allows traffic (or to
@@ -80779,24 +80879,27 @@ type SecurityGroupRule struct {
 }
 
 // Constants associated with the SecurityGroupRule.Direction property.
-// The direction of traffic to enforce.
+// The direction of traffic to allow.
 const (
 	SecurityGroupRuleDirectionInboundConst  = "inbound"
 	SecurityGroupRuleDirectionOutboundConst = "outbound"
 )
 
 // Constants associated with the SecurityGroupRule.IPVersion property.
-// The IP version to enforce. The format of `local.address`, `remote.address`,
+// The IP version to allow. The format of `local.address`, `remote.address`,
 // `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 //
-// If `remote` references a security group, then this rule only applies to IP addresses
-// (network interfaces) in that group matching this IP version.
+// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+// version.
 const (
 	SecurityGroupRuleIPVersionIpv4Const = "ipv4"
 )
 
 // Constants associated with the SecurityGroupRule.Protocol property.
-// The protocol to enforce.
+// The protocol to allow.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	SecurityGroupRuleProtocolAllConst  = "all"
 	SecurityGroupRuleProtocolIcmpConst = "icmp"
@@ -81017,14 +81120,14 @@ type SecurityGroupRulePatch struct {
 	// Specify `null` to remove an existing ICMP traffic code.
 	Code *int64 `json:"code,omitempty"`
 
-	// The direction of traffic to enforce.
+	// The direction of traffic to allow.
 	Direction *string `json:"direction,omitempty"`
 
-	// The IP version to enforce. The format of `local.address`, `remote.address`,
+	// The IP version to allow. The format of `local.address`, `remote.address`,
 	// `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 	//
-	// If `remote` references a security group, then this rule only applies to IP addresses
-	// (network interfaces) in that group matching this IP version.
+	// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+	// version.
 	IPVersion *string `json:"ip_version,omitempty"`
 
 	// The local IP address or range of local IP addresses to which this rule will allow inbound
@@ -81060,18 +81163,18 @@ type SecurityGroupRulePatch struct {
 }
 
 // Constants associated with the SecurityGroupRulePatch.Direction property.
-// The direction of traffic to enforce.
+// The direction of traffic to allow.
 const (
 	SecurityGroupRulePatchDirectionInboundConst  = "inbound"
 	SecurityGroupRulePatchDirectionOutboundConst = "outbound"
 )
 
 // Constants associated with the SecurityGroupRulePatch.IPVersion property.
-// The IP version to enforce. The format of `local.address`, `remote.address`,
+// The IP version to allow. The format of `local.address`, `remote.address`,
 // `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 //
-// If `remote` references a security group, then this rule only applies to IP addresses
-// (network interfaces) in that group matching this IP version.
+// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+// version.
 const (
 	SecurityGroupRulePatchIPVersionIpv4Const = "ipv4"
 )
@@ -81142,14 +81245,14 @@ func (securityGroupRulePatch *SecurityGroupRulePatch) AsPatch() (_patch map[stri
 // - SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp
 // - SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp
 type SecurityGroupRulePrototype struct {
-	// The direction of traffic to enforce.
+	// The direction of traffic to allow.
 	Direction *string `json:"direction" validate:"required"`
 
-	// The IP version to enforce. The format of `local.address`, `remote.address`,
+	// The IP version to allow. The format of `local.address`, `remote.address`,
 	// `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 	//
-	// If `remote` references a security group, then this rule only applies to IP addresses
-	// (network interfaces) in that group matching this IP version.
+	// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+	// version.
 	IPVersion *string `json:"ip_version,omitempty"`
 
 	// The local IP address or range of local IP addresses to which this rule will allow inbound
@@ -81159,7 +81262,7 @@ type SecurityGroupRulePrototype struct {
 	// addresses (or from all local IP addresses, for outbound rules).
 	Local SecurityGroupRuleLocalPrototypeIntf `json:"local,omitempty"`
 
-	// The protocol to enforce.
+	// The protocol to allow.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The remote IP addresses or security groups from which this rule will allow traffic (or to
@@ -81194,24 +81297,24 @@ type SecurityGroupRulePrototype struct {
 }
 
 // Constants associated with the SecurityGroupRulePrototype.Direction property.
-// The direction of traffic to enforce.
+// The direction of traffic to allow.
 const (
 	SecurityGroupRulePrototypeDirectionInboundConst  = "inbound"
 	SecurityGroupRulePrototypeDirectionOutboundConst = "outbound"
 )
 
 // Constants associated with the SecurityGroupRulePrototype.IPVersion property.
-// The IP version to enforce. The format of `local.address`, `remote.address`,
+// The IP version to allow. The format of `local.address`, `remote.address`,
 // `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 //
-// If `remote` references a security group, then this rule only applies to IP addresses
-// (network interfaces) in that group matching this IP version.
+// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+// version.
 const (
 	SecurityGroupRulePrototypeIPVersionIpv4Const = "ipv4"
 )
 
 // Constants associated with the SecurityGroupRulePrototype.Protocol property.
-// The protocol to enforce.
+// The protocol to allow.
 const (
 	SecurityGroupRulePrototypeProtocolAllConst  = "all"
 	SecurityGroupRulePrototypeProtocolIcmpConst = "icmp"
@@ -83632,6 +83735,9 @@ type ShareProfile struct {
 	Capacity ShareProfileCapacityIntf `json:"capacity" validate:"required"`
 
 	// The product family this share profile belongs to.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Family *string `json:"family" validate:"required"`
 
 	// The URL for this share profile.
@@ -83649,6 +83755,9 @@ type ShareProfile struct {
 
 // Constants associated with the ShareProfile.Family property.
 // The product family this share profile belongs to.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	ShareProfileFamilyDefinedPerformanceConst = "defined_performance"
 )
@@ -84118,6 +84227,9 @@ type SharePrototype struct {
 	// The cron specification for the file share replication schedule.
 	//
 	// Replication of a share can be scheduled to occur at most once per hour.
+	//
+	// The scheduling frequency for this property may
+	// [increase](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	ReplicationCronSpec *string `json:"replication_cron_spec,omitempty"`
 
 	// The source file share for this replica file share. The specified file share must not
@@ -84286,8 +84398,6 @@ type SharePrototypeShareContext struct {
 	// The cron specification for the file share replication schedule.
 	//
 	// Replication of a share can be scheduled to occur at most once per hour.
-	//
-	// For this property to be changed, the share `replication_role` must be `replica`.
 	ReplicationCronSpec *string `json:"replication_cron_spec" validate:"required"`
 
 	// The resource group to use. If unspecified, the resource group from
@@ -85989,6 +86099,9 @@ type Subnet struct {
 	RoutingTable *RoutingTableReference `json:"routing_table" validate:"required"`
 
 	// The status of the subnet.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 
 	// The total number of IPv4 addresses in this subnet.
@@ -86018,6 +86131,9 @@ const (
 
 // Constants associated with the Subnet.Status property.
 // The status of the subnet.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	SubnetStatusAvailableConst = "available"
 	SubnetStatusDeletingConst  = "deleting"
@@ -89622,6 +89738,9 @@ type VPC struct {
 	ResourceType *string `json:"resource_type" validate:"required"`
 
 	// The status of this VPC.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 }
 
@@ -89648,6 +89767,9 @@ const (
 
 // Constants associated with the VPC.Status property.
 // The status of this VPC.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPCStatusAvailableConst = "available"
 	VPCStatusDeletingConst  = "deleting"
@@ -91249,7 +91371,10 @@ type VPNGatewayConnection struct {
 	// If set to false, the VPN gateway connection is shut down.
 	AdminStateUp *bool `json:"admin_state_up" validate:"required"`
 
-	// The authentication mode. Only `psk` is currently supported.
+	// The authentication mode.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	AuthenticationMode *string `json:"authentication_mode" validate:"required"`
 
 	// The date and time that this VPN gateway connection was created.
@@ -91282,6 +91407,9 @@ type VPNGatewayConnection struct {
 	IpsecPolicy *IPsecPolicyReference `json:"ipsec_policy,omitempty"`
 
 	// The mode of the VPN gateway.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Mode *string `json:"mode" validate:"required"`
 
 	// The name for this VPN gateway connection. The name is unique across all connections for the VPN gateway.
@@ -91299,6 +91427,11 @@ type VPNGatewayConnection struct {
 	// The reasons for the current VPN gateway connection status (if any).
 	StatusReasons []VPNGatewayConnectionStatusReason `json:"status_reasons" validate:"required"`
 
+	// Indicates whether the traffic is distributed between the `up` tunnels of the VPN gateway connection when the VPC
+	// route's next hop is a VPN connection. If `false`, the traffic is only routed through the `up` tunnel with the lower
+	// `public_ip` address.
+	DistributeTraffic *bool `json:"distribute_traffic,omitempty"`
+
 	Local *VPNGatewayConnectionStaticRouteModeLocal `json:"local,omitempty"`
 
 	Peer VPNGatewayConnectionStaticRouteModePeerIntf `json:"peer,omitempty"`
@@ -91311,7 +91444,10 @@ type VPNGatewayConnection struct {
 }
 
 // Constants associated with the VPNGatewayConnection.AuthenticationMode property.
-// The authentication mode. Only `psk` is currently supported.
+// The authentication mode.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNGatewayConnectionAuthenticationModePskConst = "psk"
 )
@@ -91331,6 +91467,9 @@ const (
 
 // Constants associated with the VPNGatewayConnection.Mode property.
 // The mode of the VPN gateway.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNGatewayConnectionModePolicyConst = "policy"
 	VPNGatewayConnectionModeRouteConst  = "route"
@@ -91905,6 +92044,15 @@ type VPNGatewayConnectionPatch struct {
 	// The Dead Peer Detection settings.
 	DeadPeerDetection *VPNGatewayConnectionDpdPatch `json:"dead_peer_detection,omitempty"`
 
+	// Indicates whether the traffic is distributed between the `up` tunnels of the VPN gateway connection when the VPC
+	// route's next hop is a VPN connection. If `false`, the traffic is only routed through the `up` tunnel with the lower
+	// `public_ip` address. Before enabling it on VPN connections to on-prem private networks, review
+	// [distributing traffic
+	// restrictions](https://cloud.ibm.com/docs/vpc?topic=vpc-vpn-limitations#distributing-traffic-restrictions).
+	//
+	// If specified, `mode` must be `route`.
+	DistributeTraffic *bool `json:"distribute_traffic,omitempty"`
+
 	// The establish mode of the VPN gateway connection:
 	// - `bidirectional`: Either side of the VPN gateway can initiate IKE protocol
 	//    negotiations or rekeying processes.
@@ -91955,6 +92103,11 @@ func UnmarshalVPNGatewayConnectionPatch(m map[string]json.RawMessage, result int
 	err = core.UnmarshalModel(m, "dead_peer_detection", &obj.DeadPeerDetection, UnmarshalVPNGatewayConnectionDpdPatch)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "dead_peer_detection-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "distribute_traffic", &obj.DistributeTraffic)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "distribute_traffic-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "establish_mode", &obj.EstablishMode)
@@ -92275,6 +92428,13 @@ type VPNGatewayConnectionPrototype struct {
 	// The pre-shared key.
 	Psk *string `json:"psk" validate:"required"`
 
+	// Indicates whether the traffic is distributed between the `up` tunnels of the VPN gateway connection when the VPC
+	// route's next hop is a VPN connection. If `false`, the traffic is only routed through the `up` tunnel with the lower
+	// `public_ip` address. Before enabling it on VPN connections to on-prem private networks, review
+	// [distributing traffic
+	// restrictions](https://cloud.ibm.com/docs/vpc?topic=vpc-vpn-limitations#distributing-traffic-restrictions).
+	DistributeTraffic *bool `json:"distribute_traffic,omitempty"`
+
 	Local *VPNGatewayConnectionStaticRouteModeLocalPrototype `json:"local,omitempty"`
 
 	Peer VPNGatewayConnectionStaticRouteModePeerPrototypeIntf `json:"peer,omitempty"`
@@ -92346,6 +92506,11 @@ func UnmarshalVPNGatewayConnectionPrototype(m map[string]json.RawMessage, result
 	err = core.UnmarshalPrimitive(m, "psk", &obj.Psk)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "psk-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "distribute_traffic", &obj.DistributeTraffic)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "distribute_traffic-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "local", &obj.Local, UnmarshalVPNGatewayConnectionStaticRouteModeLocalPrototype)
@@ -92586,6 +92751,9 @@ type VPNGatewayConnectionStaticRouteModeTunnel struct {
 	PublicIP *IP `json:"public_ip" validate:"required"`
 
 	// The status of the VPN Tunnel.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 
 	// The reasons for the current status (if any).
@@ -92594,6 +92762,9 @@ type VPNGatewayConnectionStaticRouteModeTunnel struct {
 
 // Constants associated with the VPNGatewayConnectionStaticRouteModeTunnel.Status property.
 // The status of the VPN Tunnel.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNGatewayConnectionStaticRouteModeTunnelStatusDownConst = "down"
 	VPNGatewayConnectionStaticRouteModeTunnelStatusUpConst   = "up"
@@ -92891,6 +93062,9 @@ type VPNGatewayMember struct {
 	PublicIP *IP `json:"public_ip" validate:"required"`
 
 	// The high availability role assigned to the VPN gateway member.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Role *string `json:"role" validate:"required"`
 }
 
@@ -92923,6 +93097,9 @@ const (
 
 // Constants associated with the VPNGatewayMember.Role property.
 // The high availability role assigned to the VPN gateway member.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNGatewayMemberRoleActiveConst  = "active"
 	VPNGatewayMemberRoleStandbyConst = "standby"
@@ -93241,7 +93418,10 @@ type VPNServer struct {
 	// The reserved IPs bound to this VPN server.
 	PrivateIps []ReservedIPReference `json:"private_ips" validate:"required"`
 
-	// The transport protocol used by this VPN server.
+	// The transport protocol to use for this VPN server.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The resource group for this VPN server.
@@ -93288,7 +93468,10 @@ const (
 )
 
 // Constants associated with the VPNServer.Protocol property.
-// The transport protocol used by this VPN server.
+// The transport protocol to use for this VPN server.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNServerProtocolTCPConst = "tcp"
 	VPNServerProtocolUDPConst = "udp"
@@ -93443,6 +93626,9 @@ func UnmarshalVPNServer(m map[string]json.RawMessage, result interface{}) (err e
 // - VPNServerAuthenticationByCertificate
 type VPNServerAuthentication struct {
 	// The type of authentication.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Method *string `json:"method" validate:"required"`
 
 	// The type of identity provider to be used by VPN client.
@@ -93457,6 +93643,9 @@ type VPNServerAuthentication struct {
 
 // Constants associated with the VPNServerAuthentication.Method property.
 // The type of authentication.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNServerAuthenticationMethodCertificateConst = "certificate"
 	VPNServerAuthenticationMethodUsernameConst    = "username"
@@ -94096,7 +94285,7 @@ type VPNServerPatch struct {
 	// The port number used by this VPN server.
 	Port *int64 `json:"port,omitempty"`
 
-	// The transport protocol used by this VPN server.
+	// The transport protocol to use for this VPN server.
 	Protocol *string `json:"protocol,omitempty"`
 
 	// The subnets to provision this VPN server in (replacing the existing subnets).
@@ -94104,7 +94293,7 @@ type VPNServerPatch struct {
 }
 
 // Constants associated with the VPNServerPatch.Protocol property.
-// The transport protocol used by this VPN server.
+// The transport protocol to use for this VPN server.
 const (
 	VPNServerPatchProtocolTCPConst = "tcp"
 	VPNServerPatchProtocolUDPConst = "udp"
@@ -95639,9 +95828,15 @@ type VolumeAttachment struct {
 	Name *string `json:"name" validate:"required"`
 
 	// The status of this volume attachment.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 
 	// The type of volume attachment.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Type *string `json:"type" validate:"required"`
 
 	// The attached volume.
@@ -95652,6 +95847,9 @@ type VolumeAttachment struct {
 
 // Constants associated with the VolumeAttachment.Status property.
 // The status of this volume attachment.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VolumeAttachmentStatusAttachedConst  = "attached"
 	VolumeAttachmentStatusAttachingConst = "attaching"
@@ -95661,6 +95859,9 @@ const (
 
 // Constants associated with the VolumeAttachment.Type property.
 // The type of volume attachment.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VolumeAttachmentTypeBootConst = "boot"
 	VolumeAttachmentTypeDataConst = "data"
@@ -96194,11 +96395,17 @@ type VolumeAttachmentReferenceVolumeContext struct {
 	Name *string `json:"name" validate:"required"`
 
 	// The type of volume attachment.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Type *string `json:"type" validate:"required"`
 }
 
 // Constants associated with the VolumeAttachmentReferenceVolumeContext.Type property.
 // The type of volume attachment.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VolumeAttachmentReferenceVolumeContextTypeBootConst = "boot"
 	VolumeAttachmentReferenceVolumeContextTypeDataConst = "data"
@@ -98853,6 +99060,9 @@ type BareMetalServerNetworkAttachmentByPci struct {
 	Subnet *SubnetReference `json:"subnet" validate:"required"`
 
 	// The bare metal server network attachment type.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Type *string `json:"type" validate:"required"`
 
 	// The virtual network interface for this bare metal server network attachment.
@@ -98889,6 +99099,9 @@ const (
 
 // Constants associated with the BareMetalServerNetworkAttachmentByPci.Type property.
 // The bare metal server network attachment type.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	BareMetalServerNetworkAttachmentByPciTypePrimaryConst   = "primary"
 	BareMetalServerNetworkAttachmentByPciTypeSecondaryConst = "secondary"
@@ -99012,6 +99225,9 @@ type BareMetalServerNetworkAttachmentByVlan struct {
 	Subnet *SubnetReference `json:"subnet" validate:"required"`
 
 	// The bare metal server network attachment type.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Type *string `json:"type" validate:"required"`
 
 	// The virtual network interface for this bare metal server network attachment.
@@ -99059,6 +99275,9 @@ const (
 
 // Constants associated with the BareMetalServerNetworkAttachmentByVlan.Type property.
 // The bare metal server network attachment type.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	BareMetalServerNetworkAttachmentByVlanTypePrimaryConst   = "primary"
 	BareMetalServerNetworkAttachmentByVlanTypeSecondaryConst = "secondary"
@@ -99583,7 +99802,7 @@ type BareMetalServerNetworkInterfaceByHiperSocket struct {
 	ID *string `json:"id" validate:"required"`
 
 	// The MAC address of this bare metal server network interface. If the MAC address has not yet been selected, the value
-	// will be an empty string.
+	// will be empty.
 	//
 	// If this bare metal server has network attachments, this network interface is a
 	// [read-only representation](https://cloud.ibm.com/docs/vpc?topic=vpc-vni-about#vni-old-api-clients) of its
@@ -99830,7 +100049,7 @@ type BareMetalServerNetworkInterfaceByPci struct {
 	ID *string `json:"id" validate:"required"`
 
 	// The MAC address of this bare metal server network interface. If the MAC address has not yet been selected, the value
-	// will be an empty string.
+	// will be empty.
 	//
 	// If this bare metal server has network attachments, this network interface is a
 	// [read-only representation](https://cloud.ibm.com/docs/vpc?topic=vpc-vni-about#vni-old-api-clients) of its
@@ -100096,7 +100315,7 @@ type BareMetalServerNetworkInterfaceByVlan struct {
 	ID *string `json:"id" validate:"required"`
 
 	// The MAC address of this bare metal server network interface. If the MAC address has not yet been selected, the value
-	// will be an empty string.
+	// will be empty.
 	//
 	// If this bare metal server has network attachments, this network interface is a
 	// [read-only representation](https://cloud.ibm.com/docs/vpc?topic=vpc-vni-about#vni-old-api-clients) of its
@@ -105861,7 +106080,10 @@ type InstanceGroupManagerActionScheduledAction struct {
 	// - `completed`: Action was completed successfully
 	// - `failed`: Action could not be completed successfully
 	// - `incompatible`: Action parameters are not compatible with the group or manager
-	// - `omitted`: Action was not applied because this action's manager was disabled.
+	// - `omitted`: Action was not applied because this action's manager was disabled
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 
 	// The date and time that the instance group manager action was updated.
@@ -105898,7 +106120,10 @@ const (
 // - `completed`: Action was completed successfully
 // - `failed`: Action could not be completed successfully
 // - `incompatible`: Action parameters are not compatible with the group or manager
-// - `omitted`: Action was not applied because this action's manager was disabled.
+// - `omitted`: Action was not applied because this action's manager was disabled
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	InstanceGroupManagerActionScheduledActionStatusActiveConst       = "active"
 	InstanceGroupManagerActionScheduledActionStatusCompletedConst    = "completed"
@@ -106221,18 +106446,27 @@ type InstanceGroupManagerPolicyInstanceGroupManagerTargetPolicy struct {
 	// The date and time that the instance group manager policy was updated.
 	UpdatedAt *strfmt.DateTime `json:"updated_at" validate:"required"`
 
-	// The type of metric to be evaluated.
+	// The type of metric to be evaluated
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	MetricType *string `json:"metric_type" validate:"required"`
 
 	// The metric value to be evaluated.
 	MetricValue *int64 `json:"metric_value" validate:"required"`
 
-	// The type of policy for the instance group.
+	// The type of policy for the instance group
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	PolicyType *string `json:"policy_type" validate:"required"`
 }
 
 // Constants associated with the InstanceGroupManagerPolicyInstanceGroupManagerTargetPolicy.MetricType property.
-// The type of metric to be evaluated.
+// The type of metric to be evaluated
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	InstanceGroupManagerPolicyInstanceGroupManagerTargetPolicyMetricTypeCpuConst        = "cpu"
 	InstanceGroupManagerPolicyInstanceGroupManagerTargetPolicyMetricTypeMemoryConst     = "memory"
@@ -106241,7 +106475,10 @@ const (
 )
 
 // Constants associated with the InstanceGroupManagerPolicyInstanceGroupManagerTargetPolicy.PolicyType property.
-// The type of policy for the instance group.
+// The type of policy for the instance group
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	InstanceGroupManagerPolicyInstanceGroupManagerTargetPolicyPolicyTypeTargetConst = "target"
 )
@@ -114231,7 +114468,7 @@ type NetworkACLRuleItemNetworkACLRuleProtocolAll struct {
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
 	Source *string `json:"source" validate:"required"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 }
 
@@ -114256,7 +114493,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRuleItemNetworkACLRuleProtocolAll.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRuleItemNetworkACLRuleProtocolAllProtocolAllConst = "all"
 )
@@ -114366,7 +114603,7 @@ type NetworkACLRuleItemNetworkACLRuleProtocolIcmp struct {
 	// If absent, all codes are matched.
 	Code *int64 `json:"code,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The ICMP traffic type to match.
@@ -114396,7 +114633,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRuleItemNetworkACLRuleProtocolIcmp.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRuleItemNetworkACLRuleProtocolIcmpProtocolIcmpConst = "icmp"
 )
@@ -114517,7 +114754,7 @@ type NetworkACLRuleItemNetworkACLRuleProtocolTcpudp struct {
 	// The inclusive lower bound of TCP/UDP destination port range.
 	DestinationPortMin *int64 `json:"destination_port_min" validate:"required"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The inclusive upper bound of TCP/UDP source port range.
@@ -114548,7 +114785,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRuleItemNetworkACLRuleProtocolTcpudp.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRuleItemNetworkACLRuleProtocolTcpudpProtocolTCPConst = "tcp"
 	NetworkACLRuleItemNetworkACLRuleProtocolTcpudpProtocolUDPConst = "udp"
@@ -114662,7 +114899,7 @@ type NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolAllPrototype 
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
 	Source *string `json:"source" validate:"required"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 }
 
@@ -114687,7 +114924,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolAllPrototype.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolAllPrototypeProtocolAllConst = "all"
 )
@@ -114781,7 +115018,7 @@ type NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolIcmpPrototype
 	// If specified, `type` must also be specified.  If unspecified, all codes are matched.
 	Code *int64 `json:"code,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The ICMP traffic type to match.
@@ -114811,7 +115048,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolIcmpPrototype.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolIcmpPrototypeProtocolIcmpConst = "icmp"
 )
@@ -114916,7 +115153,7 @@ type NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpudpPrototy
 	// The inclusive lower bound of TCP/UDP destination port range.
 	DestinationPortMin *int64 `json:"destination_port_min,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The inclusive upper bound of TCP/UDP source port range.
@@ -114947,7 +115184,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpudpPrototype.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpudpPrototypeProtocolTCPConst = "tcp"
 	NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpudpPrototypeProtocolUDPConst = "udp"
@@ -115059,7 +115296,7 @@ type NetworkACLRulePrototypeNetworkACLRuleProtocolAllPrototype struct {
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
 	Source *string `json:"source" validate:"required"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 }
 
@@ -115084,7 +115321,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePrototypeNetworkACLRuleProtocolAllPrototype.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRulePrototypeNetworkACLRuleProtocolAllPrototypeProtocolAllConst = "all"
 )
@@ -115185,7 +115422,7 @@ type NetworkACLRulePrototypeNetworkACLRuleProtocolIcmpPrototype struct {
 	// If specified, `type` must also be specified.  If unspecified, all codes are matched.
 	Code *int64 `json:"code,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The ICMP traffic type to match.
@@ -115215,7 +115452,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePrototypeNetworkACLRuleProtocolIcmpPrototype.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRulePrototypeNetworkACLRuleProtocolIcmpPrototypeProtocolIcmpConst = "icmp"
 )
@@ -115327,7 +115564,7 @@ type NetworkACLRulePrototypeNetworkACLRuleProtocolTcpudpPrototype struct {
 	// The inclusive lower bound of TCP/UDP destination port range.
 	DestinationPortMin *int64 `json:"destination_port_min,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The inclusive upper bound of TCP/UDP source port range.
@@ -115358,7 +115595,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePrototypeNetworkACLRuleProtocolTcpudpPrototype.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRulePrototypeNetworkACLRuleProtocolTcpudpPrototypeProtocolTCPConst = "tcp"
 	NetworkACLRulePrototypeNetworkACLRuleProtocolTcpudpPrototypeProtocolUDPConst = "udp"
@@ -115484,7 +115721,7 @@ type NetworkACLRuleNetworkACLRuleProtocolAll struct {
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
 	Source *string `json:"source" validate:"required"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 }
 
@@ -115509,7 +115746,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRuleNetworkACLRuleProtocolAll.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRuleNetworkACLRuleProtocolAllProtocolAllConst = "all"
 )
@@ -115618,7 +115855,7 @@ type NetworkACLRuleNetworkACLRuleProtocolIcmp struct {
 	// If absent, all codes are matched.
 	Code *int64 `json:"code,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The ICMP traffic type to match.
@@ -115648,7 +115885,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRuleNetworkACLRuleProtocolIcmp.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRuleNetworkACLRuleProtocolIcmpProtocolIcmpConst = "icmp"
 )
@@ -115768,7 +116005,7 @@ type NetworkACLRuleNetworkACLRuleProtocolTcpudp struct {
 	// The inclusive lower bound of TCP/UDP destination port range.
 	DestinationPortMin *int64 `json:"destination_port_min" validate:"required"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The inclusive upper bound of TCP/UDP source port range.
@@ -115799,7 +116036,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRuleNetworkACLRuleProtocolTcpudp.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRuleNetworkACLRuleProtocolTcpudpProtocolTCPConst = "tcp"
 	NetworkACLRuleNetworkACLRuleProtocolTcpudpProtocolUDPConst = "udp"
@@ -117897,14 +118134,14 @@ func UnmarshalSecurityGroupRuleLocalIP(m map[string]json.RawMessage, result inte
 // SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll : A rule allowing traffic for all supported protocols.
 // This model "extends" SecurityGroupRulePrototype
 type SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll struct {
-	// The direction of traffic to enforce.
+	// The direction of traffic to allow.
 	Direction *string `json:"direction" validate:"required"`
 
-	// The IP version to enforce. The format of `local.address`, `remote.address`,
+	// The IP version to allow. The format of `local.address`, `remote.address`,
 	// `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 	//
-	// If `remote` references a security group, then this rule only applies to IP addresses
-	// (network interfaces) in that group matching this IP version.
+	// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+	// version.
 	IPVersion *string `json:"ip_version,omitempty"`
 
 	// The local IP address or range of local IP addresses to which this rule will allow inbound
@@ -117914,7 +118151,7 @@ type SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll struct {
 	// addresses (or from all local IP addresses, for outbound rules).
 	Local SecurityGroupRuleLocalPrototypeIntf `json:"local,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The remote IP addresses or security groups from which this rule will allow traffic (or to
@@ -117927,24 +118164,24 @@ type SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll struct {
 }
 
 // Constants associated with the SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll.Direction property.
-// The direction of traffic to enforce.
+// The direction of traffic to allow.
 const (
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolAllDirectionInboundConst  = "inbound"
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolAllDirectionOutboundConst = "outbound"
 )
 
 // Constants associated with the SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll.IPVersion property.
-// The IP version to enforce. The format of `local.address`, `remote.address`,
+// The IP version to allow. The format of `local.address`, `remote.address`,
 // `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 //
-// If `remote` references a security group, then this rule only applies to IP addresses
-// (network interfaces) in that group matching this IP version.
+// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+// version.
 const (
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolAllIPVersionIpv4Const = "ipv4"
 )
 
 // Constants associated with the SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolAllProtocolAllConst = "all"
 )
@@ -118006,14 +118243,14 @@ type SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp struct {
 	// If specified, `type` must also be specified.  If unspecified, all codes are allowed.
 	Code *int64 `json:"code,omitempty"`
 
-	// The direction of traffic to enforce.
+	// The direction of traffic to allow.
 	Direction *string `json:"direction" validate:"required"`
 
-	// The IP version to enforce. The format of `local.address`, `remote.address`,
+	// The IP version to allow. The format of `local.address`, `remote.address`,
 	// `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 	//
-	// If `remote` references a security group, then this rule only applies to IP addresses
-	// (network interfaces) in that group matching this IP version.
+	// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+	// version.
 	IPVersion *string `json:"ip_version,omitempty"`
 
 	// The local IP address or range of local IP addresses to which this rule will allow inbound
@@ -118023,7 +118260,7 @@ type SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp struct {
 	// addresses (or from all local IP addresses, for outbound rules).
 	Local SecurityGroupRuleLocalPrototypeIntf `json:"local,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The remote IP addresses or security groups from which this rule will allow traffic (or to
@@ -118041,24 +118278,24 @@ type SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp struct {
 }
 
 // Constants associated with the SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp.Direction property.
-// The direction of traffic to enforce.
+// The direction of traffic to allow.
 const (
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmpDirectionInboundConst  = "inbound"
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmpDirectionOutboundConst = "outbound"
 )
 
 // Constants associated with the SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp.IPVersion property.
-// The IP version to enforce. The format of `local.address`, `remote.address`,
+// The IP version to allow. The format of `local.address`, `remote.address`,
 // `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 //
-// If `remote` references a security group, then this rule only applies to IP addresses
-// (network interfaces) in that group matching this IP version.
+// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+// version.
 const (
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmpIPVersionIpv4Const = "ipv4"
 )
 
 // Constants associated with the SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmpProtocolIcmpConst = "icmp"
 )
@@ -118128,14 +118365,14 @@ func UnmarshalSecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp(m map[stri
 // allowed for the protocol. When both have the same value, that single destination port is allowed.
 // This model "extends" SecurityGroupRulePrototype
 type SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp struct {
-	// The direction of traffic to enforce.
+	// The direction of traffic to allow.
 	Direction *string `json:"direction" validate:"required"`
 
-	// The IP version to enforce. The format of `local.address`, `remote.address`,
+	// The IP version to allow. The format of `local.address`, `remote.address`,
 	// `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 	//
-	// If `remote` references a security group, then this rule only applies to IP addresses
-	// (network interfaces) in that group matching this IP version.
+	// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+	// version.
 	IPVersion *string `json:"ip_version,omitempty"`
 
 	// The local IP address or range of local IP addresses to which this rule will allow inbound
@@ -118157,7 +118394,7 @@ type SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp struct {
 	// unspecified, allowing traffic on all destination ports.
 	PortMin *int64 `json:"port_min,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The remote IP addresses or security groups from which this rule will allow traffic (or to
@@ -118170,24 +118407,24 @@ type SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp struct {
 }
 
 // Constants associated with the SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp.Direction property.
-// The direction of traffic to enforce.
+// The direction of traffic to allow.
 const (
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudpDirectionInboundConst  = "inbound"
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudpDirectionOutboundConst = "outbound"
 )
 
 // Constants associated with the SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp.IPVersion property.
-// The IP version to enforce. The format of `local.address`, `remote.address`,
+// The IP version to allow. The format of `local.address`, `remote.address`,
 // `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 //
-// If `remote` references a security group, then this rule only applies to IP addresses
-// (network interfaces) in that group matching this IP version.
+// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+// version.
 const (
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudpIPVersionIpv4Const = "ipv4"
 )
 
 // Constants associated with the SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudpProtocolTCPConst = "tcp"
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudpProtocolUDPConst = "udp"
@@ -118619,7 +118856,7 @@ func UnmarshalSecurityGroupRuleRemoteSecurityGroupReference(m map[string]json.Ra
 // SecurityGroupRuleSecurityGroupRuleProtocolAll : A rule allowing traffic for all supported protocols.
 // This model "extends" SecurityGroupRule
 type SecurityGroupRuleSecurityGroupRuleProtocolAll struct {
-	// The direction of traffic to enforce.
+	// The direction of traffic to allow.
 	Direction *string `json:"direction" validate:"required"`
 
 	// The URL for this security group rule.
@@ -118628,40 +118865,40 @@ type SecurityGroupRuleSecurityGroupRuleProtocolAll struct {
 	// The unique identifier for this security group rule.
 	ID *string `json:"id" validate:"required"`
 
-	// The IP version to enforce. The format of `local.address`, `remote.address`,
+	// The IP version to allow. The format of `local.address`, `remote.address`,
 	// `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 	//
-	// If `remote` references a security group, then this rule only applies to IP addresses
-	// (network interfaces) in that group matching this IP version.
+	// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+	// version.
 	IPVersion *string `json:"ip_version" validate:"required"`
 
 	Local SecurityGroupRuleLocalIntf `json:"local" validate:"required"`
 
 	Remote SecurityGroupRuleRemoteIntf `json:"remote" validate:"required"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 }
 
 // Constants associated with the SecurityGroupRuleSecurityGroupRuleProtocolAll.Direction property.
-// The direction of traffic to enforce.
+// The direction of traffic to allow.
 const (
 	SecurityGroupRuleSecurityGroupRuleProtocolAllDirectionInboundConst  = "inbound"
 	SecurityGroupRuleSecurityGroupRuleProtocolAllDirectionOutboundConst = "outbound"
 )
 
 // Constants associated with the SecurityGroupRuleSecurityGroupRuleProtocolAll.IPVersion property.
-// The IP version to enforce. The format of `local.address`, `remote.address`,
+// The IP version to allow. The format of `local.address`, `remote.address`,
 // `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 //
-// If `remote` references a security group, then this rule only applies to IP addresses
-// (network interfaces) in that group matching this IP version.
+// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+// version.
 const (
 	SecurityGroupRuleSecurityGroupRuleProtocolAllIPVersionIpv4Const = "ipv4"
 )
 
 // Constants associated with the SecurityGroupRuleSecurityGroupRuleProtocolAll.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	SecurityGroupRuleSecurityGroupRuleProtocolAllProtocolAllConst = "all"
 )
@@ -118715,7 +118952,7 @@ func UnmarshalSecurityGroupRuleSecurityGroupRuleProtocolAll(m map[string]json.Ra
 // SecurityGroupRuleSecurityGroupRuleProtocolIcmp : A rule specifying the ICMP traffic to allow.
 // This model "extends" SecurityGroupRule
 type SecurityGroupRuleSecurityGroupRuleProtocolIcmp struct {
-	// The direction of traffic to enforce.
+	// The direction of traffic to allow.
 	Direction *string `json:"direction" validate:"required"`
 
 	// The URL for this security group rule.
@@ -118724,11 +118961,11 @@ type SecurityGroupRuleSecurityGroupRuleProtocolIcmp struct {
 	// The unique identifier for this security group rule.
 	ID *string `json:"id" validate:"required"`
 
-	// The IP version to enforce. The format of `local.address`, `remote.address`,
+	// The IP version to allow. The format of `local.address`, `remote.address`,
 	// `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 	//
-	// If `remote` references a security group, then this rule only applies to IP addresses
-	// (network interfaces) in that group matching this IP version.
+	// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+	// version.
 	IPVersion *string `json:"ip_version" validate:"required"`
 
 	Local SecurityGroupRuleLocalIntf `json:"local" validate:"required"`
@@ -118738,7 +118975,7 @@ type SecurityGroupRuleSecurityGroupRuleProtocolIcmp struct {
 	// The ICMP traffic code to allow. If absent, all codes are allowed.
 	Code *int64 `json:"code,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The ICMP traffic type to allow. If absent, all types are allowed.
@@ -118746,24 +118983,24 @@ type SecurityGroupRuleSecurityGroupRuleProtocolIcmp struct {
 }
 
 // Constants associated with the SecurityGroupRuleSecurityGroupRuleProtocolIcmp.Direction property.
-// The direction of traffic to enforce.
+// The direction of traffic to allow.
 const (
 	SecurityGroupRuleSecurityGroupRuleProtocolIcmpDirectionInboundConst  = "inbound"
 	SecurityGroupRuleSecurityGroupRuleProtocolIcmpDirectionOutboundConst = "outbound"
 )
 
 // Constants associated with the SecurityGroupRuleSecurityGroupRuleProtocolIcmp.IPVersion property.
-// The IP version to enforce. The format of `local.address`, `remote.address`,
+// The IP version to allow. The format of `local.address`, `remote.address`,
 // `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 //
-// If `remote` references a security group, then this rule only applies to IP addresses
-// (network interfaces) in that group matching this IP version.
+// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+// version.
 const (
 	SecurityGroupRuleSecurityGroupRuleProtocolIcmpIPVersionIpv4Const = "ipv4"
 )
 
 // Constants associated with the SecurityGroupRuleSecurityGroupRuleProtocolIcmp.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	SecurityGroupRuleSecurityGroupRuleProtocolIcmpProtocolIcmpConst = "icmp"
 )
@@ -118830,7 +119067,7 @@ func UnmarshalSecurityGroupRuleSecurityGroupRuleProtocolIcmp(m map[string]json.R
 // allowed for the protocol. When both have the same value, that single destination port is allowed.
 // This model "extends" SecurityGroupRule
 type SecurityGroupRuleSecurityGroupRuleProtocolTcpudp struct {
-	// The direction of traffic to enforce.
+	// The direction of traffic to allow.
 	Direction *string `json:"direction" validate:"required"`
 
 	// The URL for this security group rule.
@@ -118839,11 +119076,11 @@ type SecurityGroupRuleSecurityGroupRuleProtocolTcpudp struct {
 	// The unique identifier for this security group rule.
 	ID *string `json:"id" validate:"required"`
 
-	// The IP version to enforce. The format of `local.address`, `remote.address`,
+	// The IP version to allow. The format of `local.address`, `remote.address`,
 	// `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 	//
-	// If `remote` references a security group, then this rule only applies to IP addresses
-	// (network interfaces) in that group matching this IP version.
+	// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+	// version.
 	IPVersion *string `json:"ip_version" validate:"required"`
 
 	Local SecurityGroupRuleLocalIntf `json:"local" validate:"required"`
@@ -118856,29 +119093,29 @@ type SecurityGroupRuleSecurityGroupRuleProtocolTcpudp struct {
 	// The inclusive lower bound of TCP/UDP destination port range.
 	PortMin *int64 `json:"port_min,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 }
 
 // Constants associated with the SecurityGroupRuleSecurityGroupRuleProtocolTcpudp.Direction property.
-// The direction of traffic to enforce.
+// The direction of traffic to allow.
 const (
 	SecurityGroupRuleSecurityGroupRuleProtocolTcpudpDirectionInboundConst  = "inbound"
 	SecurityGroupRuleSecurityGroupRuleProtocolTcpudpDirectionOutboundConst = "outbound"
 )
 
 // Constants associated with the SecurityGroupRuleSecurityGroupRuleProtocolTcpudp.IPVersion property.
-// The IP version to enforce. The format of `local.address`, `remote.address`,
+// The IP version to allow. The format of `local.address`, `remote.address`,
 // `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 //
-// If `remote` references a security group, then this rule only applies to IP addresses
-// (network interfaces) in that group matching this IP version.
+// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+// version.
 const (
 	SecurityGroupRuleSecurityGroupRuleProtocolTcpudpIPVersionIpv4Const = "ipv4"
 )
 
 // Constants associated with the SecurityGroupRuleSecurityGroupRuleProtocolTcpudp.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	SecurityGroupRuleSecurityGroupRuleProtocolTcpudpProtocolTCPConst = "tcp"
 	SecurityGroupRuleSecurityGroupRuleProtocolTcpudpProtocolUDPConst = "udp"
@@ -120017,7 +120254,7 @@ func UnmarshalShareProfileCapacityDependentRange(m map[string]json.RawMessage, r
 // This model "extends" ShareProfileCapacity
 type ShareProfileCapacityEnum struct {
 	// The default value for this profile field.
-	Default *int64 `json:"default" validate:"required"`
+	Default interface{} `json:"default" validate:"required"`
 
 	// The type for this profile field.
 	Type *string `json:"type" validate:"required"`
@@ -120739,6 +120976,9 @@ type SharePrototypeShareBySourceShare struct {
 	// The cron specification for the file share replication schedule.
 	//
 	// Replication of a share can be scheduled to occur at most once per hour.
+	//
+	// The scheduling frequency for this property may
+	// [increase](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	ReplicationCronSpec *string `json:"replication_cron_spec" validate:"required"`
 
 	// The resource group to use. If unspecified, the resource group from
@@ -122960,7 +123200,10 @@ type VPNGatewayConnectionPolicyMode struct {
 	// If set to false, the VPN gateway connection is shut down.
 	AdminStateUp *bool `json:"admin_state_up" validate:"required"`
 
-	// The authentication mode. Only `psk` is currently supported.
+	// The authentication mode.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	AuthenticationMode *string `json:"authentication_mode" validate:"required"`
 
 	// The date and time that this VPN gateway connection was created.
@@ -122992,6 +123235,9 @@ type VPNGatewayConnectionPolicyMode struct {
 	IpsecPolicy *IPsecPolicyReference `json:"ipsec_policy,omitempty"`
 
 	// The mode of the VPN gateway.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Mode *string `json:"mode" validate:"required"`
 
 	// The name for this VPN gateway connection. The name is unique across all connections for the VPN gateway.
@@ -123015,7 +123261,10 @@ type VPNGatewayConnectionPolicyMode struct {
 }
 
 // Constants associated with the VPNGatewayConnectionPolicyMode.AuthenticationMode property.
-// The authentication mode. Only `psk` is currently supported.
+// The authentication mode.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNGatewayConnectionPolicyModeAuthenticationModePskConst = "psk"
 )
@@ -123035,6 +123284,9 @@ const (
 
 // Constants associated with the VPNGatewayConnectionPolicyMode.Mode property.
 // The mode of the VPN gateway.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNGatewayConnectionPolicyModeModePolicyConst = "policy"
 	VPNGatewayConnectionPolicyModeModeRouteConst  = "route"
@@ -123513,6 +123765,13 @@ type VPNGatewayConnectionPrototypeVPNGatewayConnectionStaticRouteModePrototype s
 	// The pre-shared key.
 	Psk *string `json:"psk" validate:"required"`
 
+	// Indicates whether the traffic is distributed between the `up` tunnels of the VPN gateway connection when the VPC
+	// route's next hop is a VPN connection. If `false`, the traffic is only routed through the `up` tunnel with the lower
+	// `public_ip` address. Before enabling it on VPN connections to on-prem private networks, review
+	// [distributing traffic
+	// restrictions](https://cloud.ibm.com/docs/vpc?topic=vpc-vpn-limitations#distributing-traffic-restrictions).
+	DistributeTraffic *bool `json:"distribute_traffic,omitempty"`
+
 	Local *VPNGatewayConnectionStaticRouteModeLocalPrototype `json:"local,omitempty"`
 
 	Peer VPNGatewayConnectionStaticRouteModePeerPrototypeIntf `json:"peer" validate:"required"`
@@ -123595,6 +123854,11 @@ func UnmarshalVPNGatewayConnectionPrototypeVPNGatewayConnectionStaticRouteModePr
 		err = core.SDKErrorf(err, "", "psk-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "distribute_traffic", &obj.DistributeTraffic)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "distribute_traffic-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "local", &obj.Local, UnmarshalVPNGatewayConnectionStaticRouteModeLocalPrototype)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "local-error", common.GetComponentInfo())
@@ -123622,7 +123886,10 @@ type VPNGatewayConnectionRouteMode struct {
 	// If set to false, the VPN gateway connection is shut down.
 	AdminStateUp *bool `json:"admin_state_up" validate:"required"`
 
-	// The authentication mode. Only `psk` is currently supported.
+	// The authentication mode.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	AuthenticationMode *string `json:"authentication_mode" validate:"required"`
 
 	// The date and time that this VPN gateway connection was created.
@@ -123654,6 +123921,9 @@ type VPNGatewayConnectionRouteMode struct {
 	IpsecPolicy *IPsecPolicyReference `json:"ipsec_policy,omitempty"`
 
 	// The mode of the VPN gateway.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Mode *string `json:"mode" validate:"required"`
 
 	// The name for this VPN gateway connection. The name is unique across all connections for the VPN gateway.
@@ -123671,6 +123941,11 @@ type VPNGatewayConnectionRouteMode struct {
 	// The reasons for the current VPN gateway connection status (if any).
 	StatusReasons []VPNGatewayConnectionStatusReason `json:"status_reasons" validate:"required"`
 
+	// Indicates whether the traffic is distributed between the `up` tunnels of the VPN gateway connection when the VPC
+	// route's next hop is a VPN connection. If `false`, the traffic is only routed through the `up` tunnel with the lower
+	// `public_ip` address.
+	DistributeTraffic *bool `json:"distribute_traffic,omitempty"`
+
 	Local *VPNGatewayConnectionStaticRouteModeLocal `json:"local,omitempty"`
 
 	Peer VPNGatewayConnectionStaticRouteModePeerIntf `json:"peer,omitempty"`
@@ -123683,7 +123958,10 @@ type VPNGatewayConnectionRouteMode struct {
 }
 
 // Constants associated with the VPNGatewayConnectionRouteMode.AuthenticationMode property.
-// The authentication mode. Only `psk` is currently supported.
+// The authentication mode.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNGatewayConnectionRouteModeAuthenticationModePskConst = "psk"
 )
@@ -123703,6 +123981,9 @@ const (
 
 // Constants associated with the VPNGatewayConnectionRouteMode.Mode property.
 // The mode of the VPN gateway.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNGatewayConnectionRouteModeModePolicyConst = "policy"
 	VPNGatewayConnectionRouteModeModeRouteConst  = "route"
@@ -124458,6 +124739,9 @@ func UnmarshalVPNGatewayRouteMode(m map[string]json.RawMessage, result interface
 // This model "extends" VPNServerAuthentication
 type VPNServerAuthenticationByCertificate struct {
 	// The type of authentication.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Method *string `json:"method" validate:"required"`
 
 	// The certificate instance used for the VPN client certificate authority (CA).
@@ -124469,6 +124753,9 @@ type VPNServerAuthenticationByCertificate struct {
 
 // Constants associated with the VPNServerAuthenticationByCertificate.Method property.
 // The type of authentication.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNServerAuthenticationByCertificateMethodCertificateConst = "certificate"
 	VPNServerAuthenticationByCertificateMethodUsernameConst    = "username"
@@ -124504,6 +124791,9 @@ func UnmarshalVPNServerAuthenticationByCertificate(m map[string]json.RawMessage,
 // This model "extends" VPNServerAuthentication
 type VPNServerAuthenticationByUsername struct {
 	// The type of authentication.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Method *string `json:"method" validate:"required"`
 
 	// The type of identity provider to be used by VPN client.
@@ -124512,6 +124802,9 @@ type VPNServerAuthenticationByUsername struct {
 
 // Constants associated with the VPNServerAuthenticationByUsername.Method property.
 // The type of authentication.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNServerAuthenticationByUsernameMethodCertificateConst = "certificate"
 	VPNServerAuthenticationByUsernameMethodUsernameConst    = "username"
@@ -127839,7 +128132,10 @@ type InstanceGroupManagerActionScheduledActionGroupTarget struct {
 	// - `completed`: Action was completed successfully
 	// - `failed`: Action could not be completed successfully
 	// - `incompatible`: Action parameters are not compatible with the group or manager
-	// - `omitted`: Action was not applied because this action's manager was disabled.
+	// - `omitted`: Action was not applied because this action's manager was disabled
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 
 	// The date and time that the instance group manager action was updated.
@@ -127874,7 +128170,10 @@ const (
 // - `completed`: Action was completed successfully
 // - `failed`: Action could not be completed successfully
 // - `incompatible`: Action parameters are not compatible with the group or manager
-// - `omitted`: Action was not applied because this action's manager was disabled.
+// - `omitted`: Action was not applied because this action's manager was disabled
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	InstanceGroupManagerActionScheduledActionGroupTargetStatusActiveConst       = "active"
 	InstanceGroupManagerActionScheduledActionGroupTargetStatusCompletedConst    = "completed"
@@ -128006,7 +128305,10 @@ type InstanceGroupManagerActionScheduledActionManagerTarget struct {
 	// - `completed`: Action was completed successfully
 	// - `failed`: Action could not be completed successfully
 	// - `incompatible`: Action parameters are not compatible with the group or manager
-	// - `omitted`: Action was not applied because this action's manager was disabled.
+	// - `omitted`: Action was not applied because this action's manager was disabled
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 
 	// The date and time that the instance group manager action was updated.
@@ -128041,7 +128343,10 @@ const (
 // - `completed`: Action was completed successfully
 // - `failed`: Action could not be completed successfully
 // - `incompatible`: Action parameters are not compatible with the group or manager
-// - `omitted`: Action was not applied because this action's manager was disabled.
+// - `omitted`: Action was not applied because this action's manager was disabled
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	InstanceGroupManagerActionScheduledActionManagerTargetStatusActiveConst       = "active"
 	InstanceGroupManagerActionScheduledActionManagerTargetStatusCompletedConst    = "completed"
@@ -135149,7 +135454,10 @@ type VPNGatewayConnectionRouteModeVPNGatewayConnectionStaticRouteMode struct {
 	// If set to false, the VPN gateway connection is shut down.
 	AdminStateUp *bool `json:"admin_state_up" validate:"required"`
 
-	// The authentication mode. Only `psk` is currently supported.
+	// The authentication mode.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	AuthenticationMode *string `json:"authentication_mode" validate:"required"`
 
 	// The date and time that this VPN gateway connection was created.
@@ -135181,6 +135489,9 @@ type VPNGatewayConnectionRouteModeVPNGatewayConnectionStaticRouteMode struct {
 	IpsecPolicy *IPsecPolicyReference `json:"ipsec_policy,omitempty"`
 
 	// The mode of the VPN gateway.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Mode *string `json:"mode" validate:"required"`
 
 	// The name for this VPN gateway connection. The name is unique across all connections for the VPN gateway.
@@ -135198,6 +135509,11 @@ type VPNGatewayConnectionRouteModeVPNGatewayConnectionStaticRouteMode struct {
 	// The reasons for the current VPN gateway connection status (if any).
 	StatusReasons []VPNGatewayConnectionStatusReason `json:"status_reasons" validate:"required"`
 
+	// Indicates whether the traffic is distributed between the `up` tunnels of the VPN gateway connection when the VPC
+	// route's next hop is a VPN connection. If `false`, the traffic is only routed through the `up` tunnel with the lower
+	// `public_ip` address.
+	DistributeTraffic *bool `json:"distribute_traffic" validate:"required"`
+
 	Local *VPNGatewayConnectionStaticRouteModeLocal `json:"local" validate:"required"`
 
 	Peer VPNGatewayConnectionStaticRouteModePeerIntf `json:"peer" validate:"required"`
@@ -135210,7 +135526,10 @@ type VPNGatewayConnectionRouteModeVPNGatewayConnectionStaticRouteMode struct {
 }
 
 // Constants associated with the VPNGatewayConnectionRouteModeVPNGatewayConnectionStaticRouteMode.AuthenticationMode property.
-// The authentication mode. Only `psk` is currently supported.
+// The authentication mode.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNGatewayConnectionRouteModeVPNGatewayConnectionStaticRouteModeAuthenticationModePskConst = "psk"
 )
@@ -135230,6 +135549,9 @@ const (
 
 // Constants associated with the VPNGatewayConnectionRouteModeVPNGatewayConnectionStaticRouteMode.Mode property.
 // The mode of the VPN gateway.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNGatewayConnectionRouteModeVPNGatewayConnectionStaticRouteModeModePolicyConst = "policy"
 	VPNGatewayConnectionRouteModeVPNGatewayConnectionStaticRouteModeModeRouteConst  = "route"
@@ -135338,6 +135660,11 @@ func UnmarshalVPNGatewayConnectionRouteModeVPNGatewayConnectionStaticRouteMode(m
 	err = core.UnmarshalModel(m, "status_reasons", &obj.StatusReasons, UnmarshalVPNGatewayConnectionStatusReason)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "status_reasons-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "distribute_traffic", &obj.DistributeTraffic)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "distribute_traffic-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "local", &obj.Local, UnmarshalVPNGatewayConnectionStaticRouteModeLocal)
