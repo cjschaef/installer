@@ -7,12 +7,12 @@ toolchain go1.22.5
 require sigs.k8s.io/cluster-api-provider-ibmcloud v0.8.0
 
 require (
-	github.com/IBM-Cloud/power-go-client v1.8.1 // indirect
-	github.com/IBM/go-sdk-core/v5 v5.17.5 // indirect
+	github.com/IBM-Cloud/power-go-client v1.8.3 // indirect
+	github.com/IBM/go-sdk-core/v5 v5.18.0 // indirect
 	github.com/IBM/ibm-cos-sdk-go v1.11.1 // indirect
 	github.com/IBM/networking-go-sdk v0.45.0 // indirect
-	github.com/IBM/platform-services-go-sdk v0.69.2 // indirect
-	github.com/IBM/vpc-go-sdk v0.60.0 // indirect
+	github.com/IBM/platform-services-go-sdk v0.69.3 // indirect
+	github.com/IBM/vpc-go-sdk v0.61.0 // indirect
 	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20230305170008-8188dc5388df // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
@@ -131,4 +131,4 @@ require (
 )
 
 // TODO(cjschaef): Remove once IBM Cloud CAPI API PR's merge
-replace sigs.k8s.io/cluster-api-provider-ibmcloud => github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20241016151218-d34184ea09fb
+replace sigs.k8s.io/cluster-api-provider-ibmcloud => github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20241022195504-d5193d45253b
