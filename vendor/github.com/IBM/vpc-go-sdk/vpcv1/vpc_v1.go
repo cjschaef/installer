@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.91.0-d9755c53-20240605-153412
+ * IBM OpenAPI SDK Code Generator Version: 3.92.2-3f2a0533-20240712-183330
  */
 
 // Package vpcv1 : Operations and models for the VpcV1 service
@@ -38,7 +38,7 @@ import (
 // VpcV1 : The IBM Cloud Virtual Private Cloud (VPC) API can be used to programmatically provision and manage virtual
 // server instances, along with subnets, volumes, load balancers, and more.
 //
-// API Version: 2024-05-04
+// API Version: 2024-10-17
 type VpcV1 struct {
 	Service *core.BaseService
 
@@ -47,7 +47,7 @@ type VpcV1 struct {
 	Generation *int64
 
 	// The API version, in format `YYYY-MM-DD`. For the API behavior documented here, specify any date between `2024-04-30`
-	// and `2024-07-03`.
+	// and `2024-10-17`.
 	Version *string
 }
 
@@ -68,7 +68,7 @@ type VpcV1Options struct {
 	Generation *int64
 
 	// The API version, in format `YYYY-MM-DD`. For the API behavior documented here, specify any date between `2024-04-30`
-	// and `2024-07-03`.
+	// and `2024-10-17`.
 	Version *string
 }
 
@@ -133,9 +133,8 @@ func NewVpcV1(options *VpcV1Options) (service *VpcV1, err error) {
 	}
 
 	if options.Version == nil {
-		options.Version = core.StringPtr("2024-07-02")
+		options.Version = core.StringPtr("2024-10-15")
 	}
-
 	service = &VpcV1{
 		Service:    baseService,
 		Generation: options.Generation,
@@ -372,9 +371,10 @@ func (vpc *VpcV1) CreateVPCWithContext(ctx context.Context, createVPCOptions *Cr
 // This request deletes a VPC. This operation cannot be reversed.
 //
 // For this request to succeed:
-// - Instances, subnets, public gateways, and endpoint gateways must not reside in this VPC
-// - The VPC must not be providing DNS resolution for any other VPCs
-// - If `dns.enable_hub` is `true`, `dns.resolution_binding_count` must be zero
+//   - Instances, subnets, public gateways, endpoint gateways, and private path service
+//     gateways must not reside in this VPC
+//   - The VPC must not be providing DNS resolution for any other VPCs
+//   - If `dns.enable_hub` is `true`, `dns.resolution_binding_count` must be zero
 //
 // All security groups and network ACLs associated with the VPC are automatically deleted. All flow log collectors with
 // `auto_delete` set to `true` targeting the VPC or any resource in the VPC are automatically deleted.
@@ -1321,7 +1321,7 @@ func (vpc *VpcV1) ListVPCDnsResolutionBindingsWithContext(ctx context.Context, l
 // For this request to succeed, `dns.enable_hub` must be `false` for the VPC specified by the identifier in the URL, and
 // the VPC must not already have a DNS resolution binding.
 //
-// See [About DNS sharing for VPE gateways](/docs/vpc?topic=vpc-hub-spoke-model) for more information.
+// See [About DNS sharing for VPE gateways](/docs/vpc?topic=vpc-vpe-dns-sharing) for more information.
 func (vpc *VpcV1) CreateVPCDnsResolutionBinding(createVPCDnsResolutionBindingOptions *CreateVPCDnsResolutionBindingOptions) (result *VpcdnsResolutionBinding, response *core.DetailedResponse, err error) {
 	result, response, err = vpc.CreateVPCDnsResolutionBindingWithContext(context.Background(), createVPCDnsResolutionBindingOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -2142,6 +2142,9 @@ func (vpc *VpcV1) ListVPCRoutingTablesWithContext(ctx context.Context, listVPCRo
 // CreateVPCRoutingTable : Create a routing table for a VPC
 // This request creates a routing table from a routing table prototype object. The prototype object is structured in the
 // same way as a retrieved routing table, and contains the information necessary to create the new routing table.
+//
+// At present, the routing table's `resource_group` will be inherited from its VPC, but may be specifiable in the
+// future.
 func (vpc *VpcV1) CreateVPCRoutingTable(createVPCRoutingTableOptions *CreateVPCRoutingTableOptions) (result *RoutingTable, response *core.DetailedResponse, err error) {
 	result, response, err = vpc.CreateVPCRoutingTableWithContext(context.Background(), createVPCRoutingTableOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -11042,8 +11045,8 @@ func (vpc *VpcV1) ActivateReservationWithContext(ctx context.Context, activateRe
 }
 
 // ListDedicatedHostGroups : List dedicated host groups
-// This request lists dedicated host groups in the region. Host groups are a collection of dedicated hosts for placement
-// of instances. Each dedicated host must belong to one and only one group. Host groups do not span zones.
+// This request lists dedicated host groups in the region. Each dedicated host must belong to exactly one group, which
+// controls placement of instances. Dedicated host groups do not span zones.
 func (vpc *VpcV1) ListDedicatedHostGroups(listDedicatedHostGroupsOptions *ListDedicatedHostGroupsOptions) (result *DedicatedHostGroupCollection, response *core.DetailedResponse, err error) {
 	result, response, err = vpc.ListDedicatedHostGroupsWithContext(context.Background(), listDedicatedHostGroupsOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -14608,6 +14611,79 @@ func (vpc *VpcV1) UpdateBareMetalServerWithContext(ctx context.Context, updateBa
 	return
 }
 
+// UpdateFirmwareForBareMetalServer : Update firmware for a bare metal server
+// This request updates a bare metal server to the latest available firmware. The server must be stopped.
+func (vpc *VpcV1) UpdateFirmwareForBareMetalServer(updateFirmwareForBareMetalServerOptions *UpdateFirmwareForBareMetalServerOptions) (response *core.DetailedResponse, err error) {
+	response, err = vpc.UpdateFirmwareForBareMetalServerWithContext(context.Background(), updateFirmwareForBareMetalServerOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// UpdateFirmwareForBareMetalServerWithContext is an alternate form of the UpdateFirmwareForBareMetalServer method which supports a Context parameter
+func (vpc *VpcV1) UpdateFirmwareForBareMetalServerWithContext(ctx context.Context, updateFirmwareForBareMetalServerOptions *UpdateFirmwareForBareMetalServerOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updateFirmwareForBareMetalServerOptions, "updateFirmwareForBareMetalServerOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(updateFirmwareForBareMetalServerOptions, "updateFirmwareForBareMetalServerOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"id": *updateFirmwareForBareMetalServerOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/bare_metal_servers/{id}/firmware/update`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range updateFirmwareForBareMetalServerOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "UpdateFirmwareForBareMetalServer")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Content-Type", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	body := make(map[string]interface{})
+	if updateFirmwareForBareMetalServerOptions.AutoStart != nil {
+		body["auto_start"] = updateFirmwareForBareMetalServerOptions.AutoStart
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = vpc.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_firmware_for_bare_metal_server", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
 // GetBareMetalServerInitialization : Retrieve initialization configuration for a bare metal server
 // This request retrieves configuration used to initialize the bare metal server, such as the image used, SSH keys, and
 // any configured usernames and passwords. These can subsequently be changed on the server and therefore may not be
@@ -14667,6 +14743,96 @@ func (vpc *VpcV1) GetBareMetalServerInitializationWithContext(ctx context.Contex
 	response, err = vpc.Service.Request(request, &rawResponse)
 	if err != nil {
 		core.EnrichHTTPProblem(err, "get_bare_metal_server_initialization", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalBareMetalServerInitialization)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// ReplaceBareMetalServerInitialization : Reinitialize a bare metal server
+// This request reinitializes a bare metal server with the specified image and SSH keys. The server must be stopped.
+// Upon successful reinitiatilization, the bare metal server will be started automatically.
+func (vpc *VpcV1) ReplaceBareMetalServerInitialization(replaceBareMetalServerInitializationOptions *ReplaceBareMetalServerInitializationOptions) (result *BareMetalServerInitialization, response *core.DetailedResponse, err error) {
+	result, response, err = vpc.ReplaceBareMetalServerInitializationWithContext(context.Background(), replaceBareMetalServerInitializationOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ReplaceBareMetalServerInitializationWithContext is an alternate form of the ReplaceBareMetalServerInitialization method which supports a Context parameter
+func (vpc *VpcV1) ReplaceBareMetalServerInitializationWithContext(ctx context.Context, replaceBareMetalServerInitializationOptions *ReplaceBareMetalServerInitializationOptions) (result *BareMetalServerInitialization, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(replaceBareMetalServerInitializationOptions, "replaceBareMetalServerInitializationOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(replaceBareMetalServerInitializationOptions, "replaceBareMetalServerInitializationOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"id": *replaceBareMetalServerInitializationOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.PUT)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/bare_metal_servers/{id}/initialization`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range replaceBareMetalServerInitializationOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "ReplaceBareMetalServerInitialization")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	body := make(map[string]interface{})
+	if replaceBareMetalServerInitializationOptions.Image != nil {
+		body["image"] = replaceBareMetalServerInitializationOptions.Image
+	}
+	if replaceBareMetalServerInitializationOptions.Keys != nil {
+		body["keys"] = replaceBareMetalServerInitializationOptions.Keys
+	}
+	if replaceBareMetalServerInitializationOptions.UserData != nil {
+		body["user_data"] = replaceBareMetalServerInitializationOptions.UserData
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = vpc.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "replace_bare_metal_server_initialization", getServiceComponentInfo())
 		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
@@ -17108,7 +17274,7 @@ func (vpc *VpcV1) UpdateShareWithContext(ctx context.Context, updateShareOptions
 	return
 }
 
-// ListShareAccessorBindings : List accessor bindings for a share
+// ListShareAccessorBindings : List accessor bindings for a file share
 // This request lists accessor bindings for a share. Each accessor binding identifies a resource (possibly in another
 // account) with access to this file share's data.
 //
@@ -17189,7 +17355,7 @@ func (vpc *VpcV1) ListShareAccessorBindingsWithContext(ctx context.Context, list
 	return
 }
 
-// DeleteShareAccessorBinding : Delete a share accessor binding
+// DeleteShareAccessorBinding : Delete a file share accessor binding
 // This request deletes a share accessor binding. This operation cannot be reversed.
 func (vpc *VpcV1) DeleteShareAccessorBinding(deleteShareAccessorBindingOptions *DeleteShareAccessorBindingOptions) (response *core.DetailedResponse, err error) {
 	response, err = vpc.DeleteShareAccessorBindingWithContext(context.Background(), deleteShareAccessorBindingOptions)
@@ -17252,7 +17418,7 @@ func (vpc *VpcV1) DeleteShareAccessorBindingWithContext(ctx context.Context, del
 	return
 }
 
-// GetShareAccessorBinding : Retrieve a share accessor binding
+// GetShareAccessorBinding : Retrieve a file share accessor binding
 // This request retrieves a single accessor binding specified by the identifier in the URL.
 func (vpc *VpcV1) GetShareAccessorBinding(getShareAccessorBindingOptions *GetShareAccessorBindingOptions) (result *ShareAccessorBinding, response *core.DetailedResponse, err error) {
 	result, response, err = vpc.GetShareAccessorBindingWithContext(context.Background(), getShareAccessorBindingOptions)
@@ -17572,7 +17738,7 @@ func (vpc *VpcV1) CreateShareMountTargetWithContext(ctx context.Context, createS
 	return
 }
 
-// DeleteShareMountTarget : Delete a share mount target
+// DeleteShareMountTarget : Delete a file share mount target
 // This request deletes a share mount target. This operation cannot be reversed.
 //
 // If the request is accepted, the share mount target `lifecycle_state` will be set to
@@ -17648,7 +17814,7 @@ func (vpc *VpcV1) DeleteShareMountTargetWithContext(ctx context.Context, deleteS
 	return
 }
 
-// GetShareMountTarget : Retrieve a share mount target
+// GetShareMountTarget : Retrieve a file share mount target
 // This request retrieves a single share mount target specified by the identifier in the URL.
 func (vpc *VpcV1) GetShareMountTarget(getShareMountTargetOptions *GetShareMountTargetOptions) (result *ShareMountTarget, response *core.DetailedResponse, err error) {
 	result, response, err = vpc.GetShareMountTargetWithContext(context.Background(), getShareMountTargetOptions)
@@ -17721,7 +17887,7 @@ func (vpc *VpcV1) GetShareMountTargetWithContext(ctx context.Context, getShareMo
 	return
 }
 
-// UpdateShareMountTarget : Update a share mount target
+// UpdateShareMountTarget : Update a file share mount target
 // This request updates a share mount target with the information provided in a share mount target patch object. The
 // share mount target patch object is structured in the same way as a retrieved share mount target and needs to contain
 // only the information to be updated.
@@ -17803,7 +17969,7 @@ func (vpc *VpcV1) UpdateShareMountTargetWithContext(ctx context.Context, updateS
 	return
 }
 
-// DeleteShareSource : Split the source file share from a replica share
+// DeleteShareSource : Split the source file share from a replica file share
 // This request removes the replication relationship between a source share and the replica share specified by the
 // identifier in the URL. The replication relationship cannot be removed if a source share or the replica share has a
 // `lifecycle_state` of `updating`, or has a replication operation in progress.
@@ -19398,14 +19564,14 @@ func (vpc *VpcV1) CreateVirtualNetworkInterfaceWithContext(ctx context.Context, 
 // This request deletes a virtual network interface. This operation cannot be reversed. For this request to succeed, the
 // virtual network interface must not be required by another resource, such as the primary network attachment for an
 // instance.
-func (vpc *VpcV1) DeleteVirtualNetworkInterfaces(deleteVirtualNetworkInterfacesOptions *DeleteVirtualNetworkInterfacesOptions) (response *core.DetailedResponse, err error) {
-	response, err = vpc.DeleteVirtualNetworkInterfacesWithContext(context.Background(), deleteVirtualNetworkInterfacesOptions)
+func (vpc *VpcV1) DeleteVirtualNetworkInterfaces(deleteVirtualNetworkInterfacesOptions *DeleteVirtualNetworkInterfacesOptions) (result *VirtualNetworkInterface, response *core.DetailedResponse, err error) {
+	result, response, err = vpc.DeleteVirtualNetworkInterfacesWithContext(context.Background(), deleteVirtualNetworkInterfacesOptions)
 	err = core.RepurposeSDKProblem(err, "")
 	return
 }
 
 // DeleteVirtualNetworkInterfacesWithContext is an alternate form of the DeleteVirtualNetworkInterfaces method which supports a Context parameter
-func (vpc *VpcV1) DeleteVirtualNetworkInterfacesWithContext(ctx context.Context, deleteVirtualNetworkInterfacesOptions *DeleteVirtualNetworkInterfacesOptions) (response *core.DetailedResponse, err error) {
+func (vpc *VpcV1) DeleteVirtualNetworkInterfacesWithContext(ctx context.Context, deleteVirtualNetworkInterfacesOptions *DeleteVirtualNetworkInterfacesOptions) (result *VirtualNetworkInterface, response *core.DetailedResponse, err error) {
 	err = core.ValidateNotNil(deleteVirtualNetworkInterfacesOptions, "deleteVirtualNetworkInterfacesOptions cannot be nil")
 	if err != nil {
 		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
@@ -19438,6 +19604,7 @@ func (vpc *VpcV1) DeleteVirtualNetworkInterfacesWithContext(ctx context.Context,
 	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
+	builder.AddHeader("Accept", "application/json")
 
 	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
 	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
@@ -19448,11 +19615,20 @@ func (vpc *VpcV1) DeleteVirtualNetworkInterfacesWithContext(ctx context.Context,
 		return
 	}
 
-	response, err = vpc.Service.Request(request, nil)
+	var rawResponse map[string]json.RawMessage
+	response, err = vpc.Service.Request(request, &rawResponse)
 	if err != nil {
 		core.EnrichHTTPProblem(err, "delete_virtual_network_interfaces", getServiceComponentInfo())
 		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalVirtualNetworkInterface)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
 	}
 
 	return
@@ -21641,7 +21817,8 @@ func (vpc *VpcV1) GetNetworkACLRuleWithContext(ctx context.Context, getNetworkAC
 
 // UpdateNetworkACLRule : Update a network ACL rule
 // This request updates a rule with the information in a provided rule patch. The rule patch object contains only the
-// information to be updated. The request will fail if the information is not applicable to the rule's protocol.
+// information to be updated. The request will fail if the provided patch includes properties that are not used by the
+// rule's protocol.
 func (vpc *VpcV1) UpdateNetworkACLRule(updateNetworkACLRuleOptions *UpdateNetworkACLRuleOptions) (result NetworkACLRuleIntf, response *core.DetailedResponse, err error) {
 	result, response, err = vpc.UpdateNetworkACLRuleWithContext(context.Background(), updateNetworkACLRuleOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -22407,8 +22584,8 @@ func (vpc *VpcV1) GetSecurityGroupRuleWithContext(ctx context.Context, getSecuri
 
 // UpdateSecurityGroupRule : Update a security group rule
 // This request updates a security group rule with the information in a provided rule patch object. The rule patch
-// object contains only the information to be updated. The request will fail if the information is not applicable to the
-// rule's protocol.
+// object contains only the information to be updated. The request will fail if the provided patch includes properties
+// that are not used by the rule's protocol.
 func (vpc *VpcV1) UpdateSecurityGroupRule(updateSecurityGroupRuleOptions *UpdateSecurityGroupRuleOptions) (result SecurityGroupRuleIntf, response *core.DetailedResponse, err error) {
 	result, response, err = vpc.UpdateSecurityGroupRuleWithContext(context.Background(), updateSecurityGroupRuleOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -26417,6 +26594,9 @@ func (vpc *VpcV1) CreateLoadBalancerWithContext(ctx context.Context, createLoadB
 	if createLoadBalancerOptions.Dns != nil {
 		body["dns"] = createLoadBalancerOptions.Dns
 	}
+	if createLoadBalancerOptions.IsPrivatePath != nil {
+		body["is_private_path"] = createLoadBalancerOptions.IsPrivatePath
+	}
 	if createLoadBalancerOptions.Listeners != nil {
 		body["listeners"] = createLoadBalancerOptions.Listeners
 	}
@@ -28857,6 +29037,9 @@ func (vpc *VpcV1) ListEndpointGatewaysWithContext(ctx context.Context, listEndpo
 	if listEndpointGatewaysOptions.ResourceGroupID != nil {
 		builder.AddQuery("resource_group.id", fmt.Sprint(*listEndpointGatewaysOptions.ResourceGroupID))
 	}
+	if listEndpointGatewaysOptions.LifecycleState != nil {
+		builder.AddQuery("lifecycle_state", strings.Join(listEndpointGatewaysOptions.LifecycleState, ","))
+	}
 	if listEndpointGatewaysOptions.VPCID != nil {
 		builder.AddQuery("vpc.id", fmt.Sprint(*listEndpointGatewaysOptions.VPCID))
 	}
@@ -29504,8 +29687,10 @@ func (vpc *VpcV1) UpdateEndpointGatewayWithContext(ctx context.Context, updateEn
 }
 
 // ListFlowLogCollectors : List flow log collectors
-// This request lists flow log collectors in the region. A flow log collector summarizes data sent over the instance
-// network interfaces and instance network attachments contained within its target.
+// This request lists flow log collectors in the region. A [flow log
+// collector](https://cloud.ibm.com/docs/vpc?topic=vpc-flow-logs) summarizes data sent over the instance network
+// interfaces and instance network attachments contained within its target. The collected flow logs are written to a
+// cloud object storage bucket, where they can be [viewed](https://cloud.ibm.com/docs/vpc?topic=vpc-fl-analyze).
 func (vpc *VpcV1) ListFlowLogCollectors(listFlowLogCollectorsOptions *ListFlowLogCollectorsOptions) (result *FlowLogCollectorCollection, response *core.DetailedResponse, err error) {
 	result, response, err = vpc.ListFlowLogCollectorsWithContext(context.Background(), listFlowLogCollectorsOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -29903,8 +30088,1335 @@ func (vpc *VpcV1) UpdateFlowLogCollectorWithContext(ctx context.Context, updateF
 
 	return
 }
+
+// ListPrivatePathServiceGateways : List private path service gateways
+// This request lists private path service gateways in the region. Private path service gateways allow
+// [service
+// providers](https://cloud.ibm.com/docs/private-path?topic=private-path-private-path-service-architecture#private-path-service-components)
+// to make their services available using
+// [private path
+// connectivity](https://cloud.ibm.com/docs/private-path?topic=private-path-private-path-service-architecture#private-path-service-components).
+// Private path service gateways are used to facilitate and manage the private path connectivity between private path
+// network load balancers and their associated endpoint gateways.
+func (vpc *VpcV1) ListPrivatePathServiceGateways(listPrivatePathServiceGatewaysOptions *ListPrivatePathServiceGatewaysOptions) (result *PrivatePathServiceGatewayCollection, response *core.DetailedResponse, err error) {
+	result, response, err = vpc.ListPrivatePathServiceGatewaysWithContext(context.Background(), listPrivatePathServiceGatewaysOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ListPrivatePathServiceGatewaysWithContext is an alternate form of the ListPrivatePathServiceGateways method which supports a Context parameter
+func (vpc *VpcV1) ListPrivatePathServiceGatewaysWithContext(ctx context.Context, listPrivatePathServiceGatewaysOptions *ListPrivatePathServiceGatewaysOptions) (result *PrivatePathServiceGatewayCollection, response *core.DetailedResponse, err error) {
+	err = core.ValidateStruct(listPrivatePathServiceGatewaysOptions, "listPrivatePathServiceGatewaysOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/private_path_service_gateways`, nil)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range listPrivatePathServiceGatewaysOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "ListPrivatePathServiceGateways")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+	if listPrivatePathServiceGatewaysOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listPrivatePathServiceGatewaysOptions.Start))
+	}
+	if listPrivatePathServiceGatewaysOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listPrivatePathServiceGatewaysOptions.Limit))
+	}
+	if listPrivatePathServiceGatewaysOptions.ResourceGroupID != nil {
+		builder.AddQuery("resource_group.id", fmt.Sprint(*listPrivatePathServiceGatewaysOptions.ResourceGroupID))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = vpc.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "list_private_path_service_gateways", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPrivatePathServiceGatewayCollection)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// CreatePrivatePathServiceGateway : Create a private path service gateway
+// This request creates a private path service gateway from a private path service gateway prototype object. The
+// prototype object is structured in the same way as a retrieved private path service gateway, and contains the
+// information necessary to create the new private path service gateway.
+func (vpc *VpcV1) CreatePrivatePathServiceGateway(createPrivatePathServiceGatewayOptions *CreatePrivatePathServiceGatewayOptions) (result *PrivatePathServiceGateway, response *core.DetailedResponse, err error) {
+	result, response, err = vpc.CreatePrivatePathServiceGatewayWithContext(context.Background(), createPrivatePathServiceGatewayOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// CreatePrivatePathServiceGatewayWithContext is an alternate form of the CreatePrivatePathServiceGateway method which supports a Context parameter
+func (vpc *VpcV1) CreatePrivatePathServiceGatewayWithContext(ctx context.Context, createPrivatePathServiceGatewayOptions *CreatePrivatePathServiceGatewayOptions) (result *PrivatePathServiceGateway, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createPrivatePathServiceGatewayOptions, "createPrivatePathServiceGatewayOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(createPrivatePathServiceGatewayOptions, "createPrivatePathServiceGatewayOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/private_path_service_gateways`, nil)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range createPrivatePathServiceGatewayOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "CreatePrivatePathServiceGateway")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	body := make(map[string]interface{})
+	if createPrivatePathServiceGatewayOptions.LoadBalancer != nil {
+		body["load_balancer"] = createPrivatePathServiceGatewayOptions.LoadBalancer
+	}
+	if createPrivatePathServiceGatewayOptions.ServiceEndpoints != nil {
+		body["service_endpoints"] = createPrivatePathServiceGatewayOptions.ServiceEndpoints
+	}
+	if createPrivatePathServiceGatewayOptions.DefaultAccessPolicy != nil {
+		body["default_access_policy"] = createPrivatePathServiceGatewayOptions.DefaultAccessPolicy
+	}
+	if createPrivatePathServiceGatewayOptions.Name != nil {
+		body["name"] = createPrivatePathServiceGatewayOptions.Name
+	}
+	if createPrivatePathServiceGatewayOptions.ResourceGroup != nil {
+		body["resource_group"] = createPrivatePathServiceGatewayOptions.ResourceGroup
+	}
+	if createPrivatePathServiceGatewayOptions.ZonalAffinity != nil {
+		body["zonal_affinity"] = createPrivatePathServiceGatewayOptions.ZonalAffinity
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = vpc.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "create_private_path_service_gateway", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPrivatePathServiceGateway)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeletePrivatePathServiceGateway : Delete a private path service gateway
+// This request deletes a private path service gateway.  For this request to succeed, the value of
+// `endpoint_gateway_count` must be `0`. This operation cannot be reversed.
+func (vpc *VpcV1) DeletePrivatePathServiceGateway(deletePrivatePathServiceGatewayOptions *DeletePrivatePathServiceGatewayOptions) (response *core.DetailedResponse, err error) {
+	response, err = vpc.DeletePrivatePathServiceGatewayWithContext(context.Background(), deletePrivatePathServiceGatewayOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DeletePrivatePathServiceGatewayWithContext is an alternate form of the DeletePrivatePathServiceGateway method which supports a Context parameter
+func (vpc *VpcV1) DeletePrivatePathServiceGatewayWithContext(ctx context.Context, deletePrivatePathServiceGatewayOptions *DeletePrivatePathServiceGatewayOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deletePrivatePathServiceGatewayOptions, "deletePrivatePathServiceGatewayOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deletePrivatePathServiceGatewayOptions, "deletePrivatePathServiceGatewayOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"id": *deletePrivatePathServiceGatewayOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/private_path_service_gateways/{id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range deletePrivatePathServiceGatewayOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "DeletePrivatePathServiceGateway")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = vpc.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_private_path_service_gateway", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// GetPrivatePathServiceGateway : Retrieve a private path service gateway
+// This request retrieves the private path service gateway specified by the identifier in the URL.
+func (vpc *VpcV1) GetPrivatePathServiceGateway(getPrivatePathServiceGatewayOptions *GetPrivatePathServiceGatewayOptions) (result *PrivatePathServiceGateway, response *core.DetailedResponse, err error) {
+	result, response, err = vpc.GetPrivatePathServiceGatewayWithContext(context.Background(), getPrivatePathServiceGatewayOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetPrivatePathServiceGatewayWithContext is an alternate form of the GetPrivatePathServiceGateway method which supports a Context parameter
+func (vpc *VpcV1) GetPrivatePathServiceGatewayWithContext(ctx context.Context, getPrivatePathServiceGatewayOptions *GetPrivatePathServiceGatewayOptions) (result *PrivatePathServiceGateway, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getPrivatePathServiceGatewayOptions, "getPrivatePathServiceGatewayOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getPrivatePathServiceGatewayOptions, "getPrivatePathServiceGatewayOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"id": *getPrivatePathServiceGatewayOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/private_path_service_gateways/{id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getPrivatePathServiceGatewayOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "GetPrivatePathServiceGateway")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = vpc.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_private_path_service_gateway", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPrivatePathServiceGateway)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// UpdatePrivatePathServiceGateway : Update a private path service gateway
+// This request updates a private path service gateway with the information provided in a private path service gateway
+// patch object. The private path service gateway patch object is structured in the same way as a retrieved private path
+// service gateway and contains only the information to be updated.
+func (vpc *VpcV1) UpdatePrivatePathServiceGateway(updatePrivatePathServiceGatewayOptions *UpdatePrivatePathServiceGatewayOptions) (result *PrivatePathServiceGateway, response *core.DetailedResponse, err error) {
+	result, response, err = vpc.UpdatePrivatePathServiceGatewayWithContext(context.Background(), updatePrivatePathServiceGatewayOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// UpdatePrivatePathServiceGatewayWithContext is an alternate form of the UpdatePrivatePathServiceGateway method which supports a Context parameter
+func (vpc *VpcV1) UpdatePrivatePathServiceGatewayWithContext(ctx context.Context, updatePrivatePathServiceGatewayOptions *UpdatePrivatePathServiceGatewayOptions) (result *PrivatePathServiceGateway, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updatePrivatePathServiceGatewayOptions, "updatePrivatePathServiceGatewayOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(updatePrivatePathServiceGatewayOptions, "updatePrivatePathServiceGatewayOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"id": *updatePrivatePathServiceGatewayOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.PATCH)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/private_path_service_gateways/{id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range updatePrivatePathServiceGatewayOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "UpdatePrivatePathServiceGateway")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/merge-patch+json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	_, err = builder.SetBodyContentJSON(updatePrivatePathServiceGatewayOptions.PrivatePathServiceGatewayPatch)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = vpc.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_private_path_service_gateway", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPrivatePathServiceGateway)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// ListPrivatePathServiceGatewayAccountPolicies : List account policies for a private path service gateway
+// This request lists account policies for a private path service gateway. Each policy defines how requests to use the
+// private path service gateway from that account will be handled.
+//
+// The account policies will be sorted by their `created_at` property values, with newest account policies first.
+// Account policies with identical `created_at` property values will in turn be sorted by ascending `id` property
+// values.
+func (vpc *VpcV1) ListPrivatePathServiceGatewayAccountPolicies(listPrivatePathServiceGatewayAccountPoliciesOptions *ListPrivatePathServiceGatewayAccountPoliciesOptions) (result *PrivatePathServiceGatewayAccountPolicyCollection, response *core.DetailedResponse, err error) {
+	result, response, err = vpc.ListPrivatePathServiceGatewayAccountPoliciesWithContext(context.Background(), listPrivatePathServiceGatewayAccountPoliciesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ListPrivatePathServiceGatewayAccountPoliciesWithContext is an alternate form of the ListPrivatePathServiceGatewayAccountPolicies method which supports a Context parameter
+func (vpc *VpcV1) ListPrivatePathServiceGatewayAccountPoliciesWithContext(ctx context.Context, listPrivatePathServiceGatewayAccountPoliciesOptions *ListPrivatePathServiceGatewayAccountPoliciesOptions) (result *PrivatePathServiceGatewayAccountPolicyCollection, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listPrivatePathServiceGatewayAccountPoliciesOptions, "listPrivatePathServiceGatewayAccountPoliciesOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(listPrivatePathServiceGatewayAccountPoliciesOptions, "listPrivatePathServiceGatewayAccountPoliciesOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"private_path_service_gateway_id": *listPrivatePathServiceGatewayAccountPoliciesOptions.PrivatePathServiceGatewayID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/private_path_service_gateways/{private_path_service_gateway_id}/account_policies`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range listPrivatePathServiceGatewayAccountPoliciesOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "ListPrivatePathServiceGatewayAccountPolicies")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+	if listPrivatePathServiceGatewayAccountPoliciesOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listPrivatePathServiceGatewayAccountPoliciesOptions.Start))
+	}
+	if listPrivatePathServiceGatewayAccountPoliciesOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listPrivatePathServiceGatewayAccountPoliciesOptions.Limit))
+	}
+	if listPrivatePathServiceGatewayAccountPoliciesOptions.AccountID != nil {
+		builder.AddQuery("account.id", fmt.Sprint(*listPrivatePathServiceGatewayAccountPoliciesOptions.AccountID))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = vpc.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "list_private_path_service_gateway_account_policies", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPrivatePathServiceGatewayAccountPolicyCollection)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// CreatePrivatePathServiceGatewayAccountPolicy : Create an account policy for a private path service gateway
+// This request creates an account policy from an account policy prototype object. The prototype object is structured in
+// the same way as a retrieved account policy, and contains the information necessary to create the new account policy.
+func (vpc *VpcV1) CreatePrivatePathServiceGatewayAccountPolicy(createPrivatePathServiceGatewayAccountPolicyOptions *CreatePrivatePathServiceGatewayAccountPolicyOptions) (result *PrivatePathServiceGatewayAccountPolicy, response *core.DetailedResponse, err error) {
+	result, response, err = vpc.CreatePrivatePathServiceGatewayAccountPolicyWithContext(context.Background(), createPrivatePathServiceGatewayAccountPolicyOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// CreatePrivatePathServiceGatewayAccountPolicyWithContext is an alternate form of the CreatePrivatePathServiceGatewayAccountPolicy method which supports a Context parameter
+func (vpc *VpcV1) CreatePrivatePathServiceGatewayAccountPolicyWithContext(ctx context.Context, createPrivatePathServiceGatewayAccountPolicyOptions *CreatePrivatePathServiceGatewayAccountPolicyOptions) (result *PrivatePathServiceGatewayAccountPolicy, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createPrivatePathServiceGatewayAccountPolicyOptions, "createPrivatePathServiceGatewayAccountPolicyOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(createPrivatePathServiceGatewayAccountPolicyOptions, "createPrivatePathServiceGatewayAccountPolicyOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"private_path_service_gateway_id": *createPrivatePathServiceGatewayAccountPolicyOptions.PrivatePathServiceGatewayID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/private_path_service_gateways/{private_path_service_gateway_id}/account_policies`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range createPrivatePathServiceGatewayAccountPolicyOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "CreatePrivatePathServiceGatewayAccountPolicy")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	body := make(map[string]interface{})
+	if createPrivatePathServiceGatewayAccountPolicyOptions.AccessPolicy != nil {
+		body["access_policy"] = createPrivatePathServiceGatewayAccountPolicyOptions.AccessPolicy
+	}
+	if createPrivatePathServiceGatewayAccountPolicyOptions.Account != nil {
+		body["account"] = createPrivatePathServiceGatewayAccountPolicyOptions.Account
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = vpc.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "create_private_path_service_gateway_account_policy", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPrivatePathServiceGatewayAccountPolicy)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeletePrivatePathServiceGatewayAccountPolicy : Delete an account policy for a private path service gateway
+// This request deletes an account policy. This operation cannot be reversed and it does not affect the `status` of any
+// existing endpoint gateway bindings.
+func (vpc *VpcV1) DeletePrivatePathServiceGatewayAccountPolicy(deletePrivatePathServiceGatewayAccountPolicyOptions *DeletePrivatePathServiceGatewayAccountPolicyOptions) (response *core.DetailedResponse, err error) {
+	response, err = vpc.DeletePrivatePathServiceGatewayAccountPolicyWithContext(context.Background(), deletePrivatePathServiceGatewayAccountPolicyOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DeletePrivatePathServiceGatewayAccountPolicyWithContext is an alternate form of the DeletePrivatePathServiceGatewayAccountPolicy method which supports a Context parameter
+func (vpc *VpcV1) DeletePrivatePathServiceGatewayAccountPolicyWithContext(ctx context.Context, deletePrivatePathServiceGatewayAccountPolicyOptions *DeletePrivatePathServiceGatewayAccountPolicyOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deletePrivatePathServiceGatewayAccountPolicyOptions, "deletePrivatePathServiceGatewayAccountPolicyOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deletePrivatePathServiceGatewayAccountPolicyOptions, "deletePrivatePathServiceGatewayAccountPolicyOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"private_path_service_gateway_id": *deletePrivatePathServiceGatewayAccountPolicyOptions.PrivatePathServiceGatewayID,
+		"id":                              *deletePrivatePathServiceGatewayAccountPolicyOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/private_path_service_gateways/{private_path_service_gateway_id}/account_policies/{id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range deletePrivatePathServiceGatewayAccountPolicyOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "DeletePrivatePathServiceGatewayAccountPolicy")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = vpc.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_private_path_service_gateway_account_policy", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// GetPrivatePathServiceGatewayAccountPolicy : Retrieve an account policy for a private path service gateway
+// This request retrieves a single account policy specified by the identifier in the URL.
+func (vpc *VpcV1) GetPrivatePathServiceGatewayAccountPolicy(getPrivatePathServiceGatewayAccountPolicyOptions *GetPrivatePathServiceGatewayAccountPolicyOptions) (result *PrivatePathServiceGatewayAccountPolicy, response *core.DetailedResponse, err error) {
+	result, response, err = vpc.GetPrivatePathServiceGatewayAccountPolicyWithContext(context.Background(), getPrivatePathServiceGatewayAccountPolicyOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetPrivatePathServiceGatewayAccountPolicyWithContext is an alternate form of the GetPrivatePathServiceGatewayAccountPolicy method which supports a Context parameter
+func (vpc *VpcV1) GetPrivatePathServiceGatewayAccountPolicyWithContext(ctx context.Context, getPrivatePathServiceGatewayAccountPolicyOptions *GetPrivatePathServiceGatewayAccountPolicyOptions) (result *PrivatePathServiceGatewayAccountPolicy, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getPrivatePathServiceGatewayAccountPolicyOptions, "getPrivatePathServiceGatewayAccountPolicyOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getPrivatePathServiceGatewayAccountPolicyOptions, "getPrivatePathServiceGatewayAccountPolicyOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"private_path_service_gateway_id": *getPrivatePathServiceGatewayAccountPolicyOptions.PrivatePathServiceGatewayID,
+		"id":                              *getPrivatePathServiceGatewayAccountPolicyOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/private_path_service_gateways/{private_path_service_gateway_id}/account_policies/{id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getPrivatePathServiceGatewayAccountPolicyOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "GetPrivatePathServiceGatewayAccountPolicy")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = vpc.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_private_path_service_gateway_account_policy", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPrivatePathServiceGatewayAccountPolicy)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// UpdatePrivatePathServiceGatewayAccountPolicy : Update an account policy for a private path service gateway
+// This request updates an account policy with the information in a provided account policy patch. The account policy
+// patch object is structured in the same way as a retrieved account policy and contains only the information to be
+// updated.
+func (vpc *VpcV1) UpdatePrivatePathServiceGatewayAccountPolicy(updatePrivatePathServiceGatewayAccountPolicyOptions *UpdatePrivatePathServiceGatewayAccountPolicyOptions) (result *PrivatePathServiceGatewayAccountPolicy, response *core.DetailedResponse, err error) {
+	result, response, err = vpc.UpdatePrivatePathServiceGatewayAccountPolicyWithContext(context.Background(), updatePrivatePathServiceGatewayAccountPolicyOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// UpdatePrivatePathServiceGatewayAccountPolicyWithContext is an alternate form of the UpdatePrivatePathServiceGatewayAccountPolicy method which supports a Context parameter
+func (vpc *VpcV1) UpdatePrivatePathServiceGatewayAccountPolicyWithContext(ctx context.Context, updatePrivatePathServiceGatewayAccountPolicyOptions *UpdatePrivatePathServiceGatewayAccountPolicyOptions) (result *PrivatePathServiceGatewayAccountPolicy, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updatePrivatePathServiceGatewayAccountPolicyOptions, "updatePrivatePathServiceGatewayAccountPolicyOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(updatePrivatePathServiceGatewayAccountPolicyOptions, "updatePrivatePathServiceGatewayAccountPolicyOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"private_path_service_gateway_id": *updatePrivatePathServiceGatewayAccountPolicyOptions.PrivatePathServiceGatewayID,
+		"id":                              *updatePrivatePathServiceGatewayAccountPolicyOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.PATCH)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/private_path_service_gateways/{private_path_service_gateway_id}/account_policies/{id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range updatePrivatePathServiceGatewayAccountPolicyOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "UpdatePrivatePathServiceGatewayAccountPolicy")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/merge-patch+json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	_, err = builder.SetBodyContentJSON(updatePrivatePathServiceGatewayAccountPolicyOptions.PrivatePathServiceGatewayAccountPolicyPatch)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = vpc.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_private_path_service_gateway_account_policy", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPrivatePathServiceGatewayAccountPolicy)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// ListPrivatePathServiceGatewayEndpointGatewayBindings : List endpoint gateway bindings for a private path service gateway
+// This request lists endpoint gateway bindings for a private path service gateway. Each endpoint gateway binding is
+// implicitly created when an endpoint gateway is created targeting the private path service gateway. The associated
+// account policy is applied to all new endpoint gateway bindings. If an associated account policy doesn't exist, the
+// private path service gateway's `default_access_policy` is used.
+//
+// The endpoint gateway bindings will be sorted by their `created_at` property values, with newest endpoint gateway
+// bindings first. Endpoint gateway bindings with identical
+// `created_at` property values will in turn be sorted by ascending `name` property values.
+func (vpc *VpcV1) ListPrivatePathServiceGatewayEndpointGatewayBindings(listPrivatePathServiceGatewayEndpointGatewayBindingsOptions *ListPrivatePathServiceGatewayEndpointGatewayBindingsOptions) (result *PrivatePathServiceGatewayEndpointGatewayBindingCollection, response *core.DetailedResponse, err error) {
+	result, response, err = vpc.ListPrivatePathServiceGatewayEndpointGatewayBindingsWithContext(context.Background(), listPrivatePathServiceGatewayEndpointGatewayBindingsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ListPrivatePathServiceGatewayEndpointGatewayBindingsWithContext is an alternate form of the ListPrivatePathServiceGatewayEndpointGatewayBindings method which supports a Context parameter
+func (vpc *VpcV1) ListPrivatePathServiceGatewayEndpointGatewayBindingsWithContext(ctx context.Context, listPrivatePathServiceGatewayEndpointGatewayBindingsOptions *ListPrivatePathServiceGatewayEndpointGatewayBindingsOptions) (result *PrivatePathServiceGatewayEndpointGatewayBindingCollection, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listPrivatePathServiceGatewayEndpointGatewayBindingsOptions, "listPrivatePathServiceGatewayEndpointGatewayBindingsOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(listPrivatePathServiceGatewayEndpointGatewayBindingsOptions, "listPrivatePathServiceGatewayEndpointGatewayBindingsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"private_path_service_gateway_id": *listPrivatePathServiceGatewayEndpointGatewayBindingsOptions.PrivatePathServiceGatewayID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/private_path_service_gateways/{private_path_service_gateway_id}/endpoint_gateway_bindings`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range listPrivatePathServiceGatewayEndpointGatewayBindingsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "ListPrivatePathServiceGatewayEndpointGatewayBindings")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+	if listPrivatePathServiceGatewayEndpointGatewayBindingsOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listPrivatePathServiceGatewayEndpointGatewayBindingsOptions.Start))
+	}
+	if listPrivatePathServiceGatewayEndpointGatewayBindingsOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listPrivatePathServiceGatewayEndpointGatewayBindingsOptions.Limit))
+	}
+	if listPrivatePathServiceGatewayEndpointGatewayBindingsOptions.Status != nil {
+		builder.AddQuery("status", fmt.Sprint(*listPrivatePathServiceGatewayEndpointGatewayBindingsOptions.Status))
+	}
+	if listPrivatePathServiceGatewayEndpointGatewayBindingsOptions.AccountID != nil {
+		builder.AddQuery("account.id", fmt.Sprint(*listPrivatePathServiceGatewayEndpointGatewayBindingsOptions.AccountID))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = vpc.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "list_private_path_service_gateway_endpoint_gateway_bindings", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPrivatePathServiceGatewayEndpointGatewayBindingCollection)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetPrivatePathServiceGatewayEndpointGatewayBinding : Retrieve an endpoint gateway binding for a private path service gateway
+// This request retrieves a single endpoint gateway binding specified by the identifier in the URL.
+func (vpc *VpcV1) GetPrivatePathServiceGatewayEndpointGatewayBinding(getPrivatePathServiceGatewayEndpointGatewayBindingOptions *GetPrivatePathServiceGatewayEndpointGatewayBindingOptions) (result *PrivatePathServiceGatewayEndpointGatewayBinding, response *core.DetailedResponse, err error) {
+	result, response, err = vpc.GetPrivatePathServiceGatewayEndpointGatewayBindingWithContext(context.Background(), getPrivatePathServiceGatewayEndpointGatewayBindingOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetPrivatePathServiceGatewayEndpointGatewayBindingWithContext is an alternate form of the GetPrivatePathServiceGatewayEndpointGatewayBinding method which supports a Context parameter
+func (vpc *VpcV1) GetPrivatePathServiceGatewayEndpointGatewayBindingWithContext(ctx context.Context, getPrivatePathServiceGatewayEndpointGatewayBindingOptions *GetPrivatePathServiceGatewayEndpointGatewayBindingOptions) (result *PrivatePathServiceGatewayEndpointGatewayBinding, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getPrivatePathServiceGatewayEndpointGatewayBindingOptions, "getPrivatePathServiceGatewayEndpointGatewayBindingOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getPrivatePathServiceGatewayEndpointGatewayBindingOptions, "getPrivatePathServiceGatewayEndpointGatewayBindingOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"private_path_service_gateway_id": *getPrivatePathServiceGatewayEndpointGatewayBindingOptions.PrivatePathServiceGatewayID,
+		"id":                              *getPrivatePathServiceGatewayEndpointGatewayBindingOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/private_path_service_gateways/{private_path_service_gateway_id}/endpoint_gateway_bindings/{id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getPrivatePathServiceGatewayEndpointGatewayBindingOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "GetPrivatePathServiceGatewayEndpointGatewayBinding")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = vpc.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_private_path_service_gateway_endpoint_gateway_binding", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPrivatePathServiceGatewayEndpointGatewayBinding)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DenyPrivatePathServiceGatewayEndpointGatewayBinding : Deny an endpoint gateway binding for a private path service gateway
+// This request denies a `pending` endpoint gateway request, and optionally sets the policy to deny future requests from
+// the same account.
+func (vpc *VpcV1) DenyPrivatePathServiceGatewayEndpointGatewayBinding(denyPrivatePathServiceGatewayEndpointGatewayBindingOptions *DenyPrivatePathServiceGatewayEndpointGatewayBindingOptions) (response *core.DetailedResponse, err error) {
+	response, err = vpc.DenyPrivatePathServiceGatewayEndpointGatewayBindingWithContext(context.Background(), denyPrivatePathServiceGatewayEndpointGatewayBindingOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DenyPrivatePathServiceGatewayEndpointGatewayBindingWithContext is an alternate form of the DenyPrivatePathServiceGatewayEndpointGatewayBinding method which supports a Context parameter
+func (vpc *VpcV1) DenyPrivatePathServiceGatewayEndpointGatewayBindingWithContext(ctx context.Context, denyPrivatePathServiceGatewayEndpointGatewayBindingOptions *DenyPrivatePathServiceGatewayEndpointGatewayBindingOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(denyPrivatePathServiceGatewayEndpointGatewayBindingOptions, "denyPrivatePathServiceGatewayEndpointGatewayBindingOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(denyPrivatePathServiceGatewayEndpointGatewayBindingOptions, "denyPrivatePathServiceGatewayEndpointGatewayBindingOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"private_path_service_gateway_id": *denyPrivatePathServiceGatewayEndpointGatewayBindingOptions.PrivatePathServiceGatewayID,
+		"id":                              *denyPrivatePathServiceGatewayEndpointGatewayBindingOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/private_path_service_gateways/{private_path_service_gateway_id}/endpoint_gateway_bindings/{id}/deny`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range denyPrivatePathServiceGatewayEndpointGatewayBindingOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "DenyPrivatePathServiceGatewayEndpointGatewayBinding")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Content-Type", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	body := make(map[string]interface{})
+	if denyPrivatePathServiceGatewayEndpointGatewayBindingOptions.SetAccountPolicy != nil {
+		body["set_account_policy"] = denyPrivatePathServiceGatewayEndpointGatewayBindingOptions.SetAccountPolicy
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = vpc.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "deny_private_path_service_gateway_endpoint_gateway_binding", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// PermitPrivatePathServiceGatewayEndpointGatewayBinding : Permit an endpoint gateway binding for a private path service gateway
+// This request permits a `pending` endpoint gateway request, and optionally sets the policy to permit future requests
+// from the same account.
+func (vpc *VpcV1) PermitPrivatePathServiceGatewayEndpointGatewayBinding(permitPrivatePathServiceGatewayEndpointGatewayBindingOptions *PermitPrivatePathServiceGatewayEndpointGatewayBindingOptions) (response *core.DetailedResponse, err error) {
+	response, err = vpc.PermitPrivatePathServiceGatewayEndpointGatewayBindingWithContext(context.Background(), permitPrivatePathServiceGatewayEndpointGatewayBindingOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// PermitPrivatePathServiceGatewayEndpointGatewayBindingWithContext is an alternate form of the PermitPrivatePathServiceGatewayEndpointGatewayBinding method which supports a Context parameter
+func (vpc *VpcV1) PermitPrivatePathServiceGatewayEndpointGatewayBindingWithContext(ctx context.Context, permitPrivatePathServiceGatewayEndpointGatewayBindingOptions *PermitPrivatePathServiceGatewayEndpointGatewayBindingOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(permitPrivatePathServiceGatewayEndpointGatewayBindingOptions, "permitPrivatePathServiceGatewayEndpointGatewayBindingOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(permitPrivatePathServiceGatewayEndpointGatewayBindingOptions, "permitPrivatePathServiceGatewayEndpointGatewayBindingOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"private_path_service_gateway_id": *permitPrivatePathServiceGatewayEndpointGatewayBindingOptions.PrivatePathServiceGatewayID,
+		"id":                              *permitPrivatePathServiceGatewayEndpointGatewayBindingOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/private_path_service_gateways/{private_path_service_gateway_id}/endpoint_gateway_bindings/{id}/permit`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range permitPrivatePathServiceGatewayEndpointGatewayBindingOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "PermitPrivatePathServiceGatewayEndpointGatewayBinding")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Content-Type", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	body := make(map[string]interface{})
+	if permitPrivatePathServiceGatewayEndpointGatewayBindingOptions.SetAccountPolicy != nil {
+		body["set_account_policy"] = permitPrivatePathServiceGatewayEndpointGatewayBindingOptions.SetAccountPolicy
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = vpc.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "permit_private_path_service_gateway_endpoint_gateway_binding", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// PublishPrivatePathServiceGateway : Publish a private path service gateway
+// This request publishes a private path service gateway, allowing any account to request access to it.
+func (vpc *VpcV1) PublishPrivatePathServiceGateway(publishPrivatePathServiceGatewayOptions *PublishPrivatePathServiceGatewayOptions) (response *core.DetailedResponse, err error) {
+	response, err = vpc.PublishPrivatePathServiceGatewayWithContext(context.Background(), publishPrivatePathServiceGatewayOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// PublishPrivatePathServiceGatewayWithContext is an alternate form of the PublishPrivatePathServiceGateway method which supports a Context parameter
+func (vpc *VpcV1) PublishPrivatePathServiceGatewayWithContext(ctx context.Context, publishPrivatePathServiceGatewayOptions *PublishPrivatePathServiceGatewayOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(publishPrivatePathServiceGatewayOptions, "publishPrivatePathServiceGatewayOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(publishPrivatePathServiceGatewayOptions, "publishPrivatePathServiceGatewayOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"private_path_service_gateway_id": *publishPrivatePathServiceGatewayOptions.PrivatePathServiceGatewayID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/private_path_service_gateways/{private_path_service_gateway_id}/publish`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range publishPrivatePathServiceGatewayOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "PublishPrivatePathServiceGateway")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = vpc.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "publish_private_path_service_gateway", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// RevokeAccountForPrivatePathServiceGateway : Revoke access to a private path service gateway for an account
+// This request revokes a consumer account. This operation cannot be reversed. The `status` of all endpoint gateway
+// bindings associated with the specified private path service gateway become `denied`. If the specified account has an
+// existing access policy, that policy will be updated to `denied`. Otherwise, a new `deny` access policy will be
+// created for the account.
+func (vpc *VpcV1) RevokeAccountForPrivatePathServiceGateway(revokeAccountForPrivatePathServiceGatewayOptions *RevokeAccountForPrivatePathServiceGatewayOptions) (response *core.DetailedResponse, err error) {
+	response, err = vpc.RevokeAccountForPrivatePathServiceGatewayWithContext(context.Background(), revokeAccountForPrivatePathServiceGatewayOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// RevokeAccountForPrivatePathServiceGatewayWithContext is an alternate form of the RevokeAccountForPrivatePathServiceGateway method which supports a Context parameter
+func (vpc *VpcV1) RevokeAccountForPrivatePathServiceGatewayWithContext(ctx context.Context, revokeAccountForPrivatePathServiceGatewayOptions *RevokeAccountForPrivatePathServiceGatewayOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(revokeAccountForPrivatePathServiceGatewayOptions, "revokeAccountForPrivatePathServiceGatewayOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(revokeAccountForPrivatePathServiceGatewayOptions, "revokeAccountForPrivatePathServiceGatewayOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"private_path_service_gateway_id": *revokeAccountForPrivatePathServiceGatewayOptions.PrivatePathServiceGatewayID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/private_path_service_gateways/{private_path_service_gateway_id}/revoke_account`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range revokeAccountForPrivatePathServiceGatewayOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "RevokeAccountForPrivatePathServiceGateway")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Content-Type", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	body := make(map[string]interface{})
+	if revokeAccountForPrivatePathServiceGatewayOptions.Account != nil {
+		body["account"] = revokeAccountForPrivatePathServiceGatewayOptions.Account
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = vpc.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "revoke_account_for_private_path_service_gateway", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// UnpublishPrivatePathServiceGateway : Unpublish a private path service gateway
+// This request unpublishes a private path service gateway. For this request to succeed, any existing access from other
+// accounts must first be revoked. Once unpublished, access will again be restricted to the account that created this
+// private path service gateway.
+func (vpc *VpcV1) UnpublishPrivatePathServiceGateway(unpublishPrivatePathServiceGatewayOptions *UnpublishPrivatePathServiceGatewayOptions) (response *core.DetailedResponse, err error) {
+	response, err = vpc.UnpublishPrivatePathServiceGatewayWithContext(context.Background(), unpublishPrivatePathServiceGatewayOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// UnpublishPrivatePathServiceGatewayWithContext is an alternate form of the UnpublishPrivatePathServiceGateway method which supports a Context parameter
+func (vpc *VpcV1) UnpublishPrivatePathServiceGatewayWithContext(ctx context.Context, unpublishPrivatePathServiceGatewayOptions *UnpublishPrivatePathServiceGatewayOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(unpublishPrivatePathServiceGatewayOptions, "unpublishPrivatePathServiceGatewayOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(unpublishPrivatePathServiceGatewayOptions, "unpublishPrivatePathServiceGatewayOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"private_path_service_gateway_id": *unpublishPrivatePathServiceGatewayOptions.PrivatePathServiceGatewayID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/private_path_service_gateways/{private_path_service_gateway_id}/unpublish`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range unpublishPrivatePathServiceGatewayOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "UnpublishPrivatePathServiceGateway")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = vpc.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "unpublish_private_path_service_gateway", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
 func getServiceComponentInfo() *core.ProblemComponent {
-	return core.NewProblemComponent(DefaultServiceName, "2024-04-30")
+	return core.NewProblemComponent(DefaultServiceName, "2024-10-15")
+}
+
+// AccountIdentity : Identifies an account by a unique property.
+// Models which "extend" this model:
+// - AccountIdentityByID
+type AccountIdentity struct {
+	// The unique identifier for this account.
+	ID *string `json:"id,omitempty"`
+}
+
+func (*AccountIdentity) isaAccountIdentity() bool {
+	return true
+}
+
+type AccountIdentityIntf interface {
+	isaAccountIdentity() bool
+}
+
+// UnmarshalAccountIdentity unmarshals an instance of AccountIdentity from the specified map of raw messages.
+func UnmarshalAccountIdentity(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AccountIdentity)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
 }
 
 // AccountReference : AccountReference struct
@@ -30351,7 +31863,7 @@ func UnmarshalAddressPrefix(m map[string]json.RawMessage, result interface{}) (e
 
 // AddressPrefixCollection : AddressPrefixCollection struct
 type AddressPrefixCollection struct {
-	// Collection of address prefixes.
+	// A page of address prefixes for the VPC.
 	AddressPrefixes []AddressPrefix `json:"address_prefixes" validate:"required"`
 
 	// A link to the first page of resources.
@@ -30712,7 +32224,7 @@ func UnmarshalBackupPolicy(m map[string]json.RawMessage, result interface{}) (er
 
 // BackupPolicyCollection : BackupPolicyCollection struct
 type BackupPolicyCollection struct {
-	// Collection of backup policies.
+	// A page of backup policies.
 	BackupPolicies []BackupPolicyIntf `json:"backup_policies" validate:"required"`
 
 	// A link to the first page of resources.
@@ -31011,7 +32523,7 @@ type BackupPolicyJobCollection struct {
 	// A link to the first page of resources.
 	First *BackupPolicyJobCollectionFirst `json:"first" validate:"required"`
 
-	// Collection of backup policy jobs.
+	// A page of jobs for the backup policy.
 	Jobs []BackupPolicyJob `json:"jobs" validate:"required"`
 
 	// The maximum number of resources that can be returned by the request.
@@ -31119,7 +32631,7 @@ type BackupPolicyJobSource struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *VolumeReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this volume.
 	Href *string `json:"href,omitempty"`
@@ -31160,7 +32672,7 @@ func UnmarshalBackupPolicyJobSource(m map[string]json.RawMessage, result interfa
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalVolumeReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -31198,9 +32710,13 @@ func UnmarshalBackupPolicyJobSource(m map[string]json.RawMessage, result interfa
 type BackupPolicyJobStatusReason struct {
 	// A reason code for the status:
 	// - `internal_error`: Internal error (contact IBM support)
+	// - `snapshot_encryption_key_invalid`: The provided encryption key is unavailable
 	// - `snapshot_pending`: Cannot delete backup (snapshot) in the `pending` lifecycle state
 	// - `snapshot_volume_limit`: The snapshot limit for the source volume has been reached
 	// - `source_volume_busy`: The source volume has `busy` set (after multiple retries)
+	// - `source_volume_too_large`: The source volume exceeds the [maximum supported
+	//   size](https://cloud.ibm.com/docs/vpc?topic=vpc-snapshots-vpc-about&interface=api#snapshots-vpc-limitations)
+	// - `source_volume_unavailable`: The source volume is not attached to a running instance
 	//
 	// The enumerated values for this property may
 	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
@@ -31215,18 +32731,25 @@ type BackupPolicyJobStatusReason struct {
 
 // Constants associated with the BackupPolicyJobStatusReason.Code property.
 // A reason code for the status:
-// - `internal_error`: Internal error (contact IBM support)
-// - `snapshot_pending`: Cannot delete backup (snapshot) in the `pending` lifecycle state
-// - `snapshot_volume_limit`: The snapshot limit for the source volume has been reached
-// - `source_volume_busy`: The source volume has `busy` set (after multiple retries)
+//   - `internal_error`: Internal error (contact IBM support)
+//   - `snapshot_encryption_key_invalid`: The provided encryption key is unavailable
+//   - `snapshot_pending`: Cannot delete backup (snapshot) in the `pending` lifecycle state
+//   - `snapshot_volume_limit`: The snapshot limit for the source volume has been reached
+//   - `source_volume_busy`: The source volume has `busy` set (after multiple retries)
+//   - `source_volume_too_large`: The source volume exceeds the [maximum supported
+//     size](https://cloud.ibm.com/docs/vpc?topic=vpc-snapshots-vpc-about&interface=api#snapshots-vpc-limitations)
+//   - `source_volume_unavailable`: The source volume is not attached to a running instance
 //
 // The enumerated values for this property may
 // [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
-	BackupPolicyJobStatusReasonCodeInternalErrorConst       = "internal_error"
-	BackupPolicyJobStatusReasonCodeSnapshotPendingConst     = "snapshot_pending"
-	BackupPolicyJobStatusReasonCodeSnapshotVolumeLimitConst = "snapshot_volume_limit"
-	BackupPolicyJobStatusReasonCodeSourceVolumeBusyConst    = "source_volume_busy"
+	BackupPolicyJobStatusReasonCodeInternalErrorConst                = "internal_error"
+	BackupPolicyJobStatusReasonCodeSnapshotEncryptionKeyInvalidConst = "snapshot_encryption_key_invalid"
+	BackupPolicyJobStatusReasonCodeSnapshotPendingConst              = "snapshot_pending"
+	BackupPolicyJobStatusReasonCodeSnapshotVolumeLimitConst          = "snapshot_volume_limit"
+	BackupPolicyJobStatusReasonCodeSourceVolumeBusyConst             = "source_volume_busy"
+	BackupPolicyJobStatusReasonCodeSourceVolumeTooLargeConst         = "source_volume_too_large"
+	BackupPolicyJobStatusReasonCodeSourceVolumeUnavailableConst      = "source_volume_unavailable"
 )
 
 // UnmarshalBackupPolicyJobStatusReason unmarshals an instance of BackupPolicyJobStatusReason from the specified map of raw messages.
@@ -31545,7 +33068,7 @@ type BackupPolicyPlanCollection struct {
 	// except the last page.
 	Next *BackupPolicyPlanCollectionNext `json:"next,omitempty"`
 
-	// Collection of backup policy plans.
+	// A page of plans for the backup policy.
 	Plans []BackupPolicyPlan `json:"plans" validate:"required"`
 
 	// The total number of resources across all pages.
@@ -31881,7 +33404,7 @@ func UnmarshalBackupPolicyPlanPrototype(m map[string]json.RawMessage, result int
 type BackupPolicyPlanReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *BackupPolicyPlanReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this backup policy plan.
 	Href *string `json:"href" validate:"required"`
@@ -31909,7 +33432,7 @@ const (
 // UnmarshalBackupPolicyPlanReference unmarshals an instance of BackupPolicyPlanReference from the specified map of raw messages.
 func UnmarshalBackupPolicyPlanReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(BackupPolicyPlanReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalBackupPolicyPlanReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -31937,25 +33460,6 @@ func UnmarshalBackupPolicyPlanReference(m map[string]json.RawMessage, result int
 	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// BackupPolicyPlanReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type BackupPolicyPlanReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalBackupPolicyPlanReferenceDeleted unmarshals an instance of BackupPolicyPlanReferenceDeleted from the specified map of raw messages.
-func UnmarshalBackupPolicyPlanReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(BackupPolicyPlanReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -32275,6 +33779,9 @@ type BareMetalServer struct {
 	// boot.
 	EnableSecureBoot *bool `json:"enable_secure_boot" validate:"required"`
 
+	// Firmware information for the bare metal server.
+	Firmware *BareMetalServerFirmware `json:"firmware" validate:"required"`
+
 	// The URL for this bare metal server.
 	Href *string `json:"href" validate:"required"`
 
@@ -32329,6 +33836,7 @@ type BareMetalServer struct {
 	// - `failed`: server is failed and not usable (see `status_reasons`)
 	// - `maintenance`: server is undergoing maintenance (not usable)
 	// - `pending`: server is being provisioned and not yet usable
+	// - `reinitializing`: server is reinitializing and not yet usable
 	// - `restarting`: server is restarting and not yet usable
 	// - `running`: server is powered on
 	// - `starting`: server is starting and not yet usable
@@ -32374,6 +33882,7 @@ const (
 // - `failed`: server is failed and not usable (see `status_reasons`)
 // - `maintenance`: server is undergoing maintenance (not usable)
 // - `pending`: server is being provisioned and not yet usable
+// - `reinitializing`: server is reinitializing and not yet usable
 // - `restarting`: server is restarting and not yet usable
 // - `running`: server is powered on
 // - `starting`: server is starting and not yet usable
@@ -32382,14 +33891,15 @@ const (
 // The enumerated values for this property may
 // [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
-	BareMetalServerStatusDeletingConst    = "deleting"
-	BareMetalServerStatusFailedConst      = "failed"
-	BareMetalServerStatusMaintenanceConst = "maintenance"
-	BareMetalServerStatusPendingConst     = "pending"
-	BareMetalServerStatusRestartingConst  = "restarting"
-	BareMetalServerStatusRunningConst     = "running"
-	BareMetalServerStatusStartingConst    = "starting"
-	BareMetalServerStatusStoppedConst     = "stopped"
+	BareMetalServerStatusDeletingConst       = "deleting"
+	BareMetalServerStatusFailedConst         = "failed"
+	BareMetalServerStatusMaintenanceConst    = "maintenance"
+	BareMetalServerStatusPendingConst        = "pending"
+	BareMetalServerStatusReinitializingConst = "reinitializing"
+	BareMetalServerStatusRestartingConst     = "restarting"
+	BareMetalServerStatusRunningConst        = "running"
+	BareMetalServerStatusStartingConst       = "starting"
+	BareMetalServerStatusStoppedConst        = "stopped"
 )
 
 // UnmarshalBareMetalServer unmarshals an instance of BareMetalServer from the specified map of raw messages.
@@ -32428,6 +33938,11 @@ func UnmarshalBareMetalServer(m map[string]json.RawMessage, result interface{}) 
 	err = core.UnmarshalPrimitive(m, "enable_secure_boot", &obj.EnableSecureBoot)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "enable_secure_boot-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "firmware", &obj.Firmware, UnmarshalBareMetalServerFirmware)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "firmware-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
@@ -32533,7 +34048,7 @@ func UnmarshalBareMetalServer(m map[string]json.RawMessage, result interface{}) 
 type BareMetalServerBootTarget struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *BareMetalServerDiskReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this bare metal server disk.
 	Href *string `json:"href,omitempty"`
@@ -32565,7 +34080,7 @@ type BareMetalServerBootTargetIntf interface {
 // UnmarshalBareMetalServerBootTarget unmarshals an instance of BareMetalServerBootTarget from the specified map of raw messages.
 func UnmarshalBareMetalServerBootTarget(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(BareMetalServerBootTarget)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalBareMetalServerDiskReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -32638,7 +34153,7 @@ func UnmarshalBareMetalServerCpu(m map[string]json.RawMessage, result interface{
 
 // BareMetalServerCollection : BareMetalServerCollection struct
 type BareMetalServerCollection struct {
-	// Collection of bare metal servers.
+	// A page of bare metal servers.
 	BareMetalServers []BareMetalServer `json:"bare_metal_servers" validate:"required"`
 
 	// A link to the first page of resources.
@@ -32815,10 +34330,10 @@ type BareMetalServerDisk struct {
 	// The unique identifier for this bare metal server disk.
 	ID *string `json:"id" validate:"required"`
 
-	// The disk interface used for attaching the disk:
-	// - `fcp`: Attached using Fiber Channel Protocol
-	// - `sata`: Attached using Serial Advanced Technology Attachment
-	// - `nvme`: Attached using Non-Volatile Memory Express
+	// The disk attachment interface used:
+	// - `fcp`: Fiber Channel Protocol
+	// - `sata`: Serial Advanced Technology Attachment
+	// - `nvme`: Non-Volatile Memory Express
 	//
 	// The enumerated values for this property may
 	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
@@ -32835,10 +34350,10 @@ type BareMetalServerDisk struct {
 }
 
 // Constants associated with the BareMetalServerDisk.InterfaceType property.
-// The disk interface used for attaching the disk:
-// - `fcp`: Attached using Fiber Channel Protocol
-// - `sata`: Attached using Serial Advanced Technology Attachment
-// - `nvme`: Attached using Non-Volatile Memory Express
+// The disk attachment interface used:
+// - `fcp`: Fiber Channel Protocol
+// - `sata`: Serial Advanced Technology Attachment
+// - `nvme`: Non-Volatile Memory Express
 //
 // The enumerated values for this property may
 // [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
@@ -32898,7 +34413,7 @@ func UnmarshalBareMetalServerDisk(m map[string]json.RawMessage, result interface
 
 // BareMetalServerDiskCollection : BareMetalServerDiskCollection struct
 type BareMetalServerDiskCollection struct {
-	// Collection of the bare metal server's disks.
+	// The disks for the bare metal server.
 	Disks []BareMetalServerDisk `json:"disks" validate:"required"`
 }
 
@@ -32945,19 +34460,32 @@ func (bareMetalServerDiskPatch *BareMetalServerDiskPatch) AsPatch() (_patch map[
 	return
 }
 
-// BareMetalServerDiskReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type BareMetalServerDiskReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
+// BareMetalServerFirmware : Firmware information for the bare metal server.
+type BareMetalServerFirmware struct {
+	// The type of update available.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	Update *string `json:"update" validate:"required"`
 }
 
-// UnmarshalBareMetalServerDiskReferenceDeleted unmarshals an instance of BareMetalServerDiskReferenceDeleted from the specified map of raw messages.
-func UnmarshalBareMetalServerDiskReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(BareMetalServerDiskReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
+// Constants associated with the BareMetalServerFirmware.Update property.
+// The type of update available.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+const (
+	BareMetalServerFirmwareUpdateNoneConst     = "none"
+	BareMetalServerFirmwareUpdateOptionalConst = "optional"
+	BareMetalServerFirmwareUpdateRequiredConst = "required"
+)
+
+// UnmarshalBareMetalServerFirmware unmarshals an instance of BareMetalServerFirmware from the specified map of raw messages.
+func UnmarshalBareMetalServerFirmware(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(BareMetalServerFirmware)
+	err = core.UnmarshalPrimitive(m, "update", &obj.Update)
 	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
+		err = core.SDKErrorf(err, "", "update-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -33215,6 +34743,9 @@ type BareMetalServerNetworkAttachment struct {
 	Subnet *SubnetReference `json:"subnet" validate:"required"`
 
 	// The bare metal server network attachment type.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Type *string `json:"type" validate:"required"`
 
 	// The virtual network interface for this bare metal server network attachment.
@@ -33278,6 +34809,9 @@ const (
 
 // Constants associated with the BareMetalServerNetworkAttachment.Type property.
 // The bare metal server network attachment type.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	BareMetalServerNetworkAttachmentTypePrimaryConst   = "primary"
 	BareMetalServerNetworkAttachmentTypeSecondaryConst = "secondary"
@@ -33381,7 +34915,7 @@ type BareMetalServerNetworkAttachmentCollection struct {
 	// The maximum number of resources that can be returned by the request.
 	Limit *int64 `json:"limit" validate:"required"`
 
-	// Collection of bare metal server network attachments.
+	// The network attachments for the bare metal server.
 	NetworkAttachments []BareMetalServerNetworkAttachmentIntf `json:"network_attachments" validate:"required"`
 
 	// A link to the next page of resources. This property is present for all pages
@@ -33820,7 +35354,7 @@ func UnmarshalBareMetalServerNetworkAttachmentPrototypeVirtualNetworkInterface(m
 type BareMetalServerNetworkAttachmentReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *BareMetalServerNetworkAttachmentReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this bare metal server network attachment.
 	Href *string `json:"href" validate:"required"`
@@ -33842,6 +35376,9 @@ type BareMetalServerNetworkAttachmentReference struct {
 	// The subnet of the virtual network interface for the bare metal server network
 	// attachment.
 	Subnet *SubnetReference `json:"subnet" validate:"required"`
+
+	// The virtual network interface for this bare metal server network attachment.
+	VirtualNetworkInterface *VirtualNetworkInterfaceReferenceAttachmentContext `json:"virtual_network_interface" validate:"required"`
 }
 
 // Constants associated with the BareMetalServerNetworkAttachmentReference.ResourceType property.
@@ -33853,7 +35390,7 @@ const (
 // UnmarshalBareMetalServerNetworkAttachmentReference unmarshals an instance of BareMetalServerNetworkAttachmentReference from the specified map of raw messages.
 func UnmarshalBareMetalServerNetworkAttachmentReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(BareMetalServerNetworkAttachmentReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalBareMetalServerNetworkAttachmentReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -33888,23 +35425,9 @@ func UnmarshalBareMetalServerNetworkAttachmentReference(m map[string]json.RawMes
 		err = core.SDKErrorf(err, "", "subnet-error", common.GetComponentInfo())
 		return
 	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// BareMetalServerNetworkAttachmentReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type BareMetalServerNetworkAttachmentReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalBareMetalServerNetworkAttachmentReferenceDeleted unmarshals an instance of BareMetalServerNetworkAttachmentReferenceDeleted from the specified map of raw messages.
-func UnmarshalBareMetalServerNetworkAttachmentReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(BareMetalServerNetworkAttachmentReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
+	err = core.UnmarshalModel(m, "virtual_network_interface", &obj.VirtualNetworkInterface, UnmarshalVirtualNetworkInterfaceReferenceAttachmentContext)
 	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
+		err = core.SDKErrorf(err, "", "virtual_network_interface-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -33995,7 +35518,7 @@ type BareMetalServerNetworkInterface struct {
 	InterfaceType *string `json:"interface_type" validate:"required"`
 
 	// The MAC address of this bare metal server network interface. If the MAC address has not yet been selected, the value
-	// will be an empty string.
+	// will be empty.
 	//
 	// If this bare metal server has network attachments, this network interface is a
 	// [read-only representation](https://cloud.ibm.com/docs/vpc?topic=vpc-vni-about#vni-old-api-clients) of its
@@ -34195,7 +35718,7 @@ type BareMetalServerNetworkInterfaceCollection struct {
 	// The maximum number of resources that can be returned by the request.
 	Limit *int64 `json:"limit" validate:"required"`
 
-	// Collection of bare metal server network interfaces.
+	// The network interfaces for the bare metal server.
 	NetworkInterfaces []BareMetalServerNetworkInterfaceIntf `json:"network_interfaces" validate:"required"`
 
 	// A link to the next page of resources. This property is present for all pages
@@ -34527,44 +36050,6 @@ func UnmarshalBareMetalServerNetworkInterfacePrototype(m map[string]json.RawMess
 	return
 }
 
-// BareMetalServerNetworkInterfaceReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type BareMetalServerNetworkInterfaceReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalBareMetalServerNetworkInterfaceReferenceDeleted unmarshals an instance of BareMetalServerNetworkInterfaceReferenceDeleted from the specified map of raw messages.
-func UnmarshalBareMetalServerNetworkInterfaceReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(BareMetalServerNetworkInterfaceReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// BareMetalServerNetworkInterfaceReferenceTargetContextDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type BareMetalServerNetworkInterfaceReferenceTargetContextDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalBareMetalServerNetworkInterfaceReferenceTargetContextDeleted unmarshals an instance of BareMetalServerNetworkInterfaceReferenceTargetContextDeleted from the specified map of raw messages.
-func UnmarshalBareMetalServerNetworkInterfaceReferenceTargetContextDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(BareMetalServerNetworkInterfaceReferenceTargetContextDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // BareMetalServerPatch : BareMetalServerPatch struct
 type BareMetalServerPatch struct {
 	// The total bandwidth (in megabits per second) shared across the bare metal server's network interfaces. The specified
@@ -34855,7 +36340,7 @@ type BareMetalServerProfile struct {
 
 	CpuSocketCount BareMetalServerProfileCpuSocketCountIntf `json:"cpu_socket_count" validate:"required"`
 
-	// Collection of the bare metal server profile's disks.
+	// The disks for a bare metal server with this profile.
 	Disks []BareMetalServerProfileDisk `json:"disks" validate:"required"`
 
 	// The product family this bare metal server profile belongs to.
@@ -35285,7 +36770,7 @@ type BareMetalServerProfileCollection struct {
 	// except the last page.
 	Next *BareMetalServerProfileCollectionNext `json:"next,omitempty"`
 
-	// Collection of bare metal server profiles.
+	// A page of bare metal server profiles.
 	Profiles []BareMetalServerProfile `json:"profiles" validate:"required"`
 
 	// The total number of resources across all pages.
@@ -35617,13 +37102,7 @@ func UnmarshalBareMetalServerProfileDiskSize(m map[string]json.RawMessage, resul
 
 // BareMetalServerProfileDiskSupportedInterfaces : BareMetalServerProfileDiskSupportedInterfaces struct
 type BareMetalServerProfileDiskSupportedInterfaces struct {
-	// The disk interface used for attaching the disk:
-	// - `fcp`: Attached using Fiber Channel Protocol
-	// - `sata`: Attached using Serial Advanced Technology Attachment
-	// - `nvme`: Attached using Non-Volatile Memory Express
-	//
-	// The enumerated values for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	// The default value for this profile field.
 	Default *string `json:"default" validate:"required"`
 
 	// The type for this profile field.
@@ -35634,13 +37113,7 @@ type BareMetalServerProfileDiskSupportedInterfaces struct {
 }
 
 // Constants associated with the BareMetalServerProfileDiskSupportedInterfaces.Default property.
-// The disk interface used for attaching the disk:
-// - `fcp`: Attached using Fiber Channel Protocol
-// - `sata`: Attached using Serial Advanced Technology Attachment
-// - `nvme`: Attached using Non-Volatile Memory Express
-//
-// The enumerated values for this property may
-// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+// The default value for this profile field.
 const (
 	BareMetalServerProfileDiskSupportedInterfacesDefaultFcpConst  = "fcp"
 	BareMetalServerProfileDiskSupportedInterfacesDefaultNvmeConst = "nvme"
@@ -35654,10 +37127,10 @@ const (
 )
 
 // Constants associated with the BareMetalServerProfileDiskSupportedInterfaces.Values property.
-// The disk interface used for attaching the disk:
-// - `fcp`: Attached using Fiber Channel Protocol
-// - `sata`: Attached using Serial Advanced Technology Attachment
-// - `nvme`: Attached using Non-Volatile Memory Express
+// The disk attachment interface used:
+// - `fcp`: Fiber Channel Protocol
+// - `sata`: Serial Advanced Technology Attachment
+// - `nvme`: Non-Volatile Memory Express
 //
 // The enumerated values for this property may
 // [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
@@ -36226,6 +37699,7 @@ type BareMetalServerStatusReason struct {
 	// - `cannot_start_compute`: An error occurred while allocating compute resources
 	// - `cannot_start_ip_address`: An error occurred while allocating an IP address
 	// - `cannot_start_network`: An error occurred while allocating network resources
+	// - `cannot_update_firmware`: An error occurred while updating bare metal server firmware
 	//
 	// The enumerated values for this property may
 	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
@@ -36245,15 +37719,18 @@ type BareMetalServerStatusReason struct {
 // - `cannot_start_compute`: An error occurred while allocating compute resources
 // - `cannot_start_ip_address`: An error occurred while allocating an IP address
 // - `cannot_start_network`: An error occurred while allocating network resources
+// - `cannot_update_firmware`: An error occurred while updating bare metal server firmware
 //
 // The enumerated values for this property may
 // [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
+	BareMetalServerStatusReasonCodeCannotReinitializeConst   = "cannot_reinitialize"
 	BareMetalServerStatusReasonCodeCannotStartConst          = "cannot_start"
 	BareMetalServerStatusReasonCodeCannotStartCapacityConst  = "cannot_start_capacity"
 	BareMetalServerStatusReasonCodeCannotStartComputeConst   = "cannot_start_compute"
 	BareMetalServerStatusReasonCodeCannotStartIPAddressConst = "cannot_start_ip_address"
 	BareMetalServerStatusReasonCodeCannotStartNetworkConst   = "cannot_start_network"
+	BareMetalServerStatusReasonCodeCannotUpdateFirmwareConst = "cannot_update_firmware"
 )
 
 // UnmarshalBareMetalServerStatusReason unmarshals an instance of BareMetalServerStatusReason from the specified map of raw messages.
@@ -36500,7 +37977,7 @@ type CatalogOfferingVersionPlanReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *CatalogOfferingVersionPlanReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 }
 
 // UnmarshalCatalogOfferingVersionPlanReference unmarshals an instance of CatalogOfferingVersionPlanReference from the specified map of raw messages.
@@ -36511,28 +37988,9 @@ func UnmarshalCatalogOfferingVersionPlanReference(m map[string]json.RawMessage, 
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalCatalogOfferingVersionPlanReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// CatalogOfferingVersionPlanReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type CatalogOfferingVersionPlanReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalCatalogOfferingVersionPlanReferenceDeleted unmarshals an instance of CatalogOfferingVersionPlanReferenceDeleted from the specified map of raw messages.
-func UnmarshalCatalogOfferingVersionPlanReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(CatalogOfferingVersionPlanReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -37182,8 +38640,10 @@ func (options *CreateDedicatedHostOptions) SetHeaders(param map[string]string) *
 
 // CreateEndpointGatewayOptions : The CreateEndpointGateway options.
 type CreateEndpointGatewayOptions struct {
-	// The target to use for this endpoint gateway. Must not already be the target of another
-	// endpoint gateway in the VPC.
+	// The target to use for this endpoint gateway. The target:
+	// - Must not already be the target of another endpoint gateway in the VPC
+	// - Must not have a service endpoint that duplicates or overlaps with any `service_endpoints`
+	//   of another endpoint gateway in the VPC.
 	Target EndpointGatewayTargetPrototypeIntf `json:"target" validate:"required"`
 
 	// The VPC this endpoint gateway will reside in.
@@ -38187,18 +39647,23 @@ func (options *CreateInstanceVolumeAttachmentOptions) SetHeaders(param map[strin
 type CreateIpsecPolicyOptions struct {
 	// The authentication algorithm
 	//
-	// Must be `disabled` if and only if the `encryption_algorithm` is
-	// `aes128gcm16`, `aes192gcm16`, or `aes256gcm16`.
+	// Must be `disabled` if and only if the `encryption_algorithm` is `aes128gcm16`,
+	// `aes192gcm16`, or `aes256gcm16`
+	//
+	// The `md5` and `sha1` algorithms have been deprecated.
 	AuthenticationAlgorithm *string `json:"authentication_algorithm" validate:"required"`
 
 	// The encryption algorithm
 	//
 	// The `authentication_algorithm` must be `disabled` if and only if
-	// `encryption_algorithm` is `aes128gcm16`, `aes192gcm16`, or
-	// `aes256gcm16`.
+	// `encryption_algorithm` is `aes128gcm16`, `aes192gcm16`, or `aes256gcm16`
+	//
+	// The `triple_des` algorithm has been deprecated.
 	EncryptionAlgorithm *string `json:"encryption_algorithm" validate:"required"`
 
-	// Perfect Forward Secrecy.
+	// The Perfect Forward Secrecy group.
+	//
+	// Groups `group_2` and `group_5` have been deprecated.
 	Pfs *string `json:"pfs" validate:"required"`
 
 	// The key lifetime in seconds.
@@ -38219,8 +39684,10 @@ type CreateIpsecPolicyOptions struct {
 // Constants associated with the CreateIpsecPolicyOptions.AuthenticationAlgorithm property.
 // The authentication algorithm
 //
-// Must be `disabled` if and only if the `encryption_algorithm` is
-// `aes128gcm16`, `aes192gcm16`, or `aes256gcm16`.
+// Must be `disabled` if and only if the `encryption_algorithm` is `aes128gcm16`,
+// `aes192gcm16`, or `aes256gcm16`
+//
+// The `md5` and `sha1` algorithms have been deprecated.
 const (
 	CreateIpsecPolicyOptionsAuthenticationAlgorithmDisabledConst = "disabled"
 	CreateIpsecPolicyOptionsAuthenticationAlgorithmSha256Const   = "sha256"
@@ -38232,8 +39699,9 @@ const (
 // The encryption algorithm
 //
 // The `authentication_algorithm` must be `disabled` if and only if
-// `encryption_algorithm` is `aes128gcm16`, `aes192gcm16`, or
-// `aes256gcm16`.
+// `encryption_algorithm` is `aes128gcm16`, `aes192gcm16`, or `aes256gcm16`
+//
+// The `triple_des` algorithm has been deprecated.
 const (
 	CreateIpsecPolicyOptionsEncryptionAlgorithmAes128Const      = "aes128"
 	CreateIpsecPolicyOptionsEncryptionAlgorithmAes128gcm16Const = "aes128gcm16"
@@ -38244,7 +39712,9 @@ const (
 )
 
 // Constants associated with the CreateIpsecPolicyOptions.Pfs property.
-// Perfect Forward Secrecy.
+// The Perfect Forward Secrecy group.
+//
+// Groups `group_2` and `group_5` have been deprecated.
 const (
 	CreateIpsecPolicyOptionsPfsDisabledConst = "disabled"
 	CreateIpsecPolicyOptionsPfsGroup14Const  = "group_14"
@@ -38330,7 +39800,7 @@ type CreateKeyOptions struct {
 	// group](https://cloud.ibm.com/apidocs/resource-manager#introduction) will be used.
 	ResourceGroup ResourceGroupIdentityIntf `json:"resource_group,omitempty"`
 
-	// The crypto-system used by this key.
+	// The crypto-system for this key.
 	Type *string `json:"type,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -38338,7 +39808,7 @@ type CreateKeyOptions struct {
 }
 
 // Constants associated with the CreateKeyOptions.Type property.
-// The crypto-system used by this key.
+// The crypto-system for this key.
 const (
 	CreateKeyOptionsTypeEd25519Const = "ed25519"
 	CreateKeyOptionsTypeRsaConst     = "rsa"
@@ -38449,9 +39919,9 @@ type CreateLoadBalancerListenerOptions struct {
 
 	// The inclusive upper bound of the range of ports used by this listener. Must not be less than `port_min`.
 	//
-	// At present, only load balancers operating with route mode enabled, and public load balancers in the `network` family
-	// support different values for `port_min` and
-	// `port_max`. When route mode is enabled, the value `65535` must be specified.
+	// Only load balancers with route mode enabled, or network load balancers with
+	// `is_public` or `is_private_path` set to `true` support different values for `port_min` and `port_max`. When route
+	// mode is enabled, the value `65535` must be specified.
 	//
 	// The specified port range must not overlap with port ranges used by other listeners for this load balancer using the
 	// same protocol.
@@ -38459,9 +39929,9 @@ type CreateLoadBalancerListenerOptions struct {
 
 	// The inclusive lower bound of the range of ports used by this listener. Must not be greater than `port_max`.
 	//
-	// At present, only load balancers operating with route mode enabled, and public load balancers in the `network` family
-	// support different values for `port_min` and
-	// `port_max`. When route mode is enabled, the value `1` must be specified.
+	// Only load balancers with route mode enabled, or network load balancers with
+	// `is_public` or `is_private_path` set to `true` support different values for `port_min` and `port_max`. When route
+	// mode is enabled, the value `1` must be specified.
 	//
 	// The specified port range must not overlap with port ranges used by other listeners for this load balancer using the
 	// same protocol.
@@ -38584,17 +40054,13 @@ type CreateLoadBalancerListenerPolicyOptions struct {
 	// The listener identifier.
 	ListenerID *string `json:"listener_id" validate:"required,ne="`
 
-	// The policy action.
-	//
+	// The policy action:
 	// - `forward`: Requests will be forwarded to the specified `target` pool
 	// - `https_redirect`: Requests will be redirected to the specified target listener. The
 	//   listener must have a `protocol` of `http`, and the target listener must have a
 	//   `protocol` of `https`
 	// - `redirect`: Requests will be redirected to the specified `target.url`
-	// - `reject`: Requests will be rejected with a `403` status code
-	//
-	// The enumerated values for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	// - `reject`: Requests will be rejected with a `403` status code.
 	Action *string `json:"action" validate:"required"`
 
 	// Priority of the policy. The priority is unique across all policies for this load balancer listener. Lower value
@@ -38619,17 +40085,13 @@ type CreateLoadBalancerListenerPolicyOptions struct {
 }
 
 // Constants associated with the CreateLoadBalancerListenerPolicyOptions.Action property.
-// The policy action.
-//
+// The policy action:
 //   - `forward`: Requests will be forwarded to the specified `target` pool
 //   - `https_redirect`: Requests will be redirected to the specified target listener. The
 //     listener must have a `protocol` of `http`, and the target listener must have a
 //     `protocol` of `https`
 //   - `redirect`: Requests will be redirected to the specified `target.url`
-//   - `reject`: Requests will be rejected with a `403` status code
-//
-// The enumerated values for this property may
-// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+//   - `reject`: Requests will be rejected with a `403` status code.
 const (
 	CreateLoadBalancerListenerPolicyOptionsActionForwardConst       = "forward"
 	CreateLoadBalancerListenerPolicyOptionsActionHTTPSRedirectConst = "https_redirect"
@@ -38706,27 +40168,23 @@ type CreateLoadBalancerListenerPolicyRuleOptions struct {
 	// The policy identifier.
 	PolicyID *string `json:"policy_id" validate:"required,ne="`
 
-	// The condition of the rule.
+	// The condition for the rule.
 	Condition *string `json:"condition" validate:"required"`
 
-	// The type of the rule.
-	//
-	// Body rules are applied to form-encoded request bodies using the `UTF-8` character set.
+	// The type of the rule. Body rules are applied to form-encoded request bodies using the
+	// `UTF-8` character set.
 	Type *string `json:"type" validate:"required"`
 
-	// Value to be matched for rule condition.
+	// The value to be matched for the rule condition.
 	//
 	// If the rule type is `query` and the rule condition is not `matches_regex`, the value must be percent-encoded.
 	Value *string `json:"value" validate:"required"`
 
-	// The field. This is applicable to `header`, `query`, and `body` rule types.
+	// The field to match for this rule. This property must be specified if the rule type is
+	// `header`, may be specified if the rule type is `body` or `query`, and must not be specified if the rule type is
+	// `hostname` or `path`.
 	//
-	// If the rule type is `header`, this property is required.
-	//
-	// If the rule type is `query`, this is optional. If specified and the rule condition is not
-	// `matches_regex`, the value must be percent-encoded.
-	//
-	// If the rule type is `body`, this is optional.
+	// If the rule condition is not `matches_regex`, the value must be percent-encoded.
 	Field *string `json:"field,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -38734,7 +40192,7 @@ type CreateLoadBalancerListenerPolicyRuleOptions struct {
 }
 
 // Constants associated with the CreateLoadBalancerListenerPolicyRuleOptions.Condition property.
-// The condition of the rule.
+// The condition for the rule.
 const (
 	CreateLoadBalancerListenerPolicyRuleOptionsConditionContainsConst     = "contains"
 	CreateLoadBalancerListenerPolicyRuleOptionsConditionEqualsConst       = "equals"
@@ -38742,9 +40200,8 @@ const (
 )
 
 // Constants associated with the CreateLoadBalancerListenerPolicyRuleOptions.Type property.
-// The type of the rule.
-//
-// Body rules are applied to form-encoded request bodies using the `UTF-8` character set.
+// The type of the rule. Body rules are applied to form-encoded request bodies using the
+// `UTF-8` character set.
 const (
 	CreateLoadBalancerListenerPolicyRuleOptionsTypeBodyConst     = "body"
 	CreateLoadBalancerListenerPolicyRuleOptionsTypeHeaderConst   = "header"
@@ -38817,11 +40274,16 @@ func (options *CreateLoadBalancerListenerPolicyRuleOptions) SetHeaders(param map
 type CreateLoadBalancerOptions struct {
 	// Indicates whether this load balancer is public.
 	//
-	// At present, if route mode is enabled, the load balancer must not be public.
+	// At present,
+	// - If route mode is enabled, the load balancer must be private.
+	// - If `is_private_path` is specified, it must be set to `false`.
 	IsPublic *bool `json:"is_public" validate:"required"`
 
-	// The subnets to provision this load balancer in. The subnets must be in the same VPC. The load balancer's
-	// availability will depend on the availability of the zones that the subnets reside in.
+	// The subnets to provision this load balancer in.  The subnets must be in the same VPC.
+	// - If 'availability' is specified as `subnet` in the profile, the load balancer's availability will depend on the
+	// availability of the zones that the subnets reside in.
+	// - If 'availability' is specified as `region` in the profile, the load balancer remains available as long as any zone
+	// in the region is available. Only members in healthy zones will be sent new connections.
 	//
 	// Load balancers in the `network` family allow only one subnet to be specified.
 	Subnets []SubnetIdentityIntf `json:"subnets" validate:"required"`
@@ -38831,7 +40293,12 @@ type CreateLoadBalancerOptions struct {
 	// If unspecified, DNS `A` records for this load balancer's `hostname` property will be added
 	// to the public DNS zone `lb.appdomain.cloud`. Otherwise, those DNS `A` records will be
 	// added to the specified `zone`.
+	//
+	// Not supported by private path load balancers.
 	Dns *LoadBalancerDnsPrototype `json:"dns,omitempty"`
+
+	// Indicates whether this is a private path load balancer.
+	IsPrivatePath *bool `json:"is_private_path,omitempty"`
 
 	// The listeners of this load balancer.
 	Listeners []LoadBalancerListenerPrototypeLoadBalancerContext `json:"listeners,omitempty"`
@@ -38896,6 +40363,12 @@ func (_options *CreateLoadBalancerOptions) SetSubnets(subnets []SubnetIdentityIn
 // SetDns : Allow user to set Dns
 func (_options *CreateLoadBalancerOptions) SetDns(dns *LoadBalancerDnsPrototype) *CreateLoadBalancerOptions {
 	_options.Dns = dns
+	return _options
+}
+
+// SetIsPrivatePath : Allow user to set IsPrivatePath
+func (_options *CreateLoadBalancerOptions) SetIsPrivatePath(isPrivatePath bool) *CreateLoadBalancerOptions {
+	_options.IsPrivatePath = core.BoolPtr(isPrivatePath)
 	return _options
 }
 
@@ -38977,8 +40450,9 @@ type CreateLoadBalancerPoolMemberOptions struct {
 	// subnet in.
 	Target LoadBalancerPoolMemberTargetPrototypeIntf `json:"target" validate:"required"`
 
-	// Weight of the server member. Applicable only if the pool algorithm is
-	// `weighted_round_robin`.
+	// The weight of the server member.
+	//
+	// If specified, the pool algorithm must be `weighted_round_robin`.
 	Weight *int64 `json:"weight,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -39036,7 +40510,8 @@ type CreateLoadBalancerPoolOptions struct {
 	// The load balancer identifier.
 	LoadBalancerID *string `json:"load_balancer_id" validate:"required,ne="`
 
-	// The load balancing algorithm.
+	// The load balancing algorithm. The `least_connections` algorithm is only supported for load balancers that have
+	// `availability` with value `subnet` in the profile.
 	Algorithm *string `json:"algorithm" validate:"required"`
 
 	// The health monitor of this pool.
@@ -39060,12 +40535,13 @@ type CreateLoadBalancerPoolOptions struct {
 	// - `v2`: Enabled with version 2 (binary header format)
 	// - `disabled`: Disabled
 	//
-	// Supported by load balancers in the `application` family (otherwise always `disabled`).
+	// For load balancers in the `network` family, this property must be `disabled`.
 	ProxyProtocol *string `json:"proxy_protocol,omitempty"`
 
-	// The session persistence of this pool. If unspecified, session persistence will be
-	// disabled, and traffic will be distributed across backend server members of the
-	// pool.
+	// The session persistence of this pool. If specified, the load balancer must have
+	// `source_ip_session_persistence_supported` set to `true` in its profile. If
+	// unspecified, session persistence will be disabled, and traffic will be distributed
+	// across backend server members of the pool.
 	SessionPersistence *LoadBalancerPoolSessionPersistencePrototype `json:"session_persistence,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -39073,7 +40549,8 @@ type CreateLoadBalancerPoolOptions struct {
 }
 
 // Constants associated with the CreateLoadBalancerPoolOptions.Algorithm property.
-// The load balancing algorithm.
+// The load balancing algorithm. The `least_connections` algorithm is only supported for load balancers that have
+// `availability` with value `subnet` in the profile.
 const (
 	CreateLoadBalancerPoolOptionsAlgorithmLeastConnectionsConst   = "least_connections"
 	CreateLoadBalancerPoolOptionsAlgorithmRoundRobinConst         = "round_robin"
@@ -39097,7 +40574,7 @@ const (
 // - `v2`: Enabled with version 2 (binary header format)
 // - `disabled`: Disabled
 //
-// Supported by load balancers in the `application` family (otherwise always `disabled`).
+// For load balancers in the `network` family, this property must be `disabled`.
 const (
 	CreateLoadBalancerPoolOptionsProxyProtocolDisabledConst = "disabled"
 	CreateLoadBalancerPoolOptionsProxyProtocolV1Const       = "v1"
@@ -39238,10 +40715,7 @@ func (options *CreateNetworkACLRuleOptions) SetHeaders(param map[string]string) 
 type CreatePlacementGroupOptions struct {
 	// The strategy for this placement group:
 	// - `host_spread`: place on different compute hosts
-	// - `power_spread`: place on compute hosts that use different power sources
-	//
-	// The enumerated values for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	// - `power_spread`: place on compute hosts that use different power sources.
 	Strategy *string `json:"strategy" validate:"required"`
 
 	// The name for this placement group. The name must not be used by another placement group in the region. If
@@ -39259,10 +40733,7 @@ type CreatePlacementGroupOptions struct {
 // Constants associated with the CreatePlacementGroupOptions.Strategy property.
 // The strategy for this placement group:
 // - `host_spread`: place on different compute hosts
-// - `power_spread`: place on compute hosts that use different power sources
-//
-// The enumerated values for this property may
-// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+// - `power_spread`: place on compute hosts that use different power sources.
 const (
 	CreatePlacementGroupOptionsStrategyHostSpreadConst  = "host_spread"
 	CreatePlacementGroupOptionsStrategyPowerSpreadConst = "power_spread"
@@ -39295,6 +40766,178 @@ func (_options *CreatePlacementGroupOptions) SetResourceGroup(resourceGroup Reso
 
 // SetHeaders : Allow user to set Headers
 func (options *CreatePlacementGroupOptions) SetHeaders(param map[string]string) *CreatePlacementGroupOptions {
+	options.Headers = param
+	return options
+}
+
+// CreatePrivatePathServiceGatewayAccountPolicyOptions : The CreatePrivatePathServiceGatewayAccountPolicy options.
+type CreatePrivatePathServiceGatewayAccountPolicyOptions struct {
+	// The private path service gateway identifier.
+	PrivatePathServiceGatewayID *string `json:"private_path_service_gateway_id" validate:"required,ne="`
+
+	// The access policy for the account. Updating the access policy only affects pending and future endpoint gateway
+	// bindings.
+	// - permit: access will be permitted
+	// - deny: access will be denied
+	// - review: access will be manually reviewed
+	//
+	// - Updating to `review` sets the status of future endpoint gateway bindings from
+	//    this account to `pending`.
+	// - Updating to `permit` updates both the status of any `pending` and future endpoint
+	//   gateway bindings from this account to `permitted`.
+	// - Updating to `deny` updates both the status of any `pending` and future endpoint
+	//   gateway bindings from this account to `denied`.
+	AccessPolicy *string `json:"access_policy" validate:"required"`
+
+	// The account for this access policy. The account must be unique across all account
+	// policies for this private path service gateway.
+	Account AccountIdentityIntf `json:"account" validate:"required"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// Constants associated with the CreatePrivatePathServiceGatewayAccountPolicyOptions.AccessPolicy property.
+// The access policy for the account. Updating the access policy only affects pending and future endpoint gateway
+// bindings.
+// - permit: access will be permitted
+// - deny: access will be denied
+// - review: access will be manually reviewed
+//
+//   - Updating to `review` sets the status of future endpoint gateway bindings from
+//     this account to `pending`.
+//   - Updating to `permit` updates both the status of any `pending` and future endpoint
+//     gateway bindings from this account to `permitted`.
+//   - Updating to `deny` updates both the status of any `pending` and future endpoint
+//     gateway bindings from this account to `denied`.
+const (
+	CreatePrivatePathServiceGatewayAccountPolicyOptionsAccessPolicyDenyConst   = "deny"
+	CreatePrivatePathServiceGatewayAccountPolicyOptionsAccessPolicyPermitConst = "permit"
+	CreatePrivatePathServiceGatewayAccountPolicyOptionsAccessPolicyReviewConst = "review"
+)
+
+// NewCreatePrivatePathServiceGatewayAccountPolicyOptions : Instantiate CreatePrivatePathServiceGatewayAccountPolicyOptions
+func (*VpcV1) NewCreatePrivatePathServiceGatewayAccountPolicyOptions(privatePathServiceGatewayID string, accessPolicy string, account AccountIdentityIntf) *CreatePrivatePathServiceGatewayAccountPolicyOptions {
+	return &CreatePrivatePathServiceGatewayAccountPolicyOptions{
+		PrivatePathServiceGatewayID: core.StringPtr(privatePathServiceGatewayID),
+		AccessPolicy:                core.StringPtr(accessPolicy),
+		Account:                     account,
+	}
+}
+
+// SetPrivatePathServiceGatewayID : Allow user to set PrivatePathServiceGatewayID
+func (_options *CreatePrivatePathServiceGatewayAccountPolicyOptions) SetPrivatePathServiceGatewayID(privatePathServiceGatewayID string) *CreatePrivatePathServiceGatewayAccountPolicyOptions {
+	_options.PrivatePathServiceGatewayID = core.StringPtr(privatePathServiceGatewayID)
+	return _options
+}
+
+// SetAccessPolicy : Allow user to set AccessPolicy
+func (_options *CreatePrivatePathServiceGatewayAccountPolicyOptions) SetAccessPolicy(accessPolicy string) *CreatePrivatePathServiceGatewayAccountPolicyOptions {
+	_options.AccessPolicy = core.StringPtr(accessPolicy)
+	return _options
+}
+
+// SetAccount : Allow user to set Account
+func (_options *CreatePrivatePathServiceGatewayAccountPolicyOptions) SetAccount(account AccountIdentityIntf) *CreatePrivatePathServiceGatewayAccountPolicyOptions {
+	_options.Account = account
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CreatePrivatePathServiceGatewayAccountPolicyOptions) SetHeaders(param map[string]string) *CreatePrivatePathServiceGatewayAccountPolicyOptions {
+	options.Headers = param
+	return options
+}
+
+// CreatePrivatePathServiceGatewayOptions : The CreatePrivatePathServiceGateway options.
+type CreatePrivatePathServiceGatewayOptions struct {
+	// The load balancer for this private path service gateway. The load balancer must
+	// have `is_private_path` set to `true`.
+	//
+	// The private path service gateway will reside in the same VPC as the specified load
+	// balancer.
+	LoadBalancer LoadBalancerIdentityIntf `json:"load_balancer" validate:"required"`
+
+	// The fully qualified domain names for this private path service gateway. Any uppercase letters will be converted to
+	// lowercase.
+	ServiceEndpoints []string `json:"service_endpoints" validate:"required"`
+
+	// The policy to use for bindings from accounts without an explicit account policy.
+	DefaultAccessPolicy *string `json:"default_access_policy,omitempty"`
+
+	// The name for this private path service gateway. The name must not be used by another private path service gateway in
+	// the VPC. If unspecified, the name will be a hyphenated list of randomly-selected words.
+	Name *string `json:"name,omitempty"`
+
+	// The resource group to use. If unspecified, the account's [default resource
+	// group](https://cloud.ibm.com/apidocs/resource-manager#introduction) will be used.
+	ResourceGroup ResourceGroupIdentityIntf `json:"resource_group,omitempty"`
+
+	// Indicates whether this private path service gateway has zonal affinity.
+	// - `true`:  Traffic to the service from a zone the service resides in will remain in
+	//            that zone.
+	// - `false`: Traffic to the service from a zone will be load balanced across all zones
+	//            in the region the service resides in.
+	ZonalAffinity *bool `json:"zonal_affinity,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// Constants associated with the CreatePrivatePathServiceGatewayOptions.DefaultAccessPolicy property.
+// The policy to use for bindings from accounts without an explicit account policy.
+const (
+	CreatePrivatePathServiceGatewayOptionsDefaultAccessPolicyDenyConst   = "deny"
+	CreatePrivatePathServiceGatewayOptionsDefaultAccessPolicyPermitConst = "permit"
+	CreatePrivatePathServiceGatewayOptionsDefaultAccessPolicyReviewConst = "review"
+)
+
+// NewCreatePrivatePathServiceGatewayOptions : Instantiate CreatePrivatePathServiceGatewayOptions
+func (*VpcV1) NewCreatePrivatePathServiceGatewayOptions(loadBalancer LoadBalancerIdentityIntf, serviceEndpoints []string) *CreatePrivatePathServiceGatewayOptions {
+	return &CreatePrivatePathServiceGatewayOptions{
+		LoadBalancer:     loadBalancer,
+		ServiceEndpoints: serviceEndpoints,
+	}
+}
+
+// SetLoadBalancer : Allow user to set LoadBalancer
+func (_options *CreatePrivatePathServiceGatewayOptions) SetLoadBalancer(loadBalancer LoadBalancerIdentityIntf) *CreatePrivatePathServiceGatewayOptions {
+	_options.LoadBalancer = loadBalancer
+	return _options
+}
+
+// SetServiceEndpoints : Allow user to set ServiceEndpoints
+func (_options *CreatePrivatePathServiceGatewayOptions) SetServiceEndpoints(serviceEndpoints []string) *CreatePrivatePathServiceGatewayOptions {
+	_options.ServiceEndpoints = serviceEndpoints
+	return _options
+}
+
+// SetDefaultAccessPolicy : Allow user to set DefaultAccessPolicy
+func (_options *CreatePrivatePathServiceGatewayOptions) SetDefaultAccessPolicy(defaultAccessPolicy string) *CreatePrivatePathServiceGatewayOptions {
+	_options.DefaultAccessPolicy = core.StringPtr(defaultAccessPolicy)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *CreatePrivatePathServiceGatewayOptions) SetName(name string) *CreatePrivatePathServiceGatewayOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetResourceGroup : Allow user to set ResourceGroup
+func (_options *CreatePrivatePathServiceGatewayOptions) SetResourceGroup(resourceGroup ResourceGroupIdentityIntf) *CreatePrivatePathServiceGatewayOptions {
+	_options.ResourceGroup = resourceGroup
+	return _options
+}
+
+// SetZonalAffinity : Allow user to set ZonalAffinity
+func (_options *CreatePrivatePathServiceGatewayOptions) SetZonalAffinity(zonalAffinity bool) *CreatePrivatePathServiceGatewayOptions {
+	_options.ZonalAffinity = core.BoolPtr(zonalAffinity)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CreatePrivatePathServiceGatewayOptions) SetHeaders(param map[string]string) *CreatePrivatePathServiceGatewayOptions {
 	options.Headers = param
 	return options
 }
@@ -40308,12 +41951,12 @@ type CreateVPCRouteOptions struct {
 	// randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
-	// If `action` is `deliver`, the next hop that packets will be delivered to. For other
-	// `action` values, it must be omitted or specified as `0.0.0.0`.
+	// If `action` is `deliver`, the next hop that packets will be delivered to (must not be
+	// `0.0.0.0`). For other `action` values, it must be omitted or specified as `0.0.0.0`.
 	//
 	// At most two routes per `zone` in a table can have the same `destination` and `priority`,
 	// and only when each route has an `action` of `deliver` and `next_hop` is an IP address.
-	NextHop RoutePrototypeNextHopIntf `json:"next_hop,omitempty"`
+	NextHop RouteNextHopPrototypeIntf `json:"next_hop,omitempty"`
 
 	// The priority of this route. Smaller values have higher priority.
 	//
@@ -40385,7 +42028,7 @@ func (_options *CreateVPCRouteOptions) SetName(name string) *CreateVPCRouteOptio
 }
 
 // SetNextHop : Allow user to set NextHop
-func (_options *CreateVPCRouteOptions) SetNextHop(nextHop RoutePrototypeNextHopIntf) *CreateVPCRouteOptions {
+func (_options *CreateVPCRouteOptions) SetNextHop(nextHop RouteNextHopPrototypeIntf) *CreateVPCRouteOptions {
 	_options.NextHop = nextHop
 	return _options
 }
@@ -40590,12 +42233,12 @@ type CreateVPCRoutingTableRouteOptions struct {
 	// randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
-	// If `action` is `deliver`, the next hop that packets will be delivered to. For other
-	// `action` values, it must be omitted or specified as `0.0.0.0`.
+	// If `action` is `deliver`, the next hop that packets will be delivered to (must not be
+	// `0.0.0.0`). For other `action` values, it must be omitted or specified as `0.0.0.0`.
 	//
 	// At most two routes per `zone` in a table can have the same `destination` and `priority`,
 	// and only when each route has an `action` of `deliver` and `next_hop` is an IP address.
-	NextHop RoutePrototypeNextHopIntf `json:"next_hop,omitempty"`
+	NextHop RouteNextHopPrototypeIntf `json:"next_hop,omitempty"`
 
 	// The priority of this route. Smaller values have higher priority.
 	//
@@ -40674,7 +42317,7 @@ func (_options *CreateVPCRoutingTableRouteOptions) SetName(name string) *CreateV
 }
 
 // SetNextHop : Allow user to set NextHop
-func (_options *CreateVPCRoutingTableRouteOptions) SetNextHop(nextHop RoutePrototypeNextHopIntf) *CreateVPCRoutingTableRouteOptions {
+func (_options *CreateVPCRoutingTableRouteOptions) SetNextHop(nextHop RouteNextHopPrototypeIntf) *CreateVPCRoutingTableRouteOptions {
 	_options.NextHop = nextHop
 	return _options
 }
@@ -41059,26 +42702,11 @@ func UnmarshalDnsServer(m map[string]json.RawMessage, result interface{}) (err e
 
 // DnsServerPrototype : DnsServerPrototype struct
 type DnsServerPrototype struct {
-	// The IP address.
-	//
-	// This property may [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) to support IPv6 addresses in
-	// the future.
-	Address *string `json:"address" validate:"required"`
+	// The DNS server IPv4 address.
+	Address *string `json:"address,omitempty"`
 
 	// DHCP configuration for the specified zone will have this DNS server listed first.
 	ZoneAffinity ZoneIdentityIntf `json:"zone_affinity,omitempty"`
-}
-
-// NewDnsServerPrototype : Instantiate DnsServerPrototype (Generic Model Constructor)
-func (*VpcV1) NewDnsServerPrototype(address string) (_model *DnsServerPrototype, err error) {
-	_model = &DnsServerPrototype{
-		Address: core.StringPtr(address),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
-	}
-	return
 }
 
 // UnmarshalDnsServerPrototype unmarshals an instance of DnsServerPrototype from the specified map of raw messages.
@@ -41156,7 +42784,7 @@ type DedicatedHost struct {
 	// The CRN for this dedicated host.
 	CRN *string `json:"crn" validate:"required"`
 
-	// Collection of the dedicated host's disks.
+	// The disks for the dedicated host.
 	Disks []DedicatedHostDisk `json:"disks" validate:"required"`
 
 	// The dedicated host group this dedicated host is in.
@@ -41372,7 +43000,7 @@ func UnmarshalDedicatedHost(m map[string]json.RawMessage, result interface{}) (e
 
 // DedicatedHostCollection : DedicatedHostCollection struct
 type DedicatedHostCollection struct {
-	// Collection of dedicated hosts.
+	// A page of dedicated hosts.
 	DedicatedHosts []DedicatedHost `json:"dedicated_hosts" validate:"required"`
 
 	// A link to the first page of resources.
@@ -41489,10 +43117,7 @@ type DedicatedHostDisk struct {
 	// Instance disks that are on this dedicated host disk.
 	InstanceDisks []InstanceDiskReference `json:"instance_disks" validate:"required"`
 
-	// The disk interface used for attaching the disk
-	//
-	// The enumerated values for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	// The disk interface used for attaching the disk.
 	InterfaceType *string `json:"interface_type" validate:"required"`
 
 	// The lifecycle state of this dedicated host disk.
@@ -41511,14 +43136,14 @@ type DedicatedHostDisk struct {
 	Size *int64 `json:"size" validate:"required"`
 
 	// The instance disk interfaces supported for this dedicated host disk.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	SupportedInstanceInterfaceTypes []string `json:"supported_instance_interface_types" validate:"required"`
 }
 
 // Constants associated with the DedicatedHostDisk.InterfaceType property.
-// The disk interface used for attaching the disk
-//
-// The enumerated values for this property may
-// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+// The disk interface used for attaching the disk.
 const (
 	DedicatedHostDiskInterfaceTypeNvmeConst = "nvme"
 )
@@ -41620,7 +43245,7 @@ func UnmarshalDedicatedHostDisk(m map[string]json.RawMessage, result interface{}
 
 // DedicatedHostDiskCollection : DedicatedHostDiskCollection struct
 type DedicatedHostDiskCollection struct {
-	// Collection of the dedicated host's disks.
+	// The disks for the dedicated host.
 	Disks []DedicatedHostDisk `json:"disks" validate:"required"`
 }
 
@@ -41792,7 +43417,7 @@ type DedicatedHostGroupCollection struct {
 	// A link to the first page of resources.
 	First *DedicatedHostGroupCollectionFirst `json:"first" validate:"required"`
 
-	// Collection of dedicated host groups.
+	// A page of dedicated host groups.
 	Groups []DedicatedHostGroup `json:"groups" validate:"required"`
 
 	// The maximum number of resources that can be returned by the request.
@@ -42000,7 +43625,7 @@ type DedicatedHostGroupReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *DedicatedHostGroupReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this dedicated host group.
 	Href *string `json:"href" validate:"required"`
@@ -42029,7 +43654,7 @@ func UnmarshalDedicatedHostGroupReference(m map[string]json.RawMessage, result i
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDedicatedHostGroupReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -42052,25 +43677,6 @@ func UnmarshalDedicatedHostGroupReference(m map[string]json.RawMessage, result i
 	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// DedicatedHostGroupReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type DedicatedHostGroupReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalDedicatedHostGroupReferenceDeleted unmarshals an instance of DedicatedHostGroupReferenceDeleted from the specified map of raw messages.
-func UnmarshalDedicatedHostGroupReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(DedicatedHostGroupReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -42173,7 +43779,7 @@ type DedicatedHostProfile struct {
 	// The product class this dedicated host profile belongs to.
 	Class *string `json:"class" validate:"required"`
 
-	// Collection of the dedicated host profile's disks.
+	// The disks for a dedicated host with this profile.
 	Disks []DedicatedHostProfileDisk `json:"disks" validate:"required"`
 
 	// The product family this dedicated host profile belongs to
@@ -42197,9 +43803,9 @@ type DedicatedHostProfile struct {
 	//   and usable.
 	// - `current`: This dedicated host profile is the latest revision.
 	//
-	// Revisions are indicated by the generation of a dedicated host profile. Refer to the [profile naming conventions]
-	// (https://cloud.ibm.com/docs/vpc?topic=vpc-dh-profiles&interface=ui#profiles-naming-rule) for information on how
-	// generations are defined within a dedicated host profile.
+	// Revisions are indicated by the generation of a dedicated host profile. Refer to the [profile naming
+	// conventions](https://cloud.ibm.com/docs/vpc?topic=vpc-dh-profiles&interface=ui#profiles-naming-rule) for information
+	// on how generations are defined within a dedicated host profile.
 	//
 	// The enumerated values for this property may
 	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
@@ -42232,9 +43838,9 @@ const (
 //     and usable.
 //   - `current`: This dedicated host profile is the latest revision.
 //
-// Revisions are indicated by the generation of a dedicated host profile. Refer to the [profile naming conventions]
-// (https://cloud.ibm.com/docs/vpc?topic=vpc-dh-profiles&interface=ui#profiles-naming-rule) for information on how
-// generations are defined within a dedicated host profile.
+// Revisions are indicated by the generation of a dedicated host profile. Refer to the [profile naming
+// conventions](https://cloud.ibm.com/docs/vpc?topic=vpc-dh-profiles&interface=ui#profiles-naming-rule) for information
+// on how generations are defined within a dedicated host profile.
 //
 // The enumerated values for this property may
 // [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
@@ -42322,7 +43928,7 @@ type DedicatedHostProfileCollection struct {
 	// except the last page.
 	Next *DedicatedHostProfileCollectionNext `json:"next,omitempty"`
 
-	// Collection of dedicated host profiles.
+	// A page of dedicated host profiles.
 	Profiles []DedicatedHostProfile `json:"profiles" validate:"required"`
 
 	// The total number of resources across all pages.
@@ -43063,7 +44669,7 @@ type DedicatedHostReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *DedicatedHostReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this dedicated host.
 	Href *string `json:"href" validate:"required"`
@@ -43092,7 +44698,7 @@ func UnmarshalDedicatedHostReference(m map[string]json.RawMessage, result interf
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDedicatedHostReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -43115,25 +44721,6 @@ func UnmarshalDedicatedHostReference(m map[string]json.RawMessage, result interf
 	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// DedicatedHostReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type DedicatedHostReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalDedicatedHostReferenceDeleted unmarshals an instance of DedicatedHostReferenceDeleted from the specified map of raw messages.
-func UnmarshalDedicatedHostReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(DedicatedHostReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -43243,6 +44830,9 @@ type DefaultRoutingTable struct {
 	// The date and time that this routing table was created.
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
+	// The CRN for this VPC routing table.
+	CRN *string `json:"crn" validate:"required"`
+
 	// The URL for this routing table.
 	Href *string `json:"href" validate:"required"`
 
@@ -43258,6 +44848,9 @@ type DefaultRoutingTable struct {
 	// The name of the default routing table created for this VPC. The name will be a hyphenated list of randomly-selected
 	// words at creation, but may be changed.
 	Name *string `json:"name" validate:"required"`
+
+	// The resource group for this routing table.
+	ResourceGroup *ResourceGroupReference `json:"resource_group" validate:"required"`
 
 	// The resource type.
 	ResourceType *string `json:"resource_type" validate:"required"`
@@ -43354,6 +44947,11 @@ func UnmarshalDefaultRoutingTable(m map[string]json.RawMessage, result interface
 		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
@@ -43377,6 +44975,11 @@ func UnmarshalDefaultRoutingTable(m map[string]json.RawMessage, result interface
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "resource_group", &obj.ResourceGroup, UnmarshalResourceGroupReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_group-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
@@ -43423,10 +45026,10 @@ type DefaultSecurityGroup struct {
 	// The date and time that this security group was created.
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
-	// The security group's CRN.
+	// The CRN for this security group.
 	CRN *string `json:"crn" validate:"required"`
 
-	// The security group's canonical URL.
+	// The URL for this security group.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this security group.
@@ -44777,6 +46380,72 @@ func (options *DeletePlacementGroupOptions) SetHeaders(param map[string]string) 
 	return options
 }
 
+// DeletePrivatePathServiceGatewayAccountPolicyOptions : The DeletePrivatePathServiceGatewayAccountPolicy options.
+type DeletePrivatePathServiceGatewayAccountPolicyOptions struct {
+	// The private path service gateway identifier.
+	PrivatePathServiceGatewayID *string `json:"private_path_service_gateway_id" validate:"required,ne="`
+
+	// The account policy identifier.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewDeletePrivatePathServiceGatewayAccountPolicyOptions : Instantiate DeletePrivatePathServiceGatewayAccountPolicyOptions
+func (*VpcV1) NewDeletePrivatePathServiceGatewayAccountPolicyOptions(privatePathServiceGatewayID string, id string) *DeletePrivatePathServiceGatewayAccountPolicyOptions {
+	return &DeletePrivatePathServiceGatewayAccountPolicyOptions{
+		PrivatePathServiceGatewayID: core.StringPtr(privatePathServiceGatewayID),
+		ID:                          core.StringPtr(id),
+	}
+}
+
+// SetPrivatePathServiceGatewayID : Allow user to set PrivatePathServiceGatewayID
+func (_options *DeletePrivatePathServiceGatewayAccountPolicyOptions) SetPrivatePathServiceGatewayID(privatePathServiceGatewayID string) *DeletePrivatePathServiceGatewayAccountPolicyOptions {
+	_options.PrivatePathServiceGatewayID = core.StringPtr(privatePathServiceGatewayID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *DeletePrivatePathServiceGatewayAccountPolicyOptions) SetID(id string) *DeletePrivatePathServiceGatewayAccountPolicyOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeletePrivatePathServiceGatewayAccountPolicyOptions) SetHeaders(param map[string]string) *DeletePrivatePathServiceGatewayAccountPolicyOptions {
+	options.Headers = param
+	return options
+}
+
+// DeletePrivatePathServiceGatewayOptions : The DeletePrivatePathServiceGateway options.
+type DeletePrivatePathServiceGatewayOptions struct {
+	// The private path service gateway identifier.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewDeletePrivatePathServiceGatewayOptions : Instantiate DeletePrivatePathServiceGatewayOptions
+func (*VpcV1) NewDeletePrivatePathServiceGatewayOptions(id string) *DeletePrivatePathServiceGatewayOptions {
+	return &DeletePrivatePathServiceGatewayOptions{
+		ID: core.StringPtr(id),
+	}
+}
+
+// SetID : Allow user to set ID
+func (_options *DeletePrivatePathServiceGatewayOptions) SetID(id string) *DeletePrivatePathServiceGatewayOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeletePrivatePathServiceGatewayOptions) SetHeaders(param map[string]string) *DeletePrivatePathServiceGatewayOptions {
+	options.Headers = param
+	return options
+}
+
 // DeletePublicGatewayOptions : The DeletePublicGateway options.
 type DeletePublicGatewayOptions struct {
 	// The public gateway identifier.
@@ -44980,7 +46649,7 @@ type DeleteShareMountTargetOptions struct {
 	// The file share identifier.
 	ShareID *string `json:"share_id" validate:"required,ne="`
 
-	// The share mount target identifier.
+	// The file share mount target identifier.
 	ID *string `json:"id" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
@@ -45765,6 +47434,82 @@ func (options *DeleteVPNServerRouteOptions) SetHeaders(param map[string]string) 
 	return options
 }
 
+// Deleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
+// information.
+type Deleted struct {
+	// Link to documentation about deleted resources.
+	MoreInfo *string `json:"more_info" validate:"required"`
+}
+
+// UnmarshalDeleted unmarshals an instance of Deleted from the specified map of raw messages.
+func UnmarshalDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Deleted)
+	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// DenyPrivatePathServiceGatewayEndpointGatewayBindingOptions : The DenyPrivatePathServiceGatewayEndpointGatewayBinding options.
+type DenyPrivatePathServiceGatewayEndpointGatewayBindingOptions struct {
+	// The private path service gateway identifier.
+	PrivatePathServiceGatewayID *string `json:"private_path_service_gateway_id" validate:"required,ne="`
+
+	// The endpoint gateway binding identifier.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Indicates whether this will become the access policy for any `pending` and future endpoint gateway bindings from the
+	// same account.
+	//
+	// If set to `true`:
+	// - If the account has an existing access policy, that policy will be updated to `deny`.
+	//   Otherwise, a new `deny` access policy will be created for the account.
+	// - All `pending` endpoint gateway bindings for the account will be denied.
+	//
+	// If set to `false`:
+	// - No access policies will be created or updated
+	// - All `pending` endpoint gateway bindings for the account will remain `pending`.
+	SetAccountPolicy *bool `json:"set_account_policy,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewDenyPrivatePathServiceGatewayEndpointGatewayBindingOptions : Instantiate DenyPrivatePathServiceGatewayEndpointGatewayBindingOptions
+func (*VpcV1) NewDenyPrivatePathServiceGatewayEndpointGatewayBindingOptions(privatePathServiceGatewayID string, id string) *DenyPrivatePathServiceGatewayEndpointGatewayBindingOptions {
+	return &DenyPrivatePathServiceGatewayEndpointGatewayBindingOptions{
+		PrivatePathServiceGatewayID: core.StringPtr(privatePathServiceGatewayID),
+		ID:                          core.StringPtr(id),
+	}
+}
+
+// SetPrivatePathServiceGatewayID : Allow user to set PrivatePathServiceGatewayID
+func (_options *DenyPrivatePathServiceGatewayEndpointGatewayBindingOptions) SetPrivatePathServiceGatewayID(privatePathServiceGatewayID string) *DenyPrivatePathServiceGatewayEndpointGatewayBindingOptions {
+	_options.PrivatePathServiceGatewayID = core.StringPtr(privatePathServiceGatewayID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *DenyPrivatePathServiceGatewayEndpointGatewayBindingOptions) SetID(id string) *DenyPrivatePathServiceGatewayEndpointGatewayBindingOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetSetAccountPolicy : Allow user to set SetAccountPolicy
+func (_options *DenyPrivatePathServiceGatewayEndpointGatewayBindingOptions) SetSetAccountPolicy(setAccountPolicy bool) *DenyPrivatePathServiceGatewayEndpointGatewayBindingOptions {
+	_options.SetAccountPolicy = core.BoolPtr(setAccountPolicy)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DenyPrivatePathServiceGatewayEndpointGatewayBindingOptions) SetHeaders(param map[string]string) *DenyPrivatePathServiceGatewayEndpointGatewayBindingOptions {
+	options.Headers = param
+	return options
+}
+
 // DeprecateImageOptions : The DeprecateImage options.
 type DeprecateImageOptions struct {
 	// The image identifier.
@@ -46070,7 +47815,7 @@ func UnmarshalEndpointGateway(m map[string]json.RawMessage, result interface{}) 
 
 // EndpointGatewayCollection : EndpointGatewayCollection struct
 type EndpointGatewayCollection struct {
-	// Collection of endpoint gateways.
+	// A page of endpoint gateways.
 	EndpointGateways []EndpointGateway `json:"endpoint_gateways" validate:"required"`
 
 	// A link to the first page of resources.
@@ -46173,6 +47918,9 @@ func UnmarshalEndpointGatewayCollectionNext(m map[string]json.RawMessage, result
 // EndpointGatewayLifecycleReason : EndpointGatewayLifecycleReason struct
 type EndpointGatewayLifecycleReason struct {
 	// A reason code for this lifecycle state:
+	// - `access_denied`: endpoint gateway access was denied
+	// - `access_expired`: endpoint gateway access has expired
+	// - `access_pending`: endpoint gateway access is pending
 	// - `dns_resolution_binding_pending`: the DNS resolution binding is being set up
 	// - `internal_error`: internal error (contact IBM support)
 	// - `resource_suspended_by_provider`: The resource has been suspended (contact IBM
@@ -46191,6 +47939,9 @@ type EndpointGatewayLifecycleReason struct {
 
 // Constants associated with the EndpointGatewayLifecycleReason.Code property.
 // A reason code for this lifecycle state:
+//   - `access_denied`: endpoint gateway access was denied
+//   - `access_expired`: endpoint gateway access has expired
+//   - `access_pending`: endpoint gateway access is pending
 //   - `dns_resolution_binding_pending`: the DNS resolution binding is being set up
 //   - `internal_error`: internal error (contact IBM support)
 //   - `resource_suspended_by_provider`: The resource has been suspended (contact IBM
@@ -46199,6 +47950,9 @@ type EndpointGatewayLifecycleReason struct {
 // The enumerated values for this property may
 // [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
+	EndpointGatewayLifecycleReasonCodeAccessDeniedConst                = "access_denied"
+	EndpointGatewayLifecycleReasonCodeAccessExpiredConst               = "access_expired"
+	EndpointGatewayLifecycleReasonCodeAccessPendingConst               = "access_pending"
 	EndpointGatewayLifecycleReasonCodeDnsResolutionBindingPendingConst = "dns_resolution_binding_pending"
 	EndpointGatewayLifecycleReasonCodeInternalErrorConst               = "internal_error"
 	EndpointGatewayLifecycleReasonCodeResourceSuspendedByProviderConst = "resource_suspended_by_provider"
@@ -46266,25 +48020,6 @@ func (endpointGatewayPatch *EndpointGatewayPatch) AsPatch() (_patch map[string]i
 	if err != nil {
 		err = core.SDKErrorf(err, "", "unmarshal-patch-data-error", common.GetComponentInfo())
 	}
-	return
-}
-
-// EndpointGatewayReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type EndpointGatewayReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalEndpointGatewayReferenceDeleted unmarshals an instance of EndpointGatewayReferenceDeleted from the specified map of raw messages.
-func UnmarshalEndpointGatewayReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(EndpointGatewayReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
@@ -46460,24 +48195,39 @@ func UnmarshalEndpointGatewayReservedIP(m map[string]json.RawMessage, result int
 
 // EndpointGatewayTarget : The target for this endpoint gateway.
 // Models which "extend" this model:
+// - EndpointGatewayTargetPrivatePathServiceGatewayReference
 // - EndpointGatewayTargetProviderCloudServiceReference
 // - EndpointGatewayTargetProviderInfrastructureServiceReference
 type EndpointGatewayTarget struct {
-	// The CRN for this provider cloud service, or the CRN for the user's instance of a provider cloud service.
+	// The CRN for this private path service gateway.
 	CRN *string `json:"crn,omitempty"`
 
-	// The type of target.
-	ResourceType *string `json:"resource_type,omitempty"`
+	// If present, this property indicates the referenced resource has been deleted, and provides
+	// some supplementary information.
+	Deleted *Deleted `json:"deleted,omitempty"`
 
-	// The name of a provider infrastructure service. Must be:
-	// - `ibm-ntp-server`: An NTP (Network Time Protocol) server provided by IBM.
+	// The URL for this private path service gateway.
+	Href *string `json:"href,omitempty"`
+
+	// The unique identifier for this private path service gateway.
+	ID *string `json:"id,omitempty"`
+
+	// The name for this private path service gateway. The name is unique across all private path service gateways in the
+	// VPC.
 	Name *string `json:"name,omitempty"`
+
+	// If present, this property indicates that the resource associated with this reference
+	// is remote and therefore may not be directly retrievable.
+	Remote *PrivatePathServiceGatewayRemote `json:"remote,omitempty"`
+
+	// The resource type.
+	ResourceType *string `json:"resource_type,omitempty"`
 }
 
 // Constants associated with the EndpointGatewayTarget.ResourceType property.
-// The type of target.
+// The resource type.
 const (
-	EndpointGatewayTargetResourceTypeProviderCloudServiceConst = "provider_cloud_service"
+	EndpointGatewayTargetResourceTypePrivatePathServiceGatewayConst = "private_path_service_gateway"
 )
 
 func (*EndpointGatewayTarget) isaEndpointGatewayTarget() bool {
@@ -46496,9 +48246,19 @@ func UnmarshalEndpointGatewayTarget(m map[string]json.RawMessage, result interfa
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
-		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
+		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
@@ -46506,19 +48266,34 @@ func UnmarshalEndpointGatewayTarget(m map[string]json.RawMessage, result interfa
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalModel(m, "remote", &obj.Remote, UnmarshalPrivatePathServiceGatewayRemote)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "remote-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// EndpointGatewayTargetPrototype : The target to use for this endpoint gateway. Must not already be the target of another endpoint gateway in the VPC.
+// EndpointGatewayTargetPrototype : The target to use for this endpoint gateway. The target:
+//   - Must not already be the target of another endpoint gateway in the VPC
+//   - Must not have a service endpoint that duplicates or overlaps with any `service_endpoints`
+//     of another endpoint gateway in the VPC.
+//
 // Models which "extend" this model:
-// - EndpointGatewayTargetPrototypeProviderCloudServiceIdentity
-// - EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentity
+// - EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypePrivatePathServiceGatewayPrototype
+// - EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderCloudServicePrototype
+// - EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderInfrastructureServicePrototype
 type EndpointGatewayTargetPrototype struct {
 	// The type of target for this endpoint gateway.
 	ResourceType *string `json:"resource_type" validate:"required"`
 
-	// The CRN for this provider cloud service, or the CRN for the user's instance of a provider cloud service.
+	// The CRN for this private path service gateway.
 	CRN *string `json:"crn,omitempty"`
 
 	// The name of a provider infrastructure service. Must be:
@@ -46529,6 +48304,7 @@ type EndpointGatewayTargetPrototype struct {
 // Constants associated with the EndpointGatewayTargetPrototype.ResourceType property.
 // The type of target for this endpoint gateway.
 const (
+	EndpointGatewayTargetPrototypeResourceTypePrivatePathServiceGatewayConst     = "private_path_service_gateway"
 	EndpointGatewayTargetPrototypeResourceTypeProviderCloudServiceConst          = "provider_cloud_service"
 	EndpointGatewayTargetPrototypeResourceTypeProviderInfrastructureServiceConst = "provider_infrastructure_service"
 )
@@ -46543,32 +48319,23 @@ type EndpointGatewayTargetPrototypeIntf interface {
 
 // UnmarshalEndpointGatewayTargetPrototype unmarshals an instance of EndpointGatewayTargetPrototype from the specified map of raw messages.
 func UnmarshalEndpointGatewayTargetPrototype(m map[string]json.RawMessage, result interface{}) (err error) {
-	// Retrieve discriminator value to determine correct "subclass".
-	var discValue string
-	err = core.UnmarshalPrimitive(m, "resource_type", &discValue)
+	obj := new(EndpointGatewayTargetPrototype)
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
 	if err != nil {
-		errMsg := fmt.Sprintf("error unmarshalling discriminator property 'resource_type': %s", err.Error())
-		err = core.SDKErrorf(err, errMsg, "discriminator-unmarshal-error", common.GetComponentInfo())
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
 		return
 	}
-	if discValue == "" {
-		err = core.SDKErrorf(err, "required discriminator property 'resource_type' not found in JSON object", "missing-discriminator", common.GetComponentInfo())
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	if discValue == "provider_cloud_service" {
-		err = core.UnmarshalModel(m, "", result, UnmarshalEndpointGatewayTargetPrototypeProviderCloudServiceIdentity)
-		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-EndpointGatewayTargetPrototypeProviderCloudServiceIdentity-error", common.GetComponentInfo())
-		}
-	} else if discValue == "provider_infrastructure_service" {
-		err = core.UnmarshalModel(m, "", result, UnmarshalEndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentity)
-		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentity-error", common.GetComponentInfo())
-		}
-	} else {
-		errMsg := fmt.Sprintf("unrecognized value for discriminator property 'resource_type': %s", discValue)
-		err = core.SDKErrorf(err, errMsg, "invalid-discriminator", common.GetComponentInfo())
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
 	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
@@ -46661,6 +48428,9 @@ type FloatingIP struct {
 	ResourceGroup *ResourceGroupReference `json:"resource_group" validate:"required"`
 
 	// The status of the floating IP.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 
 	// The target of this floating IP.
@@ -46672,6 +48442,9 @@ type FloatingIP struct {
 
 // Constants associated with the FloatingIP.Status property.
 // The status of the floating IP.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	FloatingIPStatusAvailableConst = "available"
 	FloatingIPStatusDeletingConst  = "deleting"
@@ -46741,7 +48514,7 @@ type FloatingIPCollection struct {
 	// A link to the first page of resources.
 	First *FloatingIPCollectionFirst `json:"first" validate:"required"`
 
-	// Collection of floating IPs.
+	// A page of floating IPs.
 	FloatingIps []FloatingIP `json:"floating_ips" validate:"required"`
 
 	// The maximum number of resources that can be returned by the request.
@@ -46843,7 +48616,7 @@ type FloatingIPCollectionVirtualNetworkInterfaceContext struct {
 	// A link to the first page of resources.
 	First *FloatingIPCollectionVirtualNetworkInterfaceContextFirst `json:"first" validate:"required"`
 
-	// Collection of floating IPs bound to the virtual network interface specified by the identifier in the URL.
+	// A page of floating IPs bound to the virtual network interface specified by the identifier in the URL.
 	FloatingIps []FloatingIPReference `json:"floating_ips" validate:"required"`
 
 	// The maximum number of resources that can be returned by the request.
@@ -47061,7 +48834,7 @@ type FloatingIPReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *FloatingIPReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this floating IP.
 	Href *string `json:"href" validate:"required"`
@@ -47086,7 +48859,7 @@ func UnmarshalFloatingIPReference(m map[string]json.RawMessage, result interface
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalFloatingIPReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -47110,25 +48883,6 @@ func UnmarshalFloatingIPReference(m map[string]json.RawMessage, result interface
 	return
 }
 
-// FloatingIPReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type FloatingIPReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalFloatingIPReferenceDeleted unmarshals an instance of FloatingIPReferenceDeleted from the specified map of raw messages.
-func UnmarshalFloatingIPReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(FloatingIPReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // FloatingIPTarget : The target of this floating IP.
 // Models which "extend" this model:
 // - FloatingIPTargetNetworkInterfaceReference
@@ -47138,7 +48892,7 @@ func UnmarshalFloatingIPReferenceDeleted(m map[string]json.RawMessage, result in
 type FloatingIPTarget struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *NetworkInterfaceReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this instance network interface.
 	//
@@ -47187,7 +48941,7 @@ type FloatingIPTargetIntf interface {
 // UnmarshalFloatingIPTarget unmarshals an instance of FloatingIPTarget from the specified map of raw messages.
 func UnmarshalFloatingIPTarget(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(FloatingIPTarget)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalNetworkInterfaceReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -47358,7 +49112,7 @@ func UnmarshalFloatingIPTargetPrototype(m map[string]json.RawMessage, result int
 
 // FloatingIPUnpaginatedCollection : FloatingIPUnpaginatedCollection struct
 type FloatingIPUnpaginatedCollection struct {
-	// Collection of floating IPs.
+	// The floating IPs.
 	FloatingIps []FloatingIP `json:"floating_ips" validate:"required"`
 }
 
@@ -47519,7 +49273,7 @@ type FlowLogCollectorCollection struct {
 	// A link to the first page of resources.
 	First *FlowLogCollectorCollectionFirst `json:"first" validate:"required"`
 
-	// Collection of flow log collectors.
+	// A page of flow log collectors.
 	FlowLogCollectors []FlowLogCollector `json:"flow_log_collectors" validate:"required"`
 
 	// The maximum number of resources that can be returned by the request.
@@ -47685,7 +49439,7 @@ func (flowLogCollectorPatch *FlowLogCollectorPatch) AsPatch() (_patch map[string
 type FlowLogCollectorTarget struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *NetworkInterfaceReferenceTargetContextDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this instance network interface.
 	//
@@ -47717,6 +49471,9 @@ type FlowLogCollectorTarget struct {
 
 	// The subnet of the virtual network interface for the instance network attachment.
 	Subnet *SubnetReference `json:"subnet,omitempty"`
+
+	// The virtual network interface for this instance network attachment.
+	VirtualNetworkInterface *VirtualNetworkInterfaceReferenceAttachmentContext `json:"virtual_network_interface,omitempty"`
 }
 
 // Constants associated with the FlowLogCollectorTarget.ResourceType property.
@@ -47736,7 +49493,7 @@ type FlowLogCollectorTargetIntf interface {
 // UnmarshalFlowLogCollectorTarget unmarshals an instance of FlowLogCollectorTarget from the specified map of raw messages.
 func UnmarshalFlowLogCollectorTarget(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(FlowLogCollectorTarget)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalNetworkInterfaceReferenceTargetContextDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -47774,6 +49531,11 @@ func UnmarshalFlowLogCollectorTarget(m map[string]json.RawMessage, result interf
 	err = core.UnmarshalModel(m, "subnet", &obj.Subnet, UnmarshalSubnetReference)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "subnet-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "virtual_network_interface", &obj.VirtualNetworkInterface, UnmarshalVirtualNetworkInterfaceReferenceAttachmentContext)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "virtual_network_interface-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -47839,25 +49601,6 @@ func UnmarshalFlowLogCollectorTargetPrototype(m map[string]json.RawMessage, resu
 	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// GenericResourceReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type GenericResourceReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalGenericResourceReferenceDeleted unmarshals an instance of GenericResourceReferenceDeleted from the specified map of raw messages.
-func UnmarshalGenericResourceReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(GenericResourceReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -49690,6 +51433,110 @@ func (options *GetPlacementGroupOptions) SetHeaders(param map[string]string) *Ge
 	return options
 }
 
+// GetPrivatePathServiceGatewayAccountPolicyOptions : The GetPrivatePathServiceGatewayAccountPolicy options.
+type GetPrivatePathServiceGatewayAccountPolicyOptions struct {
+	// The private path service gateway identifier.
+	PrivatePathServiceGatewayID *string `json:"private_path_service_gateway_id" validate:"required,ne="`
+
+	// The account policy identifier.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewGetPrivatePathServiceGatewayAccountPolicyOptions : Instantiate GetPrivatePathServiceGatewayAccountPolicyOptions
+func (*VpcV1) NewGetPrivatePathServiceGatewayAccountPolicyOptions(privatePathServiceGatewayID string, id string) *GetPrivatePathServiceGatewayAccountPolicyOptions {
+	return &GetPrivatePathServiceGatewayAccountPolicyOptions{
+		PrivatePathServiceGatewayID: core.StringPtr(privatePathServiceGatewayID),
+		ID:                          core.StringPtr(id),
+	}
+}
+
+// SetPrivatePathServiceGatewayID : Allow user to set PrivatePathServiceGatewayID
+func (_options *GetPrivatePathServiceGatewayAccountPolicyOptions) SetPrivatePathServiceGatewayID(privatePathServiceGatewayID string) *GetPrivatePathServiceGatewayAccountPolicyOptions {
+	_options.PrivatePathServiceGatewayID = core.StringPtr(privatePathServiceGatewayID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *GetPrivatePathServiceGatewayAccountPolicyOptions) SetID(id string) *GetPrivatePathServiceGatewayAccountPolicyOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetPrivatePathServiceGatewayAccountPolicyOptions) SetHeaders(param map[string]string) *GetPrivatePathServiceGatewayAccountPolicyOptions {
+	options.Headers = param
+	return options
+}
+
+// GetPrivatePathServiceGatewayEndpointGatewayBindingOptions : The GetPrivatePathServiceGatewayEndpointGatewayBinding options.
+type GetPrivatePathServiceGatewayEndpointGatewayBindingOptions struct {
+	// The private path service gateway identifier.
+	PrivatePathServiceGatewayID *string `json:"private_path_service_gateway_id" validate:"required,ne="`
+
+	// The endpoint gateway binding identifier.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewGetPrivatePathServiceGatewayEndpointGatewayBindingOptions : Instantiate GetPrivatePathServiceGatewayEndpointGatewayBindingOptions
+func (*VpcV1) NewGetPrivatePathServiceGatewayEndpointGatewayBindingOptions(privatePathServiceGatewayID string, id string) *GetPrivatePathServiceGatewayEndpointGatewayBindingOptions {
+	return &GetPrivatePathServiceGatewayEndpointGatewayBindingOptions{
+		PrivatePathServiceGatewayID: core.StringPtr(privatePathServiceGatewayID),
+		ID:                          core.StringPtr(id),
+	}
+}
+
+// SetPrivatePathServiceGatewayID : Allow user to set PrivatePathServiceGatewayID
+func (_options *GetPrivatePathServiceGatewayEndpointGatewayBindingOptions) SetPrivatePathServiceGatewayID(privatePathServiceGatewayID string) *GetPrivatePathServiceGatewayEndpointGatewayBindingOptions {
+	_options.PrivatePathServiceGatewayID = core.StringPtr(privatePathServiceGatewayID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *GetPrivatePathServiceGatewayEndpointGatewayBindingOptions) SetID(id string) *GetPrivatePathServiceGatewayEndpointGatewayBindingOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetPrivatePathServiceGatewayEndpointGatewayBindingOptions) SetHeaders(param map[string]string) *GetPrivatePathServiceGatewayEndpointGatewayBindingOptions {
+	options.Headers = param
+	return options
+}
+
+// GetPrivatePathServiceGatewayOptions : The GetPrivatePathServiceGateway options.
+type GetPrivatePathServiceGatewayOptions struct {
+	// The private path service gateway identifier.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewGetPrivatePathServiceGatewayOptions : Instantiate GetPrivatePathServiceGatewayOptions
+func (*VpcV1) NewGetPrivatePathServiceGatewayOptions(id string) *GetPrivatePathServiceGatewayOptions {
+	return &GetPrivatePathServiceGatewayOptions{
+		ID: core.StringPtr(id),
+	}
+}
+
+// SetID : Allow user to set ID
+func (_options *GetPrivatePathServiceGatewayOptions) SetID(id string) *GetPrivatePathServiceGatewayOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetPrivatePathServiceGatewayOptions) SetHeaders(param map[string]string) *GetPrivatePathServiceGatewayOptions {
+	options.Headers = param
+	return options
+}
+
 // GetPublicGatewayOptions : The GetPublicGateway options.
 type GetPublicGatewayOptions struct {
 	// The public gateway identifier.
@@ -49959,7 +51806,7 @@ type GetShareMountTargetOptions struct {
 	// The file share identifier.
 	ShareID *string `json:"share_id" validate:"required,ne="`
 
-	// The share mount target identifier.
+	// The file share mount target identifier.
 	ID *string `json:"id" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
@@ -50954,9 +52801,12 @@ func (options *GetVPNServerRouteOptions) SetHeaders(param map[string]string) *Ge
 
 // IkePolicy : IkePolicy struct
 type IkePolicy struct {
-	// The authentication algorithm
+	// The authentication algorithm.
 	//
 	// The `md5` and `sha1` algorithms have been deprecated.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	AuthenticationAlgorithm *string `json:"authentication_algorithm" validate:"required"`
 
 	// The VPN gateway connections that use this IKE policy.
@@ -50970,12 +52820,15 @@ type IkePolicy struct {
 	// Groups `2` and `5` have been deprecated.
 	DhGroup *int64 `json:"dh_group" validate:"required"`
 
-	// The encryption algorithm
+	// The encryption algorithm.
 	//
 	// The `triple_des` algorithm has been deprecated.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	EncryptionAlgorithm *string `json:"encryption_algorithm" validate:"required"`
 
-	// The IKE policy's canonical URL.
+	// The URL for this IKE policy.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this IKE policy.
@@ -50990,7 +52843,10 @@ type IkePolicy struct {
 	// The name for this IKE policy. The name is unique across all IKE policies in the region.
 	Name *string `json:"name" validate:"required"`
 
-	// The IKE negotiation mode. Only `main` is supported.
+	// The IKE negotiation mode.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	NegotiationMode *string `json:"negotiation_mode" validate:"required"`
 
 	// The resource group for this IKE policy.
@@ -51001,9 +52857,12 @@ type IkePolicy struct {
 }
 
 // Constants associated with the IkePolicy.AuthenticationAlgorithm property.
-// The authentication algorithm
+// The authentication algorithm.
 //
 // The `md5` and `sha1` algorithms have been deprecated.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	IkePolicyAuthenticationAlgorithmMd5Const    = "md5"
 	IkePolicyAuthenticationAlgorithmSha1Const   = "sha1"
@@ -51013,9 +52872,12 @@ const (
 )
 
 // Constants associated with the IkePolicy.EncryptionAlgorithm property.
-// The encryption algorithm
+// The encryption algorithm.
 //
 // The `triple_des` algorithm has been deprecated.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	IkePolicyEncryptionAlgorithmAes128Const    = "aes128"
 	IkePolicyEncryptionAlgorithmAes192Const    = "aes192"
@@ -51024,7 +52886,10 @@ const (
 )
 
 // Constants associated with the IkePolicy.NegotiationMode property.
-// The IKE negotiation mode. Only `main` is supported.
+// The IKE negotiation mode.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	IkePolicyNegotiationModeMainConst = "main"
 )
@@ -51112,7 +52977,7 @@ type IkePolicyCollection struct {
 	// A link to the first page of resources.
 	First *IkePolicyCollectionFirst `json:"first" validate:"required"`
 
-	// Collection of IKE policies.
+	// A page of IKE policies.
 	IkePolicies []IkePolicy `json:"ike_policies" validate:"required"`
 
 	// The maximum number of resources that can be returned by the request.
@@ -51175,7 +53040,7 @@ func (resp *IkePolicyCollection) GetNextStart() (*string, error) {
 
 // IkePolicyConnectionCollection : IkePolicyConnectionCollection struct
 type IkePolicyConnectionCollection struct {
-	// Collection of VPN gateway connections that use a specified IKE policy specified by the identifier in the URL.
+	// A page of VPN gateway connections that use the IKE policy specified by the identifier in the URL.
 	Connections []VPNGatewayConnectionIntf `json:"connections" validate:"required"`
 
 	// A link to the first page of resources.
@@ -51330,9 +53195,9 @@ func (ikePolicyPatch *IkePolicyPatch) AsPatch() (_patch map[string]interface{}, 
 type IkePolicyReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *IkePolicyReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
-	// The IKE policy's canonical URL.
+	// The URL for this IKE policy.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this IKE policy.
@@ -51354,7 +53219,7 @@ const (
 // UnmarshalIkePolicyReference unmarshals an instance of IkePolicyReference from the specified map of raw messages.
 func UnmarshalIkePolicyReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(IkePolicyReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalIkePolicyReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -51422,8 +53287,8 @@ type IPsecPolicy struct {
 	//
 	// The `md5` and `sha1` algorithms have been deprecated
 	//
-	// Must be `disabled` if and only if the `encryption_algorithm` is
-	// `aes128gcm16`, `aes192gcm16`, or `aes256gcm16`.
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	AuthenticationAlgorithm *string `json:"authentication_algorithm" validate:"required"`
 
 	// The VPN gateway connections that use this IPsec policy.
@@ -51432,19 +53297,21 @@ type IPsecPolicy struct {
 	// The date and time that this IPsec policy was created.
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
-	// The encapsulation mode used. Only `tunnel` is supported.
+	// The encapsulation mode used.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	EncapsulationMode *string `json:"encapsulation_mode" validate:"required"`
 
 	// The encryption algorithm
 	//
 	// The `triple_des` algorithm has been deprecated
 	//
-	// The `authentication_algorithm` must be `disabled` if and only if
-	// `encryption_algorithm` is `aes128gcm16`, `aes192gcm16`, or
-	// `aes256gcm16`.
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	EncryptionAlgorithm *string `json:"encryption_algorithm" validate:"required"`
 
-	// The IPsec policy's canonical URL.
+	// The URL for this IPsec policy.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this IPsec policy.
@@ -51456,9 +53323,12 @@ type IPsecPolicy struct {
 	// The name for this IPsec policy. The name is unique across all IPsec policies in the region.
 	Name *string `json:"name" validate:"required"`
 
-	// Perfect Forward Secrecy
+	// The Perfect Forward Secrecy group
 	//
-	// Groups `group_2` and `group_5` have been deprecated.
+	// Groups `group_2` and `group_5` have been deprecated
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Pfs *string `json:"pfs" validate:"required"`
 
 	// The resource group for this IPsec policy.
@@ -51467,7 +53337,10 @@ type IPsecPolicy struct {
 	// The resource type.
 	ResourceType *string `json:"resource_type" validate:"required"`
 
-	// The transform protocol used. Only `esp` is supported.
+	// The transform protocol used.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	TransformProtocol *string `json:"transform_protocol" validate:"required"`
 }
 
@@ -51476,8 +53349,8 @@ type IPsecPolicy struct {
 //
 // # The `md5` and `sha1` algorithms have been deprecated
 //
-// Must be `disabled` if and only if the `encryption_algorithm` is
-// `aes128gcm16`, `aes192gcm16`, or `aes256gcm16`.
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	IPsecPolicyAuthenticationAlgorithmDisabledConst = "disabled"
 	IPsecPolicyAuthenticationAlgorithmMd5Const      = "md5"
@@ -51488,7 +53361,10 @@ const (
 )
 
 // Constants associated with the IPsecPolicy.EncapsulationMode property.
-// The encapsulation mode used. Only `tunnel` is supported.
+// The encapsulation mode used.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	IPsecPolicyEncapsulationModeTunnelConst = "tunnel"
 )
@@ -51498,9 +53374,8 @@ const (
 //
 // The `triple_des` algorithm has been deprecated
 //
-// The `authentication_algorithm` must be `disabled` if and only if
-// `encryption_algorithm` is `aes128gcm16`, `aes192gcm16`, or
-// `aes256gcm16`.
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	IPsecPolicyEncryptionAlgorithmAes128Const      = "aes128"
 	IPsecPolicyEncryptionAlgorithmAes128gcm16Const = "aes128gcm16"
@@ -51512,9 +53387,12 @@ const (
 )
 
 // Constants associated with the IPsecPolicy.Pfs property.
-// Perfect Forward Secrecy
+// The Perfect Forward Secrecy group
 //
-// Groups `group_2` and `group_5` have been deprecated.
+// Groups `group_2` and `group_5` have been deprecated
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	IPsecPolicyPfsDisabledConst = "disabled"
 	IPsecPolicyPfsGroup14Const  = "group_14"
@@ -51540,7 +53418,10 @@ const (
 )
 
 // Constants associated with the IPsecPolicy.TransformProtocol property.
-// The transform protocol used. Only `esp` is supported.
+// The transform protocol used.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	IPsecPolicyTransformProtocolEspConst = "esp"
 )
@@ -51622,7 +53503,7 @@ type IPsecPolicyCollection struct {
 	// A link to the first page of resources.
 	First *IPsecPolicyCollectionFirst `json:"first" validate:"required"`
 
-	// Collection of IPsec policies.
+	// A page of IPsec policies.
 	IpsecPolicies []IPsecPolicy `json:"ipsec_policies" validate:"required"`
 
 	// The maximum number of resources that can be returned by the request.
@@ -51721,7 +53602,7 @@ func UnmarshalIPsecPolicyCollectionNext(m map[string]json.RawMessage, result int
 
 // IPsecPolicyConnectionCollection : IPsecPolicyConnectionCollection struct
 type IPsecPolicyConnectionCollection struct {
-	// Collection of VPN gateway connections that use a specified IPsec policy specified by the identifier in the URL.
+	// A page of VPN gateway connections that use the IPsec policy specified by the identifier in the URL.
 	Connections []VPNGatewayConnectionIntf `json:"connections" validate:"required"`
 
 	// A link to the first page of resources.
@@ -51825,15 +53706,18 @@ func UnmarshalIPsecPolicyConnectionCollectionNext(m map[string]json.RawMessage, 
 type IPsecPolicyPatch struct {
 	// The authentication algorithm
 	//
-	// Must be `disabled` if and only if the `encryption_algorithm` is
-	// `aes128gcm16`, `aes192gcm16`, or `aes256gcm16`.
+	// Must be `disabled` if and only if the `encryption_algorithm` is `aes128gcm16`,
+	// `aes192gcm16`, or `aes256gcm16`
+	//
+	// The `md5` and `sha1` algorithms have been deprecated.
 	AuthenticationAlgorithm *string `json:"authentication_algorithm,omitempty"`
 
 	// The encryption algorithm
 	//
 	// The `authentication_algorithm` must be `disabled` if and only if
-	// `encryption_algorithm` is `aes128gcm16`, `aes192gcm16`, or
-	// `aes256gcm16`.
+	// `encryption_algorithm` is `aes128gcm16`, `aes192gcm16`, or `aes256gcm16`
+	//
+	// The `triple_des` algorithm has been deprecated.
 	EncryptionAlgorithm *string `json:"encryption_algorithm,omitempty"`
 
 	// The key lifetime in seconds.
@@ -51842,15 +53726,19 @@ type IPsecPolicyPatch struct {
 	// The name for this IPsec policy. The name must not be used by another IPsec policy in the region.
 	Name *string `json:"name,omitempty"`
 
-	// Perfect Forward Secrecy.
+	// The Perfect Forward Secrecy group.
+	//
+	// Groups `group_2` and `group_5` have been deprecated.
 	Pfs *string `json:"pfs,omitempty"`
 }
 
 // Constants associated with the IPsecPolicyPatch.AuthenticationAlgorithm property.
 // The authentication algorithm
 //
-// Must be `disabled` if and only if the `encryption_algorithm` is
-// `aes128gcm16`, `aes192gcm16`, or `aes256gcm16`.
+// Must be `disabled` if and only if the `encryption_algorithm` is `aes128gcm16`,
+// `aes192gcm16`, or `aes256gcm16`
+//
+// The `md5` and `sha1` algorithms have been deprecated.
 const (
 	IPsecPolicyPatchAuthenticationAlgorithmDisabledConst = "disabled"
 	IPsecPolicyPatchAuthenticationAlgorithmSha256Const   = "sha256"
@@ -51862,8 +53750,9 @@ const (
 // The encryption algorithm
 //
 // The `authentication_algorithm` must be `disabled` if and only if
-// `encryption_algorithm` is `aes128gcm16`, `aes192gcm16`, or
-// `aes256gcm16`.
+// `encryption_algorithm` is `aes128gcm16`, `aes192gcm16`, or `aes256gcm16`
+//
+// The `triple_des` algorithm has been deprecated.
 const (
 	IPsecPolicyPatchEncryptionAlgorithmAes128Const      = "aes128"
 	IPsecPolicyPatchEncryptionAlgorithmAes128gcm16Const = "aes128gcm16"
@@ -51874,7 +53763,9 @@ const (
 )
 
 // Constants associated with the IPsecPolicyPatch.Pfs property.
-// Perfect Forward Secrecy.
+// The Perfect Forward Secrecy group.
+//
+// Groups `group_2` and `group_5` have been deprecated.
 const (
 	IPsecPolicyPatchPfsDisabledConst = "disabled"
 	IPsecPolicyPatchPfsGroup14Const  = "group_14"
@@ -51940,9 +53831,9 @@ func (iPsecPolicyPatch *IPsecPolicyPatch) AsPatch() (_patch map[string]interface
 type IPsecPolicyReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *IPsecPolicyReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
-	// The IPsec policy's canonical URL.
+	// The URL for this IPsec policy.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this IPsec policy.
@@ -51964,7 +53855,7 @@ const (
 // UnmarshalIPsecPolicyReference unmarshals an instance of IPsecPolicyReference from the specified map of raw messages.
 func UnmarshalIPsecPolicyReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(IPsecPolicyReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalIPsecPolicyReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -51987,25 +53878,6 @@ func UnmarshalIPsecPolicyReference(m map[string]json.RawMessage, result interfac
 	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// IPsecPolicyReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type IPsecPolicyReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalIPsecPolicyReferenceDeleted unmarshals an instance of IPsecPolicyReferenceDeleted from the specified map of raw messages.
-func UnmarshalIPsecPolicyReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(IPsecPolicyReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -52078,25 +53950,6 @@ func UnmarshalIkePolicyConnectionCollectionNext(m map[string]json.RawMessage, re
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// IkePolicyReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type IkePolicyReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalIkePolicyReferenceDeleted unmarshals an instance of IkePolicyReferenceDeleted from the specified map of raw messages.
-func UnmarshalIkePolicyReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(IkePolicyReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -52397,7 +54250,7 @@ type ImageCollection struct {
 	// A link to the first page of resources.
 	First *ImageCollectionFirst `json:"first" validate:"required"`
 
-	// Collection of images.
+	// A page of images.
 	Images []Image `json:"images" validate:"required"`
 
 	// The maximum number of resources that can be returned by the request.
@@ -52525,7 +54378,7 @@ type ImageExportJob struct {
 	// `storage_object.name`, or `storage_href` values.
 	Name *string `json:"name" validate:"required"`
 
-	// The type of resource referenced.
+	// The resource type.
 	ResourceType *string `json:"resource_type" validate:"required"`
 
 	// The date and time that the image export job started running.
@@ -52541,6 +54394,9 @@ type ImageExportJob struct {
 	// - `succeeded`: Export job was completed successfully
 	//
 	// The exported image object is automatically deleted for `failed` jobs.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 
 	// The reasons for the current status (if any).
@@ -52569,7 +54425,7 @@ const (
 )
 
 // Constants associated with the ImageExportJob.ResourceType property.
-// The type of resource referenced.
+// The resource type.
 const (
 	ImageExportJobResourceTypeImageExportJobConst = "image_export_job"
 )
@@ -52583,6 +54439,9 @@ const (
 // - `succeeded`: Export job was completed successfully
 //
 // The exported image object is automatically deleted for `failed` jobs.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	ImageExportJobStatusDeletingConst  = "deleting"
 	ImageExportJobStatusFailedConst    = "failed"
@@ -52750,7 +54609,7 @@ func UnmarshalImageExportJobStatusReason(m map[string]json.RawMessage, result in
 
 // ImageExportJobUnpaginatedCollection : ImageExportJobUnpaginatedCollection struct
 type ImageExportJobUnpaginatedCollection struct {
-	// Collection of image export jobs.
+	// The export jobs for the image.
 	ExportJobs []ImageExportJob `json:"export_jobs" validate:"required"`
 }
 
@@ -52800,7 +54659,7 @@ func UnmarshalImageFile(m map[string]json.RawMessage, result interface{}) (err e
 
 // ImageFileChecksums : ImageFileChecksums struct
 type ImageFileChecksums struct {
-	// The SHA256 fingerprint of the image file.
+	// The SHA256 fingerprint of the image file, in hexadecimal.
 	Sha256 *string `json:"sha256,omitempty"`
 }
 
@@ -53108,7 +54967,7 @@ type ImageReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *ImageReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this image.
 	Href *string `json:"href" validate:"required"`
@@ -53141,7 +55000,7 @@ func UnmarshalImageReference(m map[string]json.RawMessage, result interface{}) (
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalImageReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -53169,25 +55028,6 @@ func UnmarshalImageReference(m map[string]json.RawMessage, result interface{}) (
 	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// ImageReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type ImageReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalImageReferenceDeleted unmarshals an instance of ImageReferenceDeleted from the specified map of raw messages.
-func UnmarshalImageReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ImageReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -53362,6 +55202,9 @@ type Instance struct {
 	LifecycleState *string `json:"lifecycle_state" validate:"required"`
 
 	// The amount of memory, truncated to whole gibibytes.
+	//
+	// The maximum limit for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Memory *int64 `json:"memory" validate:"required"`
 
 	// The metadata service configuration.
@@ -54000,7 +55843,7 @@ type InstanceCollection struct {
 	// A link to the first page of resources.
 	First *InstanceCollectionFirst `json:"first" validate:"required"`
 
-	// Collection of virtual server instances.
+	// A page of virtual server instances.
 	Instances []Instance `json:"instances" validate:"required"`
 
 	// The maximum number of resources that can be returned by the request.
@@ -54290,7 +56133,7 @@ func UnmarshalInstanceDisk(m map[string]json.RawMessage, result interface{}) (er
 
 // InstanceDiskCollection : InstanceDiskCollection struct
 type InstanceDiskCollection struct {
-	// Collection of the instance's disks.
+	// The disks for the instance.
 	Disks []InstanceDisk `json:"disks" validate:"required"`
 }
 
@@ -54341,7 +56184,7 @@ func (instanceDiskPatch *InstanceDiskPatch) AsPatch() (_patch map[string]interfa
 type InstanceDiskReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *InstanceDiskReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this instance disk.
 	Href *string `json:"href" validate:"required"`
@@ -54365,7 +56208,7 @@ const (
 // UnmarshalInstanceDiskReference unmarshals an instance of InstanceDiskReference from the specified map of raw messages.
 func UnmarshalInstanceDiskReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(InstanceDiskReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalInstanceDiskReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -54388,25 +56231,6 @@ func UnmarshalInstanceDiskReference(m map[string]json.RawMessage, result interfa
 	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// InstanceDiskReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type InstanceDiskReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalInstanceDiskReferenceDeleted unmarshals an instance of InstanceDiskReferenceDeleted from the specified map of raw messages.
-func UnmarshalInstanceDiskReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(InstanceDiskReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -54503,7 +56327,10 @@ type InstanceGroup struct {
 	// - `healthy`: Group has `membership_count` instances
 	// - `scaling`: Instances in the group are being created or deleted to reach
 	//              `membership_count`
-	// - `unhealthy`: Group is unable to reach `membership_count` instances.
+	// - `unhealthy`: Group is unable to reach `membership_count` instances
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 
 	// The subnets to use when creating new instances.
@@ -54534,7 +56361,10 @@ const (
 //   - `healthy`: Group has `membership_count` instances
 //   - `scaling`: Instances in the group are being created or deleted to reach
 //     `membership_count`
-//   - `unhealthy`: Group is unable to reach `membership_count` instances.
+//   - `unhealthy`: Group is unable to reach `membership_count` instances
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	InstanceGroupStatusDeletingConst  = "deleting"
 	InstanceGroupStatusHealthyConst   = "healthy"
@@ -54639,7 +56469,7 @@ type InstanceGroupCollection struct {
 	// A link to the first page of resources.
 	First *InstanceGroupCollectionFirst `json:"first" validate:"required"`
 
-	// Collection of instance groups.
+	// A page of instance groups.
 	InstanceGroups []InstanceGroup `json:"instance_groups" validate:"required"`
 
 	// The maximum number of resources that can be returned by the request.
@@ -54925,13 +56755,11 @@ func UnmarshalInstanceGroupManager(m map[string]json.RawMessage, result interfac
 // - InstanceGroupManagerActionScheduledAction
 type InstanceGroupManagerAction struct {
 	// Indicates whether this scheduled action will be automatically deleted after it has completed and
-	// `auto_delete_timeout` hours have passed. At present, this is always
-	// `true`, but may be modifiable in the future.
+	// `auto_delete_timeout` hours have passed.
 	AutoDelete *bool `json:"auto_delete" validate:"required"`
 
 	// If `auto_delete` is `true`, and this scheduled action has finished, the hours after which it will be automatically
-	// deleted. If the value is `0`, the action will be deleted once it has finished. This value may be modifiable in the
-	// future.
+	// deleted. If the value is `0`, the action will be deleted once it has finished.
 	AutoDeleteTimeout *int64 `json:"auto_delete_timeout" validate:"required"`
 
 	// The date and time that the instance group manager action was created.
@@ -54955,7 +56783,10 @@ type InstanceGroupManagerAction struct {
 	// - `completed`: Action was completed successfully
 	// - `failed`: Action could not be completed successfully
 	// - `incompatible`: Action parameters are not compatible with the group or manager
-	// - `omitted`: Action was not applied because this action's manager was disabled.
+	// - `omitted`: Action was not applied because this action's manager was disabled
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 
 	// The date and time that the instance group manager action was updated.
@@ -54992,7 +56823,10 @@ const (
 // - `completed`: Action was completed successfully
 // - `failed`: Action could not be completed successfully
 // - `incompatible`: Action parameters are not compatible with the group or manager
-// - `omitted`: Action was not applied because this action's manager was disabled.
+// - `omitted`: Action was not applied because this action's manager was disabled
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	InstanceGroupManagerActionStatusActiveConst       = "active"
 	InstanceGroupManagerActionStatusCompletedConst    = "completed"
@@ -55143,6 +56977,14 @@ func UnmarshalInstanceGroupManagerActionManagerPatch(m map[string]json.RawMessag
 
 // InstanceGroupManagerActionPatch : InstanceGroupManagerActionPatch struct
 type InstanceGroupManagerActionPatch struct {
+	// Indicates whether this scheduled action will be automatically deleted after it has completed and
+	// `auto_delete_timeout` hours have passed.
+	AutoDelete *bool `json:"auto_delete,omitempty"`
+
+	// If `auto_delete` is `true`, and this scheduled action has finished, the hours after which it will be automatically
+	// deleted. If the value is `0`, the action will be deleted once it has finished.
+	AutoDeleteTimeout *int64 `json:"auto_delete_timeout,omitempty"`
+
 	// The cron specification for a recurring scheduled action. Actions can be applied a maximum of one time within a 5 min
 	// period.
 	CronSpec *string `json:"cron_spec,omitempty"`
@@ -55162,6 +57004,16 @@ type InstanceGroupManagerActionPatch struct {
 // UnmarshalInstanceGroupManagerActionPatch unmarshals an instance of InstanceGroupManagerActionPatch from the specified map of raw messages.
 func UnmarshalInstanceGroupManagerActionPatch(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(InstanceGroupManagerActionPatch)
+	err = core.UnmarshalPrimitive(m, "auto_delete", &obj.AutoDelete)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "auto_delete-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "auto_delete_timeout", &obj.AutoDeleteTimeout)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "auto_delete_timeout-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "cron_spec", &obj.CronSpec)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "cron_spec-error", common.GetComponentInfo())
@@ -55268,7 +57120,7 @@ func UnmarshalInstanceGroupManagerActionPrototype(m map[string]json.RawMessage, 
 type InstanceGroupManagerActionReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *InstanceGroupManagerActionReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this instance group manager action.
 	Href *string `json:"href" validate:"required"`
@@ -55293,7 +57145,7 @@ const (
 // UnmarshalInstanceGroupManagerActionReference unmarshals an instance of InstanceGroupManagerActionReference from the specified map of raw messages.
 func UnmarshalInstanceGroupManagerActionReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(InstanceGroupManagerActionReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalInstanceGroupManagerActionReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -55322,28 +57174,9 @@ func UnmarshalInstanceGroupManagerActionReference(m map[string]json.RawMessage, 
 	return
 }
 
-// InstanceGroupManagerActionReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type InstanceGroupManagerActionReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalInstanceGroupManagerActionReferenceDeleted unmarshals an instance of InstanceGroupManagerActionReferenceDeleted from the specified map of raw messages.
-func UnmarshalInstanceGroupManagerActionReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(InstanceGroupManagerActionReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // InstanceGroupManagerActionsCollection : InstanceGroupManagerActionsCollection struct
 type InstanceGroupManagerActionsCollection struct {
-	// Collection of instance group manager actions.
+	// A page of actions for the instance group manager.
 	Actions []InstanceGroupManagerActionIntf `json:"actions" validate:"required"`
 
 	// A link to the first page of resources.
@@ -55451,7 +57284,7 @@ type InstanceGroupManagerCollection struct {
 	// The maximum number of resources that can be returned by the request.
 	Limit *int64 `json:"limit" validate:"required"`
 
-	// Collection of instance group managers.
+	// A page of managers for the instance group.
 	Managers []InstanceGroupManagerIntf `json:"managers" validate:"required"`
 
 	// A link to the next page of resources. This property is present for all pages
@@ -55636,18 +57469,27 @@ type InstanceGroupManagerPolicy struct {
 	// The date and time that the instance group manager policy was updated.
 	UpdatedAt *strfmt.DateTime `json:"updated_at" validate:"required"`
 
-	// The type of metric to be evaluated.
+	// The type of metric to be evaluated
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	MetricType *string `json:"metric_type,omitempty"`
 
 	// The metric value to be evaluated.
 	MetricValue *int64 `json:"metric_value,omitempty"`
 
-	// The type of policy for the instance group.
+	// The type of policy for the instance group
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	PolicyType *string `json:"policy_type,omitempty"`
 }
 
 // Constants associated with the InstanceGroupManagerPolicy.MetricType property.
-// The type of metric to be evaluated.
+// The type of metric to be evaluated
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	InstanceGroupManagerPolicyMetricTypeCpuConst        = "cpu"
 	InstanceGroupManagerPolicyMetricTypeMemoryConst     = "memory"
@@ -55656,7 +57498,10 @@ const (
 )
 
 // Constants associated with the InstanceGroupManagerPolicy.PolicyType property.
-// The type of policy for the instance group.
+// The type of policy for the instance group
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	InstanceGroupManagerPolicyPolicyTypeTargetConst = "target"
 )
@@ -55728,7 +57573,7 @@ type InstanceGroupManagerPolicyCollection struct {
 	// except the last page.
 	Next *InstanceGroupManagerPolicyCollectionNext `json:"next,omitempty"`
 
-	// Collection of instance group manager policies.
+	// A page of policies for the instance group manager.
 	Policies []InstanceGroupManagerPolicyIntf `json:"policies" validate:"required"`
 
 	// The total number of resources across all pages.
@@ -55947,7 +57792,7 @@ func UnmarshalInstanceGroupManagerPolicyPrototype(m map[string]json.RawMessage, 
 type InstanceGroupManagerPolicyReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *InstanceGroupManagerPolicyReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this instance group manager policy.
 	Href *string `json:"href" validate:"required"`
@@ -55963,7 +57808,7 @@ type InstanceGroupManagerPolicyReference struct {
 // UnmarshalInstanceGroupManagerPolicyReference unmarshals an instance of InstanceGroupManagerPolicyReference from the specified map of raw messages.
 func UnmarshalInstanceGroupManagerPolicyReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(InstanceGroupManagerPolicyReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalInstanceGroupManagerPolicyReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -55981,25 +57826,6 @@ func UnmarshalInstanceGroupManagerPolicyReference(m map[string]json.RawMessage, 
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// InstanceGroupManagerPolicyReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type InstanceGroupManagerPolicyReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalInstanceGroupManagerPolicyReferenceDeleted unmarshals an instance of InstanceGroupManagerPolicyReferenceDeleted from the specified map of raw messages.
-func UnmarshalInstanceGroupManagerPolicyReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(InstanceGroupManagerPolicyReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -56094,7 +57920,7 @@ func UnmarshalInstanceGroupManagerPrototype(m map[string]json.RawMessage, result
 type InstanceGroupManagerReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *InstanceGroupManagerReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this instance group manager.
 	Href *string `json:"href" validate:"required"`
@@ -56109,7 +57935,7 @@ type InstanceGroupManagerReference struct {
 // UnmarshalInstanceGroupManagerReference unmarshals an instance of InstanceGroupManagerReference from the specified map of raw messages.
 func UnmarshalInstanceGroupManagerReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(InstanceGroupManagerReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalInstanceGroupManagerReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -56127,25 +57953,6 @@ func UnmarshalInstanceGroupManagerReference(m map[string]json.RawMessage, result
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// InstanceGroupManagerReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type InstanceGroupManagerReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalInstanceGroupManagerReferenceDeleted unmarshals an instance of InstanceGroupManagerReferenceDeleted from the specified map of raw messages.
-func UnmarshalInstanceGroupManagerReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(InstanceGroupManagerReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -56206,7 +58013,7 @@ func UnmarshalInstanceGroupManagerScheduledActionGroupPrototype(m map[string]jso
 type InstanceGroupManagerScheduledActionManager struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *InstanceGroupManagerReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this instance group manager.
 	Href *string `json:"href,omitempty"`
@@ -56235,7 +58042,7 @@ type InstanceGroupManagerScheduledActionManagerIntf interface {
 // UnmarshalInstanceGroupManagerScheduledActionManager unmarshals an instance of InstanceGroupManagerScheduledActionManager from the specified map of raw messages.
 func UnmarshalInstanceGroupManagerScheduledActionManager(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(InstanceGroupManagerScheduledActionManager)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalInstanceGroupManagerReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -56349,7 +58156,10 @@ type InstanceGroupMembership struct {
 	// - `failed`: Membership was unable to maintain dependent resources
 	// - `healthy`: Membership is active and serving in the group
 	// - `pending`: Membership is waiting for dependent resources
-	// - `unhealthy`: Membership has unhealthy dependent resources.
+	// - `unhealthy`: Membership has unhealthy dependent resources
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 
 	// The date and time that the instance group membership was updated.
@@ -56362,7 +58172,10 @@ type InstanceGroupMembership struct {
 // - `failed`: Membership was unable to maintain dependent resources
 // - `healthy`: Membership is active and serving in the group
 // - `pending`: Membership is waiting for dependent resources
-// - `unhealthy`: Membership has unhealthy dependent resources.
+// - `unhealthy`: Membership has unhealthy dependent resources
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	InstanceGroupMembershipStatusDeletingConst  = "deleting"
 	InstanceGroupMembershipStatusFailedConst    = "failed"
@@ -56436,7 +58249,7 @@ type InstanceGroupMembershipCollection struct {
 	// The maximum number of resources that can be returned by the request.
 	Limit *int64 `json:"limit" validate:"required"`
 
-	// Collection of instance group memberships.
+	// A page of memberships for the instance group.
 	Memberships []InstanceGroupMembership `json:"memberships" validate:"required"`
 
 	// A link to the next page of resources. This property is present for all pages
@@ -56532,6 +58345,9 @@ func UnmarshalInstanceGroupMembershipCollectionNext(m map[string]json.RawMessage
 
 // InstanceGroupMembershipPatch : InstanceGroupMembershipPatch struct
 type InstanceGroupMembershipPatch struct {
+	// If set to true, when deleting the membership the instance will also be deleted.
+	DeleteInstanceOnMembershipDelete *bool `json:"delete_instance_on_membership_delete,omitempty"`
+
 	// The name for this instance group membership. The name must not be used by another membership for the instance group
 	// manager.
 	Name *string `json:"name,omitempty"`
@@ -56540,6 +58356,11 @@ type InstanceGroupMembershipPatch struct {
 // UnmarshalInstanceGroupMembershipPatch unmarshals an instance of InstanceGroupMembershipPatch from the specified map of raw messages.
 func UnmarshalInstanceGroupMembershipPatch(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(InstanceGroupMembershipPatch)
+	err = core.UnmarshalPrimitive(m, "delete_instance_on_membership_delete", &obj.DeleteInstanceOnMembershipDelete)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "delete_instance_on_membership_delete-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
@@ -56660,7 +58481,7 @@ type InstanceGroupReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *InstanceGroupReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this instance group.
 	Href *string `json:"href" validate:"required"`
@@ -56680,7 +58501,7 @@ func UnmarshalInstanceGroupReference(m map[string]json.RawMessage, result interf
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalInstanceGroupReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -56698,25 +58519,6 @@ func UnmarshalInstanceGroupReference(m map[string]json.RawMessage, result interf
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// InstanceGroupReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type InstanceGroupReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalInstanceGroupReferenceDeleted unmarshals an instance of InstanceGroupReferenceDeleted from the specified map of raw messages.
-func UnmarshalInstanceGroupReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(InstanceGroupReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -57205,7 +59007,7 @@ func UnmarshalInstanceNetworkAttachment(m map[string]json.RawMessage, result int
 
 // InstanceNetworkAttachmentCollection : InstanceNetworkAttachmentCollection struct
 type InstanceNetworkAttachmentCollection struct {
-	// Collection of instance network attachments.
+	// The network attachments for the instance.
 	NetworkAttachments []InstanceNetworkAttachment `json:"network_attachments" validate:"required"`
 }
 
@@ -57489,7 +59291,7 @@ func UnmarshalInstanceNetworkAttachmentPrototypeVirtualNetworkInterface(m map[st
 type InstanceNetworkAttachmentReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *InstanceNetworkAttachmentReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this instance network attachment.
 	Href *string `json:"href" validate:"required"`
@@ -57509,6 +59311,9 @@ type InstanceNetworkAttachmentReference struct {
 
 	// The subnet of the virtual network interface for the instance network attachment.
 	Subnet *SubnetReference `json:"subnet" validate:"required"`
+
+	// The virtual network interface for this instance network attachment.
+	VirtualNetworkInterface *VirtualNetworkInterfaceReferenceAttachmentContext `json:"virtual_network_interface" validate:"required"`
 }
 
 // Constants associated with the InstanceNetworkAttachmentReference.ResourceType property.
@@ -57520,7 +59325,7 @@ const (
 // UnmarshalInstanceNetworkAttachmentReference unmarshals an instance of InstanceNetworkAttachmentReference from the specified map of raw messages.
 func UnmarshalInstanceNetworkAttachmentReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(InstanceNetworkAttachmentReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalInstanceNetworkAttachmentReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -57555,23 +59360,9 @@ func UnmarshalInstanceNetworkAttachmentReference(m map[string]json.RawMessage, r
 		err = core.SDKErrorf(err, "", "subnet-error", common.GetComponentInfo())
 		return
 	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// InstanceNetworkAttachmentReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type InstanceNetworkAttachmentReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalInstanceNetworkAttachmentReferenceDeleted unmarshals an instance of InstanceNetworkAttachmentReferenceDeleted from the specified map of raw messages.
-func UnmarshalInstanceNetworkAttachmentReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(InstanceNetworkAttachmentReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
+	err = core.UnmarshalModel(m, "virtual_network_interface", &obj.VirtualNetworkInterface, UnmarshalVirtualNetworkInterfaceReferenceAttachmentContext)
 	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
+		err = core.SDKErrorf(err, "", "virtual_network_interface-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -57602,9 +59393,8 @@ type InstancePatch struct {
 	// region. Changing the name will not affect the system hostname.
 	Name *string `json:"name,omitempty"`
 
-	// The placement restrictions to use for the virtual server instance. For the placement
-	// restrictions to be changed, the instance `status` must be `stopping` or `stopped`.
-	//
+	// The placement restrictions to use for the virtual server instance. For the placement restrictions to be changed, the
+	// instance `status` must be `stopping` or `stopped`.
 	// If set, `reservation_affinity.policy` must be `disabled`.
 	PlacementTarget InstancePlacementTargetPatchIntf `json:"placement_target,omitempty"`
 
@@ -57764,7 +59554,7 @@ type InstancePlacementTarget struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *DedicatedHostGroupReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this dedicated host group.
 	Href *string `json:"href,omitempty"`
@@ -57801,7 +59591,7 @@ func UnmarshalInstancePlacementTarget(m map[string]json.RawMessage, result inter
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDedicatedHostGroupReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -57927,7 +59717,7 @@ type InstanceProfile struct {
 
 	ConfidentialComputeModes *InstanceProfileSupportedConfidentialComputeModes `json:"confidential_compute_modes" validate:"required"`
 
-	// Collection of the instance profile's disks.
+	// The disks for an instance with this profile.
 	Disks []InstanceProfileDisk `json:"disks" validate:"required"`
 
 	// The product family this virtual server instance profile belongs to.
@@ -57971,9 +59761,9 @@ type InstanceProfile struct {
 	//   usable.
 	// - `current`:  This profile is the latest revision.
 	//
-	// Revisions are indicated by the generation of an instance profile. Refer to the [profile naming conventions]
-	// (https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui#profiles-naming-rule) for information on how
-	// generations are defined within an instance profile.
+	// Revisions are indicated by the generation of an instance profile. Refer to the [profile naming
+	// conventions](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui#profiles-naming-rule) for information on
+	// how generations are defined within an instance profile.
 	//
 	// The enumerated values for this property may
 	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
@@ -58000,9 +59790,9 @@ const (
 //     usable.
 //   - `current`:  This profile is the latest revision.
 //
-// Revisions are indicated by the generation of an instance profile. Refer to the [profile naming conventions]
-// (https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui#profiles-naming-rule) for information on how
-// generations are defined within an instance profile.
+// Revisions are indicated by the generation of an instance profile. Refer to the [profile naming
+// conventions](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=ui#profiles-naming-rule) for information on
+// how generations are defined within an instance profile.
 //
 // The enumerated values for this property may
 // [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
@@ -58225,7 +60015,7 @@ func UnmarshalInstanceProfileBandwidth(m map[string]json.RawMessage, result inte
 
 // InstanceProfileCollection : InstanceProfileCollection struct
 type InstanceProfileCollection struct {
-	// Collection of virtual server instance profiles.
+	// A page of virtual server instance profiles.
 	Profiles []InstanceProfile `json:"profiles" validate:"required"`
 }
 
@@ -59789,7 +61579,7 @@ type InstanceReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *InstanceReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this virtual server instance.
 	Href *string `json:"href" validate:"required"`
@@ -59809,7 +61599,7 @@ func UnmarshalInstanceReference(m map[string]json.RawMessage, result interface{}
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalInstanceReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -59827,25 +61617,6 @@ func UnmarshalInstanceReference(m map[string]json.RawMessage, result interface{}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// InstanceReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type InstanceReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalInstanceReferenceDeleted unmarshals an instance of InstanceReferenceDeleted from the specified map of raw messages.
-func UnmarshalInstanceReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(InstanceReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -60336,7 +62107,7 @@ type InstanceTemplateCollection struct {
 	// except the last page.
 	Next *InstanceTemplateCollectionNext `json:"next,omitempty"`
 
-	// Collection of instance templates.
+	// A page of instance templates.
 	Templates []InstanceTemplateIntf `json:"templates" validate:"required"`
 
 	// The total number of resources across all pages.
@@ -60760,7 +62531,7 @@ type InstanceTemplateReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *InstanceTemplateReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this instance template.
 	Href *string `json:"href" validate:"required"`
@@ -60780,7 +62551,7 @@ func UnmarshalInstanceTemplateReference(m map[string]json.RawMessage, result int
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalInstanceTemplateReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -60798,25 +62569,6 @@ func UnmarshalInstanceTemplateReference(m map[string]json.RawMessage, result int
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// InstanceTemplateReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type InstanceTemplateReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalInstanceTemplateReferenceDeleted unmarshals an instance of InstanceTemplateReferenceDeleted from the specified map of raw messages.
-func UnmarshalInstanceTemplateReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(InstanceTemplateReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -60888,12 +62640,18 @@ type Key struct {
 	// The resource group for this key.
 	ResourceGroup *ResourceGroupReference `json:"resource_group" validate:"required"`
 
-	// The crypto-system used by this key.
+	// The crypto-system for this key.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Type *string `json:"type" validate:"required"`
 }
 
 // Constants associated with the Key.Type property.
-// The crypto-system used by this key.
+// The crypto-system for this key.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	KeyTypeEd25519Const = "ed25519"
 	KeyTypeRsaConst     = "rsa"
@@ -60961,7 +62719,7 @@ type KeyCollection struct {
 	// A link to the first page of resources.
 	First *KeyCollectionFirst `json:"first" validate:"required"`
 
-	// Collection of keys.
+	// A page of keys.
 	Keys []Key `json:"keys" validate:"required"`
 
 	// The maximum number of resources that can be returned by the request.
@@ -61152,7 +62910,7 @@ type KeyReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *KeyReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The fingerprint for this key.  The value is returned base64-encoded and prefixed with the hash algorithm (always
 	// `SHA256`).
@@ -61176,7 +62934,7 @@ func UnmarshalKeyReference(m map[string]json.RawMessage, result interface{}) (er
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalKeyReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -61199,25 +62957,6 @@ func UnmarshalKeyReference(m map[string]json.RawMessage, result interface{}) (er
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// KeyReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type KeyReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalKeyReferenceDeleted unmarshals an instance of KeyReferenceDeleted from the specified map of raw messages.
-func UnmarshalKeyReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(KeyReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -62079,6 +63818,10 @@ type ListEndpointGatewaysOptions struct {
 	// Filters the collection to resources with a `resource_group.id` property matching the specified identifier.
 	ResourceGroupID *string `json:"resource_group.id,omitempty"`
 
+	// Filters the collection to resources with a `lifecycle_state` property matching one of the specified comma-separated
+	// values.
+	LifecycleState []string `json:"lifecycle_state,omitempty"`
+
 	// Filters the collection to resources with a `vpc.id` property matching the specified identifier.
 	VPCID *string `json:"vpc.id,omitempty"`
 
@@ -62095,6 +63838,17 @@ type ListEndpointGatewaysOptions struct {
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
+
+// Constants associated with the ListEndpointGatewaysOptions.LifecycleState property.
+const (
+	ListEndpointGatewaysOptionsLifecycleStateDeletingConst  = "deleting"
+	ListEndpointGatewaysOptionsLifecycleStateFailedConst    = "failed"
+	ListEndpointGatewaysOptionsLifecycleStatePendingConst   = "pending"
+	ListEndpointGatewaysOptionsLifecycleStateStableConst    = "stable"
+	ListEndpointGatewaysOptionsLifecycleStateSuspendedConst = "suspended"
+	ListEndpointGatewaysOptionsLifecycleStateUpdatingConst  = "updating"
+	ListEndpointGatewaysOptionsLifecycleStateWaitingConst   = "waiting"
+)
 
 // NewListEndpointGatewaysOptions : Instantiate ListEndpointGatewaysOptions
 func (*VpcV1) NewListEndpointGatewaysOptions() *ListEndpointGatewaysOptions {
@@ -62122,6 +63876,12 @@ func (_options *ListEndpointGatewaysOptions) SetLimit(limit int64) *ListEndpoint
 // SetResourceGroupID : Allow user to set ResourceGroupID
 func (_options *ListEndpointGatewaysOptions) SetResourceGroupID(resourceGroupID string) *ListEndpointGatewaysOptions {
 	_options.ResourceGroupID = core.StringPtr(resourceGroupID)
+	return _options
+}
+
+// SetLifecycleState : Allow user to set LifecycleState
+func (_options *ListEndpointGatewaysOptions) SetLifecycleState(lifecycleState []string) *ListEndpointGatewaysOptions {
+	_options.LifecycleState = lifecycleState
 	return _options
 }
 
@@ -63828,6 +65588,179 @@ func (_options *ListPlacementGroupsOptions) SetLimit(limit int64) *ListPlacement
 
 // SetHeaders : Allow user to set Headers
 func (options *ListPlacementGroupsOptions) SetHeaders(param map[string]string) *ListPlacementGroupsOptions {
+	options.Headers = param
+	return options
+}
+
+// ListPrivatePathServiceGatewayAccountPoliciesOptions : The ListPrivatePathServiceGatewayAccountPolicies options.
+type ListPrivatePathServiceGatewayAccountPoliciesOptions struct {
+	// The private path service gateway identifier.
+	PrivatePathServiceGatewayID *string `json:"private_path_service_gateway_id" validate:"required,ne="`
+
+	// A server-provided token determining what resource to start the page on.
+	Start *string `json:"start,omitempty"`
+
+	// The number of resources to return on a page.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Filters the collection to resources with an `account.id` property matching the specified identifier.
+	AccountID *string `json:"account.id,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewListPrivatePathServiceGatewayAccountPoliciesOptions : Instantiate ListPrivatePathServiceGatewayAccountPoliciesOptions
+func (*VpcV1) NewListPrivatePathServiceGatewayAccountPoliciesOptions(privatePathServiceGatewayID string) *ListPrivatePathServiceGatewayAccountPoliciesOptions {
+	return &ListPrivatePathServiceGatewayAccountPoliciesOptions{
+		PrivatePathServiceGatewayID: core.StringPtr(privatePathServiceGatewayID),
+	}
+}
+
+// SetPrivatePathServiceGatewayID : Allow user to set PrivatePathServiceGatewayID
+func (_options *ListPrivatePathServiceGatewayAccountPoliciesOptions) SetPrivatePathServiceGatewayID(privatePathServiceGatewayID string) *ListPrivatePathServiceGatewayAccountPoliciesOptions {
+	_options.PrivatePathServiceGatewayID = core.StringPtr(privatePathServiceGatewayID)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *ListPrivatePathServiceGatewayAccountPoliciesOptions) SetStart(start string) *ListPrivatePathServiceGatewayAccountPoliciesOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListPrivatePathServiceGatewayAccountPoliciesOptions) SetLimit(limit int64) *ListPrivatePathServiceGatewayAccountPoliciesOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *ListPrivatePathServiceGatewayAccountPoliciesOptions) SetAccountID(accountID string) *ListPrivatePathServiceGatewayAccountPoliciesOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListPrivatePathServiceGatewayAccountPoliciesOptions) SetHeaders(param map[string]string) *ListPrivatePathServiceGatewayAccountPoliciesOptions {
+	options.Headers = param
+	return options
+}
+
+// ListPrivatePathServiceGatewayEndpointGatewayBindingsOptions : The ListPrivatePathServiceGatewayEndpointGatewayBindings options.
+type ListPrivatePathServiceGatewayEndpointGatewayBindingsOptions struct {
+	// The private path service gateway identifier.
+	PrivatePathServiceGatewayID *string `json:"private_path_service_gateway_id" validate:"required,ne="`
+
+	// A server-provided token determining what resource to start the page on.
+	Start *string `json:"start,omitempty"`
+
+	// The number of resources to return on a page.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Filters the collection to endpoint gateway bindings with a `status` property matching the specified value.
+	Status *string `json:"status,omitempty"`
+
+	// Filters the collection to resources with an `account.id` property matching the specified identifier.
+	AccountID *string `json:"account.id,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// Constants associated with the ListPrivatePathServiceGatewayEndpointGatewayBindingsOptions.Status property.
+// Filters the collection to endpoint gateway bindings with a `status` property matching the specified value.
+const (
+	ListPrivatePathServiceGatewayEndpointGatewayBindingsOptionsStatusAbandonedConst = "abandoned"
+	ListPrivatePathServiceGatewayEndpointGatewayBindingsOptionsStatusDeniedConst    = "denied"
+	ListPrivatePathServiceGatewayEndpointGatewayBindingsOptionsStatusExpiredConst   = "expired"
+	ListPrivatePathServiceGatewayEndpointGatewayBindingsOptionsStatusPendingConst   = "pending"
+	ListPrivatePathServiceGatewayEndpointGatewayBindingsOptionsStatusPermittedConst = "permitted"
+)
+
+// NewListPrivatePathServiceGatewayEndpointGatewayBindingsOptions : Instantiate ListPrivatePathServiceGatewayEndpointGatewayBindingsOptions
+func (*VpcV1) NewListPrivatePathServiceGatewayEndpointGatewayBindingsOptions(privatePathServiceGatewayID string) *ListPrivatePathServiceGatewayEndpointGatewayBindingsOptions {
+	return &ListPrivatePathServiceGatewayEndpointGatewayBindingsOptions{
+		PrivatePathServiceGatewayID: core.StringPtr(privatePathServiceGatewayID),
+	}
+}
+
+// SetPrivatePathServiceGatewayID : Allow user to set PrivatePathServiceGatewayID
+func (_options *ListPrivatePathServiceGatewayEndpointGatewayBindingsOptions) SetPrivatePathServiceGatewayID(privatePathServiceGatewayID string) *ListPrivatePathServiceGatewayEndpointGatewayBindingsOptions {
+	_options.PrivatePathServiceGatewayID = core.StringPtr(privatePathServiceGatewayID)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *ListPrivatePathServiceGatewayEndpointGatewayBindingsOptions) SetStart(start string) *ListPrivatePathServiceGatewayEndpointGatewayBindingsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListPrivatePathServiceGatewayEndpointGatewayBindingsOptions) SetLimit(limit int64) *ListPrivatePathServiceGatewayEndpointGatewayBindingsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetStatus : Allow user to set Status
+func (_options *ListPrivatePathServiceGatewayEndpointGatewayBindingsOptions) SetStatus(status string) *ListPrivatePathServiceGatewayEndpointGatewayBindingsOptions {
+	_options.Status = core.StringPtr(status)
+	return _options
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *ListPrivatePathServiceGatewayEndpointGatewayBindingsOptions) SetAccountID(accountID string) *ListPrivatePathServiceGatewayEndpointGatewayBindingsOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListPrivatePathServiceGatewayEndpointGatewayBindingsOptions) SetHeaders(param map[string]string) *ListPrivatePathServiceGatewayEndpointGatewayBindingsOptions {
+	options.Headers = param
+	return options
+}
+
+// ListPrivatePathServiceGatewaysOptions : The ListPrivatePathServiceGateways options.
+type ListPrivatePathServiceGatewaysOptions struct {
+	// A server-provided token determining what resource to start the page on.
+	Start *string `json:"start,omitempty"`
+
+	// The number of resources to return on a page.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Filters the collection to resources with a `resource_group.id` property matching the specified identifier.
+	ResourceGroupID *string `json:"resource_group.id,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewListPrivatePathServiceGatewaysOptions : Instantiate ListPrivatePathServiceGatewaysOptions
+func (*VpcV1) NewListPrivatePathServiceGatewaysOptions() *ListPrivatePathServiceGatewaysOptions {
+	return &ListPrivatePathServiceGatewaysOptions{}
+}
+
+// SetStart : Allow user to set Start
+func (_options *ListPrivatePathServiceGatewaysOptions) SetStart(start string) *ListPrivatePathServiceGatewaysOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListPrivatePathServiceGatewaysOptions) SetLimit(limit int64) *ListPrivatePathServiceGatewaysOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetResourceGroupID : Allow user to set ResourceGroupID
+func (_options *ListPrivatePathServiceGatewaysOptions) SetResourceGroupID(resourceGroupID string) *ListPrivatePathServiceGatewaysOptions {
+	_options.ResourceGroupID = core.StringPtr(resourceGroupID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListPrivatePathServiceGatewaysOptions) SetHeaders(param map[string]string) *ListPrivatePathServiceGatewaysOptions {
 	options.Headers = param
 	return options
 }
@@ -65990,22 +67923,42 @@ func (options *ListVPNServersOptions) SetHeaders(param map[string]string) *ListV
 
 // LoadBalancer : LoadBalancer struct
 type LoadBalancer struct {
+	// The access mode for this load balancer:
+	// - `private`: reachable from within its VPC, at IP addresses in `private_ips`
+	// - `private_path`: reachable through an endpoint gateway
+	// - `public`: reachable from the internet at the IP addresses in `public_ips`.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	AccessMode *string `json:"access_mode" validate:"required"`
+
+	// The availability of this load balancer:
+	// - `subnet`: remains available if at least one zone that the load balancer's subnets reside
+	//   in is available
+	// - `region`: remains available if at least one zone in the region is available.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	Availability *string `json:"availability" validate:"required"`
+
 	// The date and time that this load balancer was created.
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
-	// The load balancer's CRN.
+	// The CRN for this load balancer.
 	CRN *string `json:"crn" validate:"required"`
 
 	// The DNS configuration for this load balancer.
 	//
 	// If absent, DNS `A` records for this load balancer's `hostname` property will be added to
 	// the public DNS zone `lb.appdomain.cloud`.
+	//
+	// Not supported by private path load balancers.
 	Dns *LoadBalancerDns `json:"dns,omitempty"`
 
 	// Fully qualified domain name assigned to this load balancer.
 	Hostname *string `json:"hostname" validate:"required"`
 
-	// The load balancer's canonical URL.
+	// The URL for this load balancer.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this load balancer.
@@ -66013,6 +67966,9 @@ type LoadBalancer struct {
 
 	// Indicates whether this load balancer supports instance groups.
 	InstanceGroupsSupported *bool `json:"instance_groups_supported" validate:"required"`
+
+	// Indicates whether this is a private path load balancer.
+	IsPrivatePath *bool `json:"is_private_path" validate:"required"`
 
 	// The type of this load balancer, public or private.
 	IsPublic *bool `json:"is_public" validate:"required"`
@@ -66027,13 +67983,18 @@ type LoadBalancer struct {
 	Name *string `json:"name" validate:"required"`
 
 	// The operating status of this load balancer.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	OperatingStatus *string `json:"operating_status" validate:"required"`
 
 	// The pools of this load balancer.
 	Pools []LoadBalancerPoolReference `json:"pools" validate:"required"`
 
 	// The private IP addresses assigned to this load balancer.
-	PrivateIps []LoadBalancerPrivateIpsItem `json:"private_ips" validate:"required"`
+	//
+	// Will be empty if `is_private` is `false`.
+	PrivateIps []ReservedIPReference `json:"private_ips" validate:"required"`
 
 	// The profile for this load balancer.
 	Profile *LoadBalancerProfileReference `json:"profile" validate:"required"`
@@ -66055,7 +68016,7 @@ type LoadBalancer struct {
 
 	// The public IP addresses assigned to this load balancer.
 	//
-	// Applicable only for public load balancers.
+	// Will be empty if `is_public` is `false`.
 	PublicIps []IP `json:"public_ips" validate:"required"`
 
 	// The resource group for this load balancer.
@@ -66072,15 +68033,15 @@ type LoadBalancer struct {
 	// The security groups targeting this load balancer.
 	//
 	// If empty, all inbound and outbound traffic is allowed.
-	//
-	// Applicable only for load balancers that support security groups.
 	SecurityGroups []SecurityGroupReference `json:"security_groups" validate:"required"`
 
 	// Indicates whether this load balancer supports security groups.
 	SecurityGroupsSupported *bool `json:"security_groups_supported" validate:"required"`
 
-	// The subnets this load balancer is provisioned in.  The load balancer's availability depends on the availability of
-	// the zones that the subnets reside in.
+	// Indicates whether this load balancer supports source IP session persistence.
+	SourceIPSessionPersistenceSupported *bool `json:"source_ip_session_persistence_supported" validate:"required"`
+
+	// The subnets this load balancer is provisioned in.
 	//
 	// All subnets will be in the same VPC.
 	Subnets []SubnetReference `json:"subnets" validate:"required"`
@@ -66089,8 +68050,38 @@ type LoadBalancer struct {
 	UDPSupported *bool `json:"udp_supported" validate:"required"`
 }
 
+// Constants associated with the LoadBalancer.AccessMode property.
+// The access mode for this load balancer:
+// - `private`: reachable from within its VPC, at IP addresses in `private_ips`
+// - `private_path`: reachable through an endpoint gateway
+// - `public`: reachable from the internet at the IP addresses in `public_ips`.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+const (
+	LoadBalancerAccessModePrivateConst     = "private"
+	LoadBalancerAccessModePrivatePathConst = "private_path"
+	LoadBalancerAccessModePublicConst      = "public"
+)
+
+// Constants associated with the LoadBalancer.Availability property.
+// The availability of this load balancer:
+//   - `subnet`: remains available if at least one zone that the load balancer's subnets reside
+//     in is available
+//   - `region`: remains available if at least one zone in the region is available.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+const (
+	LoadBalancerAvailabilityRegionConst = "region"
+	LoadBalancerAvailabilitySubnetConst = "subnet"
+)
+
 // Constants associated with the LoadBalancer.OperatingStatus property.
 // The operating status of this load balancer.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	LoadBalancerOperatingStatusOfflineConst = "offline"
 	LoadBalancerOperatingStatusOnlineConst  = "online"
@@ -66129,6 +68120,16 @@ const (
 // UnmarshalLoadBalancer unmarshals an instance of LoadBalancer from the specified map of raw messages.
 func UnmarshalLoadBalancer(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(LoadBalancer)
+	err = core.UnmarshalPrimitive(m, "access_mode", &obj.AccessMode)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "access_mode-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "availability", &obj.Availability)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "availability-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
@@ -66164,6 +68165,11 @@ func UnmarshalLoadBalancer(m map[string]json.RawMessage, result interface{}) (er
 		err = core.SDKErrorf(err, "", "instance_groups_supported-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "is_private_path", &obj.IsPrivatePath)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "is_private_path-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "is_public", &obj.IsPublic)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "is_public-error", common.GetComponentInfo())
@@ -66194,7 +68200,7 @@ func UnmarshalLoadBalancer(m map[string]json.RawMessage, result interface{}) (er
 		err = core.SDKErrorf(err, "", "pools-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "private_ips", &obj.PrivateIps, UnmarshalLoadBalancerPrivateIpsItem)
+	err = core.UnmarshalModel(m, "private_ips", &obj.PrivateIps, UnmarshalReservedIPReference)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "private_ips-error", common.GetComponentInfo())
 		return
@@ -66239,6 +68245,11 @@ func UnmarshalLoadBalancer(m map[string]json.RawMessage, result interface{}) (er
 		err = core.SDKErrorf(err, "", "security_groups_supported-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "source_ip_session_persistence_supported", &obj.SourceIPSessionPersistenceSupported)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "source_ip_session_persistence_supported-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "subnets", &obj.Subnets, UnmarshalSubnetReference)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "subnets-error", common.GetComponentInfo())
@@ -66261,7 +68272,7 @@ type LoadBalancerCollection struct {
 	// The maximum number of resources that can be returned by the request.
 	Limit *int64 `json:"limit" validate:"required"`
 
-	// Collection of load balancers.
+	// A page of load balancers.
 	LoadBalancers []LoadBalancer `json:"load_balancers" validate:"required"`
 
 	// A link to the next page of resources. This property is present for all pages
@@ -66359,6 +68370,8 @@ func UnmarshalLoadBalancerCollectionNext(m map[string]json.RawMessage, result in
 //
 // If absent, DNS `A` records for this load balancer's `hostname` property will be added to the public DNS zone
 // `lb.appdomain.cloud`.
+//
+// Not supported by private path load balancers.
 type LoadBalancerDns struct {
 	// The DNS instance associated with this load balancer.
 	Instance *DnsInstanceReferenceLoadBalancerDnsContext `json:"instance" validate:"required"`
@@ -66388,6 +68401,8 @@ func UnmarshalLoadBalancerDns(m map[string]json.RawMessage, result interface{}) 
 //
 // Specify `null` to remove the existing DNS configuration, which will remove all DNS `A` records for this load balancer
 // that had been added to `zone`, and add equivalent `A` records to the public DNS zone `lb.appdomain.cloud`.
+//
+// Not supported by private path load balancers.
 type LoadBalancerDnsPatch struct {
 	// The DNS instance to associate with this load balancer.
 	//
@@ -66422,6 +68437,8 @@ func UnmarshalLoadBalancerDnsPatch(m map[string]json.RawMessage, result interfac
 //
 // If unspecified, DNS `A` records for this load balancer's `hostname` property will be added to the public DNS zone
 // `lb.appdomain.cloud`. Otherwise, those DNS `A` records will be added to the specified `zone`.
+//
+// Not supported by private path load balancers.
 type LoadBalancerDnsPrototype struct {
 	// The DNS instance to associate with this load balancer.
 	//
@@ -66474,10 +68491,10 @@ type LoadBalancerIdentity struct {
 	// The unique identifier for this load balancer.
 	ID *string `json:"id,omitempty"`
 
-	// The load balancer's CRN.
+	// The CRN for this load balancer.
 	CRN *string `json:"crn,omitempty"`
 
-	// The load balancer's canonical URL.
+	// The URL for this load balancer.
 	Href *string `json:"href,omitempty"`
 }
 
@@ -66537,7 +68554,7 @@ type LoadBalancerListener struct {
 	// If `https_redirect` is set, the default pool will not be used.
 	DefaultPool *LoadBalancerPoolReference `json:"default_pool,omitempty"`
 
-	// The listener's canonical URL.
+	// The URL for this load balancer listener.
 	Href *string `json:"href" validate:"required"`
 
 	// If present, the target listener that requests are redirected to if none of the
@@ -66689,7 +68706,7 @@ func UnmarshalLoadBalancerListener(m map[string]json.RawMessage, result interfac
 
 // LoadBalancerListenerCollection : LoadBalancerListenerCollection struct
 type LoadBalancerListenerCollection struct {
-	// Collection of listeners.
+	// The listeners for the load balancer.
 	Listeners []LoadBalancerListener `json:"listeners" validate:"required"`
 }
 
@@ -66721,7 +68738,7 @@ type LoadBalancerListenerDefaultPoolPatch struct {
 	// The unique identifier for this load balancer pool.
 	ID *string `json:"id,omitempty"`
 
-	// The pool's canonical URL.
+	// The URL for this load balancer pool.
 	Href *string `json:"href,omitempty"`
 }
 
@@ -66872,7 +68889,7 @@ type LoadBalancerListenerIdentity struct {
 	// The unique identifier for this load balancer listener.
 	ID *string `json:"id,omitempty"`
 
-	// The listener's canonical URL.
+	// The URL for this load balancer listener.
 	Href *string `json:"href,omitempty"`
 }
 
@@ -66949,9 +68966,9 @@ type LoadBalancerListenerPatch struct {
 
 	// The inclusive upper bound of the range of ports used by this listener. Must not be less than `port_min`.
 	//
-	// At present, only load balancers operating with route mode enabled, and public load balancers in the `network` family
-	// support different values for `port_min` and
-	// `port_max`. When route mode is enabled, the value `65535` must be specified.
+	// Only load balancers with route mode enabled, or network load balancers with
+	// `is_public` or `is_private_path` set to `true` support different values for `port_min` and `port_max`. When route
+	// mode is enabled, the value `65535` must be specified.
 	//
 	// The specified port range must not overlap with port ranges used by other listeners for this load balancer using the
 	// same protocol.
@@ -66959,9 +68976,9 @@ type LoadBalancerListenerPatch struct {
 
 	// The inclusive lower bound of the range of ports used by this listener. Must not be greater than `port_max`.
 	//
-	// At present, only load balancers operating with route mode enabled, and public load balancers in the `network` family
-	// support different values for `port_min` and
-	// `port_max`. When route mode is enabled, the value `1` must be specified.
+	// Only load balancers with route mode enabled, or network load balancers with
+	// `is_public` or `is_private_path` set to `true` support different values for `port_min` and `port_max`. When route
+	// mode is enabled, the value `1` must be specified.
 	//
 	// The specified port range must not overlap with port ranges used by other listeners for this load balancer using the
 	// same protocol.
@@ -67072,8 +69089,7 @@ func (loadBalancerListenerPatch *LoadBalancerListenerPatch) AsPatch() (_patch ma
 
 // LoadBalancerListenerPolicy : LoadBalancerListenerPolicy struct
 type LoadBalancerListenerPolicy struct {
-	// The policy action.
-	//
+	// The policy action:
 	// - `forward`: Requests will be forwarded to the specified `target` pool
 	// - `https_redirect`: Requests will be redirected to the specified target listener. The
 	//   listener must have a `protocol` of `http`, and the target listener must have a
@@ -67088,10 +69104,10 @@ type LoadBalancerListenerPolicy struct {
 	// The date and time that this policy was created.
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
-	// The listener policy's canonical URL.
+	// The URL for this load balancer policy.
 	Href *string `json:"href" validate:"required"`
 
-	// The policy's unique identifier.
+	// The unique identifier for this load balancer policy.
 	ID *string `json:"id" validate:"required"`
 
 	// The name for this load balancer listener policy. The name is unique across all policies for the load balancer
@@ -67119,8 +69135,7 @@ type LoadBalancerListenerPolicy struct {
 }
 
 // Constants associated with the LoadBalancerListenerPolicy.Action property.
-// The policy action.
-//
+// The policy action:
 //   - `forward`: Requests will be forwarded to the specified `target` pool
 //   - `https_redirect`: Requests will be redirected to the specified target listener. The
 //     listener must have a `protocol` of `http`, and the target listener must have a
@@ -67204,7 +69219,7 @@ func UnmarshalLoadBalancerListenerPolicy(m map[string]json.RawMessage, result in
 
 // LoadBalancerListenerPolicyCollection : LoadBalancerListenerPolicyCollection struct
 type LoadBalancerListenerPolicyCollection struct {
-	// Collection of policies.
+	// The policies for the load balancer listener.
 	Policies []LoadBalancerListenerPolicy `json:"policies" validate:"required"`
 }
 
@@ -67273,17 +69288,13 @@ func (loadBalancerListenerPolicyPatch *LoadBalancerListenerPolicyPatch) AsPatch(
 
 // LoadBalancerListenerPolicyPrototype : LoadBalancerListenerPolicyPrototype struct
 type LoadBalancerListenerPolicyPrototype struct {
-	// The policy action.
-	//
+	// The policy action:
 	// - `forward`: Requests will be forwarded to the specified `target` pool
 	// - `https_redirect`: Requests will be redirected to the specified target listener. The
 	//   listener must have a `protocol` of `http`, and the target listener must have a
 	//   `protocol` of `https`
 	// - `redirect`: Requests will be redirected to the specified `target.url`
-	// - `reject`: Requests will be rejected with a `403` status code
-	//
-	// The enumerated values for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	// - `reject`: Requests will be rejected with a `403` status code.
 	Action *string `json:"action" validate:"required"`
 
 	// The name for this policy. The name must not be used by another policy for the load balancer listener. If
@@ -67305,17 +69316,13 @@ type LoadBalancerListenerPolicyPrototype struct {
 }
 
 // Constants associated with the LoadBalancerListenerPolicyPrototype.Action property.
-// The policy action.
-//
+// The policy action:
 //   - `forward`: Requests will be forwarded to the specified `target` pool
 //   - `https_redirect`: Requests will be redirected to the specified target listener. The
 //     listener must have a `protocol` of `http`, and the target listener must have a
 //     `protocol` of `https`
 //   - `redirect`: Requests will be redirected to the specified `target.url`
-//   - `reject`: Requests will be rejected with a `403` status code
-//
-// The enumerated values for this property may
-// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+//   - `reject`: Requests will be rejected with a `403` status code.
 const (
 	LoadBalancerListenerPolicyPrototypeActionForwardConst       = "forward"
 	LoadBalancerListenerPolicyPrototypeActionHTTPSRedirectConst = "https_redirect"
@@ -67372,12 +69379,12 @@ func UnmarshalLoadBalancerListenerPolicyPrototype(m map[string]json.RawMessage, 
 type LoadBalancerListenerPolicyReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *LoadBalancerListenerPolicyReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
-	// The listener policy's canonical URL.
+	// The URL for this load balancer policy.
 	Href *string `json:"href" validate:"required"`
 
-	// The policy's unique identifier.
+	// The unique identifier for this load balancer policy.
 	ID *string `json:"id" validate:"required"`
 
 	// The name for this load balancer listener policy. The name is unique across all policies for the load balancer
@@ -67388,7 +69395,7 @@ type LoadBalancerListenerPolicyReference struct {
 // UnmarshalLoadBalancerListenerPolicyReference unmarshals an instance of LoadBalancerListenerPolicyReference from the specified map of raw messages.
 func UnmarshalLoadBalancerListenerPolicyReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(LoadBalancerListenerPolicyReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalLoadBalancerListenerPolicyReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -67412,47 +69419,24 @@ func UnmarshalLoadBalancerListenerPolicyReference(m map[string]json.RawMessage, 
 	return
 }
 
-// LoadBalancerListenerPolicyReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type LoadBalancerListenerPolicyReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalLoadBalancerListenerPolicyReferenceDeleted unmarshals an instance of LoadBalancerListenerPolicyReferenceDeleted from the specified map of raw messages.
-func UnmarshalLoadBalancerListenerPolicyReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(LoadBalancerListenerPolicyReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // LoadBalancerListenerPolicyRule : LoadBalancerListenerPolicyRule struct
 type LoadBalancerListenerPolicyRule struct {
-	// The condition of the rule.
+	// The condition for the rule.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Condition *string `json:"condition" validate:"required"`
 
 	// The date and time that this rule was created.
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
-	// The field. This is applicable to `header`, `query`, and `body` rule types.
-	//
-	// If the rule type is `header`, this property is required.
-	//
-	// If the rule type is `query`, this is optional. If specified and the rule condition is not
-	// `matches_regex`, the value must be percent-encoded.
-	//
-	// If the rule type is `body`, this is optional.
+	// The field to match for this rule. If `condition` is not `matches_regex`, the value is percent-encoded.
 	Field *string `json:"field,omitempty"`
 
-	// The rule's canonical URL.
+	// The URL for this load balancer listener policy rule.
 	Href *string `json:"href" validate:"required"`
 
-	// The rule's unique identifier.
+	// The unique identifier for this load balancer listener policy rule.
 	ID *string `json:"id" validate:"required"`
 
 	// The provisioning status of this rule
@@ -67461,19 +69445,24 @@ type LoadBalancerListenerPolicyRule struct {
 	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	ProvisioningStatus *string `json:"provisioning_status" validate:"required"`
 
-	// The type of the rule.
+	// The type of the rule. Body rules are applied to form-encoded request bodies using the
+	// `UTF-8` character set.
 	//
-	// Body rules are applied to form-encoded request bodies using the `UTF-8` character set.
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Type *string `json:"type" validate:"required"`
 
-	// Value to be matched for rule condition.
+	// The value to be matched for the rule condition.
 	//
 	// If the rule type is `query` and the rule condition is not `matches_regex`, the value must be percent-encoded.
 	Value *string `json:"value" validate:"required"`
 }
 
 // Constants associated with the LoadBalancerListenerPolicyRule.Condition property.
-// The condition of the rule.
+// The condition for the rule.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	LoadBalancerListenerPolicyRuleConditionContainsConst     = "contains"
 	LoadBalancerListenerPolicyRuleConditionEqualsConst       = "equals"
@@ -67494,9 +69483,11 @@ const (
 )
 
 // Constants associated with the LoadBalancerListenerPolicyRule.Type property.
-// The type of the rule.
+// The type of the rule. Body rules are applied to form-encoded request bodies using the
+// `UTF-8` character set.
 //
-// Body rules are applied to form-encoded request bodies using the `UTF-8` character set.
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	LoadBalancerListenerPolicyRuleTypeBodyConst     = "body"
 	LoadBalancerListenerPolicyRuleTypeHeaderConst   = "header"
@@ -67554,7 +69545,7 @@ func UnmarshalLoadBalancerListenerPolicyRule(m map[string]json.RawMessage, resul
 
 // LoadBalancerListenerPolicyRuleCollection : LoadBalancerListenerPolicyRuleCollection struct
 type LoadBalancerListenerPolicyRuleCollection struct {
-	// Collection of rules.
+	// The rules for the load balancer listener policy.
 	Rules []LoadBalancerListenerPolicyRule `json:"rules" validate:"required"`
 }
 
@@ -67572,32 +69563,28 @@ func UnmarshalLoadBalancerListenerPolicyRuleCollection(m map[string]json.RawMess
 
 // LoadBalancerListenerPolicyRulePatch : LoadBalancerListenerPolicyRulePatch struct
 type LoadBalancerListenerPolicyRulePatch struct {
-	// The condition of the rule.
+	// The condition for the rule.
 	Condition *string `json:"condition,omitempty"`
 
-	// The field. This is applicable to `header`, `query`, and `body` rule types.
+	// The field to match for this rule. This property must be specified if the rule type is
+	// `header`, may be specified if the rule type is `body` or `query`, and must not be specified if the rule type is
+	// `hostname` or `path`.
 	//
-	// If the rule type is `header`, this property is required.
-	//
-	// If the rule type is `query`, this is optional. If specified and the rule condition is not
-	// `matches_regex`, the value must be percent-encoded.
-	//
-	// If the rule type is `body`, this is optional.
+	// If the rule condition is not `matches_regex`, the value must be percent-encoded.
 	Field *string `json:"field,omitempty"`
 
-	// The type of the rule.
-	//
-	// Body rules are applied to form-encoded request bodies using the `UTF-8` character set.
+	// The type of the rule. Body rules are applied to form-encoded request bodies using the
+	// `UTF-8` character set.
 	Type *string `json:"type,omitempty"`
 
-	// Value to be matched for rule condition.
+	// The value to be matched for the rule condition.
 	//
 	// If the rule type is `query` and the rule condition is not `matches_regex`, the value must be percent-encoded.
 	Value *string `json:"value,omitempty"`
 }
 
 // Constants associated with the LoadBalancerListenerPolicyRulePatch.Condition property.
-// The condition of the rule.
+// The condition for the rule.
 const (
 	LoadBalancerListenerPolicyRulePatchConditionContainsConst     = "contains"
 	LoadBalancerListenerPolicyRulePatchConditionEqualsConst       = "equals"
@@ -67605,9 +69592,8 @@ const (
 )
 
 // Constants associated with the LoadBalancerListenerPolicyRulePatch.Type property.
-// The type of the rule.
-//
-// Body rules are applied to form-encoded request bodies using the `UTF-8` character set.
+// The type of the rule. Body rules are applied to form-encoded request bodies using the
+// `UTF-8` character set.
 const (
 	LoadBalancerListenerPolicyRulePatchTypeBodyConst     = "body"
 	LoadBalancerListenerPolicyRulePatchTypeHeaderConst   = "header"
@@ -67658,32 +69644,28 @@ func (loadBalancerListenerPolicyRulePatch *LoadBalancerListenerPolicyRulePatch) 
 
 // LoadBalancerListenerPolicyRulePrototype : LoadBalancerListenerPolicyRulePrototype struct
 type LoadBalancerListenerPolicyRulePrototype struct {
-	// The condition of the rule.
+	// The condition for the rule.
 	Condition *string `json:"condition" validate:"required"`
 
-	// The field. This is applicable to `header`, `query`, and `body` rule types.
+	// The field to match for this rule. This property must be specified if the rule type is
+	// `header`, may be specified if the rule type is `body` or `query`, and must not be specified if the rule type is
+	// `hostname` or `path`.
 	//
-	// If the rule type is `header`, this property is required.
-	//
-	// If the rule type is `query`, this is optional. If specified and the rule condition is not
-	// `matches_regex`, the value must be percent-encoded.
-	//
-	// If the rule type is `body`, this is optional.
+	// If the rule condition is not `matches_regex`, the value must be percent-encoded.
 	Field *string `json:"field,omitempty"`
 
-	// The type of the rule.
-	//
-	// Body rules are applied to form-encoded request bodies using the `UTF-8` character set.
+	// The type of the rule. Body rules are applied to form-encoded request bodies using the
+	// `UTF-8` character set.
 	Type *string `json:"type" validate:"required"`
 
-	// Value to be matched for rule condition.
+	// The value to be matched for the rule condition.
 	//
 	// If the rule type is `query` and the rule condition is not `matches_regex`, the value must be percent-encoded.
 	Value *string `json:"value" validate:"required"`
 }
 
 // Constants associated with the LoadBalancerListenerPolicyRulePrototype.Condition property.
-// The condition of the rule.
+// The condition for the rule.
 const (
 	LoadBalancerListenerPolicyRulePrototypeConditionContainsConst     = "contains"
 	LoadBalancerListenerPolicyRulePrototypeConditionEqualsConst       = "equals"
@@ -67691,9 +69673,8 @@ const (
 )
 
 // Constants associated with the LoadBalancerListenerPolicyRulePrototype.Type property.
-// The type of the rule.
-//
-// Body rules are applied to form-encoded request bodies using the `UTF-8` character set.
+// The type of the rule. Body rules are applied to form-encoded request bodies using the
+// `UTF-8` character set.
 const (
 	LoadBalancerListenerPolicyRulePrototypeTypeBodyConst     = "body"
 	LoadBalancerListenerPolicyRulePrototypeTypeHeaderConst   = "header"
@@ -67747,19 +69728,19 @@ func UnmarshalLoadBalancerListenerPolicyRulePrototype(m map[string]json.RawMessa
 type LoadBalancerListenerPolicyRuleReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *LoadBalancerListenerPolicyRuleReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
-	// The rule's canonical URL.
+	// The URL for this load balancer listener policy rule.
 	Href *string `json:"href" validate:"required"`
 
-	// The rule's unique identifier.
+	// The unique identifier for this load balancer listener policy rule.
 	ID *string `json:"id" validate:"required"`
 }
 
 // UnmarshalLoadBalancerListenerPolicyRuleReference unmarshals an instance of LoadBalancerListenerPolicyRuleReference from the specified map of raw messages.
 func UnmarshalLoadBalancerListenerPolicyRuleReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(LoadBalancerListenerPolicyRuleReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalLoadBalancerListenerPolicyRuleReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -67778,25 +69759,6 @@ func UnmarshalLoadBalancerListenerPolicyRuleReference(m map[string]json.RawMessa
 	return
 }
 
-// LoadBalancerListenerPolicyRuleReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type LoadBalancerListenerPolicyRuleReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalLoadBalancerListenerPolicyRuleReferenceDeleted unmarshals an instance of LoadBalancerListenerPolicyRuleReferenceDeleted from the specified map of raw messages.
-func UnmarshalLoadBalancerListenerPolicyRuleReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(LoadBalancerListenerPolicyRuleReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // LoadBalancerListenerPolicyTarget : - If `action` is `forward`, the response is a `LoadBalancerPoolReference`
 // - If `action` is `https_redirect`, the response is a
 // `LoadBalancerListenerPolicyHTTPSRedirect`
@@ -67808,9 +69770,9 @@ func UnmarshalLoadBalancerListenerPolicyRuleReferenceDeleted(m map[string]json.R
 type LoadBalancerListenerPolicyTarget struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *LoadBalancerPoolReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
-	// The pool's canonical URL.
+	// The URL for this load balancer pool.
 	Href *string `json:"href,omitempty"`
 
 	// The unique identifier for this load balancer pool.
@@ -67827,7 +69789,23 @@ type LoadBalancerListenerPolicyTarget struct {
 	// The redirect relative target URI.
 	URI *string `json:"uri,omitempty"`
 
-	// The redirect target URL.
+	// The redirect target URL. The URL supports [RFC 6570 level 1
+	// expressions](https://datatracker.ietf.org/doc/html/rfc6570#section-1.2) for the following variables which expand to
+	// values from the originally requested URL (or the indicated defaults if the request did not include them):
+	//
+	// - `protocol`
+	// - `host`
+	// - `port`  (default: `80` for HTTP requests, `443` for HTTPS requests)
+	// - `path`  (default: '/')
+	// - `query` (default: '')
+	//
+	// The protocol, host, and port segments of the URL, must only contain at most one instance of the `protocol`, `host`,
+	// and `port` variables, respectively. The path and query segments of the URL may contain any combination of variables.
+	// If the substitution of `path` results in consecutive leading slashes, the leading slash from the substitution will
+	// be removed. Additional examples:
+	// - `https://{host}:8080/{port}/{host}/{path}`
+	// - `https://www.example.com`
+	// - `{protocol}://test.{host}:80/{path}`.
 	URL *string `json:"url,omitempty"`
 }
 
@@ -67842,7 +69820,7 @@ type LoadBalancerListenerPolicyTargetIntf interface {
 // UnmarshalLoadBalancerListenerPolicyTarget unmarshals an instance of LoadBalancerListenerPolicyTarget from the specified map of raw messages.
 func UnmarshalLoadBalancerListenerPolicyTarget(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(LoadBalancerListenerPolicyTarget)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalLoadBalancerPoolReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -67898,7 +69876,7 @@ type LoadBalancerListenerPolicyTargetPatch struct {
 	// The unique identifier for this load balancer pool.
 	ID *string `json:"id,omitempty"`
 
-	// The pool's canonical URL.
+	// The URL for this load balancer pool.
 	Href *string `json:"href,omitempty"`
 
 	// The HTTP status code for this redirect.
@@ -67910,7 +69888,23 @@ type LoadBalancerListenerPolicyTargetPatch struct {
 	// The redirect relative target URI.
 	URI *string `json:"uri,omitempty"`
 
-	// The redirect target URL.
+	// The redirect target URL. The URL supports [RFC 6570 level 1
+	// expressions](https://datatracker.ietf.org/doc/html/rfc6570#section-1.2) for the following variables which expand to
+	// values from the originally requested URL (or the indicated defaults if the request did not include them):
+	//
+	// - `protocol`
+	// - `host`
+	// - `port`  (default: `80` for HTTP requests, `443` for HTTPS requests)
+	// - `path`  (default: '/')
+	// - `query` (default: '')
+	//
+	// The protocol, host, and port segments of the URL, must only contain at most one instance of the `protocol`, `host`,
+	// and `port` variables, respectively. The path and query segments of the URL may contain any combination of variables.
+	// If the substitution of `path` results in consecutive leading slashes, the leading slash from the substitution will
+	// be removed. Additional examples:
+	// - `https://{host}:8080/{port}/{host}/{path}`
+	// - `https://www.example.com`
+	// - `{protocol}://test.{host}:80/{path}`.
 	URL *string `json:"url,omitempty"`
 }
 
@@ -67971,7 +69965,7 @@ type LoadBalancerListenerPolicyTargetPrototype struct {
 	// The unique identifier for this load balancer pool.
 	ID *string `json:"id,omitempty"`
 
-	// The pool's canonical URL.
+	// The URL for this load balancer pool.
 	Href *string `json:"href,omitempty"`
 
 	// The HTTP status code for this redirect.
@@ -67983,7 +69977,23 @@ type LoadBalancerListenerPolicyTargetPrototype struct {
 	// The redirect relative target URI.
 	URI *string `json:"uri,omitempty"`
 
-	// The redirect target URL.
+	// The redirect target URL. The URL supports [RFC 6570 level 1
+	// expressions](https://datatracker.ietf.org/doc/html/rfc6570#section-1.2) for the following variables which expand to
+	// values from the originally requested URL (or the indicated defaults if the request did not include them):
+	//
+	// - `protocol`
+	// - `host`
+	// - `port`  (default: `80` for HTTP requests, `443` for HTTPS requests)
+	// - `path`  (default: '/')
+	// - `query` (default: '')
+	//
+	// The protocol, host, and port segments of the URL, must only contain at most one instance of the `protocol`, `host`,
+	// and `port` variables, respectively. The path and query segments of the URL may contain any combination of variables.
+	// If the substitution of `path` results in consecutive leading slashes, the leading slash from the substitution will
+	// be removed. Additional examples:
+	// - `https://{host}:8080/{port}/{host}/{path}`
+	// - `https://www.example.com`
+	// - `{protocol}://test.{host}:80/{path}`.
 	URL *string `json:"url,omitempty"`
 }
 
@@ -68079,9 +70089,9 @@ type LoadBalancerListenerPrototypeLoadBalancerContext struct {
 
 	// The inclusive upper bound of the range of ports used by this listener. Must not be less than `port_min`.
 	//
-	// At present, only load balancers operating with route mode enabled, and public load balancers in the `network` family
-	// support different values for `port_min` and
-	// `port_max`. When route mode is enabled, the value `65535` must be specified.
+	// Only load balancers with route mode enabled, or network load balancers with
+	// `is_public` or `is_private_path` set to `true` support different values for `port_min` and `port_max`. When route
+	// mode is enabled, the value `65535` must be specified.
 	//
 	// The specified port range must not overlap with port ranges used by other listeners for this load balancer using the
 	// same protocol.
@@ -68089,9 +70099,9 @@ type LoadBalancerListenerPrototypeLoadBalancerContext struct {
 
 	// The inclusive lower bound of the range of ports used by this listener. Must not be greater than `port_max`.
 	//
-	// At present, only load balancers operating with route mode enabled, and public load balancers in the `network` family
-	// support different values for `port_min` and
-	// `port_max`. When route mode is enabled, the value `1` must be specified.
+	// Only load balancers with route mode enabled, or network load balancers with
+	// `is_public` or `is_private_path` set to `true` support different values for `port_min` and `port_max`. When route
+	// mode is enabled, the value `1` must be specified.
 	//
 	// The specified port range must not overlap with port ranges used by other listeners for this load balancer using the
 	// same protocol.
@@ -68203,9 +70213,9 @@ func UnmarshalLoadBalancerListenerPrototypeLoadBalancerContext(m map[string]json
 type LoadBalancerListenerReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *LoadBalancerListenerReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
-	// The listener's canonical URL.
+	// The URL for this load balancer listener.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this load balancer listener.
@@ -68215,7 +70225,7 @@ type LoadBalancerListenerReference struct {
 // UnmarshalLoadBalancerListenerReference unmarshals an instance of LoadBalancerListenerReference from the specified map of raw messages.
 func UnmarshalLoadBalancerListenerReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(LoadBalancerListenerReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalLoadBalancerListenerReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -68228,25 +70238,6 @@ func UnmarshalLoadBalancerListenerReference(m map[string]json.RawMessage, result
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// LoadBalancerListenerReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type LoadBalancerListenerReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalLoadBalancerListenerReferenceDeleted unmarshals an instance of LoadBalancerListenerReferenceDeleted from the specified map of raw messages.
-func UnmarshalLoadBalancerListenerReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(LoadBalancerListenerReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -68368,6 +70359,8 @@ type LoadBalancerPatch struct {
 	// Specify `null` to remove the existing DNS configuration, which will remove all DNS `A`
 	// records for this load balancer that had been added to `zone`, and add equivalent `A`
 	// records to the public DNS zone `lb.appdomain.cloud`.
+	//
+	// Not supported by private path load balancers.
 	Dns *LoadBalancerDnsPatch `json:"dns,omitempty"`
 
 	// The logging configuration to use for this load balancer.
@@ -68431,6 +70424,9 @@ func (loadBalancerPatch *LoadBalancerPatch) AsPatch() (_patch map[string]interfa
 // LoadBalancerPool : LoadBalancerPool struct
 type LoadBalancerPool struct {
 	// The load balancing algorithm.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Algorithm *string `json:"algorithm" validate:"required"`
 
 	// The date and time that this pool was created.
@@ -68439,7 +70435,7 @@ type LoadBalancerPool struct {
 	// The health monitor of this pool.
 	HealthMonitor *LoadBalancerPoolHealthMonitor `json:"health_monitor" validate:"required"`
 
-	// The pool's canonical URL.
+	// The URL for this load balancer pool.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this load balancer pool.
@@ -68471,7 +70467,8 @@ type LoadBalancerPool struct {
 	// - `v2`: Enabled with version 2 (binary header format)
 	// - `disabled`: Disabled
 	//
-	// Supported by load balancers in the `application` family (otherwise always `disabled`).
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	ProxyProtocol *string `json:"proxy_protocol" validate:"required"`
 
 	// The session persistence of this pool.
@@ -68483,6 +70480,9 @@ type LoadBalancerPool struct {
 
 // Constants associated with the LoadBalancerPool.Algorithm property.
 // The load balancing algorithm.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	LoadBalancerPoolAlgorithmLeastConnectionsConst   = "least_connections"
 	LoadBalancerPoolAlgorithmRoundRobinConst         = "round_robin"
@@ -68520,7 +70520,8 @@ const (
 // - `v2`: Enabled with version 2 (binary header format)
 // - `disabled`: Disabled
 //
-// Supported by load balancers in the `application` family (otherwise always `disabled`).
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	LoadBalancerPoolProxyProtocolDisabledConst = "disabled"
 	LoadBalancerPoolProxyProtocolV1Const       = "v1"
@@ -68596,7 +70597,7 @@ func UnmarshalLoadBalancerPool(m map[string]json.RawMessage, result interface{})
 
 // LoadBalancerPoolCollection : LoadBalancerPoolCollection struct
 type LoadBalancerPoolCollection struct {
-	// Collection of pools.
+	// The pools for the load balancer.
 	Pools []LoadBalancerPool `json:"pools" validate:"required"`
 }
 
@@ -68634,7 +70635,13 @@ type LoadBalancerPoolHealthMonitor struct {
 	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Type *string `json:"type" validate:"required"`
 
-	// The health check URL path. Applicable when `type` is `http` or `https`.
+	// The health check URL path, in the format of an [origin-form request
+	// target](https://tools.ietf.org/html/rfc7230#section-5.3.1).
+	//
+	// If `type` is `tcp`, this property will be absent.
+	URL interface{} `json:"url,omitempty"`
+
+	// The health check URL path.  If specified, `type` must be `http` or `https`.
 	//
 	// Must be in the format of an [origin-form request target](https://tools.ietf.org/html/rfc7230#section-5.3.1).
 	URLPath *string `json:"url_path,omitempty"`
@@ -68679,6 +70686,11 @@ func UnmarshalLoadBalancerPoolHealthMonitor(m map[string]json.RawMessage, result
 		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "url", &obj.URL)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "url_path", &obj.URLPath)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "url_path-error", common.GetComponentInfo())
@@ -68709,7 +70721,7 @@ type LoadBalancerPoolHealthMonitorPatch struct {
 	// The protocol type to use for health checks.
 	Type *string `json:"type" validate:"required"`
 
-	// The health check URL path. Applicable when `type` is `http` or `https`.
+	// The health check URL path.  If specified, `type` must be `http` or `https`.
 	//
 	// Must be in the format of an [origin-form request target](https://tools.ietf.org/html/rfc7230#section-5.3.1).
 	URLPath *string `json:"url_path,omitempty"`
@@ -68794,7 +70806,7 @@ type LoadBalancerPoolHealthMonitorPrototype struct {
 	// The protocol type to use for health checks.
 	Type *string `json:"type" validate:"required"`
 
-	// The health check URL path. Applicable when `type` is `http` or `https`.
+	// The health check URL path.  If specified, `type` must be `http` or `https`.
 	//
 	// Must be in the format of an [origin-form request target](https://tools.ietf.org/html/rfc7230#section-5.3.1).
 	URLPath *string `json:"url_path,omitempty"`
@@ -68868,7 +70880,7 @@ type LoadBalancerPoolIdentity struct {
 	// The unique identifier for this load balancer pool.
 	ID *string `json:"id,omitempty"`
 
-	// The pool's canonical URL.
+	// The URL for this load balancer pool.
 	Href *string `json:"href,omitempty"`
 }
 
@@ -68933,9 +70945,12 @@ type LoadBalancerPoolMember struct {
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
 	// Health of the server member in the pool.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Health *string `json:"health" validate:"required"`
 
-	// The member's canonical URL.
+	// The URL for this load balancer pool member.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this load balancer pool member.
@@ -68961,13 +70976,17 @@ type LoadBalancerPoolMember struct {
 	// subnet in.
 	Target LoadBalancerPoolMemberTargetIntf `json:"target" validate:"required"`
 
-	// Weight of the server member. Applicable only if the pool algorithm is
-	// `weighted_round_robin`.
+	// The weight of the server member.
+	//
+	// This property will be present if the pool algorithm is `weighted_round_robin`.
 	Weight *int64 `json:"weight,omitempty"`
 }
 
 // Constants associated with the LoadBalancerPoolMember.Health property.
 // Health of the server member in the pool.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	LoadBalancerPoolMemberHealthFaultedConst = "faulted"
 	LoadBalancerPoolMemberHealthOkConst      = "ok"
@@ -69036,7 +71055,7 @@ func UnmarshalLoadBalancerPoolMember(m map[string]json.RawMessage, result interf
 
 // LoadBalancerPoolMemberCollection : LoadBalancerPoolMemberCollection struct
 type LoadBalancerPoolMemberCollection struct {
-	// Collection of members.
+	// The members for the load balancer pool.
 	Members []LoadBalancerPoolMember `json:"members" validate:"required"`
 }
 
@@ -69070,8 +71089,9 @@ type LoadBalancerPoolMemberPatch struct {
 	// subnet in.
 	Target LoadBalancerPoolMemberTargetPrototypeIntf `json:"target,omitempty"`
 
-	// Weight of the server member. Applicable only if the pool algorithm is
-	// `weighted_round_robin`.
+	// The weight of the server member.
+	//
+	// If specified, the pool algorithm must be `weighted_round_robin`.
 	Weight *int64 `json:"weight,omitempty"`
 }
 
@@ -69128,8 +71148,9 @@ type LoadBalancerPoolMemberPrototype struct {
 	// subnet in.
 	Target LoadBalancerPoolMemberTargetPrototypeIntf `json:"target" validate:"required"`
 
-	// Weight of the server member. Applicable only if the pool algorithm is
-	// `weighted_round_robin`.
+	// The weight of the server member.
+	//
+	// If specified, the pool algorithm must be `weighted_round_robin`.
 	Weight *int64 `json:"weight,omitempty"`
 }
 
@@ -69172,9 +71193,9 @@ func UnmarshalLoadBalancerPoolMemberPrototype(m map[string]json.RawMessage, resu
 type LoadBalancerPoolMemberReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *LoadBalancerPoolMemberReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
-	// The member's canonical URL.
+	// The URL for this load balancer pool member.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this load balancer pool member.
@@ -69184,7 +71205,7 @@ type LoadBalancerPoolMemberReference struct {
 // UnmarshalLoadBalancerPoolMemberReference unmarshals an instance of LoadBalancerPoolMemberReference from the specified map of raw messages.
 func UnmarshalLoadBalancerPoolMemberReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(LoadBalancerPoolMemberReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalLoadBalancerPoolMemberReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -69203,25 +71224,6 @@ func UnmarshalLoadBalancerPoolMemberReference(m map[string]json.RawMessage, resu
 	return
 }
 
-// LoadBalancerPoolMemberReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type LoadBalancerPoolMemberReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalLoadBalancerPoolMemberReferenceDeleted unmarshals an instance of LoadBalancerPoolMemberReferenceDeleted from the specified map of raw messages.
-func UnmarshalLoadBalancerPoolMemberReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(LoadBalancerPoolMemberReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // LoadBalancerPoolMemberTarget : The pool member target. Load balancers in the `network` family support virtual server instances. Load balancers in
 // the `application` family support IP addresses. If the load balancer has route mode enabled, the member must be in a
 // zone the load balancer has a subnet in.
@@ -69234,7 +71236,7 @@ type LoadBalancerPoolMemberTarget struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *InstanceReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this virtual server instance.
 	Href *string `json:"href,omitempty"`
@@ -69268,7 +71270,7 @@ func UnmarshalLoadBalancerPoolMemberTarget(m map[string]json.RawMessage, result 
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalInstanceReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -69381,7 +71383,7 @@ type LoadBalancerPoolPatch struct {
 	// - `v2`: Enabled with version 2 (binary header format)
 	// - `disabled`: Disabled
 	//
-	// Supported by load balancers in the `application` family (otherwise always `disabled`).
+	// For load balancers in the `network` family, this property must be `disabled`.
 	ProxyProtocol *string `json:"proxy_protocol,omitempty"`
 
 	// The session persistence of this pool.
@@ -69418,7 +71420,7 @@ const (
 // - `v2`: Enabled with version 2 (binary header format)
 // - `disabled`: Disabled
 //
-// Supported by load balancers in the `application` family (otherwise always `disabled`).
+// For load balancers in the `network` family, this property must be `disabled`.
 const (
 	LoadBalancerPoolPatchProxyProtocolDisabledConst = "disabled"
 	LoadBalancerPoolPatchProxyProtocolV1Const       = "v1"
@@ -69477,7 +71479,8 @@ func (loadBalancerPoolPatch *LoadBalancerPoolPatch) AsPatch() (_patch map[string
 
 // LoadBalancerPoolPrototype : LoadBalancerPoolPrototype struct
 type LoadBalancerPoolPrototype struct {
-	// The load balancing algorithm.
+	// The load balancing algorithm. The `least_connections` algorithm is only supported for load balancers that have
+	// `availability` with value `subnet` in the profile.
 	Algorithm *string `json:"algorithm" validate:"required"`
 
 	// The health monitor of this pool.
@@ -69501,17 +71504,19 @@ type LoadBalancerPoolPrototype struct {
 	// - `v2`: Enabled with version 2 (binary header format)
 	// - `disabled`: Disabled
 	//
-	// Supported by load balancers in the `application` family (otherwise always `disabled`).
+	// For load balancers in the `network` family, this property must be `disabled`.
 	ProxyProtocol *string `json:"proxy_protocol,omitempty"`
 
-	// The session persistence of this pool. If unspecified, session persistence will be
-	// disabled, and traffic will be distributed across backend server members of the
-	// pool.
+	// The session persistence of this pool. If specified, the load balancer must have
+	// `source_ip_session_persistence_supported` set to `true` in its profile. If
+	// unspecified, session persistence will be disabled, and traffic will be distributed
+	// across backend server members of the pool.
 	SessionPersistence *LoadBalancerPoolSessionPersistencePrototype `json:"session_persistence,omitempty"`
 }
 
 // Constants associated with the LoadBalancerPoolPrototype.Algorithm property.
-// The load balancing algorithm.
+// The load balancing algorithm. The `least_connections` algorithm is only supported for load balancers that have
+// `availability` with value `subnet` in the profile.
 const (
 	LoadBalancerPoolPrototypeAlgorithmLeastConnectionsConst   = "least_connections"
 	LoadBalancerPoolPrototypeAlgorithmRoundRobinConst         = "round_robin"
@@ -69535,7 +71540,7 @@ const (
 // - `v2`: Enabled with version 2 (binary header format)
 // - `disabled`: Disabled
 //
-// Supported by load balancers in the `application` family (otherwise always `disabled`).
+// For load balancers in the `network` family, this property must be `disabled`.
 const (
 	LoadBalancerPoolPrototypeProxyProtocolDisabledConst = "disabled"
 	LoadBalancerPoolPrototypeProxyProtocolV1Const       = "v1"
@@ -69602,9 +71607,9 @@ func UnmarshalLoadBalancerPoolPrototype(m map[string]json.RawMessage, result int
 type LoadBalancerPoolReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *LoadBalancerPoolReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
-	// The pool's canonical URL.
+	// The URL for this load balancer pool.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this load balancer pool.
@@ -69617,7 +71622,7 @@ type LoadBalancerPoolReference struct {
 // UnmarshalLoadBalancerPoolReference unmarshals an instance of LoadBalancerPoolReference from the specified map of raw messages.
 func UnmarshalLoadBalancerPoolReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(LoadBalancerPoolReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalLoadBalancerPoolReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -69641,33 +71646,12 @@ func UnmarshalLoadBalancerPoolReference(m map[string]json.RawMessage, result int
 	return
 }
 
-// LoadBalancerPoolReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type LoadBalancerPoolReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalLoadBalancerPoolReferenceDeleted unmarshals an instance of LoadBalancerPoolReferenceDeleted from the specified map of raw messages.
-func UnmarshalLoadBalancerPoolReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(LoadBalancerPoolReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // LoadBalancerPoolSessionPersistence : LoadBalancerPoolSessionPersistence struct
 type LoadBalancerPoolSessionPersistence struct {
-	// The session persistence cookie name. Applicable only for type `app_cookie`. Names starting with `IBM` are not
-	// allowed.
+	// The session persistence cookie name.
 	CookieName *string `json:"cookie_name,omitempty"`
 
-	// The session persistence type. The `http_cookie` and `app_cookie` types are applicable only to the `http` and `https`
-	// protocols.
+	// The session persistence type.
 	//
 	// The enumerated values for this property may
 	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
@@ -69675,8 +71659,7 @@ type LoadBalancerPoolSessionPersistence struct {
 }
 
 // Constants associated with the LoadBalancerPoolSessionPersistence.Type property.
-// The session persistence type. The `http_cookie` and `app_cookie` types are applicable only to the `http` and `https`
-// protocols.
+// The session persistence type.
 //
 // The enumerated values for this property may
 // [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
@@ -69705,18 +71688,23 @@ func UnmarshalLoadBalancerPoolSessionPersistence(m map[string]json.RawMessage, r
 
 // LoadBalancerPoolSessionPersistencePatch : The session persistence configuration. Specify `null` to remove any existing session persistence configuration.
 type LoadBalancerPoolSessionPersistencePatch struct {
-	// The session persistence cookie name. Applicable only for type `app_cookie`. Names starting with `IBM` are not
-	// allowed.
+	// The session persistence cookie name. Names starting with `IBM` are not allowed.
+	//
+	// If specified, the session persistence type must be `app_cookie`.
 	CookieName *string `json:"cookie_name,omitempty"`
 
-	// The session persistence type. The `http_cookie` and `app_cookie` types are applicable only to the `http` and `https`
-	// protocols.
+	// The session persistence type.
+	//
+	// If `http_cookie` or `app_cookie` is specified, the pool protocol must be `http` or
+	// `https`.
 	Type *string `json:"type,omitempty"`
 }
 
 // Constants associated with the LoadBalancerPoolSessionPersistencePatch.Type property.
-// The session persistence type. The `http_cookie` and `app_cookie` types are applicable only to the `http` and `https`
-// protocols.
+// The session persistence type.
+//
+// If `http_cookie` or `app_cookie` is specified, the pool protocol must be `http` or
+// `https`.
 const (
 	LoadBalancerPoolSessionPersistencePatchTypeAppCookieConst  = "app_cookie"
 	LoadBalancerPoolSessionPersistencePatchTypeHTTPCookieConst = "http_cookie"
@@ -69742,18 +71730,23 @@ func UnmarshalLoadBalancerPoolSessionPersistencePatch(m map[string]json.RawMessa
 
 // LoadBalancerPoolSessionPersistencePrototype : LoadBalancerPoolSessionPersistencePrototype struct
 type LoadBalancerPoolSessionPersistencePrototype struct {
-	// The session persistence cookie name. Applicable only for type `app_cookie`. Names starting with `IBM` are not
-	// allowed.
+	// The session persistence cookie name. Names starting with `IBM` are not allowed.
+	//
+	// If specified, the session persistence type must be `app_cookie`.
 	CookieName *string `json:"cookie_name,omitempty"`
 
-	// The session persistence type. The `http_cookie` and `app_cookie` types are applicable only to the `http` and `https`
-	// protocols.
+	// The session persistence type.
+	//
+	// If `http_cookie` or `app_cookie` is specified, the pool protocol must be `http` or
+	// `https`.
 	Type *string `json:"type" validate:"required"`
 }
 
 // Constants associated with the LoadBalancerPoolSessionPersistencePrototype.Type property.
-// The session persistence type. The `http_cookie` and `app_cookie` types are applicable only to the `http` and `https`
-// protocols.
+// The session persistence type.
+//
+// If `http_cookie` or `app_cookie` is specified, the pool protocol must be `http` or
+// `https`.
 const (
 	LoadBalancerPoolSessionPersistencePrototypeTypeAppCookieConst  = "app_cookie"
 	LoadBalancerPoolSessionPersistencePrototypeTypeHTTPCookieConst = "http_cookie"
@@ -69789,78 +71782,12 @@ func UnmarshalLoadBalancerPoolSessionPersistencePrototype(m map[string]json.RawM
 	return
 }
 
-// LoadBalancerPrivateIpsItem : LoadBalancerPrivateIpsItem struct
-type LoadBalancerPrivateIpsItem struct {
-	// The IP address.
-	//
-	// If the address has not yet been selected, the value will be `0.0.0.0`.
-	//
-	// This property may [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) to support IPv6 addresses in
-	// the future.
-	Address *string `json:"address" validate:"required"`
-
-	// If present, this property indicates the referenced resource has been deleted, and provides
-	// some supplementary information.
-	Deleted *ReservedIPReferenceDeleted `json:"deleted,omitempty"`
-
-	// The URL for this reserved IP.
-	Href *string `json:"href" validate:"required"`
-
-	// The unique identifier for this reserved IP.
-	ID *string `json:"id" validate:"required"`
-
-	// The name for this reserved IP. The name is unique across all reserved IPs in a subnet.
-	Name *string `json:"name" validate:"required"`
-
-	// The resource type.
-	ResourceType *string `json:"resource_type" validate:"required"`
-}
-
-// Constants associated with the LoadBalancerPrivateIpsItem.ResourceType property.
-// The resource type.
-const (
-	LoadBalancerPrivateIpsItemResourceTypeSubnetReservedIPConst = "subnet_reserved_ip"
-)
-
-// UnmarshalLoadBalancerPrivateIpsItem unmarshals an instance of LoadBalancerPrivateIpsItem from the specified map of raw messages.
-func UnmarshalLoadBalancerPrivateIpsItem(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(LoadBalancerPrivateIpsItem)
-	err = core.UnmarshalPrimitive(m, "address", &obj.Address)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "address-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalReservedIPReferenceDeleted)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // LoadBalancerProfile : LoadBalancerProfile struct
 type LoadBalancerProfile struct {
+	AccessModes *LoadBalancerProfileAccessModes `json:"access_modes" validate:"required"`
+
+	Availability LoadBalancerProfileAvailabilityIntf `json:"availability" validate:"required"`
+
 	// The product family this load balancer profile belongs to.
 	//
 	// The enumerated values for this property may
@@ -69882,6 +71809,8 @@ type LoadBalancerProfile struct {
 
 	SecurityGroupsSupported LoadBalancerProfileSecurityGroupsSupportedIntf `json:"security_groups_supported" validate:"required"`
 
+	SourceIPSessionPersistenceSupported LoadBalancerProfileSourceIPSessionPersistenceSupportedIntf `json:"source_ip_session_persistence_supported" validate:"required"`
+
 	UDPSupported LoadBalancerProfileUDPSupportedIntf `json:"udp_supported" validate:"required"`
 }
 
@@ -69898,6 +71827,16 @@ const (
 // UnmarshalLoadBalancerProfile unmarshals an instance of LoadBalancerProfile from the specified map of raw messages.
 func UnmarshalLoadBalancerProfile(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(LoadBalancerProfile)
+	err = core.UnmarshalModel(m, "access_modes", &obj.AccessModes, UnmarshalLoadBalancerProfileAccessModes)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "access_modes-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "availability", &obj.Availability, UnmarshalLoadBalancerProfileAvailability)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "availability-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "family", &obj.Family)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "family-error", common.GetComponentInfo())
@@ -69933,9 +71872,122 @@ func UnmarshalLoadBalancerProfile(m map[string]json.RawMessage, result interface
 		err = core.SDKErrorf(err, "", "security_groups_supported-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalModel(m, "source_ip_session_persistence_supported", &obj.SourceIPSessionPersistenceSupported, UnmarshalLoadBalancerProfileSourceIPSessionPersistenceSupported)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "source_ip_session_persistence_supported-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "udp_supported", &obj.UDPSupported, UnmarshalLoadBalancerProfileUDPSupported)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "udp_supported-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// LoadBalancerProfileAccessModes : LoadBalancerProfileAccessModes struct
+type LoadBalancerProfileAccessModes struct {
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+
+	// The access modes supported by load balancers with this profile.
+	Values []string `json:"values" validate:"required"`
+}
+
+// Constants associated with the LoadBalancerProfileAccessModes.Type property.
+// The type for this profile field.
+const (
+	LoadBalancerProfileAccessModesTypeEnumConst = "enum"
+)
+
+// Constants associated with the LoadBalancerProfileAccessModes.Values property.
+// The access mode for this load balancer:
+// - `private`: reachable from within its VPC, at IP addresses in `private_ips`
+// - `private_path`: reachable through an endpoint gateway
+// - `public`: reachable from the internet at the IP addresses in `public_ips`.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+const (
+	LoadBalancerProfileAccessModesValuesPrivateConst     = "private"
+	LoadBalancerProfileAccessModesValuesPrivatePathConst = "private_path"
+	LoadBalancerProfileAccessModesValuesPublicConst      = "public"
+)
+
+// UnmarshalLoadBalancerProfileAccessModes unmarshals an instance of LoadBalancerProfileAccessModes from the specified map of raw messages.
+func UnmarshalLoadBalancerProfileAccessModes(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(LoadBalancerProfileAccessModes)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "values", &obj.Values)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "values-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// LoadBalancerProfileAvailability : LoadBalancerProfileAvailability struct
+// Models which "extend" this model:
+// - LoadBalancerProfileAvailabilityFixed
+// - LoadBalancerProfileAvailabilityDependent
+type LoadBalancerProfileAvailability struct {
+	// The type for this profile field.
+	Type *string `json:"type,omitempty"`
+
+	// The availability of this load balancer:
+	// - `subnet`: remains available if at least one zone that the load balancer's subnets reside
+	//   in is available
+	// - `region`: remains available if at least one zone in the region is available.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	Value *string `json:"value,omitempty"`
+}
+
+// Constants associated with the LoadBalancerProfileAvailability.Type property.
+// The type for this profile field.
+const (
+	LoadBalancerProfileAvailabilityTypeFixedConst = "fixed"
+)
+
+// Constants associated with the LoadBalancerProfileAvailability.Value property.
+// The availability of this load balancer:
+//   - `subnet`: remains available if at least one zone that the load balancer's subnets reside
+//     in is available
+//   - `region`: remains available if at least one zone in the region is available.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+const (
+	LoadBalancerProfileAvailabilityValueRegionConst = "region"
+	LoadBalancerProfileAvailabilityValueSubnetConst = "subnet"
+)
+
+func (*LoadBalancerProfileAvailability) isaLoadBalancerProfileAvailability() bool {
+	return true
+}
+
+type LoadBalancerProfileAvailabilityIntf interface {
+	isaLoadBalancerProfileAvailability() bool
+}
+
+// UnmarshalLoadBalancerProfileAvailability unmarshals an instance of LoadBalancerProfileAvailability from the specified map of raw messages.
+func UnmarshalLoadBalancerProfileAvailability(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(LoadBalancerProfileAvailability)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -69954,7 +72006,7 @@ type LoadBalancerProfileCollection struct {
 	// except the last page.
 	Next *LoadBalancerProfileCollectionNext `json:"next,omitempty"`
 
-	// Collection of load balancer profiles.
+	// A page of load balancer profiles.
 	Profiles []LoadBalancerProfile `json:"profiles" validate:"required"`
 
 	// The total number of resources across all pages.
@@ -70289,6 +72341,49 @@ func UnmarshalLoadBalancerProfileSecurityGroupsSupported(m map[string]json.RawMe
 	return
 }
 
+// LoadBalancerProfileSourceIPSessionPersistenceSupported : LoadBalancerProfileSourceIPSessionPersistenceSupported struct
+// Models which "extend" this model:
+// - LoadBalancerProfileSourceIPSessionPersistenceSupportedFixed
+// - LoadBalancerProfileSourceIPSessionPersistenceSupportedDependent
+type LoadBalancerProfileSourceIPSessionPersistenceSupported struct {
+	// The type for this profile field.
+	Type *string `json:"type,omitempty"`
+
+	// The value for this profile field.
+	Value *bool `json:"value,omitempty"`
+}
+
+// Constants associated with the LoadBalancerProfileSourceIPSessionPersistenceSupported.Type property.
+// The type for this profile field.
+const (
+	LoadBalancerProfileSourceIPSessionPersistenceSupportedTypeFixedConst = "fixed"
+)
+
+func (*LoadBalancerProfileSourceIPSessionPersistenceSupported) isaLoadBalancerProfileSourceIPSessionPersistenceSupported() bool {
+	return true
+}
+
+type LoadBalancerProfileSourceIPSessionPersistenceSupportedIntf interface {
+	isaLoadBalancerProfileSourceIPSessionPersistenceSupported() bool
+}
+
+// UnmarshalLoadBalancerProfileSourceIPSessionPersistenceSupported unmarshals an instance of LoadBalancerProfileSourceIPSessionPersistenceSupported from the specified map of raw messages.
+func UnmarshalLoadBalancerProfileSourceIPSessionPersistenceSupported(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(LoadBalancerProfileSourceIPSessionPersistenceSupported)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // LoadBalancerProfileUDPSupported : LoadBalancerProfileUDPSupported struct
 // Models which "extend" this model:
 // - LoadBalancerProfileUDPSupportedFixed
@@ -70332,19 +72427,65 @@ func UnmarshalLoadBalancerProfileUDPSupported(m map[string]json.RawMessage, resu
 	return
 }
 
-// LoadBalancerReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type LoadBalancerReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
+// LoadBalancerReference : LoadBalancerReference struct
+type LoadBalancerReference struct {
+	// The CRN for this load balancer.
+	CRN *string `json:"crn" validate:"required"`
+
+	// If present, this property indicates the referenced resource has been deleted, and provides
+	// some supplementary information.
+	Deleted *Deleted `json:"deleted,omitempty"`
+
+	// The URL for this load balancer.
+	Href *string `json:"href" validate:"required"`
+
+	// The unique identifier for this load balancer.
+	ID *string `json:"id" validate:"required"`
+
+	// The name for this load balancer. The name is unique across all load balancers in the VPC.
+	Name *string `json:"name" validate:"required"`
+
+	// The resource type.
+	ResourceType *string `json:"resource_type" validate:"required"`
 }
 
-// UnmarshalLoadBalancerReferenceDeleted unmarshals an instance of LoadBalancerReferenceDeleted from the specified map of raw messages.
-func UnmarshalLoadBalancerReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(LoadBalancerReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
+// Constants associated with the LoadBalancerReference.ResourceType property.
+// The resource type.
+const (
+	LoadBalancerReferenceResourceTypeLoadBalancerConst = "load_balancer"
+)
+
+// UnmarshalLoadBalancerReference unmarshals an instance of LoadBalancerReference from the specified map of raw messages.
+func UnmarshalLoadBalancerReference(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(LoadBalancerReference)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
 	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -70483,7 +72624,7 @@ type NetworkACLCollection struct {
 	// The maximum number of resources that can be returned by the request.
 	Limit *int64 `json:"limit" validate:"required"`
 
-	// Collection of network ACLs.
+	// A page of network ACLs.
 	NetworkAcls []NetworkACL `json:"network_acls" validate:"required"`
 
 	// A link to the next page of resources. This property is present for all pages
@@ -70725,7 +72866,7 @@ type NetworkACLReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *NetworkACLReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this network ACL.
 	Href *string `json:"href" validate:"required"`
@@ -70745,7 +72886,7 @@ func UnmarshalNetworkACLReference(m map[string]json.RawMessage, result interface
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalNetworkACLReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -70763,25 +72904,6 @@ func UnmarshalNetworkACLReference(m map[string]json.RawMessage, result interface
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// NetworkACLReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type NetworkACLReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalNetworkACLReferenceDeleted unmarshals an instance of NetworkACLReferenceDeleted from the specified map of raw messages.
-func UnmarshalNetworkACLReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(NetworkACLReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -70821,7 +72943,7 @@ type NetworkACLRule struct {
 	// The name for this network ACL rule. The name is unique across all rules for the network ACL.
 	Name *string `json:"name" validate:"required"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
@@ -70871,7 +72993,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRule.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRuleProtocolAllConst  = "all"
 	NetworkACLRuleProtocolIcmpConst = "icmp"
@@ -71018,7 +73140,7 @@ type NetworkACLRuleCollection struct {
 	// except the last page.
 	Next *NetworkACLRuleCollectionNext `json:"next,omitempty"`
 
-	// Ordered collection of network ACL rules.
+	// A page of ordered rules (sorted based on the `before` property) for the network ACL.
 	Rules []NetworkACLRuleItemIntf `json:"rules" validate:"required"`
 
 	// The total number of resources across all pages.
@@ -71142,7 +73264,7 @@ type NetworkACLRuleItem struct {
 	// The name for this network ACL rule. The name is unique across all rules for the network ACL.
 	Name *string `json:"name" validate:"required"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
@@ -71192,7 +73314,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRuleItem.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRuleItemProtocolAllConst  = "all"
 	NetworkACLRuleItemProtocolIcmpConst = "icmp"
@@ -71279,7 +73401,7 @@ type NetworkACLRulePatch struct {
 	// The name for this network ACL rule. The name must not be used by another rule for the network ACL.
 	Name *string `json:"name,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol,omitempty"`
 
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
@@ -71312,7 +73434,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePatch.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRulePatchProtocolAllConst  = "all"
 	NetworkACLRulePatchProtocolIcmpConst = "icmp"
@@ -71432,7 +73554,7 @@ type NetworkACLRulePrototype struct {
 	// the name will be a hyphenated list of randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
@@ -71482,7 +73604,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePrototype.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRulePrototypeProtocolAllConst  = "all"
 	NetworkACLRulePrototypeProtocolIcmpConst = "icmp"
@@ -71561,7 +73683,7 @@ type NetworkACLRulePrototypeNetworkACLContext struct {
 	// the name will be a hyphenated list of randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
@@ -71611,7 +73733,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePrototypeNetworkACLContext.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRulePrototypeNetworkACLContextProtocolAllConst  = "all"
 	NetworkACLRulePrototypeNetworkACLContextProtocolIcmpConst = "icmp"
@@ -71672,7 +73794,7 @@ func UnmarshalNetworkACLRulePrototypeNetworkACLContext(m map[string]json.RawMess
 type NetworkACLRuleReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *NetworkACLRuleReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this network ACL rule.
 	Href *string `json:"href" validate:"required"`
@@ -71687,7 +73809,7 @@ type NetworkACLRuleReference struct {
 // UnmarshalNetworkACLRuleReference unmarshals an instance of NetworkACLRuleReference from the specified map of raw messages.
 func UnmarshalNetworkACLRuleReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(NetworkACLRuleReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalNetworkACLRuleReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -71705,25 +73827,6 @@ func UnmarshalNetworkACLRuleReference(m map[string]json.RawMessage, result inter
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// NetworkACLRuleReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type NetworkACLRuleReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalNetworkACLRuleReferenceDeleted unmarshals an instance of NetworkACLRuleReferenceDeleted from the specified map of raw messages.
-func UnmarshalNetworkACLRuleReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(NetworkACLRuleReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -71925,7 +74028,7 @@ func UnmarshalNetworkInterface(m map[string]json.RawMessage, result interface{})
 type NetworkInterfaceBareMetalServerContextReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *NetworkInterfaceBareMetalServerContextReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this bare metal server network interface.
 	//
@@ -71963,7 +74066,7 @@ const (
 // UnmarshalNetworkInterfaceBareMetalServerContextReference unmarshals an instance of NetworkInterfaceBareMetalServerContextReference from the specified map of raw messages.
 func UnmarshalNetworkInterfaceBareMetalServerContextReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(NetworkInterfaceBareMetalServerContextReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalNetworkInterfaceBareMetalServerContextReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -71996,25 +74099,6 @@ func UnmarshalNetworkInterfaceBareMetalServerContextReference(m map[string]json.
 	err = core.UnmarshalModel(m, "subnet", &obj.Subnet, UnmarshalSubnetReference)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "subnet-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// NetworkInterfaceBareMetalServerContextReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type NetworkInterfaceBareMetalServerContextReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalNetworkInterfaceBareMetalServerContextReferenceDeleted unmarshals an instance of NetworkInterfaceBareMetalServerContextReferenceDeleted from the specified map of raw messages.
-func UnmarshalNetworkInterfaceBareMetalServerContextReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(NetworkInterfaceBareMetalServerContextReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -72091,7 +74175,7 @@ func UnmarshalNetworkInterfaceIPPrototype(m map[string]json.RawMessage, result i
 type NetworkInterfaceInstanceContextReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *NetworkInterfaceInstanceContextReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this instance network interface.
 	//
@@ -72129,7 +74213,7 @@ const (
 // UnmarshalNetworkInterfaceInstanceContextReference unmarshals an instance of NetworkInterfaceInstanceContextReference from the specified map of raw messages.
 func UnmarshalNetworkInterfaceInstanceContextReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(NetworkInterfaceInstanceContextReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalNetworkInterfaceInstanceContextReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -72162,25 +74246,6 @@ func UnmarshalNetworkInterfaceInstanceContextReference(m map[string]json.RawMess
 	err = core.UnmarshalModel(m, "subnet", &obj.Subnet, UnmarshalSubnetReference)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "subnet-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// NetworkInterfaceInstanceContextReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type NetworkInterfaceInstanceContextReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalNetworkInterfaceInstanceContextReferenceDeleted unmarshals an instance of NetworkInterfaceInstanceContextReferenceDeleted from the specified map of raw messages.
-func UnmarshalNetworkInterfaceInstanceContextReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(NetworkInterfaceInstanceContextReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -72306,47 +74371,9 @@ func UnmarshalNetworkInterfacePrototype(m map[string]json.RawMessage, result int
 	return
 }
 
-// NetworkInterfaceReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type NetworkInterfaceReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalNetworkInterfaceReferenceDeleted unmarshals an instance of NetworkInterfaceReferenceDeleted from the specified map of raw messages.
-func UnmarshalNetworkInterfaceReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(NetworkInterfaceReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// NetworkInterfaceReferenceTargetContextDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type NetworkInterfaceReferenceTargetContextDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalNetworkInterfaceReferenceTargetContextDeleted unmarshals an instance of NetworkInterfaceReferenceTargetContextDeleted from the specified map of raw messages.
-func UnmarshalNetworkInterfaceReferenceTargetContextDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(NetworkInterfaceReferenceTargetContextDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // NetworkInterfaceUnpaginatedCollection : NetworkInterfaceUnpaginatedCollection struct
 type NetworkInterfaceUnpaginatedCollection struct {
-	// Collection of instance network interfaces.
+	// The network interfaces for the instance.
 	NetworkInterfaces []NetworkInterface `json:"network_interfaces" validate:"required"`
 }
 
@@ -72508,7 +74535,7 @@ type OperatingSystemCollection struct {
 	// except the last page.
 	Next *OperatingSystemCollectionNext `json:"next,omitempty"`
 
-	// Collection of operating systems.
+	// A page of operating systems.
 	OperatingSystems []OperatingSystem `json:"operating_systems" validate:"required"`
 
 	// The total number of resources across all pages.
@@ -72633,6 +74660,65 @@ func UnmarshalOperatingSystemIdentity(m map[string]json.RawMessage, result inter
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// PermitPrivatePathServiceGatewayEndpointGatewayBindingOptions : The PermitPrivatePathServiceGatewayEndpointGatewayBinding options.
+type PermitPrivatePathServiceGatewayEndpointGatewayBindingOptions struct {
+	// The private path service gateway identifier.
+	PrivatePathServiceGatewayID *string `json:"private_path_service_gateway_id" validate:"required,ne="`
+
+	// The endpoint gateway binding identifier.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Indicates whether this will become the access policy for any `pending` and future endpoint gateway bindings from the
+	// same account.
+	//
+	// If set to `true`:
+	//
+	// - If the account has an existing access policy, that policy will be updated to
+	//   `permit`. Otherwise, a new `permit` access policy will be created for the account.
+	// - All `pending` endpoint gateway bindings for the account will be permitted.
+	//
+	// If set to `false`:
+	//
+	// - No access policies will be created or updated
+	// - All `pending` endpoint gateway bindings for the account will remain `pending`.
+	SetAccountPolicy *bool `json:"set_account_policy,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewPermitPrivatePathServiceGatewayEndpointGatewayBindingOptions : Instantiate PermitPrivatePathServiceGatewayEndpointGatewayBindingOptions
+func (*VpcV1) NewPermitPrivatePathServiceGatewayEndpointGatewayBindingOptions(privatePathServiceGatewayID string, id string) *PermitPrivatePathServiceGatewayEndpointGatewayBindingOptions {
+	return &PermitPrivatePathServiceGatewayEndpointGatewayBindingOptions{
+		PrivatePathServiceGatewayID: core.StringPtr(privatePathServiceGatewayID),
+		ID:                          core.StringPtr(id),
+	}
+}
+
+// SetPrivatePathServiceGatewayID : Allow user to set PrivatePathServiceGatewayID
+func (_options *PermitPrivatePathServiceGatewayEndpointGatewayBindingOptions) SetPrivatePathServiceGatewayID(privatePathServiceGatewayID string) *PermitPrivatePathServiceGatewayEndpointGatewayBindingOptions {
+	_options.PrivatePathServiceGatewayID = core.StringPtr(privatePathServiceGatewayID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *PermitPrivatePathServiceGatewayEndpointGatewayBindingOptions) SetID(id string) *PermitPrivatePathServiceGatewayEndpointGatewayBindingOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetSetAccountPolicy : Allow user to set SetAccountPolicy
+func (_options *PermitPrivatePathServiceGatewayEndpointGatewayBindingOptions) SetSetAccountPolicy(setAccountPolicy bool) *PermitPrivatePathServiceGatewayEndpointGatewayBindingOptions {
+	_options.SetAccountPolicy = core.BoolPtr(setAccountPolicy)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *PermitPrivatePathServiceGatewayEndpointGatewayBindingOptions) SetHeaders(param map[string]string) *PermitPrivatePathServiceGatewayEndpointGatewayBindingOptions {
+	options.Headers = param
+	return options
 }
 
 // PlacementGroup : PlacementGroup struct
@@ -72764,7 +74850,7 @@ type PlacementGroupCollection struct {
 	// except the last page.
 	Next *PlacementGroupCollectionNext `json:"next,omitempty"`
 
-	// Collection of placement groups.
+	// A page of placement groups.
 	PlacementGroups []PlacementGroup `json:"placement_groups" validate:"required"`
 
 	// The total number of resources across all pages.
@@ -72885,19 +74971,861 @@ func (placementGroupPatch *PlacementGroupPatch) AsPatch() (_patch map[string]int
 	return
 }
 
-// PlacementGroupReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type PlacementGroupReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
+// PrivatePathServiceGateway : PrivatePathServiceGateway struct
+type PrivatePathServiceGateway struct {
+	// The date and time that the private path service gateway was created.
+	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
+
+	// The CRN for this private path service gateway.
+	CRN *string `json:"crn" validate:"required"`
+
+	// The policy to use for bindings from accounts without an explicit account policy.
+	DefaultAccessPolicy *string `json:"default_access_policy" validate:"required"`
+
+	// Indicates whether endpoint gateway bindings will be automatically deleted after
+	// `endpoint_gateway_binding_auto_delete_timeout` hours have passed. At present, this is always `true`, but may be
+	// modifiable in the future.
+	EndpointGatewayBindingAutoDelete *bool `json:"endpoint_gateway_binding_auto_delete" validate:"required"`
+
+	// If `endpoint_gateway_binding_auto_delete` is `true`, the hours after which endpoint gateway bindings will be
+	// automatically deleted. If the value is `0`, `abandoned` endpoint gateway bindings will be deleted immediately. At
+	// present, this is always set to `0`. This value may be modifiable in the future.
+	EndpointGatewayBindingAutoDeleteTimeout *int64 `json:"endpoint_gateway_binding_auto_delete_timeout" validate:"required"`
+
+	// The number of active endpoint gateways using this private path service gateway.
+	EndpointGatewayCount *int64 `json:"endpoint_gateway_count" validate:"required"`
+
+	// The URL for this private path service gateway.
+	Href *string `json:"href" validate:"required"`
+
+	// The unique identifier for this private path service gateway.
+	ID *string `json:"id" validate:"required"`
+
+	// The lifecycle state of the private path service gateway.
+	LifecycleState *string `json:"lifecycle_state" validate:"required"`
+
+	// The load balancer for this private path service gateway.
+	LoadBalancer *LoadBalancerReference `json:"load_balancer" validate:"required"`
+
+	// The name for this private path service gateway. The name is unique across all private path service gateways in the
+	// VPC.
+	Name *string `json:"name" validate:"required"`
+
+	// Indicates the availability of this private path service gateway
+	// - `true`: Any account can request access to this private path service gateway.
+	// - `false`: Access is restricted to the account that created this private path service gateway.
+	Published *bool `json:"published" validate:"required"`
+
+	// The resource group for this private path service gateway.
+	ResourceGroup *ResourceGroupReference `json:"resource_group" validate:"required"`
+
+	// The resource type.
+	ResourceType *string `json:"resource_type" validate:"required"`
+
+	// The fully qualified domain names for this private path service gateway. The domains are used for endpoint gateways
+	// to connect to the service and are configured in the VPC for each endpoint gateway.
+	ServiceEndpoints []string `json:"service_endpoints" validate:"required"`
+
+	// The VPC this private path service gateway resides in.
+	VPC *VPCReference `json:"vpc" validate:"required"`
+
+	// Indicates whether this private path service gateway has zonal affinity.
+	// - `true`:  Traffic to the service from a zone the service resides in will remain in
+	//            that zone.
+	// - `false`: Traffic to the service from a zone will be load balanced across all zones
+	//            in the region the service resides in.
+	ZonalAffinity *bool `json:"zonal_affinity" validate:"required"`
 }
 
-// UnmarshalPlacementGroupReferenceDeleted unmarshals an instance of PlacementGroupReferenceDeleted from the specified map of raw messages.
-func UnmarshalPlacementGroupReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(PlacementGroupReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
+// Constants associated with the PrivatePathServiceGateway.DefaultAccessPolicy property.
+// The policy to use for bindings from accounts without an explicit account policy.
+const (
+	PrivatePathServiceGatewayDefaultAccessPolicyDenyConst   = "deny"
+	PrivatePathServiceGatewayDefaultAccessPolicyPermitConst = "permit"
+	PrivatePathServiceGatewayDefaultAccessPolicyReviewConst = "review"
+)
+
+// Constants associated with the PrivatePathServiceGateway.LifecycleState property.
+// The lifecycle state of the private path service gateway.
+const (
+	PrivatePathServiceGatewayLifecycleStateDeletingConst  = "deleting"
+	PrivatePathServiceGatewayLifecycleStateFailedConst    = "failed"
+	PrivatePathServiceGatewayLifecycleStatePendingConst   = "pending"
+	PrivatePathServiceGatewayLifecycleStateStableConst    = "stable"
+	PrivatePathServiceGatewayLifecycleStateSuspendedConst = "suspended"
+	PrivatePathServiceGatewayLifecycleStateUpdatingConst  = "updating"
+	PrivatePathServiceGatewayLifecycleStateWaitingConst   = "waiting"
+)
+
+// Constants associated with the PrivatePathServiceGateway.ResourceType property.
+// The resource type.
+const (
+	PrivatePathServiceGatewayResourceTypePrivatePathServiceGatewayConst = "private_path_service_gateway"
+)
+
+// UnmarshalPrivatePathServiceGateway unmarshals an instance of PrivatePathServiceGateway from the specified map of raw messages.
+func UnmarshalPrivatePathServiceGateway(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PrivatePathServiceGateway)
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
 	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "default_access_policy", &obj.DefaultAccessPolicy)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "default_access_policy-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "endpoint_gateway_binding_auto_delete", &obj.EndpointGatewayBindingAutoDelete)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "endpoint_gateway_binding_auto_delete-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "endpoint_gateway_binding_auto_delete_timeout", &obj.EndpointGatewayBindingAutoDeleteTimeout)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "endpoint_gateway_binding_auto_delete_timeout-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "endpoint_gateway_count", &obj.EndpointGatewayCount)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "endpoint_gateway_count-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "lifecycle_state", &obj.LifecycleState)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "lifecycle_state-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "load_balancer", &obj.LoadBalancer, UnmarshalLoadBalancerReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "load_balancer-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "published", &obj.Published)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "published-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "resource_group", &obj.ResourceGroup, UnmarshalResourceGroupReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_group-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "service_endpoints", &obj.ServiceEndpoints)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "service_endpoints-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "vpc", &obj.VPC, UnmarshalVPCReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "vpc-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "zonal_affinity", &obj.ZonalAffinity)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "zonal_affinity-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// PrivatePathServiceGatewayAccountPolicy : PrivatePathServiceGatewayAccountPolicy struct
+type PrivatePathServiceGatewayAccountPolicy struct {
+	// The access policy for the account:
+	// - permit: access will be permitted
+	// - deny:  access will be denied
+	// - review: access will be manually reviewed
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	AccessPolicy *string `json:"access_policy" validate:"required"`
+
+	// The account for this access policy.
+	Account *AccountReference `json:"account" validate:"required"`
+
+	// The date and time that the account policy was created.
+	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
+
+	// The URL for this account policy.
+	Href *string `json:"href" validate:"required"`
+
+	// The unique identifier for this account policy.
+	ID *string `json:"id" validate:"required"`
+
+	// The resource type.
+	ResourceType *string `json:"resource_type" validate:"required"`
+}
+
+// Constants associated with the PrivatePathServiceGatewayAccountPolicy.AccessPolicy property.
+// The access policy for the account:
+// - permit: access will be permitted
+// - deny:  access will be denied
+// - review: access will be manually reviewed
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+const (
+	PrivatePathServiceGatewayAccountPolicyAccessPolicyDenyConst   = "deny"
+	PrivatePathServiceGatewayAccountPolicyAccessPolicyPermitConst = "permit"
+	PrivatePathServiceGatewayAccountPolicyAccessPolicyReviewConst = "review"
+)
+
+// Constants associated with the PrivatePathServiceGatewayAccountPolicy.ResourceType property.
+// The resource type.
+const (
+	PrivatePathServiceGatewayAccountPolicyResourceTypePrivatePathServiceGatewayAccountPolicyConst = "private_path_service_gateway_account_policy"
+)
+
+// UnmarshalPrivatePathServiceGatewayAccountPolicy unmarshals an instance of PrivatePathServiceGatewayAccountPolicy from the specified map of raw messages.
+func UnmarshalPrivatePathServiceGatewayAccountPolicy(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PrivatePathServiceGatewayAccountPolicy)
+	err = core.UnmarshalPrimitive(m, "access_policy", &obj.AccessPolicy)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "access_policy-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "account", &obj.Account, UnmarshalAccountReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "account-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// PrivatePathServiceGatewayAccountPolicyCollection : PrivatePathServiceGatewayAccountPolicyCollection struct
+type PrivatePathServiceGatewayAccountPolicyCollection struct {
+	// A page of account policies for the private path service gateway.
+	AccountPolicies []PrivatePathServiceGatewayAccountPolicy `json:"account_policies" validate:"required"`
+
+	// A link to the first page of resources.
+	First *PrivatePathServiceGatewayAccountPolicyCollectionFirst `json:"first" validate:"required"`
+
+	// The maximum number of resources that can be returned by the request.
+	Limit *int64 `json:"limit" validate:"required"`
+
+	// A link to the next page of resources. This property is present for all pages
+	// except the last page.
+	Next *PrivatePathServiceGatewayAccountPolicyCollectionNext `json:"next,omitempty"`
+
+	// The total number of resources across all pages.
+	TotalCount *int64 `json:"total_count" validate:"required"`
+}
+
+// UnmarshalPrivatePathServiceGatewayAccountPolicyCollection unmarshals an instance of PrivatePathServiceGatewayAccountPolicyCollection from the specified map of raw messages.
+func UnmarshalPrivatePathServiceGatewayAccountPolicyCollection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PrivatePathServiceGatewayAccountPolicyCollection)
+	err = core.UnmarshalModel(m, "account_policies", &obj.AccountPolicies, UnmarshalPrivatePathServiceGatewayAccountPolicy)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "account_policies-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPrivatePathServiceGatewayAccountPolicyCollectionFirst)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPrivatePathServiceGatewayAccountPolicyCollectionNext)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *PrivatePathServiceGatewayAccountPolicyCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
+		return nil, err
+	} else if start == nil {
+		return nil, nil
+	}
+	return start, nil
+}
+
+// PrivatePathServiceGatewayAccountPolicyCollectionFirst : A link to the first page of resources.
+type PrivatePathServiceGatewayAccountPolicyCollectionFirst struct {
+	// The URL for a page of resources.
+	Href *string `json:"href" validate:"required"`
+}
+
+// UnmarshalPrivatePathServiceGatewayAccountPolicyCollectionFirst unmarshals an instance of PrivatePathServiceGatewayAccountPolicyCollectionFirst from the specified map of raw messages.
+func UnmarshalPrivatePathServiceGatewayAccountPolicyCollectionFirst(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PrivatePathServiceGatewayAccountPolicyCollectionFirst)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// PrivatePathServiceGatewayAccountPolicyCollectionNext : A link to the next page of resources. This property is present for all pages except the last page.
+type PrivatePathServiceGatewayAccountPolicyCollectionNext struct {
+	// The URL for a page of resources.
+	Href *string `json:"href" validate:"required"`
+}
+
+// UnmarshalPrivatePathServiceGatewayAccountPolicyCollectionNext unmarshals an instance of PrivatePathServiceGatewayAccountPolicyCollectionNext from the specified map of raw messages.
+func UnmarshalPrivatePathServiceGatewayAccountPolicyCollectionNext(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PrivatePathServiceGatewayAccountPolicyCollectionNext)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// PrivatePathServiceGatewayAccountPolicyPatch : PrivatePathServiceGatewayAccountPolicyPatch struct
+type PrivatePathServiceGatewayAccountPolicyPatch struct {
+	// The access policy for the account. Updating the access policy only affects pending and future endpoint gateway
+	// bindings.
+	// - permit: access will be permitted
+	// - deny: access will be denied
+	// - review: access will be manually reviewed
+	//
+	// - Updating to `review` sets the status of future endpoint gateway bindings from
+	//    this account to `pending`.
+	// - Updating to `permit` updates both the status of any `pending` and future endpoint
+	//   gateway bindings from this account to `permitted`.
+	// - Updating to `deny` updates both the status of any `pending` and future endpoint
+	//   gateway bindings from this account to `denied`.
+	AccessPolicy *string `json:"access_policy,omitempty"`
+}
+
+// Constants associated with the PrivatePathServiceGatewayAccountPolicyPatch.AccessPolicy property.
+// The access policy for the account. Updating the access policy only affects pending and future endpoint gateway
+// bindings.
+// - permit: access will be permitted
+// - deny: access will be denied
+// - review: access will be manually reviewed
+//
+//   - Updating to `review` sets the status of future endpoint gateway bindings from
+//     this account to `pending`.
+//   - Updating to `permit` updates both the status of any `pending` and future endpoint
+//     gateway bindings from this account to `permitted`.
+//   - Updating to `deny` updates both the status of any `pending` and future endpoint
+//     gateway bindings from this account to `denied`.
+const (
+	PrivatePathServiceGatewayAccountPolicyPatchAccessPolicyDenyConst   = "deny"
+	PrivatePathServiceGatewayAccountPolicyPatchAccessPolicyPermitConst = "permit"
+	PrivatePathServiceGatewayAccountPolicyPatchAccessPolicyReviewConst = "review"
+)
+
+// UnmarshalPrivatePathServiceGatewayAccountPolicyPatch unmarshals an instance of PrivatePathServiceGatewayAccountPolicyPatch from the specified map of raw messages.
+func UnmarshalPrivatePathServiceGatewayAccountPolicyPatch(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PrivatePathServiceGatewayAccountPolicyPatch)
+	err = core.UnmarshalPrimitive(m, "access_policy", &obj.AccessPolicy)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "access_policy-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// AsPatch returns a generic map representation of the PrivatePathServiceGatewayAccountPolicyPatch
+func (privatePathServiceGatewayAccountPolicyPatch *PrivatePathServiceGatewayAccountPolicyPatch) AsPatch() (_patch map[string]interface{}, err error) {
+	var jsonData []byte
+	jsonData, err = json.Marshal(privatePathServiceGatewayAccountPolicyPatch)
+	if err == nil {
+		err = json.Unmarshal(jsonData, &_patch)
+	}
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unmarshal-patch-data-error", common.GetComponentInfo())
+	}
+	return
+}
+
+// PrivatePathServiceGatewayCollection : PrivatePathServiceGatewayCollection struct
+type PrivatePathServiceGatewayCollection struct {
+	// A link to the first page of resources.
+	First *PrivatePathServiceGatewayCollectionFirst `json:"first" validate:"required"`
+
+	// The maximum number of resources that can be returned by the request.
+	Limit *int64 `json:"limit" validate:"required"`
+
+	// A link to the next page of resources. This property is present for all pages
+	// except the last page.
+	Next *PrivatePathServiceGatewayCollectionNext `json:"next,omitempty"`
+
+	// A page of private path service gateways.
+	PrivatePathServiceGateways []PrivatePathServiceGateway `json:"private_path_service_gateways" validate:"required"`
+
+	// The total number of resources across all pages.
+	TotalCount *int64 `json:"total_count" validate:"required"`
+}
+
+// UnmarshalPrivatePathServiceGatewayCollection unmarshals an instance of PrivatePathServiceGatewayCollection from the specified map of raw messages.
+func UnmarshalPrivatePathServiceGatewayCollection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PrivatePathServiceGatewayCollection)
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPrivatePathServiceGatewayCollectionFirst)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPrivatePathServiceGatewayCollectionNext)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "private_path_service_gateways", &obj.PrivatePathServiceGateways, UnmarshalPrivatePathServiceGateway)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "private_path_service_gateways-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *PrivatePathServiceGatewayCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
+		return nil, err
+	} else if start == nil {
+		return nil, nil
+	}
+	return start, nil
+}
+
+// PrivatePathServiceGatewayCollectionFirst : A link to the first page of resources.
+type PrivatePathServiceGatewayCollectionFirst struct {
+	// The URL for a page of resources.
+	Href *string `json:"href" validate:"required"`
+}
+
+// UnmarshalPrivatePathServiceGatewayCollectionFirst unmarshals an instance of PrivatePathServiceGatewayCollectionFirst from the specified map of raw messages.
+func UnmarshalPrivatePathServiceGatewayCollectionFirst(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PrivatePathServiceGatewayCollectionFirst)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// PrivatePathServiceGatewayCollectionNext : A link to the next page of resources. This property is present for all pages except the last page.
+type PrivatePathServiceGatewayCollectionNext struct {
+	// The URL for a page of resources.
+	Href *string `json:"href" validate:"required"`
+}
+
+// UnmarshalPrivatePathServiceGatewayCollectionNext unmarshals an instance of PrivatePathServiceGatewayCollectionNext from the specified map of raw messages.
+func UnmarshalPrivatePathServiceGatewayCollectionNext(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PrivatePathServiceGatewayCollectionNext)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// PrivatePathServiceGatewayEndpointGatewayBinding : PrivatePathServiceGatewayEndpointGatewayBinding struct
+type PrivatePathServiceGatewayEndpointGatewayBinding struct {
+	// The account that created the endpoint gateway.
+	Account *AccountReference `json:"account" validate:"required"`
+
+	// The date and time that the endpoint gateway binding was created.
+	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
+
+	// The expiration date and time for the endpoint gateway binding. At binding creation, this property will be set to 14
+	// days after the creation time, and will remain while the `status` of the binding is `pending`. If the date and time
+	// are reached while the binding is still `pending`, the binding will transition to `expired`.
+	//
+	// This property will be present if the `status` is `pending` or `expired`.
+	ExpirationAt *strfmt.DateTime `json:"expiration_at,omitempty"`
+
+	// The URL for this endpoint gateway binding.
+	Href *string `json:"href" validate:"required"`
+
+	// The unique identifier for this endpoint gateway binding.
+	ID *string `json:"id" validate:"required"`
+
+	// The lifecycle state of the endpoint gateway binding.
+	LifecycleState *string `json:"lifecycle_state" validate:"required"`
+
+	// The resource type.
+	ResourceType *string `json:"resource_type" validate:"required"`
+
+	// The status of the endpoint gateway binding:
+	// - `abandoned`: endpoint gateway binding is inactive, awaiting deletion.
+	// - `denied`: endpoint gateway binding was denied
+	// - `expired`: endpoint gateway binding has expired
+	// - `pending`: endpoint gateway binding is awaiting review
+	// - `permitted`: endpoint gateway binding was permitted
+	//
+	// An endpoint gateway binding will be automatically deleted when its associated endpoint gateway is deleted.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	Status *string `json:"status" validate:"required"`
+}
+
+// Constants associated with the PrivatePathServiceGatewayEndpointGatewayBinding.LifecycleState property.
+// The lifecycle state of the endpoint gateway binding.
+const (
+	PrivatePathServiceGatewayEndpointGatewayBindingLifecycleStateDeletingConst  = "deleting"
+	PrivatePathServiceGatewayEndpointGatewayBindingLifecycleStateFailedConst    = "failed"
+	PrivatePathServiceGatewayEndpointGatewayBindingLifecycleStatePendingConst   = "pending"
+	PrivatePathServiceGatewayEndpointGatewayBindingLifecycleStateStableConst    = "stable"
+	PrivatePathServiceGatewayEndpointGatewayBindingLifecycleStateSuspendedConst = "suspended"
+	PrivatePathServiceGatewayEndpointGatewayBindingLifecycleStateUpdatingConst  = "updating"
+	PrivatePathServiceGatewayEndpointGatewayBindingLifecycleStateWaitingConst   = "waiting"
+)
+
+// Constants associated with the PrivatePathServiceGatewayEndpointGatewayBinding.ResourceType property.
+// The resource type.
+const (
+	PrivatePathServiceGatewayEndpointGatewayBindingResourceTypePrivatePathServiceGatewayEndpointGatewayBindingConst = "private_path_service_gateway_endpoint_gateway_binding"
+)
+
+// Constants associated with the PrivatePathServiceGatewayEndpointGatewayBinding.Status property.
+// The status of the endpoint gateway binding:
+// - `abandoned`: endpoint gateway binding is inactive, awaiting deletion.
+// - `denied`: endpoint gateway binding was denied
+// - `expired`: endpoint gateway binding has expired
+// - `pending`: endpoint gateway binding is awaiting review
+// - `permitted`: endpoint gateway binding was permitted
+//
+// An endpoint gateway binding will be automatically deleted when its associated endpoint gateway is deleted.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+const (
+	PrivatePathServiceGatewayEndpointGatewayBindingStatusAbandonedConst = "abandoned"
+	PrivatePathServiceGatewayEndpointGatewayBindingStatusDeniedConst    = "denied"
+	PrivatePathServiceGatewayEndpointGatewayBindingStatusExpiredConst   = "expired"
+	PrivatePathServiceGatewayEndpointGatewayBindingStatusPendingConst   = "pending"
+	PrivatePathServiceGatewayEndpointGatewayBindingStatusPermittedConst = "permitted"
+)
+
+// UnmarshalPrivatePathServiceGatewayEndpointGatewayBinding unmarshals an instance of PrivatePathServiceGatewayEndpointGatewayBinding from the specified map of raw messages.
+func UnmarshalPrivatePathServiceGatewayEndpointGatewayBinding(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PrivatePathServiceGatewayEndpointGatewayBinding)
+	err = core.UnmarshalModel(m, "account", &obj.Account, UnmarshalAccountReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "account-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "expiration_at", &obj.ExpirationAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "expiration_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "lifecycle_state", &obj.LifecycleState)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "lifecycle_state-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// PrivatePathServiceGatewayEndpointGatewayBindingCollection : PrivatePathServiceGatewayEndpointGatewayBindingCollection struct
+type PrivatePathServiceGatewayEndpointGatewayBindingCollection struct {
+	// A page of endpoint gateway bindings for the private path service gateway.
+	EndpointGatewayBindings []PrivatePathServiceGatewayEndpointGatewayBinding `json:"endpoint_gateway_bindings" validate:"required"`
+
+	// A link to the first page of resources.
+	First *PrivatePathServiceGatewayEndpointGatewayBindingCollectionFirst `json:"first" validate:"required"`
+
+	// The maximum number of resources that can be returned by the request.
+	Limit *int64 `json:"limit" validate:"required"`
+
+	// A link to the next page of resources. This property is present for all pages
+	// except the last page.
+	Next *PrivatePathServiceGatewayEndpointGatewayBindingCollectionNext `json:"next,omitempty"`
+
+	// The total number of resources across all pages.
+	TotalCount *int64 `json:"total_count" validate:"required"`
+}
+
+// UnmarshalPrivatePathServiceGatewayEndpointGatewayBindingCollection unmarshals an instance of PrivatePathServiceGatewayEndpointGatewayBindingCollection from the specified map of raw messages.
+func UnmarshalPrivatePathServiceGatewayEndpointGatewayBindingCollection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PrivatePathServiceGatewayEndpointGatewayBindingCollection)
+	err = core.UnmarshalModel(m, "endpoint_gateway_bindings", &obj.EndpointGatewayBindings, UnmarshalPrivatePathServiceGatewayEndpointGatewayBinding)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "endpoint_gateway_bindings-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPrivatePathServiceGatewayEndpointGatewayBindingCollectionFirst)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPrivatePathServiceGatewayEndpointGatewayBindingCollectionNext)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *PrivatePathServiceGatewayEndpointGatewayBindingCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
+		return nil, err
+	} else if start == nil {
+		return nil, nil
+	}
+	return start, nil
+}
+
+// PrivatePathServiceGatewayEndpointGatewayBindingCollectionFirst : A link to the first page of resources.
+type PrivatePathServiceGatewayEndpointGatewayBindingCollectionFirst struct {
+	// The URL for a page of resources.
+	Href *string `json:"href" validate:"required"`
+}
+
+// UnmarshalPrivatePathServiceGatewayEndpointGatewayBindingCollectionFirst unmarshals an instance of PrivatePathServiceGatewayEndpointGatewayBindingCollectionFirst from the specified map of raw messages.
+func UnmarshalPrivatePathServiceGatewayEndpointGatewayBindingCollectionFirst(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PrivatePathServiceGatewayEndpointGatewayBindingCollectionFirst)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// PrivatePathServiceGatewayEndpointGatewayBindingCollectionNext : A link to the next page of resources. This property is present for all pages except the last page.
+type PrivatePathServiceGatewayEndpointGatewayBindingCollectionNext struct {
+	// The URL for a page of resources.
+	Href *string `json:"href" validate:"required"`
+}
+
+// UnmarshalPrivatePathServiceGatewayEndpointGatewayBindingCollectionNext unmarshals an instance of PrivatePathServiceGatewayEndpointGatewayBindingCollectionNext from the specified map of raw messages.
+func UnmarshalPrivatePathServiceGatewayEndpointGatewayBindingCollectionNext(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PrivatePathServiceGatewayEndpointGatewayBindingCollectionNext)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// PrivatePathServiceGatewayPatch : PrivatePathServiceGatewayPatch struct
+type PrivatePathServiceGatewayPatch struct {
+	// The policy to use for bindings from accounts without an explicit account policy.
+	DefaultAccessPolicy *string `json:"default_access_policy,omitempty"`
+
+	// The load balancer for this private path service gateway. The load balancer must
+	// have `is_private_path` set to `true`, and must be in the same VPC as the private
+	// path service gateway.
+	LoadBalancer LoadBalancerIdentityIntf `json:"load_balancer,omitempty"`
+
+	// The name for this private path service gateway. The name must not be used by another private path service gateway in
+	// the VPC.
+	Name *string `json:"name,omitempty"`
+
+	// Updating the value of `zonal_affinity` changes how traffic for existing and future endpoint gateway bindings will be
+	// routed:
+	// - `true`:  Traffic to the service from a zone the service resides in will remain in
+	//            that zone.
+	// - `false`: Traffic to the service from a zone will be load balanced across all zones
+	//            in the region the service resides in.
+	ZonalAffinity *bool `json:"zonal_affinity,omitempty"`
+}
+
+// Constants associated with the PrivatePathServiceGatewayPatch.DefaultAccessPolicy property.
+// The policy to use for bindings from accounts without an explicit account policy.
+const (
+	PrivatePathServiceGatewayPatchDefaultAccessPolicyDenyConst   = "deny"
+	PrivatePathServiceGatewayPatchDefaultAccessPolicyPermitConst = "permit"
+	PrivatePathServiceGatewayPatchDefaultAccessPolicyReviewConst = "review"
+)
+
+// UnmarshalPrivatePathServiceGatewayPatch unmarshals an instance of PrivatePathServiceGatewayPatch from the specified map of raw messages.
+func UnmarshalPrivatePathServiceGatewayPatch(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PrivatePathServiceGatewayPatch)
+	err = core.UnmarshalPrimitive(m, "default_access_policy", &obj.DefaultAccessPolicy)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "default_access_policy-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "load_balancer", &obj.LoadBalancer, UnmarshalLoadBalancerIdentity)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "load_balancer-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "zonal_affinity", &obj.ZonalAffinity)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "zonal_affinity-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// AsPatch returns a generic map representation of the PrivatePathServiceGatewayPatch
+func (privatePathServiceGatewayPatch *PrivatePathServiceGatewayPatch) AsPatch() (_patch map[string]interface{}, err error) {
+	var jsonData []byte
+	jsonData, err = json.Marshal(privatePathServiceGatewayPatch)
+	if err == nil {
+		err = json.Unmarshal(jsonData, &_patch)
+	}
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unmarshal-patch-data-error", common.GetComponentInfo())
+	}
+	return
+}
+
+// PrivatePathServiceGatewayRemote : If present, this property indicates that the resource associated with this reference is remote and therefore may not
+// be directly retrievable.
+type PrivatePathServiceGatewayRemote struct {
+	// If present, this property indicates that the referenced resource is remote to this
+	// account, and identifies the owning account.
+	Account *AccountReference `json:"account,omitempty"`
+
+	// If present, this property indicates that the referenced resource is remote to this
+	// region, and identifies the native region.
+	Region *RegionReference `json:"region,omitempty"`
+}
+
+// UnmarshalPrivatePathServiceGatewayRemote unmarshals an instance of PrivatePathServiceGatewayRemote from the specified map of raw messages.
+func UnmarshalPrivatePathServiceGatewayRemote(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PrivatePathServiceGatewayRemote)
+	err = core.UnmarshalModel(m, "account", &obj.Account, UnmarshalAccountReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "account-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "region", &obj.Region, UnmarshalRegionReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "region-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -73029,7 +75957,7 @@ type PublicGatewayCollection struct {
 	// except the last page.
 	Next *PublicGatewayCollectionNext `json:"next,omitempty"`
 
-	// Collection of public gateways.
+	// A page of public gateways.
 	PublicGateways []PublicGateway `json:"public_gateways" validate:"required"`
 
 	// The total number of resources across all pages.
@@ -73129,7 +76057,7 @@ type PublicGatewayFloatingIP struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *FloatingIPReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this floating IP.
 	Href *string `json:"href" validate:"required"`
@@ -73154,7 +76082,7 @@ func UnmarshalPublicGatewayFloatingIP(m map[string]json.RawMessage, result inter
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalFloatingIPReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -73333,7 +76261,7 @@ type PublicGatewayReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *PublicGatewayReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this public gateway.
 	Href *string `json:"href" validate:"required"`
@@ -73362,7 +76290,7 @@ func UnmarshalPublicGatewayReference(m map[string]json.RawMessage, result interf
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalPublicGatewayReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -73391,23 +76319,32 @@ func UnmarshalPublicGatewayReference(m map[string]json.RawMessage, result interf
 	return
 }
 
-// PublicGatewayReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type PublicGatewayReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
+// PublishPrivatePathServiceGatewayOptions : The PublishPrivatePathServiceGateway options.
+type PublishPrivatePathServiceGatewayOptions struct {
+	// The private path service gateway identifier.
+	PrivatePathServiceGatewayID *string `json:"private_path_service_gateway_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
 }
 
-// UnmarshalPublicGatewayReferenceDeleted unmarshals an instance of PublicGatewayReferenceDeleted from the specified map of raw messages.
-func UnmarshalPublicGatewayReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(PublicGatewayReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
-		return
+// NewPublishPrivatePathServiceGatewayOptions : Instantiate PublishPrivatePathServiceGatewayOptions
+func (*VpcV1) NewPublishPrivatePathServiceGatewayOptions(privatePathServiceGatewayID string) *PublishPrivatePathServiceGatewayOptions {
+	return &PublishPrivatePathServiceGatewayOptions{
+		PrivatePathServiceGatewayID: core.StringPtr(privatePathServiceGatewayID),
 	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
+}
+
+// SetPrivatePathServiceGatewayID : Allow user to set PrivatePathServiceGatewayID
+func (_options *PublishPrivatePathServiceGatewayOptions) SetPrivatePathServiceGatewayID(privatePathServiceGatewayID string) *PublishPrivatePathServiceGatewayOptions {
+	_options.PrivatePathServiceGatewayID = core.StringPtr(privatePathServiceGatewayID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *PublishPrivatePathServiceGatewayOptions) SetHeaders(param map[string]string) *PublishPrivatePathServiceGatewayOptions {
+	options.Headers = param
+	return options
 }
 
 // Region : Region struct
@@ -73422,11 +76359,17 @@ type Region struct {
 	Name *string `json:"name" validate:"required"`
 
 	// The availability status of this region.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 }
 
 // Constants associated with the Region.Status property.
 // The availability status of this region.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	RegionStatusAvailableConst   = "available"
 	RegionStatusUnavailableConst = "unavailable"
@@ -73461,7 +76404,7 @@ func UnmarshalRegion(m map[string]json.RawMessage, result interface{}) (err erro
 
 // RegionCollection : RegionCollection struct
 type RegionCollection struct {
-	// Collection of regions.
+	// The regions for the account.
 	Regions []Region `json:"regions" validate:"required"`
 }
 
@@ -73842,6 +76785,71 @@ func (_options *RemoveVPNGatewayConnectionsPeerCIDROptions) SetCIDR(cidr string)
 
 // SetHeaders : Allow user to set Headers
 func (options *RemoveVPNGatewayConnectionsPeerCIDROptions) SetHeaders(param map[string]string) *RemoveVPNGatewayConnectionsPeerCIDROptions {
+	options.Headers = param
+	return options
+}
+
+// ReplaceBareMetalServerInitializationOptions : The ReplaceBareMetalServerInitialization options.
+type ReplaceBareMetalServerInitializationOptions struct {
+	// The bare metal server identifier.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// The image to be used when provisioning the bare metal server.
+	Image ImageIdentityIntf `json:"image" validate:"required"`
+
+	// The public SSH keys to install on the bare metal server. Keys will be made available to the bare metal server as
+	// cloud-init vendor data. For cloud-init enabled images, these keys will also be added as SSH authorized keys for the
+	// administrative user.
+	//
+	// For Windows images, at least one key must be specified, and one will be selected to encrypt the administrator
+	// password. Keys are optional for other images, but if no keys are specified, the instance will be inaccessible unless
+	// the specified image provides another means of access.
+	Keys []KeyIdentityIntf `json:"keys" validate:"required"`
+
+	// User data to be made available when initializing the bare metal server.
+	//
+	// If unspecified, no user data will be made available.
+	UserData *string `json:"user_data,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewReplaceBareMetalServerInitializationOptions : Instantiate ReplaceBareMetalServerInitializationOptions
+func (*VpcV1) NewReplaceBareMetalServerInitializationOptions(id string, image ImageIdentityIntf, keys []KeyIdentityIntf) *ReplaceBareMetalServerInitializationOptions {
+	return &ReplaceBareMetalServerInitializationOptions{
+		ID:    core.StringPtr(id),
+		Image: image,
+		Keys:  keys,
+	}
+}
+
+// SetID : Allow user to set ID
+func (_options *ReplaceBareMetalServerInitializationOptions) SetID(id string) *ReplaceBareMetalServerInitializationOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetImage : Allow user to set Image
+func (_options *ReplaceBareMetalServerInitializationOptions) SetImage(image ImageIdentityIntf) *ReplaceBareMetalServerInitializationOptions {
+	_options.Image = image
+	return _options
+}
+
+// SetKeys : Allow user to set Keys
+func (_options *ReplaceBareMetalServerInitializationOptions) SetKeys(keys []KeyIdentityIntf) *ReplaceBareMetalServerInitializationOptions {
+	_options.Keys = keys
+	return _options
+}
+
+// SetUserData : Allow user to set UserData
+func (_options *ReplaceBareMetalServerInitializationOptions) SetUserData(userData string) *ReplaceBareMetalServerInitializationOptions {
+	_options.UserData = core.StringPtr(userData)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ReplaceBareMetalServerInitializationOptions) SetHeaders(param map[string]string) *ReplaceBareMetalServerInitializationOptions {
 	options.Headers = param
 	return options
 }
@@ -74294,7 +77302,7 @@ type ReservationCollection struct {
 	// except the last page.
 	Next *ReservationCollectionNext `json:"next,omitempty"`
 
-	// Collection of reservations.
+	// A page of reservations.
 	Reservations []Reservation `json:"reservations" validate:"required"`
 
 	// The total number of resources across all pages.
@@ -74387,7 +77395,9 @@ func UnmarshalReservationCollectionNext(m map[string]json.RawMessage, result int
 // ReservationCommittedUse : The committed use reservation configuration.
 type ReservationCommittedUse struct {
 	// The expiration date and time for this committed use reservation.
-	ExpirationAt *strfmt.DateTime `json:"expiration_at" validate:"required"`
+	//
+	// This property will be absent if the reservation has a `status` of `inactive`.
+	ExpirationAt *strfmt.DateTime `json:"expiration_at,omitempty"`
 
 	// The policy to apply when the committed use term expires:
 	// - `release`: Release any available capacity and let the reservation expire.
@@ -74448,9 +77458,6 @@ type ReservationCommittedUsePatch struct {
 	// - `release`: Release any available capacity and let the reservation expire.
 	// - `renew`: Renew for another term, provided the term remains listed in the
 	//   `reservation_terms` for the profile. Otherwise, let the reservation expire.
-	//
-	// The enumerated values for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	ExpirationPolicy *string `json:"expiration_policy,omitempty"`
 
 	// The term for this committed use reservation:
@@ -74468,9 +77475,6 @@ type ReservationCommittedUsePatch struct {
 //   - `release`: Release any available capacity and let the reservation expire.
 //   - `renew`: Renew for another term, provided the term remains listed in the
 //     `reservation_terms` for the profile. Otherwise, let the reservation expire.
-//
-// The enumerated values for this property may
-// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	ReservationCommittedUsePatchExpirationPolicyReleaseConst = "release"
 	ReservationCommittedUsePatchExpirationPolicyRenewConst   = "renew"
@@ -74499,9 +77503,6 @@ type ReservationCommittedUsePrototype struct {
 	// - `release`: Release any available capacity and let the reservation expire.
 	// - `renew`: Renew for another term, provided the term remains listed in the
 	//   `reservation_terms` for the profile. Otherwise, let the reservation expire.
-	//
-	// The enumerated values for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	ExpirationPolicy *string `json:"expiration_policy,omitempty"`
 
 	// The term for this committed use reservation:
@@ -74517,9 +77518,6 @@ type ReservationCommittedUsePrototype struct {
 //   - `release`: Release any available capacity and let the reservation expire.
 //   - `renew`: Renew for another term, provided the term remains listed in the
 //     `reservation_terms` for the profile. Otherwise, let the reservation expire.
-//
-// The enumerated values for this property may
-// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	ReservationCommittedUsePrototypeExpirationPolicyReleaseConst = "release"
 	ReservationCommittedUsePrototypeExpirationPolicyRenewConst   = "renew"
@@ -74782,7 +77780,7 @@ type ReservationReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *ReservationReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this reservation.
 	Href *string `json:"href" validate:"required"`
@@ -74811,7 +77809,7 @@ func UnmarshalReservationReference(m map[string]json.RawMessage, result interfac
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalReservationReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -74834,25 +77832,6 @@ func UnmarshalReservationReference(m map[string]json.RawMessage, result interfac
 	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// ReservationReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type ReservationReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalReservationReferenceDeleted unmarshals an instance of ReservationReferenceDeleted from the specified map of raw messages.
-func UnmarshalReservationReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ReservationReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -74936,6 +77915,9 @@ type ReservedIP struct {
 	Name *string `json:"name" validate:"required"`
 
 	// The owner of the reserved IP.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Owner *string `json:"owner" validate:"required"`
 
 	// The resource type.
@@ -74961,6 +77943,9 @@ const (
 
 // Constants associated with the ReservedIP.Owner property.
 // The owner of the reserved IP.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	ReservedIPOwnerProviderConst = "provider"
 	ReservedIPOwnerUserConst     = "user"
@@ -75041,7 +78026,7 @@ type ReservedIPCollection struct {
 	// except the last page.
 	Next *ReservedIPCollectionNext `json:"next,omitempty"`
 
-	// Collection of reserved IPs in this subnet.
+	// A page of reserved IPs in the subnet.
 	ReservedIps []ReservedIP `json:"reserved_ips" validate:"required"`
 
 	// The total number of resources across all pages.
@@ -75100,7 +78085,7 @@ type ReservedIPCollectionBareMetalServerNetworkInterfaceContext struct {
 	// A link to the first page of resources.
 	First *ReservedIPCollectionBareMetalServerNetworkInterfaceContextFirst `json:"first" validate:"required"`
 
-	// Collection of reserved IPs bound to a bare metal server network interface.
+	// A page of reserved IPs bound to the bare metal server network interface.
 	Ips []ReservedIP `json:"ips" validate:"required"`
 
 	// The maximum number of resources that can be returned by the request.
@@ -75187,7 +78172,7 @@ type ReservedIPCollectionEndpointGatewayContext struct {
 	// A link to the first page of resources.
 	First *ReservedIPCollectionEndpointGatewayContextFirst `json:"first" validate:"required"`
 
-	// Collection of reserved IPs bound to an endpoint gateway.
+	// A page of reserved IPs bound to the endpoint gateway.
 	Ips []ReservedIP `json:"ips" validate:"required"`
 
 	// The maximum number of resources that can be returned by the request.
@@ -75307,7 +78292,7 @@ type ReservedIPCollectionInstanceNetworkInterfaceContext struct {
 	// A link to the first page of resources.
 	First *ReservedIPCollectionInstanceNetworkInterfaceContextFirst `json:"first" validate:"required"`
 
-	// Collection of reserved IPs bound to an instance network interface.
+	// A page of reserved IPs bound to the instance network interface.
 	Ips []ReservedIP `json:"ips" validate:"required"`
 
 	// The maximum number of resources that can be returned by the request.
@@ -75427,7 +78412,7 @@ type ReservedIPCollectionVirtualNetworkInterfaceContext struct {
 	// A link to the first page of resources.
 	First *ReservedIPCollectionVirtualNetworkInterfaceContextFirst `json:"first" validate:"required"`
 
-	// Collection of reserved IPs bound to the virtual network interface specified by the identifier in the URL.
+	// A page of reserved IPs bound to the virtual network interface specified by the identifier in the URL.
 	Ips []ReservedIPReference `json:"ips" validate:"required"`
 
 	// The maximum number of resources that can be returned by the request.
@@ -75577,7 +78562,7 @@ type ReservedIPReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *ReservedIPReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this reserved IP.
 	Href *string `json:"href" validate:"required"`
@@ -75606,7 +78591,7 @@ func UnmarshalReservedIPReference(m map[string]json.RawMessage, result interface
 		err = core.SDKErrorf(err, "", "address-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalReservedIPReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -75635,25 +78620,6 @@ func UnmarshalReservedIPReference(m map[string]json.RawMessage, result interface
 	return
 }
 
-// ReservedIPReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type ReservedIPReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalReservedIPReferenceDeleted unmarshals an instance of ReservedIPReferenceDeleted from the specified map of raw messages.
-func UnmarshalReservedIPReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ReservedIPReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // ReservedIPTarget : The target this reserved IP is bound to.
 //
 // If absent, this reserved IP is provider-owned or unbound.
@@ -75672,7 +78638,7 @@ type ReservedIPTarget struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *EndpointGatewayReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this endpoint gateway.
 	Href *string `json:"href,omitempty"`
@@ -75709,7 +78675,7 @@ func UnmarshalReservedIPTarget(m map[string]json.RawMessage, result interface{})
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalEndpointGatewayReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -75898,13 +78864,54 @@ func (options *RestartBareMetalServerOptions) SetHeaders(param map[string]string
 	return options
 }
 
+// RevokeAccountForPrivatePathServiceGatewayOptions : The RevokeAccountForPrivatePathServiceGateway options.
+type RevokeAccountForPrivatePathServiceGatewayOptions struct {
+	// The private path service gateway identifier.
+	PrivatePathServiceGatewayID *string `json:"private_path_service_gateway_id" validate:"required,ne="`
+
+	// The account that will be revoked access to the private path service gateway.
+	Account AccountIdentityIntf `json:"account" validate:"required"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewRevokeAccountForPrivatePathServiceGatewayOptions : Instantiate RevokeAccountForPrivatePathServiceGatewayOptions
+func (*VpcV1) NewRevokeAccountForPrivatePathServiceGatewayOptions(privatePathServiceGatewayID string, account AccountIdentityIntf) *RevokeAccountForPrivatePathServiceGatewayOptions {
+	return &RevokeAccountForPrivatePathServiceGatewayOptions{
+		PrivatePathServiceGatewayID: core.StringPtr(privatePathServiceGatewayID),
+		Account:                     account,
+	}
+}
+
+// SetPrivatePathServiceGatewayID : Allow user to set PrivatePathServiceGatewayID
+func (_options *RevokeAccountForPrivatePathServiceGatewayOptions) SetPrivatePathServiceGatewayID(privatePathServiceGatewayID string) *RevokeAccountForPrivatePathServiceGatewayOptions {
+	_options.PrivatePathServiceGatewayID = core.StringPtr(privatePathServiceGatewayID)
+	return _options
+}
+
+// SetAccount : Allow user to set Account
+func (_options *RevokeAccountForPrivatePathServiceGatewayOptions) SetAccount(account AccountIdentityIntf) *RevokeAccountForPrivatePathServiceGatewayOptions {
+	_options.Account = account
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *RevokeAccountForPrivatePathServiceGatewayOptions) SetHeaders(param map[string]string) *RevokeAccountForPrivatePathServiceGatewayOptions {
+	options.Headers = param
+	return options
+}
+
 // Route : Route struct
 type Route struct {
 	// The action to perform with a packet matching the route:
 	// - `delegate`: delegate to system-provided routes
 	// - `delegate_vpc`: delegate to system-provided routes, ignoring Internet-bound routes
 	// - `deliver`: deliver the packet to the specified `next_hop`
-	// - `drop`: drop the packet.
+	// - `drop`: drop the packet
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Action *string `json:"action" validate:"required"`
 
 	// Indicates whether this route will be advertised to the ingress sources specified by the `advertise_routes_to`
@@ -75944,7 +78951,7 @@ type Route struct {
 	//
 	// The enumerated values for this property may
 	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
-	Origin *string `json:"origin,omitempty"`
+	Origin *string `json:"origin" validate:"required"`
 
 	// The priority of this route. Smaller values have higher priority.
 	//
@@ -75968,7 +78975,10 @@ type Route struct {
 // - `delegate`: delegate to system-provided routes
 // - `delegate_vpc`: delegate to system-provided routes, ignoring Internet-bound routes
 // - `deliver`: deliver the packet to the specified `next_hop`
-// - `drop`: drop the packet.
+// - `drop`: drop the packet
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	RouteActionDelegateConst    = "delegate"
 	RouteActionDelegateVPCConst = "delegate_vpc"
@@ -76084,7 +79094,7 @@ type RouteCollection struct {
 	// except the last page.
 	Next *RouteCollectionNext `json:"next,omitempty"`
 
-	// Collection of routes.
+	// A page of routes in the routing table.
 	Routes []Route `json:"routes" validate:"required"`
 
 	// The total number of resources across all pages.
@@ -76186,7 +79196,7 @@ type RouteCollectionVPCContext struct {
 	// except the last page.
 	Next *RouteCollectionVPCContextNext `json:"next,omitempty"`
 
-	// Collection of routes.
+	// A page of routes in the routing table.
 	Routes []RouteCollectionVPCContextRoutesItem `json:"routes" validate:"required"`
 
 	// The total number of resources across all pages.
@@ -76282,7 +79292,10 @@ type RouteCollectionVPCContextRoutesItem struct {
 	// - `delegate`: delegate to system-provided routes
 	// - `delegate_vpc`: delegate to system-provided routes, ignoring Internet-bound routes
 	// - `deliver`: deliver the packet to the specified `next_hop`
-	// - `drop`: drop the packet.
+	// - `drop`: drop the packet
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Action *string `json:"action" validate:"required"`
 
 	// Indicates whether this route will be advertised to the ingress sources specified by the `advertise_routes_to`
@@ -76322,7 +79335,7 @@ type RouteCollectionVPCContextRoutesItem struct {
 	//
 	// The enumerated values for this property may
 	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
-	Origin *string `json:"origin,omitempty"`
+	Origin *string `json:"origin" validate:"required"`
 
 	// The priority of this route. Smaller values have higher priority.
 	//
@@ -76346,7 +79359,10 @@ type RouteCollectionVPCContextRoutesItem struct {
 // - `delegate`: delegate to system-provided routes
 // - `delegate_vpc`: delegate to system-provided routes, ignoring Internet-bound routes
 // - `deliver`: deliver the packet to the specified `next_hop`
-// - `drop`: drop the packet.
+// - `drop`: drop the packet
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	RouteCollectionVPCContextRoutesItemActionDelegateConst    = "delegate"
 	RouteCollectionVPCContextRoutesItemActionDelegateVPCConst = "delegate_vpc"
@@ -76457,14 +79473,14 @@ func UnmarshalRouteCollectionVPCContextRoutesItem(m map[string]json.RawMessage, 
 // - RouteCreatorVPNGatewayReference
 // - RouteCreatorVPNServerReference
 type RouteCreator struct {
-	// The VPN gateway's CRN.
+	// The CRN for this VPN gateway.
 	CRN *string `json:"crn,omitempty"`
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *VPNGatewayReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
-	// The VPN gateway's canonical URL.
+	// The URL for this VPN gateway.
 	Href *string `json:"href,omitempty"`
 
 	// The unique identifier for this VPN gateway.
@@ -76499,7 +79515,7 @@ func UnmarshalRouteCreator(m map[string]json.RawMessage, result interface{}) (er
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalVPNGatewayReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -76541,9 +79557,9 @@ type RouteNextHop struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *VPNGatewayConnectionReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
-	// The VPN connection's canonical URL.
+	// The URL for this VPN gateway connection.
 	Href *string `json:"href,omitempty"`
 
 	// The unique identifier for this VPN gateway connection.
@@ -76578,7 +79594,7 @@ func UnmarshalRouteNextHop(m map[string]json.RawMessage, result interface{}) (er
 		err = core.SDKErrorf(err, "", "address-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalVPNGatewayConnectionReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -76607,8 +79623,9 @@ func UnmarshalRouteNextHop(m map[string]json.RawMessage, result interface{}) (er
 	return
 }
 
-// RouteNextHopPatch : If `action` is `deliver`, the next hop that packets will be delivered to. For other
-// `action` values, specify `0.0.0.0` or remove it by specifying `null`.
+// RouteNextHopPatch : If `action` is `deliver`, the next hop that packets will be delivered to (must not be
+// `0.0.0.0`). For other `action` values, specify `0.0.0.0` or remove it by specifying
+// `null`.
 //
 // At most two routes per `zone` in a table can have the same `destination` and `priority`, and only when each route has
 // an `action` of `deliver` and `next_hop` is an IP address.
@@ -76625,7 +79642,7 @@ type RouteNextHopPatch struct {
 	// The unique identifier for this VPN gateway connection.
 	ID *string `json:"id,omitempty"`
 
-	// The VPN connection's canonical URL.
+	// The URL for this VPN gateway connection.
 	Href *string `json:"href,omitempty"`
 }
 
@@ -76640,6 +79657,58 @@ type RouteNextHopPatchIntf interface {
 // UnmarshalRouteNextHopPatch unmarshals an instance of RouteNextHopPatch from the specified map of raw messages.
 func UnmarshalRouteNextHopPatch(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(RouteNextHopPatch)
+	err = core.UnmarshalPrimitive(m, "address", &obj.Address)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "address-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RouteNextHopPrototype : If `action` is `deliver`, the next hop that packets will be delivered to (must not be
+// `0.0.0.0`). For other `action` values, it must be omitted or specified as `0.0.0.0`.
+//
+// At most two routes per `zone` in a table can have the same `destination` and `priority`, and only when each route has
+// an `action` of `deliver` and `next_hop` is an IP address.
+// Models which "extend" this model:
+// - RouteNextHopPrototypeRouteNextHopIP
+// - RouteNextHopPrototypeVPNGatewayConnectionIdentity
+type RouteNextHopPrototype struct {
+	// The sentinel IP address (`0.0.0.0`).
+	//
+	// This property may [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) to support IPv6 addresses in
+	// the future.
+	Address *string `json:"address,omitempty"`
+
+	// The unique identifier for this VPN gateway connection.
+	ID *string `json:"id,omitempty"`
+
+	// The URL for this VPN gateway connection.
+	Href *string `json:"href,omitempty"`
+}
+
+func (*RouteNextHopPrototype) isaRouteNextHopPrototype() bool {
+	return true
+}
+
+type RouteNextHopPrototypeIntf interface {
+	isaRouteNextHopPrototype() bool
+}
+
+// UnmarshalRouteNextHopPrototype unmarshals an instance of RouteNextHopPrototype from the specified map of raw messages.
+func UnmarshalRouteNextHopPrototype(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RouteNextHopPrototype)
 	err = core.UnmarshalPrimitive(m, "address", &obj.Address)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "address-error", common.GetComponentInfo())
@@ -76674,8 +79743,9 @@ type RoutePatch struct {
 	// are reserved for system-provided routes, and are not allowed.
 	Name *string `json:"name,omitempty"`
 
-	// If `action` is `deliver`, the next hop that packets will be delivered to. For other
-	// `action` values, specify `0.0.0.0` or remove it by specifying `null`.
+	// If `action` is `deliver`, the next hop that packets will be delivered to (must not be
+	// `0.0.0.0`). For other `action` values, specify `0.0.0.0` or remove it by specifying
+	// `null`.
 	//
 	// At most two routes per `zone` in a table can have the same `destination` and `priority`,
 	// and only when each route has an `action` of `deliver` and `next_hop` is an IP address.
@@ -76756,12 +79826,12 @@ type RoutePrototype struct {
 	// randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
-	// If `action` is `deliver`, the next hop that packets will be delivered to. For other
-	// `action` values, it must be omitted or specified as `0.0.0.0`.
+	// If `action` is `deliver`, the next hop that packets will be delivered to (must not be
+	// `0.0.0.0`). For other `action` values, it must be omitted or specified as `0.0.0.0`.
 	//
 	// At most two routes per `zone` in a table can have the same `destination` and `priority`,
 	// and only when each route has an `action` of `deliver` and `next_hop` is an IP address.
-	NextHop RoutePrototypeNextHopIntf `json:"next_hop,omitempty"`
+	NextHop RouteNextHopPrototypeIntf `json:"next_hop,omitempty"`
 
 	// The priority of this route. Smaller values have higher priority.
 	//
@@ -76829,7 +79899,7 @@ func UnmarshalRoutePrototype(m map[string]json.RawMessage, result interface{}) (
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "next_hop", &obj.NextHop, UnmarshalRoutePrototypeNextHop)
+	err = core.UnmarshalModel(m, "next_hop", &obj.NextHop, UnmarshalRouteNextHopPrototype)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "next_hop-error", common.GetComponentInfo())
 		return
@@ -76848,63 +79918,11 @@ func UnmarshalRoutePrototype(m map[string]json.RawMessage, result interface{}) (
 	return
 }
 
-// RoutePrototypeNextHop : If `action` is `deliver`, the next hop that packets will be delivered to. For other
-// `action` values, it must be omitted or specified as `0.0.0.0`.
-//
-// At most two routes per `zone` in a table can have the same `destination` and `priority`, and only when each route has
-// an `action` of `deliver` and `next_hop` is an IP address.
-// Models which "extend" this model:
-// - RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIP
-// - RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentity
-type RoutePrototypeNextHop struct {
-	// The sentinel IP address (`0.0.0.0`).
-	//
-	// This property may [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) to support IPv6 addresses in
-	// the future.
-	Address *string `json:"address,omitempty"`
-
-	// The unique identifier for this VPN gateway connection.
-	ID *string `json:"id,omitempty"`
-
-	// The VPN connection's canonical URL.
-	Href *string `json:"href,omitempty"`
-}
-
-func (*RoutePrototypeNextHop) isaRoutePrototypeNextHop() bool {
-	return true
-}
-
-type RoutePrototypeNextHopIntf interface {
-	isaRoutePrototypeNextHop() bool
-}
-
-// UnmarshalRoutePrototypeNextHop unmarshals an instance of RoutePrototypeNextHop from the specified map of raw messages.
-func UnmarshalRoutePrototypeNextHop(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(RoutePrototypeNextHop)
-	err = core.UnmarshalPrimitive(m, "address", &obj.Address)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "address-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // RouteReference : RouteReference struct
 type RouteReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *RouteReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this route.
 	Href *string `json:"href" validate:"required"`
@@ -76919,7 +79937,7 @@ type RouteReference struct {
 // UnmarshalRouteReference unmarshals an instance of RouteReference from the specified map of raw messages.
 func UnmarshalRouteReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(RouteReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalRouteReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -76937,25 +79955,6 @@ func UnmarshalRouteReference(m map[string]json.RawMessage, result interface{}) (
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// RouteReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type RouteReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalRouteReferenceDeleted unmarshals an instance of RouteReferenceDeleted from the specified map of raw messages.
-func UnmarshalRouteReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(RouteReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -76980,6 +79979,9 @@ type RoutingTable struct {
 	// The date and time that this routing table was created.
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
+	// The CRN for this VPC routing table.
+	CRN *string `json:"crn" validate:"required"`
+
 	// The URL for this routing table.
 	Href *string `json:"href" validate:"required"`
 
@@ -76994,6 +79996,9 @@ type RoutingTable struct {
 
 	// The name for this routing table. The name is unique across all routing tables for the VPC.
 	Name *string `json:"name" validate:"required"`
+
+	// The resource group for this routing table.
+	ResourceGroup *ResourceGroupReference `json:"resource_group" validate:"required"`
 
 	// The resource type.
 	ResourceType *string `json:"resource_type" validate:"required"`
@@ -77089,6 +80094,11 @@ func UnmarshalRoutingTable(m map[string]json.RawMessage, result interface{}) (er
 		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
@@ -77112,6 +80122,11 @@ func UnmarshalRoutingTable(m map[string]json.RawMessage, result interface{}) (er
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "resource_group", &obj.ResourceGroup, UnmarshalResourceGroupReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_group-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
@@ -77165,7 +80180,7 @@ type RoutingTableCollection struct {
 	// except the last page.
 	Next *RoutingTableCollectionNext `json:"next,omitempty"`
 
-	// Collection of routing tables.
+	// A page of routing tables.
 	RoutingTables []RoutingTable `json:"routing_tables" validate:"required"`
 
 	// The total number of resources across all pages.
@@ -77257,9 +80272,13 @@ func UnmarshalRoutingTableCollectionNext(m map[string]json.RawMessage, result in
 
 // RoutingTableIdentity : Identifies a routing table by a unique property.
 // Models which "extend" this model:
+// - RoutingTableIdentityByCRN
 // - RoutingTableIdentityByID
 // - RoutingTableIdentityByHref
 type RoutingTableIdentity struct {
+	// The CRN for this VPC routing table.
+	CRN *string `json:"crn,omitempty"`
+
 	// The unique identifier for this routing table.
 	ID *string `json:"id,omitempty"`
 
@@ -77278,6 +80297,11 @@ type RoutingTableIdentityIntf interface {
 // UnmarshalRoutingTableIdentity unmarshals an instance of RoutingTableIdentity from the specified map of raw messages.
 func UnmarshalRoutingTableIdentity(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(RoutingTableIdentity)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
@@ -77428,9 +80452,12 @@ func (routingTablePatch *RoutingTablePatch) AsPatch() (_patch map[string]interfa
 
 // RoutingTableReference : RoutingTableReference struct
 type RoutingTableReference struct {
+	// The CRN for this VPC routing table.
+	CRN *string `json:"crn" validate:"required"`
+
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *RoutingTableReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this routing table.
 	Href *string `json:"href" validate:"required"`
@@ -77454,7 +80481,12 @@ const (
 // UnmarshalRoutingTableReference unmarshals an instance of RoutingTableReference from the specified map of raw messages.
 func UnmarshalRoutingTableReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(RoutingTableReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalRoutingTableReferenceDeleted)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -77483,34 +80515,15 @@ func UnmarshalRoutingTableReference(m map[string]json.RawMessage, result interfa
 	return
 }
 
-// RoutingTableReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type RoutingTableReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalRoutingTableReferenceDeleted unmarshals an instance of RoutingTableReferenceDeleted from the specified map of raw messages.
-func UnmarshalRoutingTableReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(RoutingTableReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // SecurityGroup : SecurityGroup struct
 type SecurityGroup struct {
 	// The date and time that this security group was created.
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
-	// The security group's CRN.
+	// The CRN for this security group.
 	CRN *string `json:"crn" validate:"required"`
 
-	// The security group's canonical URL.
+	// The URL for this security group.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this security group.
@@ -77596,7 +80609,7 @@ type SecurityGroupCollection struct {
 	// except the last page.
 	Next *SecurityGroupCollectionNext `json:"next,omitempty"`
 
-	// Collection of security groups.
+	// A page of security groups.
 	SecurityGroups []SecurityGroup `json:"security_groups" validate:"required"`
 
 	// The total number of resources across all pages.
@@ -77695,10 +80708,10 @@ type SecurityGroupIdentity struct {
 	// The unique identifier for this security group.
 	ID *string `json:"id,omitempty"`
 
-	// The security group's CRN.
+	// The CRN for this security group.
 	CRN *string `json:"crn,omitempty"`
 
-	// The security group's canonical URL.
+	// The URL for this security group.
 	Href *string `json:"href,omitempty"`
 }
 
@@ -77765,14 +80778,14 @@ func (securityGroupPatch *SecurityGroupPatch) AsPatch() (_patch map[string]inter
 
 // SecurityGroupReference : SecurityGroupReference struct
 type SecurityGroupReference struct {
-	// The security group's CRN.
+	// The CRN for this security group.
 	CRN *string `json:"crn" validate:"required"`
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *SecurityGroupReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
-	// The security group's canonical URL.
+	// The URL for this security group.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this security group.
@@ -77790,7 +80803,7 @@ func UnmarshalSecurityGroupReference(m map[string]json.RawMessage, result interf
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalSecurityGroupReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -77814,32 +80827,13 @@ func UnmarshalSecurityGroupReference(m map[string]json.RawMessage, result interf
 	return
 }
 
-// SecurityGroupReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type SecurityGroupReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalSecurityGroupReferenceDeleted unmarshals an instance of SecurityGroupReferenceDeleted from the specified map of raw messages.
-func UnmarshalSecurityGroupReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(SecurityGroupReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // SecurityGroupRule : SecurityGroupRule struct
 // Models which "extend" this model:
 // - SecurityGroupRuleSecurityGroupRuleProtocolAll
 // - SecurityGroupRuleSecurityGroupRuleProtocolIcmp
 // - SecurityGroupRuleSecurityGroupRuleProtocolTcpudp
 type SecurityGroupRule struct {
-	// The direction of traffic to enforce.
+	// The direction of traffic to allow.
 	Direction *string `json:"direction" validate:"required"`
 
 	// The URL for this security group rule.
@@ -77848,11 +80842,11 @@ type SecurityGroupRule struct {
 	// The unique identifier for this security group rule.
 	ID *string `json:"id" validate:"required"`
 
-	// The IP version to enforce. The format of `local.address`, `remote.address`,
+	// The IP version to allow. The format of `local.address`, `remote.address`,
 	// `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 	//
-	// If `remote` references a security group, then this rule only applies to IP addresses
-	// (network interfaces) in that group matching this IP version.
+	// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+	// version.
 	IPVersion *string `json:"ip_version" validate:"required"`
 
 	// The local IP address or range of local IP addresses to which this rule will allow inbound
@@ -77860,7 +80854,10 @@ type SecurityGroupRule struct {
 	// to all local IP addresses (or from all local IP addresses, for outbound rules).
 	Local SecurityGroupRuleLocalIntf `json:"local" validate:"required"`
 
-	// The protocol to enforce.
+	// The protocol to allow.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The remote IP addresses or security groups from which this rule allows traffic (or to
@@ -77882,24 +80879,27 @@ type SecurityGroupRule struct {
 }
 
 // Constants associated with the SecurityGroupRule.Direction property.
-// The direction of traffic to enforce.
+// The direction of traffic to allow.
 const (
 	SecurityGroupRuleDirectionInboundConst  = "inbound"
 	SecurityGroupRuleDirectionOutboundConst = "outbound"
 )
 
 // Constants associated with the SecurityGroupRule.IPVersion property.
-// The IP version to enforce. The format of `local.address`, `remote.address`,
+// The IP version to allow. The format of `local.address`, `remote.address`,
 // `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 //
-// If `remote` references a security group, then this rule only applies to IP addresses
-// (network interfaces) in that group matching this IP version.
+// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+// version.
 const (
 	SecurityGroupRuleIPVersionIpv4Const = "ipv4"
 )
 
 // Constants associated with the SecurityGroupRule.Protocol property.
-// The protocol to enforce.
+// The protocol to allow.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	SecurityGroupRuleProtocolAllConst  = "all"
 	SecurityGroupRuleProtocolIcmpConst = "icmp"
@@ -77956,9 +80956,9 @@ func UnmarshalSecurityGroupRule(m map[string]json.RawMessage, result interface{}
 	return
 }
 
-// SecurityGroupRuleCollection : Collection of rules in a security group.
+// SecurityGroupRuleCollection : SecurityGroupRuleCollection struct
 type SecurityGroupRuleCollection struct {
-	// Array of rules.
+	// The rules for the security group.
 	Rules []SecurityGroupRuleIntf `json:"rules" validate:"required"`
 }
 
@@ -78120,14 +81120,14 @@ type SecurityGroupRulePatch struct {
 	// Specify `null` to remove an existing ICMP traffic code.
 	Code *int64 `json:"code,omitempty"`
 
-	// The direction of traffic to enforce.
+	// The direction of traffic to allow.
 	Direction *string `json:"direction,omitempty"`
 
-	// The IP version to enforce. The format of `local.address`, `remote.address`,
+	// The IP version to allow. The format of `local.address`, `remote.address`,
 	// `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 	//
-	// If `remote` references a security group, then this rule only applies to IP addresses
-	// (network interfaces) in that group matching this IP version.
+	// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+	// version.
 	IPVersion *string `json:"ip_version,omitempty"`
 
 	// The local IP address or range of local IP addresses to which this rule will allow inbound
@@ -78163,18 +81163,18 @@ type SecurityGroupRulePatch struct {
 }
 
 // Constants associated with the SecurityGroupRulePatch.Direction property.
-// The direction of traffic to enforce.
+// The direction of traffic to allow.
 const (
 	SecurityGroupRulePatchDirectionInboundConst  = "inbound"
 	SecurityGroupRulePatchDirectionOutboundConst = "outbound"
 )
 
 // Constants associated with the SecurityGroupRulePatch.IPVersion property.
-// The IP version to enforce. The format of `local.address`, `remote.address`,
+// The IP version to allow. The format of `local.address`, `remote.address`,
 // `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 //
-// If `remote` references a security group, then this rule only applies to IP addresses
-// (network interfaces) in that group matching this IP version.
+// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+// version.
 const (
 	SecurityGroupRulePatchIPVersionIpv4Const = "ipv4"
 )
@@ -78245,14 +81245,14 @@ func (securityGroupRulePatch *SecurityGroupRulePatch) AsPatch() (_patch map[stri
 // - SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp
 // - SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp
 type SecurityGroupRulePrototype struct {
-	// The direction of traffic to enforce.
+	// The direction of traffic to allow.
 	Direction *string `json:"direction" validate:"required"`
 
-	// The IP version to enforce. The format of `local.address`, `remote.address`,
+	// The IP version to allow. The format of `local.address`, `remote.address`,
 	// `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 	//
-	// If `remote` references a security group, then this rule only applies to IP addresses
-	// (network interfaces) in that group matching this IP version.
+	// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+	// version.
 	IPVersion *string `json:"ip_version,omitempty"`
 
 	// The local IP address or range of local IP addresses to which this rule will allow inbound
@@ -78262,7 +81262,7 @@ type SecurityGroupRulePrototype struct {
 	// addresses (or from all local IP addresses, for outbound rules).
 	Local SecurityGroupRuleLocalPrototypeIntf `json:"local,omitempty"`
 
-	// The protocol to enforce.
+	// The protocol to allow.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The remote IP addresses or security groups from which this rule will allow traffic (or to
@@ -78297,24 +81297,24 @@ type SecurityGroupRulePrototype struct {
 }
 
 // Constants associated with the SecurityGroupRulePrototype.Direction property.
-// The direction of traffic to enforce.
+// The direction of traffic to allow.
 const (
 	SecurityGroupRulePrototypeDirectionInboundConst  = "inbound"
 	SecurityGroupRulePrototypeDirectionOutboundConst = "outbound"
 )
 
 // Constants associated with the SecurityGroupRulePrototype.IPVersion property.
-// The IP version to enforce. The format of `local.address`, `remote.address`,
+// The IP version to allow. The format of `local.address`, `remote.address`,
 // `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 //
-// If `remote` references a security group, then this rule only applies to IP addresses
-// (network interfaces) in that group matching this IP version.
+// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+// version.
 const (
 	SecurityGroupRulePrototypeIPVersionIpv4Const = "ipv4"
 )
 
 // Constants associated with the SecurityGroupRulePrototype.Protocol property.
-// The protocol to enforce.
+// The protocol to allow.
 const (
 	SecurityGroupRulePrototypeProtocolAllConst  = "all"
 	SecurityGroupRulePrototypeProtocolIcmpConst = "icmp"
@@ -78391,14 +81391,14 @@ type SecurityGroupRuleRemote struct {
 	// blocks in the future.
 	CIDRBlock *string `json:"cidr_block,omitempty"`
 
-	// The security group's CRN.
+	// The CRN for this security group.
 	CRN *string `json:"crn,omitempty"`
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *SecurityGroupReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
-	// The security group's canonical URL.
+	// The URL for this security group.
 	Href *string `json:"href,omitempty"`
 
 	// The unique identifier for this security group.
@@ -78434,7 +81434,7 @@ func UnmarshalSecurityGroupRuleRemote(m map[string]json.RawMessage, result inter
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalSecurityGroupReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -78481,10 +81481,10 @@ type SecurityGroupRuleRemotePatch struct {
 	// The unique identifier for this security group.
 	ID *string `json:"id,omitempty"`
 
-	// The security group's CRN.
+	// The CRN for this security group.
 	CRN *string `json:"crn,omitempty"`
 
-	// The security group's canonical URL.
+	// The URL for this security group.
 	Href *string `json:"href,omitempty"`
 }
 
@@ -78553,10 +81553,10 @@ type SecurityGroupRuleRemotePrototype struct {
 	// The unique identifier for this security group.
 	ID *string `json:"id,omitempty"`
 
-	// The security group's CRN.
+	// The CRN for this security group.
 	CRN *string `json:"crn,omitempty"`
 
-	// The security group's canonical URL.
+	// The URL for this security group.
 	Href *string `json:"href,omitempty"`
 }
 
@@ -78612,7 +81612,7 @@ type SecurityGroupTargetCollection struct {
 	// except the last page.
 	Next *SecurityGroupTargetCollectionNext `json:"next,omitempty"`
 
-	// Collection of targets for this security group.
+	// A page of targets for the security group.
 	Targets []SecurityGroupTargetReferenceIntf `json:"targets" validate:"required"`
 
 	// The total number of resources across all pages.
@@ -78716,7 +81716,7 @@ func UnmarshalSecurityGroupTargetCollectionNext(m map[string]json.RawMessage, re
 type SecurityGroupTargetReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *NetworkInterfaceReferenceTargetContextDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this instance network interface.
 	//
@@ -78739,7 +81739,7 @@ type SecurityGroupTargetReference struct {
 	// The resource type.
 	ResourceType *string `json:"resource_type,omitempty"`
 
-	// The load balancer's CRN.
+	// The CRN for this load balancer.
 	CRN *string `json:"crn,omitempty"`
 
 	// The primary IP for this virtual network interface.
@@ -78766,7 +81766,7 @@ type SecurityGroupTargetReferenceIntf interface {
 // UnmarshalSecurityGroupTargetReference unmarshals an instance of SecurityGroupTargetReference from the specified map of raw messages.
 func UnmarshalSecurityGroupTargetReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(SecurityGroupTargetReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalNetworkInterfaceReferenceTargetContextDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -79341,7 +82341,7 @@ type ShareAccessorBindingAccessor struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *ShareReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this file share.
 	Href *string `json:"href,omitempty"`
@@ -79382,7 +82382,7 @@ func UnmarshalShareAccessorBindingAccessor(m map[string]json.RawMessage, result 
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalShareReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -79418,7 +82418,7 @@ func UnmarshalShareAccessorBindingAccessor(m map[string]json.RawMessage, result 
 
 // ShareAccessorBindingCollection : ShareAccessorBindingCollection struct
 type ShareAccessorBindingCollection struct {
-	// Collection of share accessor bindings.
+	// A page of accessor bindings for the share.
 	AccessorBindings []ShareAccessorBinding `json:"accessor_bindings" validate:"required"`
 
 	// A link to the first page of resources.
@@ -79570,7 +82570,7 @@ type ShareCollection struct {
 	// except the last page.
 	Next *ShareCollectionNext `json:"next,omitempty"`
 
-	// Collection of file shares.
+	// A page of file shares.
 	Shares []Share `json:"shares" validate:"required"`
 
 	// The total number of resources across all pages.
@@ -80153,7 +83153,7 @@ type ShareMountTargetCollection struct {
 	// The maximum number of resources that can be returned by the request.
 	Limit *int64 `json:"limit" validate:"required"`
 
-	// Collection of share mount targets.
+	// A page of mount targets for the share.
 	MountTargets []ShareMountTarget `json:"mount_targets" validate:"required"`
 
 	// A link to the next page of resources. This property is present for all pages
@@ -80353,7 +83353,7 @@ func UnmarshalShareMountTargetPrototype(m map[string]json.RawMessage, result int
 type ShareMountTargetReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *ShareMountTargetReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this share mount target.
 	Href *string `json:"href" validate:"required"`
@@ -80377,7 +83377,7 @@ const (
 // UnmarshalShareMountTargetReference unmarshals an instance of ShareMountTargetReference from the specified map of raw messages.
 func UnmarshalShareMountTargetReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(ShareMountTargetReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalShareMountTargetReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -80400,25 +83400,6 @@ func UnmarshalShareMountTargetReference(m map[string]json.RawMessage, result int
 	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// ShareMountTargetReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type ShareMountTargetReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalShareMountTargetReferenceDeleted unmarshals an instance of ShareMountTargetReferenceDeleted from the specified map of raw messages.
-func UnmarshalShareMountTargetReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ShareMountTargetReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -80754,6 +83735,9 @@ type ShareProfile struct {
 	Capacity ShareProfileCapacityIntf `json:"capacity" validate:"required"`
 
 	// The product family this share profile belongs to.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Family *string `json:"family" validate:"required"`
 
 	// The URL for this share profile.
@@ -80771,6 +83755,9 @@ type ShareProfile struct {
 
 // Constants associated with the ShareProfile.Family property.
 // The product family this share profile belongs to.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	ShareProfileFamilyDefinedPerformanceConst = "defined_performance"
 )
@@ -80915,7 +83902,7 @@ type ShareProfileCollection struct {
 	// except the last page.
 	Next *ShareProfileCollectionNext `json:"next,omitempty"`
 
-	// Collection of share profiles.
+	// A page of share profiles.
 	Profiles []ShareProfile `json:"profiles" validate:"required"`
 
 	// The total number of resources across all pages.
@@ -81233,13 +84220,16 @@ type SharePrototype struct {
 	// The maximum size for a share may increase in the future.
 	Size *int64 `json:"size,omitempty"`
 
-	// The zone this file share will reside in. For a replica share, this must be a different
-	// zone in the same region as the source share.
+	// The zone this file share will reside in. For a replica share in the same region as
+	// the source share, this must be a different zone from the source share.
 	Zone ZoneIdentityIntf `json:"zone,omitempty"`
 
 	// The cron specification for the file share replication schedule.
 	//
 	// Replication of a share can be scheduled to occur at most once per hour.
+	//
+	// The scheduling frequency for this property may
+	// [increase](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	ReplicationCronSpec *string `json:"replication_cron_spec,omitempty"`
 
 	// The source file share for this replica file share. The specified file share must not
@@ -81417,9 +84407,8 @@ type SharePrototypeShareContext struct {
 	// Tags for this resource.
 	UserTags []string `json:"user_tags,omitempty"`
 
-	// The zone this replica file share will reside in.
-	//
-	// Must be a different zone in the same region as the source share.
+	// The zone this replica file share will reside in. For a replica share in the same
+	// region as the source share, this must be a different zone from the source share.
 	Zone ZoneIdentityIntf `json:"zone" validate:"required"`
 }
 
@@ -81508,7 +84497,7 @@ type ShareReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *ShareReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this file share.
 	Href *string `json:"href" validate:"required"`
@@ -81541,7 +84530,7 @@ func UnmarshalShareReference(m map[string]json.RawMessage, result interface{}) (
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalShareReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -81569,25 +84558,6 @@ func UnmarshalShareReference(m map[string]json.RawMessage, result interface{}) (
 	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// ShareReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type ShareReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalShareReferenceDeleted unmarshals an instance of ShareReferenceDeleted from the specified map of raw messages.
-func UnmarshalShareReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(ShareReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -81996,7 +84966,7 @@ func UnmarshalSnapshotClone(m map[string]json.RawMessage, result interface{}) (e
 
 // SnapshotCloneCollection : SnapshotCloneCollection struct
 type SnapshotCloneCollection struct {
-	// Collection of snapshot clones.
+	// The clones for the snapshot.
 	Clones []SnapshotClone `json:"clones" validate:"required"`
 }
 
@@ -82055,7 +85025,7 @@ type SnapshotCollection struct {
 	// except the last page.
 	Next *SnapshotCollectionNext `json:"next,omitempty"`
 
-	// Collection of snapshots.
+	// A page of snapshots.
 	Snapshots []Snapshot `json:"snapshots" validate:"required"`
 
 	// The total number of resources across all pages.
@@ -82285,7 +85255,7 @@ type SnapshotConsistencyGroupCollection struct {
 	// except the last page.
 	Next *SnapshotConsistencyGroupCollectionNext `json:"next,omitempty"`
 
-	// Collection of snapshot consistency groups.
+	// A page of snapshot consistency groups.
 	SnapshotConsistencyGroups []SnapshotConsistencyGroup `json:"snapshot_consistency_groups" validate:"required"`
 
 	// The total number of resources across all pages.
@@ -82479,7 +85449,7 @@ type SnapshotConsistencyGroupReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *SnapshotConsistencyGroupReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this snapshot consistency group.
 	Href *string `json:"href" validate:"required"`
@@ -82509,7 +85479,7 @@ func UnmarshalSnapshotConsistencyGroupReference(m map[string]json.RawMessage, re
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalSnapshotConsistencyGroupReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -82538,25 +85508,6 @@ func UnmarshalSnapshotConsistencyGroupReference(m map[string]json.RawMessage, re
 	return
 }
 
-// SnapshotConsistencyGroupReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type SnapshotConsistencyGroupReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalSnapshotConsistencyGroupReferenceDeleted unmarshals an instance of SnapshotConsistencyGroupReferenceDeleted from the specified map of raw messages.
-func UnmarshalSnapshotConsistencyGroupReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(SnapshotConsistencyGroupReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // SnapshotCopiesItem : SnapshotCopiesItem struct
 type SnapshotCopiesItem struct {
 	// The CRN for the copied snapshot.
@@ -82564,7 +85515,7 @@ type SnapshotCopiesItem struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *SnapshotReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for the copied snapshot.
 	Href *string `json:"href" validate:"required"`
@@ -82597,7 +85548,7 @@ func UnmarshalSnapshotCopiesItem(m map[string]json.RawMessage, result interface{
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalSnapshotReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -82858,7 +85809,7 @@ type SnapshotReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *SnapshotReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this snapshot.
 	Href *string `json:"href" validate:"required"`
@@ -82891,7 +85842,7 @@ func UnmarshalSnapshotReference(m map[string]json.RawMessage, result interface{}
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalSnapshotReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -82925,28 +85876,13 @@ func UnmarshalSnapshotReference(m map[string]json.RawMessage, result interface{}
 	return
 }
 
-// SnapshotReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type SnapshotReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalSnapshotReferenceDeleted unmarshals an instance of SnapshotReferenceDeleted from the specified map of raw messages.
-func UnmarshalSnapshotReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(SnapshotReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // SnapshotRemote : If present, this property indicates that the resource associated with this reference is remote and therefore may not
 // be directly retrievable.
 type SnapshotRemote struct {
+	// If present, this property indicates that the referenced resource is remote to this
+	// account, and identifies the owning account.
+	Account *AccountReference `json:"account,omitempty"`
+
 	// If present, this property indicates that the referenced resource is remote to this
 	// region, and identifies the native region.
 	Region *RegionReference `json:"region,omitempty"`
@@ -82955,6 +85891,11 @@ type SnapshotRemote struct {
 // UnmarshalSnapshotRemote unmarshals an instance of SnapshotRemote from the specified map of raw messages.
 func UnmarshalSnapshotRemote(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(SnapshotRemote)
+	err = core.UnmarshalModel(m, "account", &obj.Account, UnmarshalAccountReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "account-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "region", &obj.Region, UnmarshalRegionReference)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "region-error", common.GetComponentInfo())
@@ -82971,7 +85912,7 @@ type SnapshotSourceSnapshot struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *SnapshotReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for the source snapshot.
 	Href *string `json:"href" validate:"required"`
@@ -83004,7 +85945,7 @@ func UnmarshalSnapshotSourceSnapshot(m map[string]json.RawMessage, result interf
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalSnapshotReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -83158,6 +86099,9 @@ type Subnet struct {
 	RoutingTable *RoutingTableReference `json:"routing_table" validate:"required"`
 
 	// The status of the subnet.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 
 	// The total number of IPv4 addresses in this subnet.
@@ -83187,6 +86131,9 @@ const (
 
 // Constants associated with the Subnet.Status property.
 // The status of the subnet.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	SubnetStatusAvailableConst = "available"
 	SubnetStatusDeletingConst  = "deleting"
@@ -83298,7 +86245,7 @@ type SubnetCollection struct {
 	// except the last page.
 	Next *SubnetCollectionNext `json:"next,omitempty"`
 
-	// Collection of subnets.
+	// A page of subnets.
 	Subnets []Subnet `json:"subnets" validate:"required"`
 
 	// The total number of resources across all pages.
@@ -83662,7 +86609,7 @@ type SubnetReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *SubnetReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this subnet.
 	Href *string `json:"href" validate:"required"`
@@ -83691,7 +86638,7 @@ func UnmarshalSubnetReference(m map[string]json.RawMessage, result interface{}) 
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalSubnetReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -83714,25 +86661,6 @@ func UnmarshalSubnetReference(m map[string]json.RawMessage, result interface{}) 
 	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// SubnetReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type SubnetReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalSubnetReferenceDeleted unmarshals an instance of SubnetReferenceDeleted from the specified map of raw messages.
-func UnmarshalSubnetReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(SubnetReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -83814,6 +86742,34 @@ func UnmarshalTrustedProfileReference(m map[string]json.RawMessage, result inter
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// UnpublishPrivatePathServiceGatewayOptions : The UnpublishPrivatePathServiceGateway options.
+type UnpublishPrivatePathServiceGatewayOptions struct {
+	// The private path service gateway identifier.
+	PrivatePathServiceGatewayID *string `json:"private_path_service_gateway_id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewUnpublishPrivatePathServiceGatewayOptions : Instantiate UnpublishPrivatePathServiceGatewayOptions
+func (*VpcV1) NewUnpublishPrivatePathServiceGatewayOptions(privatePathServiceGatewayID string) *UnpublishPrivatePathServiceGatewayOptions {
+	return &UnpublishPrivatePathServiceGatewayOptions{
+		PrivatePathServiceGatewayID: core.StringPtr(privatePathServiceGatewayID),
+	}
+}
+
+// SetPrivatePathServiceGatewayID : Allow user to set PrivatePathServiceGatewayID
+func (_options *UnpublishPrivatePathServiceGatewayOptions) SetPrivatePathServiceGatewayID(privatePathServiceGatewayID string) *UnpublishPrivatePathServiceGatewayOptions {
+	_options.PrivatePathServiceGatewayID = core.StringPtr(privatePathServiceGatewayID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UnpublishPrivatePathServiceGatewayOptions) SetHeaders(param map[string]string) *UnpublishPrivatePathServiceGatewayOptions {
+	options.Headers = param
+	return options
 }
 
 // UnsetSubnetPublicGatewayOptions : The UnsetSubnetPublicGateway options.
@@ -84290,6 +87246,43 @@ func (_options *UpdateEndpointGatewayOptions) SetEndpointGatewayPatch(endpointGa
 
 // SetHeaders : Allow user to set Headers
 func (options *UpdateEndpointGatewayOptions) SetHeaders(param map[string]string) *UpdateEndpointGatewayOptions {
+	options.Headers = param
+	return options
+}
+
+// UpdateFirmwareForBareMetalServerOptions : The UpdateFirmwareForBareMetalServer options.
+type UpdateFirmwareForBareMetalServerOptions struct {
+	// The bare metal server identifier.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Indicates whether to automatically start the bare metal server after the firmware update is successfully completed.
+	AutoStart *bool `json:"auto_start,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewUpdateFirmwareForBareMetalServerOptions : Instantiate UpdateFirmwareForBareMetalServerOptions
+func (*VpcV1) NewUpdateFirmwareForBareMetalServerOptions(id string) *UpdateFirmwareForBareMetalServerOptions {
+	return &UpdateFirmwareForBareMetalServerOptions{
+		ID: core.StringPtr(id),
+	}
+}
+
+// SetID : Allow user to set ID
+func (_options *UpdateFirmwareForBareMetalServerOptions) SetID(id string) *UpdateFirmwareForBareMetalServerOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetAutoStart : Allow user to set AutoStart
+func (_options *UpdateFirmwareForBareMetalServerOptions) SetAutoStart(autoStart bool) *UpdateFirmwareForBareMetalServerOptions {
+	_options.AutoStart = core.BoolPtr(autoStart)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdateFirmwareForBareMetalServerOptions) SetHeaders(param map[string]string) *UpdateFirmwareForBareMetalServerOptions {
 	options.Headers = param
 	return options
 }
@@ -85550,6 +88543,92 @@ func (options *UpdatePlacementGroupOptions) SetHeaders(param map[string]string) 
 	return options
 }
 
+// UpdatePrivatePathServiceGatewayAccountPolicyOptions : The UpdatePrivatePathServiceGatewayAccountPolicy options.
+type UpdatePrivatePathServiceGatewayAccountPolicyOptions struct {
+	// The private path service gateway identifier.
+	PrivatePathServiceGatewayID *string `json:"private_path_service_gateway_id" validate:"required,ne="`
+
+	// The account policy identifier.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// The account policy patch.
+	PrivatePathServiceGatewayAccountPolicyPatch map[string]interface{} `json:"PrivatePathServiceGatewayAccountPolicy_patch" validate:"required"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewUpdatePrivatePathServiceGatewayAccountPolicyOptions : Instantiate UpdatePrivatePathServiceGatewayAccountPolicyOptions
+func (*VpcV1) NewUpdatePrivatePathServiceGatewayAccountPolicyOptions(privatePathServiceGatewayID string, id string, privatePathServiceGatewayAccountPolicyPatch map[string]interface{}) *UpdatePrivatePathServiceGatewayAccountPolicyOptions {
+	return &UpdatePrivatePathServiceGatewayAccountPolicyOptions{
+		PrivatePathServiceGatewayID: core.StringPtr(privatePathServiceGatewayID),
+		ID:                          core.StringPtr(id),
+		PrivatePathServiceGatewayAccountPolicyPatch: privatePathServiceGatewayAccountPolicyPatch,
+	}
+}
+
+// SetPrivatePathServiceGatewayID : Allow user to set PrivatePathServiceGatewayID
+func (_options *UpdatePrivatePathServiceGatewayAccountPolicyOptions) SetPrivatePathServiceGatewayID(privatePathServiceGatewayID string) *UpdatePrivatePathServiceGatewayAccountPolicyOptions {
+	_options.PrivatePathServiceGatewayID = core.StringPtr(privatePathServiceGatewayID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *UpdatePrivatePathServiceGatewayAccountPolicyOptions) SetID(id string) *UpdatePrivatePathServiceGatewayAccountPolicyOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetPrivatePathServiceGatewayAccountPolicyPatch : Allow user to set PrivatePathServiceGatewayAccountPolicyPatch
+func (_options *UpdatePrivatePathServiceGatewayAccountPolicyOptions) SetPrivatePathServiceGatewayAccountPolicyPatch(privatePathServiceGatewayAccountPolicyPatch map[string]interface{}) *UpdatePrivatePathServiceGatewayAccountPolicyOptions {
+	_options.PrivatePathServiceGatewayAccountPolicyPatch = privatePathServiceGatewayAccountPolicyPatch
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdatePrivatePathServiceGatewayAccountPolicyOptions) SetHeaders(param map[string]string) *UpdatePrivatePathServiceGatewayAccountPolicyOptions {
+	options.Headers = param
+	return options
+}
+
+// UpdatePrivatePathServiceGatewayOptions : The UpdatePrivatePathServiceGateway options.
+type UpdatePrivatePathServiceGatewayOptions struct {
+	// The private path service gateway identifier.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// The private path service gateway patch.
+	PrivatePathServiceGatewayPatch map[string]interface{} `json:"PrivatePathServiceGateway_patch" validate:"required"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewUpdatePrivatePathServiceGatewayOptions : Instantiate UpdatePrivatePathServiceGatewayOptions
+func (*VpcV1) NewUpdatePrivatePathServiceGatewayOptions(id string, privatePathServiceGatewayPatch map[string]interface{}) *UpdatePrivatePathServiceGatewayOptions {
+	return &UpdatePrivatePathServiceGatewayOptions{
+		ID:                             core.StringPtr(id),
+		PrivatePathServiceGatewayPatch: privatePathServiceGatewayPatch,
+	}
+}
+
+// SetID : Allow user to set ID
+func (_options *UpdatePrivatePathServiceGatewayOptions) SetID(id string) *UpdatePrivatePathServiceGatewayOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetPrivatePathServiceGatewayPatch : Allow user to set PrivatePathServiceGatewayPatch
+func (_options *UpdatePrivatePathServiceGatewayOptions) SetPrivatePathServiceGatewayPatch(privatePathServiceGatewayPatch map[string]interface{}) *UpdatePrivatePathServiceGatewayOptions {
+	_options.PrivatePathServiceGatewayPatch = privatePathServiceGatewayPatch
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdatePrivatePathServiceGatewayOptions) SetHeaders(param map[string]string) *UpdatePrivatePathServiceGatewayOptions {
+	options.Headers = param
+	return options
+}
+
 // UpdatePublicGatewayOptions : The UpdatePublicGateway options.
 type UpdatePublicGatewayOptions struct {
 	// The public gateway identifier.
@@ -85717,7 +88796,7 @@ type UpdateShareMountTargetOptions struct {
 	// The file share identifier.
 	ShareID *string `json:"share_id" validate:"required,ne="`
 
-	// The share mount target identifier.
+	// The file share mount target identifier.
 	ID *string `json:"id" validate:"required,ne="`
 
 	// The share mount target patch.
@@ -86659,6 +89738,9 @@ type VPC struct {
 	ResourceType *string `json:"resource_type" validate:"required"`
 
 	// The status of this VPC.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 }
 
@@ -86685,6 +89767,9 @@ const (
 
 // Constants associated with the VPC.Status property.
 // The status of this VPC.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPCStatusAvailableConst = "available"
 	VPCStatusDeletingConst  = "deleting"
@@ -86820,7 +89905,7 @@ type VPCCollection struct {
 	// The total number of resources across all pages.
 	TotalCount *int64 `json:"total_count" validate:"required"`
 
-	// Collection of VPCs.
+	// A page of VPCs.
 	Vpcs []VPC `json:"vpcs" validate:"required"`
 }
 
@@ -87135,7 +90220,7 @@ func UnmarshalVpcdnsResolutionBinding(m map[string]json.RawMessage, result inter
 
 // VpcdnsResolutionBindingCollection : VpcdnsResolutionBindingCollection struct
 type VpcdnsResolutionBindingCollection struct {
-	// Collection of DNS resolution bindings for this VPC.
+	// A page of DNS resolution bindings for the VPC.
 	DnsResolutionBindings []VpcdnsResolutionBinding `json:"dns_resolution_bindings" validate:"required"`
 
 	// A link to the first page of resources.
@@ -87321,7 +90406,7 @@ type VpcdnsResolver struct {
 	//
 	// - `custom_resolver`: A custom DNS resolver is configured for this VPC.
 	//
-	// - `private_resolver`: A private DNS resolver is configured for this VPC. Applicable when
+	// - `private_resolver`: A private DNS resolver is configured for this VPC. Applies when
 	//   the VPC has either or both of the following:
 	//
 	//     - at least one endpoint gateway residing in it
@@ -87358,7 +90443,7 @@ const (
 //
 // - `custom_resolver`: A custom DNS resolver is configured for this VPC.
 //
-//   - `private_resolver`: A private DNS resolver is configured for this VPC. Applicable when
+//   - `private_resolver`: A private DNS resolver is configured for this VPC. Applies when
 //     the VPC has either or both of the following:
 //
 //   - at least one endpoint gateway residing in it
@@ -87755,7 +90840,7 @@ type VPCReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *VPCReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this VPC.
 	Href *string `json:"href" validate:"required"`
@@ -87784,7 +90869,7 @@ func UnmarshalVPCReference(m map[string]json.RawMessage, result interface{}) (er
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalVPCReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -87822,7 +90907,7 @@ type VPCReferenceDnsResolverContext struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *VPCReferenceDnsResolverContextDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this VPC.
 	Href *string `json:"href" validate:"required"`
@@ -87855,7 +90940,7 @@ func UnmarshalVPCReferenceDnsResolverContext(m map[string]json.RawMessage, resul
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalVPCReferenceDnsResolverContextDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -87883,44 +90968,6 @@ func UnmarshalVPCReferenceDnsResolverContext(m map[string]json.RawMessage, resul
 	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// VPCReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type VPCReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalVPCReferenceDeleted unmarshals an instance of VPCReferenceDeleted from the specified map of raw messages.
-func UnmarshalVPCReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(VPCReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// VPCReferenceDnsResolverContextDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type VPCReferenceDnsResolverContextDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalVPCReferenceDnsResolverContextDeleted unmarshals an instance of VPCReferenceDnsResolverContextDeleted from the specified map of raw messages.
-func UnmarshalVPCReferenceDnsResolverContextDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(VPCReferenceDnsResolverContextDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -88032,7 +91079,7 @@ type VPNGateway struct {
 	// The date and time that this VPN gateway was created.
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
-	// The VPN gateway's CRN.
+	// The CRN for this VPN gateway.
 	CRN *string `json:"crn" validate:"required"`
 
 	// The reasons for the current `health_state` (if any).
@@ -88047,7 +91094,7 @@ type VPNGateway struct {
 	//    health state of `inapplicable`. A `pending` resource may also have this state.
 	HealthState *string `json:"health_state" validate:"required"`
 
-	// The VPN gateway's canonical URL.
+	// The URL for this VPN gateway.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this VPN gateway.
@@ -88059,7 +91106,7 @@ type VPNGateway struct {
 	// The lifecycle state of the VPN gateway.
 	LifecycleState *string `json:"lifecycle_state" validate:"required"`
 
-	// Collection of VPN gateway members.
+	// The members for the VPN gateway.
 	Members []VPNGatewayMember `json:"members" validate:"required"`
 
 	// The name for this VPN gateway. The name is unique across all VPN gateways in the VPC.
@@ -88229,7 +91276,7 @@ type VPNGatewayCollection struct {
 	// The total number of resources across all pages.
 	TotalCount *int64 `json:"total_count" validate:"required"`
 
-	// Collection of VPN gateways.
+	// A page of VPN gateways.
 	VPNGateways []VPNGatewayIntf `json:"vpn_gateways" validate:"required"`
 }
 
@@ -88324,7 +91371,10 @@ type VPNGatewayConnection struct {
 	// If set to false, the VPN gateway connection is shut down.
 	AdminStateUp *bool `json:"admin_state_up" validate:"required"`
 
-	// The authentication mode. Only `psk` is currently supported.
+	// The authentication mode.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	AuthenticationMode *string `json:"authentication_mode" validate:"required"`
 
 	// The date and time that this VPN gateway connection was created.
@@ -88342,7 +91392,7 @@ type VPNGatewayConnection struct {
 	//    connection will be brought down after its lifetime expires.
 	EstablishMode *string `json:"establish_mode" validate:"required"`
 
-	// The VPN connection's canonical URL.
+	// The URL for this VPN gateway connection.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this VPN gateway connection.
@@ -88357,6 +91407,9 @@ type VPNGatewayConnection struct {
 	IpsecPolicy *IPsecPolicyReference `json:"ipsec_policy,omitempty"`
 
 	// The mode of the VPN gateway.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Mode *string `json:"mode" validate:"required"`
 
 	// The name for this VPN gateway connection. The name is unique across all connections for the VPN gateway.
@@ -88374,6 +91427,11 @@ type VPNGatewayConnection struct {
 	// The reasons for the current VPN gateway connection status (if any).
 	StatusReasons []VPNGatewayConnectionStatusReason `json:"status_reasons" validate:"required"`
 
+	// Indicates whether the traffic is distributed between the `up` tunnels of the VPN gateway connection when the VPC
+	// route's next hop is a VPN connection. If `false`, the traffic is only routed through the `up` tunnel with the lower
+	// `public_ip` address.
+	DistributeTraffic *bool `json:"distribute_traffic,omitempty"`
+
 	Local *VPNGatewayConnectionStaticRouteModeLocal `json:"local,omitempty"`
 
 	Peer VPNGatewayConnectionStaticRouteModePeerIntf `json:"peer,omitempty"`
@@ -88386,7 +91444,10 @@ type VPNGatewayConnection struct {
 }
 
 // Constants associated with the VPNGatewayConnection.AuthenticationMode property.
-// The authentication mode. Only `psk` is currently supported.
+// The authentication mode.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNGatewayConnectionAuthenticationModePskConst = "psk"
 )
@@ -88406,6 +91467,9 @@ const (
 
 // Constants associated with the VPNGatewayConnection.Mode property.
 // The mode of the VPN gateway.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNGatewayConnectionModePolicyConst = "policy"
 	VPNGatewayConnectionModeRouteConst  = "route"
@@ -88489,7 +91553,7 @@ func UnmarshalVPNGatewayConnectionCIDRs(m map[string]json.RawMessage, result int
 
 // VPNGatewayConnectionCollection : VPNGatewayConnectionCollection struct
 type VPNGatewayConnectionCollection struct {
-	// Collection of VPN gateway connections in a VPN gateway.
+	// A page of connections for the VPN gateway.
 	Connections []VPNGatewayConnectionIntf `json:"connections" validate:"required"`
 
 	// A link to the first page of resources.
@@ -88829,7 +91893,7 @@ type VPNGatewayConnectionIkePolicyPatch struct {
 	// The unique identifier for this IKE policy.
 	ID *string `json:"id,omitempty"`
 
-	// The IKE policy's canonical URL.
+	// The URL for this IKE policy.
 	Href *string `json:"href,omitempty"`
 }
 
@@ -88867,7 +91931,7 @@ type VPNGatewayConnectionIkePolicyPrototype struct {
 	// The unique identifier for this IKE policy.
 	ID *string `json:"id,omitempty"`
 
-	// The IKE policy's canonical URL.
+	// The URL for this IKE policy.
 	Href *string `json:"href,omitempty"`
 }
 
@@ -88905,7 +91969,7 @@ type VPNGatewayConnectionIPsecPolicyPatch struct {
 	// The unique identifier for this IPsec policy.
 	ID *string `json:"id,omitempty"`
 
-	// The IPsec policy's canonical URL.
+	// The URL for this IPsec policy.
 	Href *string `json:"href,omitempty"`
 }
 
@@ -88943,7 +92007,7 @@ type VPNGatewayConnectionIPsecPolicyPrototype struct {
 	// The unique identifier for this IPsec policy.
 	ID *string `json:"id,omitempty"`
 
-	// The IPsec policy's canonical URL.
+	// The URL for this IPsec policy.
 	Href *string `json:"href,omitempty"`
 }
 
@@ -88979,6 +92043,15 @@ type VPNGatewayConnectionPatch struct {
 
 	// The Dead Peer Detection settings.
 	DeadPeerDetection *VPNGatewayConnectionDpdPatch `json:"dead_peer_detection,omitempty"`
+
+	// Indicates whether the traffic is distributed between the `up` tunnels of the VPN gateway connection when the VPC
+	// route's next hop is a VPN connection. If `false`, the traffic is only routed through the `up` tunnel with the lower
+	// `public_ip` address. Before enabling it on VPN connections to on-prem private networks, review
+	// [distributing traffic
+	// restrictions](https://cloud.ibm.com/docs/vpc?topic=vpc-vpn-limitations#distributing-traffic-restrictions).
+	//
+	// If specified, `mode` must be `route`.
+	DistributeTraffic *bool `json:"distribute_traffic,omitempty"`
 
 	// The establish mode of the VPN gateway connection:
 	// - `bidirectional`: Either side of the VPN gateway can initiate IKE protocol
@@ -89030,6 +92103,11 @@ func UnmarshalVPNGatewayConnectionPatch(m map[string]json.RawMessage, result int
 	err = core.UnmarshalModel(m, "dead_peer_detection", &obj.DeadPeerDetection, UnmarshalVPNGatewayConnectionDpdPatch)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "dead_peer_detection-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "distribute_traffic", &obj.DistributeTraffic)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "distribute_traffic-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "establish_mode", &obj.EstablishMode)
@@ -89350,6 +92428,13 @@ type VPNGatewayConnectionPrototype struct {
 	// The pre-shared key.
 	Psk *string `json:"psk" validate:"required"`
 
+	// Indicates whether the traffic is distributed between the `up` tunnels of the VPN gateway connection when the VPC
+	// route's next hop is a VPN connection. If `false`, the traffic is only routed through the `up` tunnel with the lower
+	// `public_ip` address. Before enabling it on VPN connections to on-prem private networks, review
+	// [distributing traffic
+	// restrictions](https://cloud.ibm.com/docs/vpc?topic=vpc-vpn-limitations#distributing-traffic-restrictions).
+	DistributeTraffic *bool `json:"distribute_traffic,omitempty"`
+
 	Local *VPNGatewayConnectionStaticRouteModeLocalPrototype `json:"local,omitempty"`
 
 	Peer VPNGatewayConnectionStaticRouteModePeerPrototypeIntf `json:"peer,omitempty"`
@@ -89423,6 +92508,11 @@ func UnmarshalVPNGatewayConnectionPrototype(m map[string]json.RawMessage, result
 		err = core.SDKErrorf(err, "", "psk-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "distribute_traffic", &obj.DistributeTraffic)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "distribute_traffic-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "local", &obj.Local, UnmarshalVPNGatewayConnectionStaticRouteModeLocalPrototype)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "local-error", common.GetComponentInfo())
@@ -89446,9 +92536,9 @@ func UnmarshalVPNGatewayConnectionPrototype(m map[string]json.RawMessage, result
 type VPNGatewayConnectionReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *VPNGatewayConnectionReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
-	// The VPN connection's canonical URL.
+	// The URL for this VPN gateway connection.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this VPN gateway connection.
@@ -89470,7 +92560,7 @@ const (
 // UnmarshalVPNGatewayConnectionReference unmarshals an instance of VPNGatewayConnectionReference from the specified map of raw messages.
 func UnmarshalVPNGatewayConnectionReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(VPNGatewayConnectionReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalVPNGatewayConnectionReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -89493,25 +92583,6 @@ func UnmarshalVPNGatewayConnectionReference(m map[string]json.RawMessage, result
 	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// VPNGatewayConnectionReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type VPNGatewayConnectionReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalVPNGatewayConnectionReferenceDeleted unmarshals an instance of VPNGatewayConnectionReferenceDeleted from the specified map of raw messages.
-func UnmarshalVPNGatewayConnectionReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(VPNGatewayConnectionReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -89680,6 +92751,9 @@ type VPNGatewayConnectionStaticRouteModeTunnel struct {
 	PublicIP *IP `json:"public_ip" validate:"required"`
 
 	// The status of the VPN Tunnel.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 
 	// The reasons for the current status (if any).
@@ -89688,6 +92762,9 @@ type VPNGatewayConnectionStaticRouteModeTunnel struct {
 
 // Constants associated with the VPNGatewayConnectionStaticRouteModeTunnel.Status property.
 // The status of the VPN Tunnel.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNGatewayConnectionStaticRouteModeTunnelStatusDownConst = "down"
 	VPNGatewayConnectionStaticRouteModeTunnelStatusUpConst   = "up"
@@ -89985,6 +93062,9 @@ type VPNGatewayMember struct {
 	PublicIP *IP `json:"public_ip" validate:"required"`
 
 	// The high availability role assigned to the VPN gateway member.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Role *string `json:"role" validate:"required"`
 }
 
@@ -90017,6 +93097,9 @@ const (
 
 // Constants associated with the VPNGatewayMember.Role property.
 // The high availability role assigned to the VPN gateway member.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNGatewayMemberRoleActiveConst  = "active"
 	VPNGatewayMemberRoleStandbyConst = "standby"
@@ -90262,25 +93345,6 @@ func UnmarshalVPNGatewayPrototype(m map[string]json.RawMessage, result interface
 	return
 }
 
-// VPNGatewayReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type VPNGatewayReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalVPNGatewayReferenceDeleted unmarshals an instance of VPNGatewayReferenceDeleted from the specified map of raw messages.
-func UnmarshalVPNGatewayReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(VPNGatewayReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // VPNServer : VPNServer struct
 type VPNServer struct {
 	// The certificate instance for this VPN server.
@@ -90354,7 +93418,10 @@ type VPNServer struct {
 	// The reserved IPs bound to this VPN server.
 	PrivateIps []ReservedIPReference `json:"private_ips" validate:"required"`
 
-	// The transport protocol used by this VPN server.
+	// The transport protocol to use for this VPN server.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The resource group for this VPN server.
@@ -90401,7 +93468,10 @@ const (
 )
 
 // Constants associated with the VPNServer.Protocol property.
-// The transport protocol used by this VPN server.
+// The transport protocol to use for this VPN server.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNServerProtocolTCPConst = "tcp"
 	VPNServerProtocolUDPConst = "udp"
@@ -90556,6 +93626,9 @@ func UnmarshalVPNServer(m map[string]json.RawMessage, result interface{}) (err e
 // - VPNServerAuthenticationByCertificate
 type VPNServerAuthentication struct {
 	// The type of authentication.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Method *string `json:"method" validate:"required"`
 
 	// The type of identity provider to be used by VPN client.
@@ -90570,6 +93643,9 @@ type VPNServerAuthentication struct {
 
 // Constants associated with the VPNServerAuthentication.Method property.
 // The type of authentication.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNServerAuthenticationMethodCertificateConst = "certificate"
 	VPNServerAuthenticationMethodUsernameConst    = "username"
@@ -90845,7 +93921,7 @@ func UnmarshalVPNServerClient(m map[string]json.RawMessage, result interface{}) 
 
 // VPNServerClientCollection : VPNServerClientCollection struct
 type VPNServerClientCollection struct {
-	// Collection of VPN clients.
+	// A page of clients of the VPN server.
 	Clients []VPNServerClient `json:"clients" validate:"required"`
 
 	// A link to the first page of resources.
@@ -90960,7 +94036,7 @@ type VPNServerCollection struct {
 	// The total number of resources across all pages.
 	TotalCount *int64 `json:"total_count" validate:"required"`
 
-	// Collection of VPN servers.
+	// A page of VPN servers.
 	VPNServers []VPNServer `json:"vpn_servers" validate:"required"`
 }
 
@@ -91209,7 +94285,7 @@ type VPNServerPatch struct {
 	// The port number used by this VPN server.
 	Port *int64 `json:"port,omitempty"`
 
-	// The transport protocol used by this VPN server.
+	// The transport protocol to use for this VPN server.
 	Protocol *string `json:"protocol,omitempty"`
 
 	// The subnets to provision this VPN server in (replacing the existing subnets).
@@ -91217,7 +94293,7 @@ type VPNServerPatch struct {
 }
 
 // Constants associated with the VPNServerPatch.Protocol property.
-// The transport protocol used by this VPN server.
+// The transport protocol to use for this VPN server.
 const (
 	VPNServerPatchProtocolTCPConst = "tcp"
 	VPNServerPatchProtocolUDPConst = "udp"
@@ -91290,25 +94366,6 @@ func (vpnServerPatch *VPNServerPatch) AsPatch() (_patch map[string]interface{}, 
 	if err != nil {
 		err = core.SDKErrorf(err, "", "unmarshal-patch-data-error", common.GetComponentInfo())
 	}
-	return
-}
-
-// VPNServerReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type VPNServerReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalVPNServerReferenceDeleted unmarshals an instance of VPNServerReferenceDeleted from the specified map of raw messages.
-func UnmarshalVPNServerReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(VPNServerReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
@@ -91484,7 +94541,7 @@ type VPNServerRouteCollection struct {
 	// except the last page.
 	Next *VPNServerRouteCollectionNext `json:"next,omitempty"`
 
-	// Collection of VPN routes.
+	// A page of routes for the VPN server.
 	Routes []VPNServerRoute `json:"routes" validate:"required"`
 
 	// The total number of resources across all pages.
@@ -91950,7 +95007,7 @@ type VirtualNetworkInterfaceCollection struct {
 	// The total number of resources across all pages.
 	TotalCount *int64 `json:"total_count" validate:"required"`
 
-	// Collection of virtual network interfaces.
+	// A page of virtual network interfaces.
 	VirtualNetworkInterfaces []VirtualNetworkInterface `json:"virtual_network_interfaces" validate:"required"`
 }
 
@@ -92327,25 +95384,6 @@ func UnmarshalVirtualNetworkInterfaceReferenceAttachmentContext(m map[string]jso
 	return
 }
 
-// VirtualNetworkInterfaceReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type VirtualNetworkInterfaceReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalVirtualNetworkInterfaceReferenceDeleted unmarshals an instance of VirtualNetworkInterfaceReferenceDeleted from the specified map of raw messages.
-func UnmarshalVirtualNetworkInterfaceReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(VirtualNetworkInterfaceReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // VirtualNetworkInterfaceTarget : A virtual network interface target.
 //
 // The resources supported by this property may
@@ -92357,7 +95395,7 @@ func UnmarshalVirtualNetworkInterfaceReferenceDeleted(m map[string]json.RawMessa
 type VirtualNetworkInterfaceTarget struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *ShareMountTargetReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this share mount target.
 	Href *string `json:"href,omitempty"`
@@ -92389,7 +95427,7 @@ type VirtualNetworkInterfaceTargetIntf interface {
 // UnmarshalVirtualNetworkInterfaceTarget unmarshals an instance of VirtualNetworkInterfaceTarget from the specified map of raw messages.
 func UnmarshalVirtualNetworkInterfaceTarget(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(VirtualNetworkInterfaceTarget)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalShareMountTargetReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -92422,6 +95460,12 @@ func UnmarshalVirtualNetworkInterfaceTarget(m map[string]json.RawMessage, result
 type Volume struct {
 	// Indicates whether a running virtual server instance has an attachment to this volume.
 	Active *bool `json:"active" validate:"required"`
+
+	// The attachment states that support adjustable capacity for this volume.
+	AdjustableCapacityStates []string `json:"adjustable_capacity_states" validate:"required"`
+
+	// The attachment states that support adjustable IOPS for this volume.
+	AdjustableIopsStates []string `json:"adjustable_iops_states" validate:"required"`
 
 	// The attachment state of the volume
 	// - `unattached`: Not attached to any virtual server instances
@@ -92530,6 +95574,28 @@ type Volume struct {
 	Zone *ZoneReference `json:"zone" validate:"required"`
 }
 
+// Constants associated with the Volume.AdjustableCapacityStates property.
+// The attachment state of the volume
+// - `unattached`: Not attached to any virtual server instances
+// - `attached`: Attached to a virtual server instance (even if the instance is stopped)
+// - `unusable`: Not able to be attached to any virtual server instances.
+const (
+	VolumeAdjustableCapacityStatesAttachedConst   = "attached"
+	VolumeAdjustableCapacityStatesUnattachedConst = "unattached"
+	VolumeAdjustableCapacityStatesUnusableConst   = "unusable"
+)
+
+// Constants associated with the Volume.AdjustableIopsStates property.
+// The attachment state of the volume
+// - `unattached`: Not attached to any virtual server instances
+// - `attached`: Attached to a virtual server instance (even if the instance is stopped)
+// - `unusable`: Not able to be attached to any virtual server instances.
+const (
+	VolumeAdjustableIopsStatesAttachedConst   = "attached"
+	VolumeAdjustableIopsStatesUnattachedConst = "unattached"
+	VolumeAdjustableIopsStatesUnusableConst   = "unusable"
+)
+
 // Constants associated with the Volume.AttachmentState property.
 // The attachment state of the volume
 // - `unattached`: Not attached to any virtual server instances
@@ -92589,6 +95655,16 @@ func UnmarshalVolume(m map[string]json.RawMessage, result interface{}) (err erro
 	err = core.UnmarshalPrimitive(m, "active", &obj.Active)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "active-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "adjustable_capacity_states", &obj.AdjustableCapacityStates)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "adjustable_capacity_states-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "adjustable_iops_states", &obj.AdjustableIopsStates)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "adjustable_iops_states-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "attachment_state", &obj.AttachmentState)
@@ -92752,9 +95828,15 @@ type VolumeAttachment struct {
 	Name *string `json:"name" validate:"required"`
 
 	// The status of this volume attachment.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 
 	// The type of volume attachment.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Type *string `json:"type" validate:"required"`
 
 	// The attached volume.
@@ -92765,6 +95847,9 @@ type VolumeAttachment struct {
 
 // Constants associated with the VolumeAttachment.Status property.
 // The status of this volume attachment.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VolumeAttachmentStatusAttachedConst  = "attached"
 	VolumeAttachmentStatusAttachingConst = "attaching"
@@ -92774,6 +95859,9 @@ const (
 
 // Constants associated with the VolumeAttachment.Type property.
 // The type of volume attachment.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VolumeAttachmentTypeBootConst = "boot"
 	VolumeAttachmentTypeDataConst = "data"
@@ -92838,7 +95926,7 @@ func UnmarshalVolumeAttachment(m map[string]json.RawMessage, result interface{})
 
 // VolumeAttachmentCollection : VolumeAttachmentCollection struct
 type VolumeAttachmentCollection struct {
-	// Collection of volume attachments.
+	// The volume attachments for the instance.
 	VolumeAttachments []VolumeAttachment `json:"volume_attachments" validate:"required"`
 }
 
@@ -93113,8 +96201,8 @@ type VolumeAttachmentPrototypeVolume struct {
 	// The URL for this volume.
 	Href *string `json:"href,omitempty"`
 
-	// The maximum I/O operations per second (IOPS) to use for this volume. Applicable only to volumes using a profile
-	// `family` of `custom`.
+	// The maximum I/O operations per second (IOPS) to use for this volume. If specified, the `family` of the volume
+	// profile must be `custom` or `defined_performance`.
 	Iops *int64 `json:"iops,omitempty"`
 
 	// The name for this volume. The name must not be used by another volume in the region. If unspecified, the name will
@@ -93132,10 +96220,8 @@ type VolumeAttachmentPrototypeVolume struct {
 	// The [user tags](https://cloud.ibm.com/apidocs/tagging#types-of-tags) associated with this volume.
 	UserTags []string `json:"user_tags,omitempty"`
 
-	// The capacity to use for the volume (in gigabytes).
-	//
-	// The minimum and maximum limits for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	// The capacity to use for the volume (in gigabytes). The specified value must be within the `capacity` range of the
+	// volume's profile.
 	Capacity *int64 `json:"capacity,omitempty"`
 
 	// The root key to use to wrap the data encryption key for the volume.
@@ -93143,7 +96229,9 @@ type VolumeAttachmentPrototypeVolume struct {
 	// If unspecified, the `encryption` type for the volume will be `provider_managed`.
 	EncryptionKey EncryptionKeyIdentityIntf `json:"encryption_key,omitempty"`
 
-	// The snapshot from which to clone the volume.
+	// The snapshot to use as a source for the volume's data.
+	//
+	// The specified snapshot may be in a different account, subject to IAM policies.
 	SourceSnapshot SnapshotIdentityIntf `json:"source_snapshot,omitempty"`
 }
 
@@ -93221,7 +96309,7 @@ func UnmarshalVolumeAttachmentPrototypeVolume(m map[string]json.RawMessage, resu
 type VolumeAttachmentReferenceInstanceContext struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *VolumeAttachmentReferenceInstanceContextDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// Information about how the volume is exposed to the instance operating system.
 	//
@@ -93246,7 +96334,7 @@ type VolumeAttachmentReferenceInstanceContext struct {
 // UnmarshalVolumeAttachmentReferenceInstanceContext unmarshals an instance of VolumeAttachmentReferenceInstanceContext from the specified map of raw messages.
 func UnmarshalVolumeAttachmentReferenceInstanceContext(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(VolumeAttachmentReferenceInstanceContext)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalVolumeAttachmentReferenceInstanceContextDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -93280,25 +96368,6 @@ func UnmarshalVolumeAttachmentReferenceInstanceContext(m map[string]json.RawMess
 	return
 }
 
-// VolumeAttachmentReferenceInstanceContextDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type VolumeAttachmentReferenceInstanceContextDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalVolumeAttachmentReferenceInstanceContextDeleted unmarshals an instance of VolumeAttachmentReferenceInstanceContextDeleted from the specified map of raw messages.
-func UnmarshalVolumeAttachmentReferenceInstanceContextDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(VolumeAttachmentReferenceInstanceContextDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // VolumeAttachmentReferenceVolumeContext : VolumeAttachmentReferenceVolumeContext struct
 type VolumeAttachmentReferenceVolumeContext struct {
 	// Indicates whether deleting the instance will also delete the attached volume.
@@ -93306,7 +96375,7 @@ type VolumeAttachmentReferenceVolumeContext struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *VolumeAttachmentReferenceVolumeContextDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// Information about how the volume is exposed to the instance operating system.
 	//
@@ -93326,11 +96395,17 @@ type VolumeAttachmentReferenceVolumeContext struct {
 	Name *string `json:"name" validate:"required"`
 
 	// The type of volume attachment.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Type *string `json:"type" validate:"required"`
 }
 
 // Constants associated with the VolumeAttachmentReferenceVolumeContext.Type property.
 // The type of volume attachment.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VolumeAttachmentReferenceVolumeContextTypeBootConst = "boot"
 	VolumeAttachmentReferenceVolumeContextTypeDataConst = "data"
@@ -93344,7 +96419,7 @@ func UnmarshalVolumeAttachmentReferenceVolumeContext(m map[string]json.RawMessag
 		err = core.SDKErrorf(err, "", "delete_volume_on_instance_delete-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalVolumeAttachmentReferenceVolumeContextDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -93377,25 +96452,6 @@ func UnmarshalVolumeAttachmentReferenceVolumeContext(m map[string]json.RawMessag
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// VolumeAttachmentReferenceVolumeContextDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type VolumeAttachmentReferenceVolumeContextDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalVolumeAttachmentReferenceVolumeContextDeleted unmarshals an instance of VolumeAttachmentReferenceVolumeContextDeleted from the specified map of raw messages.
-func UnmarshalVolumeAttachmentReferenceVolumeContextDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(VolumeAttachmentReferenceVolumeContextDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -93447,7 +96503,7 @@ type VolumeCollection struct {
 	// The total number of resources across all pages.
 	TotalCount *int64 `json:"total_count" validate:"required"`
 
-	// Collection of volumes.
+	// A page of volumes.
 	Volumes []Volume `json:"volumes" validate:"required"`
 }
 
@@ -93549,7 +96605,8 @@ type VolumeHealthReason struct {
 // Constants associated with the VolumeHealthReason.Code property.
 // A reason code for this health state.
 const (
-	VolumeHealthReasonCodeInitializingFromSnapshotConst = "initializing_from_snapshot"
+	VolumeHealthReasonCodeInitializingFromSnapshotConst                 = "initializing_from_snapshot"
+	VolumeHealthReasonCodeThrottledByInsufficientInstanceBandwidthConst = "throttled_by_insufficient_instance_bandwidth"
 )
 
 // UnmarshalVolumeHealthReason unmarshals an instance of VolumeHealthReason from the specified map of raw messages.
@@ -93622,25 +96679,33 @@ func UnmarshalVolumeIdentity(m map[string]json.RawMessage, result interface{}) (
 
 // VolumePatch : VolumePatch struct
 type VolumePatch struct {
-	// The capacity to use for the volume (in gigabytes). The volume must be attached to a running virtual server instance,
-	// and the specified value must not be less than the current capacity. Additionally, if the volume is attached as a
-	// boot volume, the maximum value is 250 gigabytes.
-	//
-	// The minimum and maximum limits for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	// The capacity to use for the volume (in gigabytes). For the capacity to be changed the volume's current
+	// `attachment_state` must be one of the values included in
+	// `adjustable_capacity_states`. If `adjustable_capacity_states` is empty, then the volume capacity cannot be changed.
+	// Additionally:
+	// - The specified value must not be less than the current capacity.
+	// - If the volume is attached as a boot volume, the specified value must not exceed
+	//   the `boot_capacity.max` of the volume profile.
+	// - If the volume is attached as a data volume, the specified value must not exceed
+	//   the `capacity.max` of the volume profile.
 	Capacity *int64 `json:"capacity,omitempty"`
 
-	// The maximum I/O operations per second (IOPS) to use for this volume. Applicable only to volumes using a profile
-	// `family` of `custom`. The volume must be attached as a data volume to a running virtual server instance.
+	// The maximum I/O operations per second (IOPS) to use for this volume.  For the IOPS to be changed the volume's
+	// current `attachment_state` must be one of the values included in `adjustable_iops_states`. If
+	// `adjustable_iops_states` is empty, then the IOPS cannot be changed.
 	Iops *int64 `json:"iops,omitempty"`
 
 	// The name for this volume. The name must not be used by another volume in the region.
 	Name *string `json:"name,omitempty"`
 
 	// The profile to use for this volume. The requested profile must be in the same
-	// `family` as the current profile. The volume must be attached as a data volume to
-	// a running virtual server instance, and must have a `capacity` within the range
-	// supported by the specified profile.
+	// `family` as the current profile.  Additionally:
+	// - If the volume is a boot volume then the value specified for `capacity` property
+	// must not be less than the `boot_capacity.min` and must not exceed the
+	// `boot_capacity.max` of the specified volume profile.
+	// - If the volume is a data volume then the value specified for `capacity` property
+	// must not be less than the `capacity.min` and must not exceed the `capacity.max`
+	// of the specified volume profile.
 	Profile VolumeProfileIdentityIntf `json:"profile,omitempty"`
 
 	// The [user tags](https://cloud.ibm.com/apidocs/tagging#types-of-tags) associated with this volume.
@@ -93694,6 +96759,14 @@ func (volumePatch *VolumePatch) AsPatch() (_patch map[string]interface{}, err er
 
 // VolumeProfile : VolumeProfile struct
 type VolumeProfile struct {
+	AdjustableCapacityStates *VolumeProfileAdjustableCapacityStates `json:"adjustable_capacity_states" validate:"required"`
+
+	AdjustableIopsStates *VolumeProfileAdjustableIopsStates `json:"adjustable_iops_states" validate:"required"`
+
+	BootCapacity VolumeProfileBootCapacityIntf `json:"boot_capacity" validate:"required"`
+
+	Capacity VolumeProfileCapacityIntf `json:"capacity" validate:"required"`
+
 	// The product family this volume profile belongs to.
 	//
 	// The enumerated values for this property may
@@ -93702,6 +96775,8 @@ type VolumeProfile struct {
 
 	// The URL for this volume profile.
 	Href *string `json:"href" validate:"required"`
+
+	Iops VolumeProfileIopsIntf `json:"iops" validate:"required"`
 
 	// The globally unique name for this volume profile.
 	Name *string `json:"name" validate:"required"`
@@ -93713,13 +96788,34 @@ type VolumeProfile struct {
 // The enumerated values for this property may
 // [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
-	VolumeProfileFamilyCustomConst = "custom"
-	VolumeProfileFamilyTieredConst = "tiered"
+	VolumeProfileFamilyCustomConst             = "custom"
+	VolumeProfileFamilyDefinedPerformanceConst = "defined_performance"
+	VolumeProfileFamilyTieredConst             = "tiered"
 )
 
 // UnmarshalVolumeProfile unmarshals an instance of VolumeProfile from the specified map of raw messages.
 func UnmarshalVolumeProfile(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(VolumeProfile)
+	err = core.UnmarshalModel(m, "adjustable_capacity_states", &obj.AdjustableCapacityStates, UnmarshalVolumeProfileAdjustableCapacityStates)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "adjustable_capacity_states-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "adjustable_iops_states", &obj.AdjustableIopsStates, UnmarshalVolumeProfileAdjustableIopsStates)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "adjustable_iops_states-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "boot_capacity", &obj.BootCapacity, UnmarshalVolumeProfileBootCapacity)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "boot_capacity-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "capacity", &obj.Capacity, UnmarshalVolumeProfileCapacity)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "capacity-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "family", &obj.Family)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "family-error", common.GetComponentInfo())
@@ -93730,9 +96826,270 @@ func UnmarshalVolumeProfile(m map[string]json.RawMessage, result interface{}) (e
 		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalModel(m, "iops", &obj.Iops, UnmarshalVolumeProfileIops)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "iops-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VolumeProfileAdjustableCapacityStates : VolumeProfileAdjustableCapacityStates struct
+type VolumeProfileAdjustableCapacityStates struct {
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+
+	// The attachment states that support adjustable capacity for a volume with this profile.
+	Values []string `json:"values" validate:"required"`
+}
+
+// Constants associated with the VolumeProfileAdjustableCapacityStates.Type property.
+// The type for this profile field.
+const (
+	VolumeProfileAdjustableCapacityStatesTypeEnumConst = "enum"
+)
+
+// Constants associated with the VolumeProfileAdjustableCapacityStates.Values property.
+// The attachment state of the volume
+// - `unattached`: Not attached to any virtual server instances
+// - `attached`: Attached to a virtual server instance (even if the instance is stopped)
+// - `unusable`: Not able to be attached to any virtual server instances.
+const (
+	VolumeProfileAdjustableCapacityStatesValuesAttachedConst   = "attached"
+	VolumeProfileAdjustableCapacityStatesValuesUnattachedConst = "unattached"
+	VolumeProfileAdjustableCapacityStatesValuesUnusableConst   = "unusable"
+)
+
+// UnmarshalVolumeProfileAdjustableCapacityStates unmarshals an instance of VolumeProfileAdjustableCapacityStates from the specified map of raw messages.
+func UnmarshalVolumeProfileAdjustableCapacityStates(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VolumeProfileAdjustableCapacityStates)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "values", &obj.Values)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "values-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VolumeProfileAdjustableIopsStates : VolumeProfileAdjustableIopsStates struct
+type VolumeProfileAdjustableIopsStates struct {
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+
+	// The attachment states that support adjustable IOPS for a volume with this profile.
+	Values []string `json:"values" validate:"required"`
+}
+
+// Constants associated with the VolumeProfileAdjustableIopsStates.Type property.
+// The type for this profile field.
+const (
+	VolumeProfileAdjustableIopsStatesTypeEnumConst = "enum"
+)
+
+// Constants associated with the VolumeProfileAdjustableIopsStates.Values property.
+// The attachment state of the volume
+// - `unattached`: Not attached to any virtual server instances
+// - `attached`: Attached to a virtual server instance (even if the instance is stopped)
+// - `unusable`: Not able to be attached to any virtual server instances.
+const (
+	VolumeProfileAdjustableIopsStatesValuesAttachedConst   = "attached"
+	VolumeProfileAdjustableIopsStatesValuesUnattachedConst = "unattached"
+	VolumeProfileAdjustableIopsStatesValuesUnusableConst   = "unusable"
+)
+
+// UnmarshalVolumeProfileAdjustableIopsStates unmarshals an instance of VolumeProfileAdjustableIopsStates from the specified map of raw messages.
+func UnmarshalVolumeProfileAdjustableIopsStates(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VolumeProfileAdjustableIopsStates)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "values", &obj.Values)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "values-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VolumeProfileBootCapacity : VolumeProfileBootCapacity struct
+// Models which "extend" this model:
+// - VolumeProfileBootCapacityFixed
+// - VolumeProfileBootCapacityRange
+// - VolumeProfileBootCapacityEnum
+// - VolumeProfileBootCapacityDependentRange
+type VolumeProfileBootCapacity struct {
+	// The type for this profile field.
+	Type *string `json:"type,omitempty"`
+
+	// The value for this profile field.
+	Value *int64 `json:"value,omitempty"`
+
+	// The default value for this profile field.
+	Default *int64 `json:"default,omitempty"`
+
+	// The maximum value for this profile field.
+	Max *int64 `json:"max,omitempty"`
+
+	// The minimum value for this profile field.
+	Min *int64 `json:"min,omitempty"`
+
+	// The increment step value for this profile field.
+	Step *int64 `json:"step,omitempty"`
+
+	// The permitted values for this profile field.
+	Values []int64 `json:"values,omitempty"`
+}
+
+// Constants associated with the VolumeProfileBootCapacity.Type property.
+// The type for this profile field.
+const (
+	VolumeProfileBootCapacityTypeFixedConst = "fixed"
+)
+
+func (*VolumeProfileBootCapacity) isaVolumeProfileBootCapacity() bool {
+	return true
+}
+
+type VolumeProfileBootCapacityIntf interface {
+	isaVolumeProfileBootCapacity() bool
+}
+
+// UnmarshalVolumeProfileBootCapacity unmarshals an instance of VolumeProfileBootCapacity from the specified map of raw messages.
+func UnmarshalVolumeProfileBootCapacity(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VolumeProfileBootCapacity)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "default-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "max", &obj.Max)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "max-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "min", &obj.Min)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "min-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "step", &obj.Step)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "step-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "values", &obj.Values)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "values-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VolumeProfileCapacity : VolumeProfileCapacity struct
+// Models which "extend" this model:
+// - VolumeProfileCapacityFixed
+// - VolumeProfileCapacityRange
+// - VolumeProfileCapacityEnum
+// - VolumeProfileCapacityDependentRange
+type VolumeProfileCapacity struct {
+	// The type for this profile field.
+	Type *string `json:"type,omitempty"`
+
+	// The value for this profile field.
+	Value *int64 `json:"value,omitempty"`
+
+	// The default value for this profile field.
+	Default *int64 `json:"default,omitempty"`
+
+	// The maximum value for this profile field.
+	Max *int64 `json:"max,omitempty"`
+
+	// The minimum value for this profile field.
+	Min *int64 `json:"min,omitempty"`
+
+	// The increment step value for this profile field.
+	Step *int64 `json:"step,omitempty"`
+
+	// The permitted values for this profile field.
+	Values []int64 `json:"values,omitempty"`
+}
+
+// Constants associated with the VolumeProfileCapacity.Type property.
+// The type for this profile field.
+const (
+	VolumeProfileCapacityTypeFixedConst = "fixed"
+)
+
+func (*VolumeProfileCapacity) isaVolumeProfileCapacity() bool {
+	return true
+}
+
+type VolumeProfileCapacityIntf interface {
+	isaVolumeProfileCapacity() bool
+}
+
+// UnmarshalVolumeProfileCapacity unmarshals an instance of VolumeProfileCapacity from the specified map of raw messages.
+func UnmarshalVolumeProfileCapacity(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VolumeProfileCapacity)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "default-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "max", &obj.Max)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "max-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "min", &obj.Min)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "min-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "step", &obj.Step)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "step-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "values", &obj.Values)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "values-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -93751,7 +97108,7 @@ type VolumeProfileCollection struct {
 	// except the last page.
 	Next *VolumeProfileCollectionNext `json:"next,omitempty"`
 
-	// Collection of volume profiles.
+	// A page of volume profiles.
 	Profiles []VolumeProfile `json:"profiles" validate:"required"`
 
 	// The total number of resources across all pages.
@@ -93841,6 +97198,91 @@ func UnmarshalVolumeProfileCollectionNext(m map[string]json.RawMessage, result i
 	return
 }
 
+// VolumeProfileIops : VolumeProfileIops struct
+// Models which "extend" this model:
+// - VolumeProfileIopsFixed
+// - VolumeProfileIopsRange
+// - VolumeProfileIopsEnum
+// - VolumeProfileIopsDependentRange
+type VolumeProfileIops struct {
+	// The type for this profile field.
+	Type *string `json:"type,omitempty"`
+
+	// The value for this profile field.
+	Value *int64 `json:"value,omitempty"`
+
+	// The default value for this profile field.
+	Default *int64 `json:"default,omitempty"`
+
+	// The maximum value for this profile field.
+	Max *int64 `json:"max,omitempty"`
+
+	// The minimum value for this profile field.
+	Min *int64 `json:"min,omitempty"`
+
+	// The increment step value for this profile field.
+	Step *int64 `json:"step,omitempty"`
+
+	// The permitted values for this profile field.
+	Values []int64 `json:"values,omitempty"`
+}
+
+// Constants associated with the VolumeProfileIops.Type property.
+// The type for this profile field.
+const (
+	VolumeProfileIopsTypeFixedConst = "fixed"
+)
+
+func (*VolumeProfileIops) isaVolumeProfileIops() bool {
+	return true
+}
+
+type VolumeProfileIopsIntf interface {
+	isaVolumeProfileIops() bool
+}
+
+// UnmarshalVolumeProfileIops unmarshals an instance of VolumeProfileIops from the specified map of raw messages.
+func UnmarshalVolumeProfileIops(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VolumeProfileIops)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "default-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "max", &obj.Max)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "max-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "min", &obj.Min)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "min-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "step", &obj.Step)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "step-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "values", &obj.Values)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "values-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // VolumeProfileIdentity : Identifies a volume profile by a unique property.
 // Models which "extend" this model:
 // - VolumeProfileIdentityByName
@@ -93909,8 +97351,8 @@ func UnmarshalVolumeProfileReference(m map[string]json.RawMessage, result interf
 // - VolumePrototypeVolumeByCapacity
 // - VolumePrototypeVolumeBySourceSnapshot
 type VolumePrototype struct {
-	// The maximum I/O operations per second (IOPS) to use for this volume. Applicable only to volumes using a profile
-	// `family` of `custom`.
+	// The maximum I/O operations per second (IOPS) to use for this volume. If specified, the `family` of the volume
+	// profile must be `custom` or `defined_performance`.
 	Iops *int64 `json:"iops,omitempty"`
 
 	// The name for this volume. The name must not be used by another volume in the region. If unspecified, the name will
@@ -93931,10 +97373,8 @@ type VolumePrototype struct {
 	// The zone this volume will reside in.
 	Zone ZoneIdentityIntf `json:"zone" validate:"required"`
 
-	// The capacity to use for the volume (in gigabytes).
-	//
-	// The minimum and maximum limits for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	// The capacity to use for the volume (in gigabytes). The specified value must be within the `capacity` range of the
+	// volume's profile.
 	Capacity *int64 `json:"capacity,omitempty"`
 
 	// The root key to use to wrap the data encryption key for the volume.
@@ -93942,7 +97382,9 @@ type VolumePrototype struct {
 	// If unspecified, the `encryption` type for the volume will be `provider_managed`.
 	EncryptionKey EncryptionKeyIdentityIntf `json:"encryption_key,omitempty"`
 
-	// The snapshot from which to clone the volume.
+	// The snapshot to use as a source for the volume's data.
+	//
+	// The specified snapshot may be in a different account, subject to IAM policies.
 	SourceSnapshot SnapshotIdentityIntf `json:"source_snapshot,omitempty"`
 }
 
@@ -94008,8 +97450,9 @@ func UnmarshalVolumePrototype(m map[string]json.RawMessage, result interface{}) 
 
 // VolumePrototypeInstanceByImageContext : VolumePrototypeInstanceByImageContext struct
 type VolumePrototypeInstanceByImageContext struct {
-	// The capacity to use for the volume (in gigabytes). Must be at least the image's
-	// `minimum_provisioned_size`. The maximum value may increase in the future.
+	// The capacity to use for the volume (in gigabytes). The specified value must be at least the image's
+	// `minimum_provisioned_size`, at most 250 gigabytes, and within the
+	// `boot_capacity` range of the volume's profile.
 	//
 	// If unspecified, the capacity will be the image's `minimum_provisioned_size`.
 	Capacity *int64 `json:"capacity,omitempty"`
@@ -94019,8 +97462,8 @@ type VolumePrototypeInstanceByImageContext struct {
 	// If unspecified, the `encryption` type for the volume will be `provider_managed`.
 	EncryptionKey EncryptionKeyIdentityIntf `json:"encryption_key,omitempty"`
 
-	// The maximum I/O operations per second (IOPS) to use for this volume. Applicable only to volumes using a profile
-	// `family` of `custom`.
+	// The maximum I/O operations per second (IOPS) to use for this volume. If specified, the `family` of the volume
+	// profile must be `custom` or `defined_performance`.
 	Iops *int64 `json:"iops,omitempty"`
 
 	// The name for this volume. The name must not be used by another volume in the region. If unspecified, the name will
@@ -94095,10 +97538,8 @@ func UnmarshalVolumePrototypeInstanceByImageContext(m map[string]json.RawMessage
 
 // VolumePrototypeInstanceBySourceSnapshotContext : VolumePrototypeInstanceBySourceSnapshotContext struct
 type VolumePrototypeInstanceBySourceSnapshotContext struct {
-	// The capacity to use for the volume (in gigabytes). Must be at least the snapshot's
-	// `minimum_capacity`. The maximum value may increase in the future.
-	//
-	// If unspecified, the capacity will be the source snapshot's `minimum_capacity`.
+	// The capacity to use for the volume (in gigabytes). The specified value must be at least the snapshot's
+	// `minimum_capacity`, at most 250 gigabytes, and within the `boot_capacity` range of the volume's profile.
 	Capacity *int64 `json:"capacity,omitempty"`
 
 	// The root key to use to wrap the data encryption key for the volume.
@@ -94106,8 +97547,8 @@ type VolumePrototypeInstanceBySourceSnapshotContext struct {
 	// If unspecified, the `encryption` type for the volume will be `provider_managed`.
 	EncryptionKey EncryptionKeyIdentityIntf `json:"encryption_key,omitempty"`
 
-	// The maximum I/O operations per second (IOPS) to use for this volume. Applicable only to volumes using a profile
-	// `family` of `custom`.
+	// The maximum I/O operations per second (IOPS) to use for this volume. If specified, the `family` of the volume
+	// profile must be `custom` or `defined_performance`.
 	Iops *int64 `json:"iops,omitempty"`
 
 	// The name for this volume. The name must not be used by another volume in the region. If unspecified, the name will
@@ -94122,7 +97563,9 @@ type VolumePrototypeInstanceBySourceSnapshotContext struct {
 	// group will be used.
 	ResourceGroup ResourceGroupIdentityIntf `json:"resource_group,omitempty"`
 
-	// The snapshot from which to clone the volume.
+	// The snapshot to use as a source for the volume's data.
+	//
+	// The specified snapshot may be in a different account, subject to IAM policies.
 	SourceSnapshot SnapshotIdentityIntf `json:"source_snapshot" validate:"required"`
 
 	// The [user tags](https://cloud.ibm.com/apidocs/tagging#types-of-tags) associated with this volume.
@@ -94196,7 +97639,7 @@ type VolumeReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *VolumeReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this volume.
 	Href *string `json:"href" validate:"required"`
@@ -94229,7 +97672,7 @@ func UnmarshalVolumeReference(m map[string]json.RawMessage, result interface{}) 
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalVolumeReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -94263,25 +97706,6 @@ func UnmarshalVolumeReference(m map[string]json.RawMessage, result interface{}) 
 	return
 }
 
-// VolumeReferenceDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type VolumeReferenceDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalVolumeReferenceDeleted unmarshals an instance of VolumeReferenceDeleted from the specified map of raw messages.
-func UnmarshalVolumeReferenceDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(VolumeReferenceDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // VolumeReferenceVolumeAttachmentContext : VolumeReferenceVolumeAttachmentContext struct
 type VolumeReferenceVolumeAttachmentContext struct {
 	// The CRN for this volume.
@@ -94289,7 +97713,7 @@ type VolumeReferenceVolumeAttachmentContext struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *VolumeReferenceVolumeAttachmentContextDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this volume.
 	Href *string `json:"href" validate:"required"`
@@ -94318,7 +97742,7 @@ func UnmarshalVolumeReferenceVolumeAttachmentContext(m map[string]json.RawMessag
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalVolumeReferenceVolumeAttachmentContextDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -94341,25 +97765,6 @@ func UnmarshalVolumeReferenceVolumeAttachmentContext(m map[string]json.RawMessag
 	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// VolumeReferenceVolumeAttachmentContextDeleted : If present, this property indicates the referenced resource has been deleted, and provides some supplementary
-// information.
-type VolumeReferenceVolumeAttachmentContextDeleted struct {
-	// Link to documentation about deleted resources.
-	MoreInfo *string `json:"more_info" validate:"required"`
-}
-
-// UnmarshalVolumeReferenceVolumeAttachmentContextDeleted unmarshals an instance of VolumeReferenceVolumeAttachmentContextDeleted from the specified map of raw messages.
-func UnmarshalVolumeReferenceVolumeAttachmentContextDeleted(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(VolumeReferenceVolumeAttachmentContextDeleted)
-	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -94470,6 +97875,11 @@ func UnmarshalVpcdnsResolutionBindingCollectionNext(m map[string]json.RawMessage
 
 // Zone : Zone struct
 type Zone struct {
+	// The physical data center assigned to this logical zone.
+	//
+	// If absent, no physical data center has been assigned.
+	DataCenter *string `json:"data_center,omitempty"`
+
 	// The URL for this zone.
 	Href *string `json:"href" validate:"required"`
 
@@ -94479,21 +97889,49 @@ type Zone struct {
 	// The region this zone resides in.
 	Region *RegionReference `json:"region" validate:"required"`
 
-	// The availability status of this zone.
+	// The status of the zone.
+	//
+	// - `available`: The zone is available to create and manage resources.
+	// - `impaired`: The zone's availability and performance to create and manage resources
+	//   may be impaired.
+	// - `unavailable`: The zone is unavailable to create and manage resources.
+	// - `unassigned`: The zone has not been assigned to a physical zone.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
+
+	// The [universal name](https://cloud.ibm.com/docs/overview?topic=overview-locations#zone-mapping) for this zone. Will
+	// be absent if this zone has a `status` of `unassigned`.
+	UniversalName *string `json:"universal_name,omitempty"`
 }
 
 // Constants associated with the Zone.Status property.
-// The availability status of this zone.
+// The status of the zone.
+//
+//   - `available`: The zone is available to create and manage resources.
+//   - `impaired`: The zone's availability and performance to create and manage resources
+//     may be impaired.
+//   - `unavailable`: The zone is unavailable to create and manage resources.
+//   - `unassigned`: The zone has not been assigned to a physical zone.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	ZoneStatusAvailableConst   = "available"
 	ZoneStatusImpairedConst    = "impaired"
+	ZoneStatusUnassignedConst  = "unassigned"
 	ZoneStatusUnavailableConst = "unavailable"
 )
 
 // UnmarshalZone unmarshals an instance of Zone from the specified map of raw messages.
 func UnmarshalZone(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(Zone)
+	err = core.UnmarshalPrimitive(m, "data_center", &obj.DataCenter)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "data_center-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
@@ -94514,13 +97952,18 @@ func UnmarshalZone(m map[string]json.RawMessage, result interface{}) (err error)
 		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "universal_name", &obj.UniversalName)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "universal_name-error", common.GetComponentInfo())
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
 // ZoneCollection : ZoneCollection struct
 type ZoneCollection struct {
-	// Collection of zones.
+	// The zones for the region.
 	Zones []Zone `json:"zones" validate:"required"`
 }
 
@@ -94599,6 +98042,41 @@ func UnmarshalZoneReference(m map[string]json.RawMessage, result interface{}) (e
 	return
 }
 
+// AccountIdentityByID : AccountIdentityByID struct
+// This model "extends" AccountIdentity
+type AccountIdentityByID struct {
+	// The unique identifier for this account.
+	ID *string `json:"id" validate:"required"`
+}
+
+// NewAccountIdentityByID : Instantiate AccountIdentityByID (Generic Model Constructor)
+func (*VpcV1) NewAccountIdentityByID(id string) (_model *AccountIdentityByID, err error) {
+	_model = &AccountIdentityByID{
+		ID: core.StringPtr(id),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*AccountIdentityByID) isaAccountIdentity() bool {
+	return true
+}
+
+// UnmarshalAccountIdentityByID unmarshals an instance of AccountIdentityByID from the specified map of raw messages.
+func UnmarshalAccountIdentityByID(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AccountIdentityByID)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // BackupPolicyJobSourceInstanceReference : BackupPolicyJobSourceInstanceReference struct
 // This model "extends" BackupPolicyJobSource
 type BackupPolicyJobSourceInstanceReference struct {
@@ -94607,7 +98085,7 @@ type BackupPolicyJobSourceInstanceReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *InstanceReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this virtual server instance.
 	Href *string `json:"href" validate:"required"`
@@ -94631,7 +98109,7 @@ func UnmarshalBackupPolicyJobSourceInstanceReference(m map[string]json.RawMessag
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalInstanceReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -94663,7 +98141,7 @@ type BackupPolicyJobSourceVolumeReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *VolumeReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this volume.
 	Href *string `json:"href" validate:"required"`
@@ -94700,7 +98178,7 @@ func UnmarshalBackupPolicyJobSourceVolumeReference(m map[string]json.RawMessage,
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalVolumeReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -95440,7 +98918,7 @@ func UnmarshalBackupPolicyScopeEnterpriseReference(m map[string]json.RawMessage,
 type BareMetalServerBootTargetBareMetalServerDiskReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *BareMetalServerDiskReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this bare metal server disk.
 	Href *string `json:"href" validate:"required"`
@@ -95468,7 +98946,7 @@ func (*BareMetalServerBootTargetBareMetalServerDiskReference) isaBareMetalServer
 // UnmarshalBareMetalServerBootTargetBareMetalServerDiskReference unmarshals an instance of BareMetalServerBootTargetBareMetalServerDiskReference from the specified map of raw messages.
 func UnmarshalBareMetalServerBootTargetBareMetalServerDiskReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(BareMetalServerBootTargetBareMetalServerDiskReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalBareMetalServerDiskReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -95582,6 +99060,9 @@ type BareMetalServerNetworkAttachmentByPci struct {
 	Subnet *SubnetReference `json:"subnet" validate:"required"`
 
 	// The bare metal server network attachment type.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Type *string `json:"type" validate:"required"`
 
 	// The virtual network interface for this bare metal server network attachment.
@@ -95618,6 +99099,9 @@ const (
 
 // Constants associated with the BareMetalServerNetworkAttachmentByPci.Type property.
 // The bare metal server network attachment type.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	BareMetalServerNetworkAttachmentByPciTypePrimaryConst   = "primary"
 	BareMetalServerNetworkAttachmentByPciTypeSecondaryConst = "secondary"
@@ -95741,6 +99225,9 @@ type BareMetalServerNetworkAttachmentByVlan struct {
 	Subnet *SubnetReference `json:"subnet" validate:"required"`
 
 	// The bare metal server network attachment type.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Type *string `json:"type" validate:"required"`
 
 	// The virtual network interface for this bare metal server network attachment.
@@ -95788,6 +99275,9 @@ const (
 
 // Constants associated with the BareMetalServerNetworkAttachmentByVlan.Type property.
 // The bare metal server network attachment type.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	BareMetalServerNetworkAttachmentByVlanTypePrimaryConst   = "primary"
 	BareMetalServerNetworkAttachmentByVlanTypeSecondaryConst = "secondary"
@@ -96312,7 +99802,7 @@ type BareMetalServerNetworkInterfaceByHiperSocket struct {
 	ID *string `json:"id" validate:"required"`
 
 	// The MAC address of this bare metal server network interface. If the MAC address has not yet been selected, the value
-	// will be an empty string.
+	// will be empty.
 	//
 	// If this bare metal server has network attachments, this network interface is a
 	// [read-only representation](https://cloud.ibm.com/docs/vpc?topic=vpc-vni-about#vni-old-api-clients) of its
@@ -96559,7 +100049,7 @@ type BareMetalServerNetworkInterfaceByPci struct {
 	ID *string `json:"id" validate:"required"`
 
 	// The MAC address of this bare metal server network interface. If the MAC address has not yet been selected, the value
-	// will be an empty string.
+	// will be empty.
 	//
 	// If this bare metal server has network attachments, this network interface is a
 	// [read-only representation](https://cloud.ibm.com/docs/vpc?topic=vpc-vni-about#vni-old-api-clients) of its
@@ -96825,7 +100315,7 @@ type BareMetalServerNetworkInterfaceByVlan struct {
 	ID *string `json:"id" validate:"required"`
 
 	// The MAC address of this bare metal server network interface. If the MAC address has not yet been selected, the value
-	// will be an empty string.
+	// will be empty.
 	//
 	// If this bare metal server has network attachments, this network interface is a
 	// [read-only representation](https://cloud.ibm.com/docs/vpc?topic=vpc-vni-about#vni-old-api-clients) of its
@@ -100312,99 +103802,231 @@ func UnmarshalEndpointGatewayReservedIPReservedIPPrototypeTargetContext(m map[st
 	return
 }
 
-// EndpointGatewayTargetPrototypeProviderCloudServiceIdentity : EndpointGatewayTargetPrototypeProviderCloudServiceIdentity struct
-// Models which "extend" this model:
-// - EndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRN
+// EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypePrivatePathServiceGatewayPrototype : EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypePrivatePathServiceGatewayPrototype struct
 // This model "extends" EndpointGatewayTargetPrototype
-type EndpointGatewayTargetPrototypeProviderCloudServiceIdentity struct {
-	// The type of target for this endpoint gateway.
-	ResourceType *string `json:"resource_type" validate:"required"`
+type EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypePrivatePathServiceGatewayPrototype struct {
+	// The CRN for this private path service gateway.
+	CRN *string `json:"crn" validate:"required"`
 
-	// The CRN for this provider cloud service, or the CRN for the user's instance of a provider cloud service.
-	CRN *string `json:"crn,omitempty"`
+	// The target resource type for this endpoint gateway.
+	ResourceType *string `json:"resource_type" validate:"required"`
 }
 
-// Constants associated with the EndpointGatewayTargetPrototypeProviderCloudServiceIdentity.ResourceType property.
-// The type of target for this endpoint gateway.
+// Constants associated with the EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypePrivatePathServiceGatewayPrototype.ResourceType property.
+// The target resource type for this endpoint gateway.
 const (
-	EndpointGatewayTargetPrototypeProviderCloudServiceIdentityResourceTypeProviderCloudServiceConst          = "provider_cloud_service"
-	EndpointGatewayTargetPrototypeProviderCloudServiceIdentityResourceTypeProviderInfrastructureServiceConst = "provider_infrastructure_service"
+	EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypePrivatePathServiceGatewayPrototypeResourceTypePrivatePathServiceGatewayConst = "private_path_service_gateway"
 )
 
-func (*EndpointGatewayTargetPrototypeProviderCloudServiceIdentity) isaEndpointGatewayTargetPrototypeProviderCloudServiceIdentity() bool {
-	return true
-}
-
-type EndpointGatewayTargetPrototypeProviderCloudServiceIdentityIntf interface {
-	EndpointGatewayTargetPrototypeIntf
-	isaEndpointGatewayTargetPrototypeProviderCloudServiceIdentity() bool
-}
-
-func (*EndpointGatewayTargetPrototypeProviderCloudServiceIdentity) isaEndpointGatewayTargetPrototype() bool {
-	return true
-}
-
-// UnmarshalEndpointGatewayTargetPrototypeProviderCloudServiceIdentity unmarshals an instance of EndpointGatewayTargetPrototypeProviderCloudServiceIdentity from the specified map of raw messages.
-func UnmarshalEndpointGatewayTargetPrototypeProviderCloudServiceIdentity(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(EndpointGatewayTargetPrototypeProviderCloudServiceIdentity)
-	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
-		return
+// NewEndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypePrivatePathServiceGatewayPrototype : Instantiate EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypePrivatePathServiceGatewayPrototype (Generic Model Constructor)
+func (*VpcV1) NewEndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypePrivatePathServiceGatewayPrototype(crn string, resourceType string) (_model *EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypePrivatePathServiceGatewayPrototype, err error) {
+	_model = &EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypePrivatePathServiceGatewayPrototype{
+		CRN:          core.StringPtr(crn),
+		ResourceType: core.StringPtr(resourceType),
 	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypePrivatePathServiceGatewayPrototype) isaEndpointGatewayTargetPrototype() bool {
+	return true
+}
+
+// UnmarshalEndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypePrivatePathServiceGatewayPrototype unmarshals an instance of EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypePrivatePathServiceGatewayPrototype from the specified map of raw messages.
+func UnmarshalEndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypePrivatePathServiceGatewayPrototype(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypePrivatePathServiceGatewayPrototype)
 	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
-// EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentity : EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentity struct
-// Models which "extend" this model:
-// - EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityProviderInfrastructureServiceIdentityByName
+// EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderCloudServicePrototype : EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderCloudServicePrototype struct
 // This model "extends" EndpointGatewayTargetPrototype
-type EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentity struct {
-	// The type of target for this endpoint gateway.
-	ResourceType *string `json:"resource_type" validate:"required"`
+type EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderCloudServicePrototype struct {
+	// The CRN for this provider cloud service, or the CRN for the user's instance of a provider cloud service.
+	CRN *string `json:"crn" validate:"required"`
 
-	// The name of a provider infrastructure service. Must be:
-	// - `ibm-ntp-server`: An NTP (Network Time Protocol) server provided by IBM.
-	Name *string `json:"name,omitempty"`
+	// The target resource type for this endpoint gateway.
+	ResourceType *string `json:"resource_type" validate:"required"`
 }
 
-// Constants associated with the EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentity.ResourceType property.
-// The type of target for this endpoint gateway.
+// Constants associated with the EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderCloudServicePrototype.ResourceType property.
+// The target resource type for this endpoint gateway.
 const (
-	EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityResourceTypeProviderCloudServiceConst          = "provider_cloud_service"
-	EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityResourceTypeProviderInfrastructureServiceConst = "provider_infrastructure_service"
+	EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderCloudServicePrototypeResourceTypeProviderCloudServiceConst = "provider_cloud_service"
 )
 
-func (*EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentity) isaEndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentity() bool {
+// NewEndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderCloudServicePrototype : Instantiate EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderCloudServicePrototype (Generic Model Constructor)
+func (*VpcV1) NewEndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderCloudServicePrototype(crn string, resourceType string) (_model *EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderCloudServicePrototype, err error) {
+	_model = &EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderCloudServicePrototype{
+		CRN:          core.StringPtr(crn),
+		ResourceType: core.StringPtr(resourceType),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderCloudServicePrototype) isaEndpointGatewayTargetPrototype() bool {
 	return true
 }
 
-type EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityIntf interface {
-	EndpointGatewayTargetPrototypeIntf
-	isaEndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentity() bool
-}
-
-func (*EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentity) isaEndpointGatewayTargetPrototype() bool {
-	return true
-}
-
-// UnmarshalEndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentity unmarshals an instance of EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentity from the specified map of raw messages.
-func UnmarshalEndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentity(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentity)
+// UnmarshalEndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderCloudServicePrototype unmarshals an instance of EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderCloudServicePrototype from the specified map of raw messages.
+func UnmarshalEndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderCloudServicePrototype(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderCloudServicePrototype)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
 		return
 	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderInfrastructureServicePrototype : The name of this provider infrastructure service.
+// This model "extends" EndpointGatewayTargetPrototype
+type EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderInfrastructureServicePrototype struct {
+	// The name of a provider infrastructure service. Must be:
+	// - `ibm-ntp-server`: An NTP (Network Time Protocol) server provided by IBM.
+	Name *string `json:"name" validate:"required"`
+
+	// The target resource type for this endpoint gateway.
+	ResourceType *string `json:"resource_type" validate:"required"`
+}
+
+// Constants associated with the EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderInfrastructureServicePrototype.ResourceType property.
+// The target resource type for this endpoint gateway.
+const (
+	EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderInfrastructureServicePrototypeResourceTypeProviderInfrastructureServiceConst = "provider_infrastructure_service"
+)
+
+// NewEndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderInfrastructureServicePrototype : Instantiate EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderInfrastructureServicePrototype (Generic Model Constructor)
+func (*VpcV1) NewEndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderInfrastructureServicePrototype(name string, resourceType string) (_model *EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderInfrastructureServicePrototype, err error) {
+	_model = &EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderInfrastructureServicePrototype{
+		Name:         core.StringPtr(name),
+		ResourceType: core.StringPtr(resourceType),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderInfrastructureServicePrototype) isaEndpointGatewayTargetPrototype() bool {
+	return true
+}
+
+// UnmarshalEndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderInfrastructureServicePrototype unmarshals an instance of EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderInfrastructureServicePrototype from the specified map of raw messages.
+func UnmarshalEndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderInfrastructureServicePrototype(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EndpointGatewayTargetPrototypeEndpointGatewayTargetResourceTypeProviderInfrastructureServicePrototype)
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// EndpointGatewayTargetPrivatePathServiceGatewayReference : EndpointGatewayTargetPrivatePathServiceGatewayReference struct
+// This model "extends" EndpointGatewayTarget
+type EndpointGatewayTargetPrivatePathServiceGatewayReference struct {
+	// The CRN for this private path service gateway.
+	CRN *string `json:"crn" validate:"required"`
+
+	// If present, this property indicates the referenced resource has been deleted, and provides
+	// some supplementary information.
+	Deleted *Deleted `json:"deleted,omitempty"`
+
+	// The URL for this private path service gateway.
+	Href *string `json:"href" validate:"required"`
+
+	// The unique identifier for this private path service gateway.
+	ID *string `json:"id" validate:"required"`
+
+	// The name for this private path service gateway. The name is unique across all private path service gateways in the
+	// VPC.
+	Name *string `json:"name" validate:"required"`
+
+	// If present, this property indicates that the resource associated with this reference
+	// is remote and therefore may not be directly retrievable.
+	Remote *PrivatePathServiceGatewayRemote `json:"remote,omitempty"`
+
+	// The resource type.
+	ResourceType *string `json:"resource_type" validate:"required"`
+}
+
+// Constants associated with the EndpointGatewayTargetPrivatePathServiceGatewayReference.ResourceType property.
+// The resource type.
+const (
+	EndpointGatewayTargetPrivatePathServiceGatewayReferenceResourceTypePrivatePathServiceGatewayConst = "private_path_service_gateway"
+)
+
+func (*EndpointGatewayTargetPrivatePathServiceGatewayReference) isaEndpointGatewayTarget() bool {
+	return true
+}
+
+// UnmarshalEndpointGatewayTargetPrivatePathServiceGatewayReference unmarshals an instance of EndpointGatewayTargetPrivatePathServiceGatewayReference from the specified map of raw messages.
+func UnmarshalEndpointGatewayTargetPrivatePathServiceGatewayReference(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EndpointGatewayTargetPrivatePathServiceGatewayReference)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "remote", &obj.Remote, UnmarshalPrivatePathServiceGatewayRemote)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "remote-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -100912,7 +104534,7 @@ func UnmarshalFloatingIPTargetPrototypeVirtualNetworkInterfaceIdentity(m map[str
 type FloatingIPTargetBareMetalServerNetworkInterfaceReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *BareMetalServerNetworkInterfaceReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this bare metal server network interface.
 	//
@@ -100951,7 +104573,7 @@ func (*FloatingIPTargetBareMetalServerNetworkInterfaceReference) isaFloatingIPTa
 // UnmarshalFloatingIPTargetBareMetalServerNetworkInterfaceReference unmarshals an instance of FloatingIPTargetBareMetalServerNetworkInterfaceReference from the specified map of raw messages.
 func UnmarshalFloatingIPTargetBareMetalServerNetworkInterfaceReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(FloatingIPTargetBareMetalServerNetworkInterfaceReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalBareMetalServerNetworkInterfaceReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -100990,7 +104612,7 @@ func UnmarshalFloatingIPTargetBareMetalServerNetworkInterfaceReference(m map[str
 type FloatingIPTargetNetworkInterfaceReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *NetworkInterfaceReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this instance network interface.
 	//
@@ -101029,7 +104651,7 @@ func (*FloatingIPTargetNetworkInterfaceReference) isaFloatingIPTarget() bool {
 // UnmarshalFloatingIPTargetNetworkInterfaceReference unmarshals an instance of FloatingIPTargetNetworkInterfaceReference from the specified map of raw messages.
 func UnmarshalFloatingIPTargetNetworkInterfaceReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(FloatingIPTargetNetworkInterfaceReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalNetworkInterfaceReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -101071,7 +104693,7 @@ type FloatingIPTargetPublicGatewayReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *PublicGatewayReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this public gateway.
 	Href *string `json:"href" validate:"required"`
@@ -101104,7 +104726,7 @@ func UnmarshalFloatingIPTargetPublicGatewayReference(m map[string]json.RawMessag
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalPublicGatewayReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -101141,7 +104763,7 @@ type FloatingIPTargetVirtualNetworkInterfaceReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *VirtualNetworkInterfaceReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this virtual network interface.
 	Href *string `json:"href" validate:"required"`
@@ -101180,7 +104802,7 @@ func UnmarshalFloatingIPTargetVirtualNetworkInterfaceReference(m map[string]json
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalVirtualNetworkInterfaceReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -101527,7 +105149,7 @@ func UnmarshalFlowLogCollectorTargetPrototypeVirtualNetworkInterfaceIdentity(m m
 type FlowLogCollectorTargetInstanceNetworkAttachmentReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *InstanceNetworkAttachmentReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this instance network attachment.
 	Href *string `json:"href" validate:"required"`
@@ -101547,6 +105169,9 @@ type FlowLogCollectorTargetInstanceNetworkAttachmentReference struct {
 
 	// The subnet of the virtual network interface for the instance network attachment.
 	Subnet *SubnetReference `json:"subnet" validate:"required"`
+
+	// The virtual network interface for this instance network attachment.
+	VirtualNetworkInterface *VirtualNetworkInterfaceReferenceAttachmentContext `json:"virtual_network_interface" validate:"required"`
 }
 
 // Constants associated with the FlowLogCollectorTargetInstanceNetworkAttachmentReference.ResourceType property.
@@ -101562,7 +105187,7 @@ func (*FlowLogCollectorTargetInstanceNetworkAttachmentReference) isaFlowLogColle
 // UnmarshalFlowLogCollectorTargetInstanceNetworkAttachmentReference unmarshals an instance of FlowLogCollectorTargetInstanceNetworkAttachmentReference from the specified map of raw messages.
 func UnmarshalFlowLogCollectorTargetInstanceNetworkAttachmentReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(FlowLogCollectorTargetInstanceNetworkAttachmentReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalInstanceNetworkAttachmentReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -101597,6 +105222,11 @@ func UnmarshalFlowLogCollectorTargetInstanceNetworkAttachmentReference(m map[str
 		err = core.SDKErrorf(err, "", "subnet-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalModel(m, "virtual_network_interface", &obj.VirtualNetworkInterface, UnmarshalVirtualNetworkInterfaceReferenceAttachmentContext)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "virtual_network_interface-error", common.GetComponentInfo())
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
@@ -101609,7 +105239,7 @@ type FlowLogCollectorTargetInstanceReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *InstanceReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this virtual server instance.
 	Href *string `json:"href" validate:"required"`
@@ -101633,7 +105263,7 @@ func UnmarshalFlowLogCollectorTargetInstanceReference(m map[string]json.RawMessa
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalInstanceReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -101662,7 +105292,7 @@ func UnmarshalFlowLogCollectorTargetInstanceReference(m map[string]json.RawMessa
 type FlowLogCollectorTargetNetworkInterfaceReferenceTargetContext struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *NetworkInterfaceReferenceTargetContextDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this instance network interface.
 	//
@@ -101699,7 +105329,7 @@ func (*FlowLogCollectorTargetNetworkInterfaceReferenceTargetContext) isaFlowLogC
 // UnmarshalFlowLogCollectorTargetNetworkInterfaceReferenceTargetContext unmarshals an instance of FlowLogCollectorTargetNetworkInterfaceReferenceTargetContext from the specified map of raw messages.
 func UnmarshalFlowLogCollectorTargetNetworkInterfaceReferenceTargetContext(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(FlowLogCollectorTargetNetworkInterfaceReferenceTargetContext)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalNetworkInterfaceReferenceTargetContextDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -101736,7 +105366,7 @@ type FlowLogCollectorTargetSubnetReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *SubnetReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this subnet.
 	Href *string `json:"href" validate:"required"`
@@ -101769,7 +105399,7 @@ func UnmarshalFlowLogCollectorTargetSubnetReference(m map[string]json.RawMessage
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalSubnetReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -101806,7 +105436,7 @@ type FlowLogCollectorTargetVPCReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *VPCReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this VPC.
 	Href *string `json:"href" validate:"required"`
@@ -101839,7 +105469,7 @@ func UnmarshalFlowLogCollectorTargetVPCReference(m map[string]json.RawMessage, r
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalVPCReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -102422,13 +106052,11 @@ func UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototype(m map[
 // This model "extends" InstanceGroupManagerAction
 type InstanceGroupManagerActionScheduledAction struct {
 	// Indicates whether this scheduled action will be automatically deleted after it has completed and
-	// `auto_delete_timeout` hours have passed. At present, this is always
-	// `true`, but may be modifiable in the future.
+	// `auto_delete_timeout` hours have passed.
 	AutoDelete *bool `json:"auto_delete" validate:"required"`
 
 	// If `auto_delete` is `true`, and this scheduled action has finished, the hours after which it will be automatically
-	// deleted. If the value is `0`, the action will be deleted once it has finished. This value may be modifiable in the
-	// future.
+	// deleted. If the value is `0`, the action will be deleted once it has finished.
 	AutoDeleteTimeout *int64 `json:"auto_delete_timeout" validate:"required"`
 
 	// The date and time that the instance group manager action was created.
@@ -102452,7 +106080,10 @@ type InstanceGroupManagerActionScheduledAction struct {
 	// - `completed`: Action was completed successfully
 	// - `failed`: Action could not be completed successfully
 	// - `incompatible`: Action parameters are not compatible with the group or manager
-	// - `omitted`: Action was not applied because this action's manager was disabled.
+	// - `omitted`: Action was not applied because this action's manager was disabled
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 
 	// The date and time that the instance group manager action was updated.
@@ -102489,7 +106120,10 @@ const (
 // - `completed`: Action was completed successfully
 // - `failed`: Action could not be completed successfully
 // - `incompatible`: Action parameters are not compatible with the group or manager
-// - `omitted`: Action was not applied because this action's manager was disabled.
+// - `omitted`: Action was not applied because this action's manager was disabled
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	InstanceGroupManagerActionScheduledActionStatusActiveConst       = "active"
 	InstanceGroupManagerActionScheduledActionStatusCompletedConst    = "completed"
@@ -102812,18 +106446,27 @@ type InstanceGroupManagerPolicyInstanceGroupManagerTargetPolicy struct {
 	// The date and time that the instance group manager policy was updated.
 	UpdatedAt *strfmt.DateTime `json:"updated_at" validate:"required"`
 
-	// The type of metric to be evaluated.
+	// The type of metric to be evaluated
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	MetricType *string `json:"metric_type" validate:"required"`
 
 	// The metric value to be evaluated.
 	MetricValue *int64 `json:"metric_value" validate:"required"`
 
-	// The type of policy for the instance group.
+	// The type of policy for the instance group
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	PolicyType *string `json:"policy_type" validate:"required"`
 }
 
 // Constants associated with the InstanceGroupManagerPolicyInstanceGroupManagerTargetPolicy.MetricType property.
-// The type of metric to be evaluated.
+// The type of metric to be evaluated
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	InstanceGroupManagerPolicyInstanceGroupManagerTargetPolicyMetricTypeCpuConst        = "cpu"
 	InstanceGroupManagerPolicyInstanceGroupManagerTargetPolicyMetricTypeMemoryConst     = "memory"
@@ -102832,7 +106475,10 @@ const (
 )
 
 // Constants associated with the InstanceGroupManagerPolicyInstanceGroupManagerTargetPolicy.PolicyType property.
-// The type of policy for the instance group.
+// The type of policy for the instance group
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	InstanceGroupManagerPolicyInstanceGroupManagerTargetPolicyPolicyTypeTargetConst = "target"
 )
@@ -103127,7 +106773,7 @@ func UnmarshalInstanceGroupManagerScheduled(m map[string]json.RawMessage, result
 type InstanceGroupManagerScheduledActionManagerAutoScale struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *InstanceGroupManagerReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this instance group manager.
 	Href *string `json:"href" validate:"required"`
@@ -103152,7 +106798,7 @@ func (*InstanceGroupManagerScheduledActionManagerAutoScale) isaInstanceGroupMana
 // UnmarshalInstanceGroupManagerScheduledActionManagerAutoScale unmarshals an instance of InstanceGroupManagerScheduledActionManagerAutoScale from the specified map of raw messages.
 func UnmarshalInstanceGroupManagerScheduledActionManagerAutoScale(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(InstanceGroupManagerScheduledActionManagerAutoScale)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalInstanceGroupManagerReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -103792,7 +107438,7 @@ type InstancePlacementTargetDedicatedHostGroupReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *DedicatedHostGroupReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this dedicated host group.
 	Href *string `json:"href" validate:"required"`
@@ -103825,7 +107471,7 @@ func UnmarshalInstancePlacementTargetDedicatedHostGroupReference(m map[string]js
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDedicatedHostGroupReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -103862,7 +107508,7 @@ type InstancePlacementTargetDedicatedHostReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *DedicatedHostReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this dedicated host.
 	Href *string `json:"href" validate:"required"`
@@ -103895,7 +107541,7 @@ func UnmarshalInstancePlacementTargetDedicatedHostReference(m map[string]json.Ra
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDedicatedHostReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -103932,7 +107578,7 @@ type InstancePlacementTargetPlacementGroupReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *PlacementGroupReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this placement group.
 	Href *string `json:"href" validate:"required"`
@@ -103965,7 +107611,7 @@ func UnmarshalInstancePlacementTargetPlacementGroupReference(m map[string]json.R
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalPlacementGroupReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -109037,7 +112683,7 @@ func UnmarshalLegacyCloudObjectStorageBucketIdentityCloudObjectStorageBucketIden
 // LoadBalancerIdentityByCRN : LoadBalancerIdentityByCRN struct
 // This model "extends" LoadBalancerIdentity
 type LoadBalancerIdentityByCRN struct {
-	// The load balancer's CRN.
+	// The CRN for this load balancer.
 	CRN *string `json:"crn" validate:"required"`
 }
 
@@ -109072,7 +112718,7 @@ func UnmarshalLoadBalancerIdentityByCRN(m map[string]json.RawMessage, result int
 // LoadBalancerIdentityByHref : LoadBalancerIdentityByHref struct
 // This model "extends" LoadBalancerIdentity
 type LoadBalancerIdentityByHref struct {
-	// The load balancer's canonical URL.
+	// The URL for this load balancer.
 	Href *string `json:"href" validate:"required"`
 }
 
@@ -109142,7 +112788,7 @@ func UnmarshalLoadBalancerIdentityByID(m map[string]json.RawMessage, result inte
 // LoadBalancerListenerDefaultPoolPatchLoadBalancerPoolIdentityByHref : LoadBalancerListenerDefaultPoolPatchLoadBalancerPoolIdentityByHref struct
 // This model "extends" LoadBalancerListenerDefaultPoolPatch
 type LoadBalancerListenerDefaultPoolPatchLoadBalancerPoolIdentityByHref struct {
-	// The pool's canonical URL.
+	// The URL for this load balancer pool.
 	Href *string `json:"href" validate:"required"`
 }
 
@@ -109212,7 +112858,7 @@ func UnmarshalLoadBalancerListenerDefaultPoolPatchLoadBalancerPoolIdentityByID(m
 // LoadBalancerListenerIdentityByHref : LoadBalancerListenerIdentityByHref struct
 // This model "extends" LoadBalancerListenerIdentity
 type LoadBalancerListenerIdentityByHref struct {
-	// The listener's canonical URL.
+	// The URL for this load balancer listener.
 	Href *string `json:"href" validate:"required"`
 }
 
@@ -109324,7 +112970,23 @@ type LoadBalancerListenerPolicyTargetPatchLoadBalancerListenerPolicyRedirectURLP
 	// The HTTP status code for this redirect.
 	HTTPStatusCode *int64 `json:"http_status_code,omitempty"`
 
-	// The redirect target URL.
+	// The redirect target URL. The URL supports [RFC 6570 level 1
+	// expressions](https://datatracker.ietf.org/doc/html/rfc6570#section-1.2) for the following variables which expand to
+	// values from the originally requested URL (or the indicated defaults if the request did not include them):
+	//
+	// - `protocol`
+	// - `host`
+	// - `port`  (default: `80` for HTTP requests, `443` for HTTPS requests)
+	// - `path`  (default: '/')
+	// - `query` (default: '')
+	//
+	// The protocol, host, and port segments of the URL, must only contain at most one instance of the `protocol`, `host`,
+	// and `port` variables, respectively. The path and query segments of the URL may contain any combination of variables.
+	// If the substitution of `path` results in consecutive leading slashes, the leading slash from the substitution will
+	// be removed. Additional examples:
+	// - `https://{host}:8080/{port}/{host}/{path}`
+	// - `https://www.example.com`
+	// - `{protocol}://test.{host}:80/{path}`.
 	URL *string `json:"url,omitempty"`
 }
 
@@ -109358,7 +113020,7 @@ type LoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentity struct {
 	// The unique identifier for this load balancer pool.
 	ID *string `json:"id,omitempty"`
 
-	// The pool's canonical URL.
+	// The URL for this load balancer pool.
 	Href *string `json:"href,omitempty"`
 }
 
@@ -109450,7 +113112,23 @@ type LoadBalancerListenerPolicyTargetPrototypeLoadBalancerListenerPolicyRedirect
 	// The HTTP status code for this redirect.
 	HTTPStatusCode *int64 `json:"http_status_code" validate:"required"`
 
-	// The redirect target URL.
+	// The redirect target URL. The URL supports [RFC 6570 level 1
+	// expressions](https://datatracker.ietf.org/doc/html/rfc6570#section-1.2) for the following variables which expand to
+	// values from the originally requested URL (or the indicated defaults if the request did not include them):
+	//
+	// - `protocol`
+	// - `host`
+	// - `port`  (default: `80` for HTTP requests, `443` for HTTPS requests)
+	// - `path`  (default: '/')
+	// - `query` (default: '')
+	//
+	// The protocol, host, and port segments of the URL, must only contain at most one instance of the `protocol`, `host`,
+	// and `port` variables, respectively. The path and query segments of the URL may contain any combination of variables.
+	// If the substitution of `path` results in consecutive leading slashes, the leading slash from the substitution will
+	// be removed. Additional examples:
+	// - `https://{host}:8080/{port}/{host}/{path}`
+	// - `https://www.example.com`
+	// - `{protocol}://test.{host}:80/{path}`.
 	URL *string `json:"url" validate:"required"`
 }
 
@@ -109497,7 +113175,7 @@ type LoadBalancerListenerPolicyTargetPrototypeLoadBalancerPoolIdentity struct {
 	// The unique identifier for this load balancer pool.
 	ID *string `json:"id,omitempty"`
 
-	// The pool's canonical URL.
+	// The URL for this load balancer pool.
 	Href *string `json:"href,omitempty"`
 }
 
@@ -109575,7 +113253,23 @@ type LoadBalancerListenerPolicyTargetLoadBalancerListenerPolicyRedirectURL struc
 	// The HTTP status code for this redirect.
 	HTTPStatusCode *int64 `json:"http_status_code" validate:"required"`
 
-	// The redirect target URL.
+	// The redirect target URL. The URL supports [RFC 6570 level 1
+	// expressions](https://datatracker.ietf.org/doc/html/rfc6570#section-1.2) for the following variables which expand to
+	// values from the originally requested URL (or the indicated defaults if the request did not include them):
+	//
+	// - `protocol`
+	// - `host`
+	// - `port`  (default: `80` for HTTP requests, `443` for HTTPS requests)
+	// - `path`  (default: '/')
+	// - `query` (default: '')
+	//
+	// The protocol, host, and port segments of the URL, must only contain at most one instance of the `protocol`, `host`,
+	// and `port` variables, respectively. The path and query segments of the URL may contain any combination of variables.
+	// If the substitution of `path` results in consecutive leading slashes, the leading slash from the substitution will
+	// be removed. Additional examples:
+	// - `https://{host}:8080/{port}/{host}/{path}`
+	// - `https://www.example.com`
+	// - `{protocol}://test.{host}:80/{path}`.
 	URL *string `json:"url" validate:"required"`
 }
 
@@ -109605,9 +113299,9 @@ func UnmarshalLoadBalancerListenerPolicyTargetLoadBalancerListenerPolicyRedirect
 type LoadBalancerListenerPolicyTargetLoadBalancerPoolReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *LoadBalancerPoolReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
-	// The pool's canonical URL.
+	// The URL for this load balancer pool.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this load balancer pool.
@@ -109624,7 +113318,7 @@ func (*LoadBalancerListenerPolicyTargetLoadBalancerPoolReference) isaLoadBalance
 // UnmarshalLoadBalancerListenerPolicyTargetLoadBalancerPoolReference unmarshals an instance of LoadBalancerListenerPolicyTargetLoadBalancerPoolReference from the specified map of raw messages.
 func UnmarshalLoadBalancerListenerPolicyTargetLoadBalancerPoolReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(LoadBalancerListenerPolicyTargetLoadBalancerPoolReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalLoadBalancerPoolReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -109651,7 +113345,7 @@ func UnmarshalLoadBalancerListenerPolicyTargetLoadBalancerPoolReference(m map[st
 // LoadBalancerPoolIdentityLoadBalancerPoolIdentityByHref : LoadBalancerPoolIdentityLoadBalancerPoolIdentityByHref struct
 // This model "extends" LoadBalancerPoolIdentity
 type LoadBalancerPoolIdentityLoadBalancerPoolIdentityByHref struct {
-	// The pool's canonical URL.
+	// The URL for this load balancer pool.
 	Href *string `json:"href" validate:"required"`
 }
 
@@ -109842,7 +113536,7 @@ type LoadBalancerPoolMemberTargetInstanceReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *InstanceReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this virtual server instance.
 	Href *string `json:"href" validate:"required"`
@@ -109866,7 +113560,7 @@ func UnmarshalLoadBalancerPoolMemberTargetInstanceReference(m map[string]json.Ra
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalInstanceReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -109884,6 +113578,91 @@ func UnmarshalLoadBalancerPoolMemberTargetInstanceReference(m map[string]json.Ra
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// LoadBalancerProfileAvailabilityDependent : The availability mode for a load balancer with this profile depends on its configuration.
+// This model "extends" LoadBalancerProfileAvailability
+type LoadBalancerProfileAvailabilityDependent struct {
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+}
+
+// Constants associated with the LoadBalancerProfileAvailabilityDependent.Type property.
+// The type for this profile field.
+const (
+	LoadBalancerProfileAvailabilityDependentTypeDependentConst = "dependent"
+)
+
+func (*LoadBalancerProfileAvailabilityDependent) isaLoadBalancerProfileAvailability() bool {
+	return true
+}
+
+// UnmarshalLoadBalancerProfileAvailabilityDependent unmarshals an instance of LoadBalancerProfileAvailabilityDependent from the specified map of raw messages.
+func UnmarshalLoadBalancerProfileAvailabilityDependent(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(LoadBalancerProfileAvailabilityDependent)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// LoadBalancerProfileAvailabilityFixed : The availability mode for a load balancer with this profile.
+// This model "extends" LoadBalancerProfileAvailability
+type LoadBalancerProfileAvailabilityFixed struct {
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+
+	// The availability of this load balancer:
+	// - `subnet`: remains available if at least one zone that the load balancer's subnets reside
+	//   in is available
+	// - `region`: remains available if at least one zone in the region is available.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	Value *string `json:"value" validate:"required"`
+}
+
+// Constants associated with the LoadBalancerProfileAvailabilityFixed.Type property.
+// The type for this profile field.
+const (
+	LoadBalancerProfileAvailabilityFixedTypeFixedConst = "fixed"
+)
+
+// Constants associated with the LoadBalancerProfileAvailabilityFixed.Value property.
+// The availability of this load balancer:
+//   - `subnet`: remains available if at least one zone that the load balancer's subnets reside
+//     in is available
+//   - `region`: remains available if at least one zone in the region is available.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+const (
+	LoadBalancerProfileAvailabilityFixedValueRegionConst = "region"
+	LoadBalancerProfileAvailabilityFixedValueSubnetConst = "subnet"
+)
+
+func (*LoadBalancerProfileAvailabilityFixed) isaLoadBalancerProfileAvailability() bool {
+	return true
+}
+
+// UnmarshalLoadBalancerProfileAvailabilityFixed unmarshals an instance of LoadBalancerProfileAvailabilityFixed from the specified map of raw messages.
+func UnmarshalLoadBalancerProfileAvailabilityFixed(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(LoadBalancerProfileAvailabilityFixed)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -110144,6 +113923,72 @@ func (*LoadBalancerProfileSecurityGroupsSupportedFixed) isaLoadBalancerProfileSe
 // UnmarshalLoadBalancerProfileSecurityGroupsSupportedFixed unmarshals an instance of LoadBalancerProfileSecurityGroupsSupportedFixed from the specified map of raw messages.
 func UnmarshalLoadBalancerProfileSecurityGroupsSupportedFixed(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(LoadBalancerProfileSecurityGroupsSupportedFixed)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// LoadBalancerProfileSourceIPSessionPersistenceSupportedDependent : The source IP session persistence support for a load balancer with this profile depends on its configuration.
+// This model "extends" LoadBalancerProfileSourceIPSessionPersistenceSupported
+type LoadBalancerProfileSourceIPSessionPersistenceSupportedDependent struct {
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+}
+
+// Constants associated with the LoadBalancerProfileSourceIPSessionPersistenceSupportedDependent.Type property.
+// The type for this profile field.
+const (
+	LoadBalancerProfileSourceIPSessionPersistenceSupportedDependentTypeDependentConst = "dependent"
+)
+
+func (*LoadBalancerProfileSourceIPSessionPersistenceSupportedDependent) isaLoadBalancerProfileSourceIPSessionPersistenceSupported() bool {
+	return true
+}
+
+// UnmarshalLoadBalancerProfileSourceIPSessionPersistenceSupportedDependent unmarshals an instance of LoadBalancerProfileSourceIPSessionPersistenceSupportedDependent from the specified map of raw messages.
+func UnmarshalLoadBalancerProfileSourceIPSessionPersistenceSupportedDependent(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(LoadBalancerProfileSourceIPSessionPersistenceSupportedDependent)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// LoadBalancerProfileSourceIPSessionPersistenceSupportedFixed : The source IP session persistence support for a load balancer with this profile.
+// This model "extends" LoadBalancerProfileSourceIPSessionPersistenceSupported
+type LoadBalancerProfileSourceIPSessionPersistenceSupportedFixed struct {
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+
+	// The value for this profile field.
+	Value *bool `json:"value" validate:"required"`
+}
+
+// Constants associated with the LoadBalancerProfileSourceIPSessionPersistenceSupportedFixed.Type property.
+// The type for this profile field.
+const (
+	LoadBalancerProfileSourceIPSessionPersistenceSupportedFixedTypeFixedConst = "fixed"
+)
+
+func (*LoadBalancerProfileSourceIPSessionPersistenceSupportedFixed) isaLoadBalancerProfileSourceIPSessionPersistenceSupported() bool {
+	return true
+}
+
+// UnmarshalLoadBalancerProfileSourceIPSessionPersistenceSupportedFixed unmarshals an instance of LoadBalancerProfileSourceIPSessionPersistenceSupportedFixed from the specified map of raw messages.
+func UnmarshalLoadBalancerProfileSourceIPSessionPersistenceSupportedFixed(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(LoadBalancerProfileSourceIPSessionPersistenceSupportedFixed)
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
@@ -110623,7 +114468,7 @@ type NetworkACLRuleItemNetworkACLRuleProtocolAll struct {
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
 	Source *string `json:"source" validate:"required"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 }
 
@@ -110648,7 +114493,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRuleItemNetworkACLRuleProtocolAll.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRuleItemNetworkACLRuleProtocolAllProtocolAllConst = "all"
 )
@@ -110758,7 +114603,7 @@ type NetworkACLRuleItemNetworkACLRuleProtocolIcmp struct {
 	// If absent, all codes are matched.
 	Code *int64 `json:"code,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The ICMP traffic type to match.
@@ -110788,7 +114633,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRuleItemNetworkACLRuleProtocolIcmp.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRuleItemNetworkACLRuleProtocolIcmpProtocolIcmpConst = "icmp"
 )
@@ -110909,7 +114754,7 @@ type NetworkACLRuleItemNetworkACLRuleProtocolTcpudp struct {
 	// The inclusive lower bound of TCP/UDP destination port range.
 	DestinationPortMin *int64 `json:"destination_port_min" validate:"required"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The inclusive upper bound of TCP/UDP source port range.
@@ -110940,7 +114785,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRuleItemNetworkACLRuleProtocolTcpudp.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRuleItemNetworkACLRuleProtocolTcpudpProtocolTCPConst = "tcp"
 	NetworkACLRuleItemNetworkACLRuleProtocolTcpudpProtocolUDPConst = "udp"
@@ -111054,7 +114899,7 @@ type NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolAllPrototype 
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
 	Source *string `json:"source" validate:"required"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 }
 
@@ -111079,7 +114924,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolAllPrototype.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolAllPrototypeProtocolAllConst = "all"
 )
@@ -111173,7 +115018,7 @@ type NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolIcmpPrototype
 	// If specified, `type` must also be specified.  If unspecified, all codes are matched.
 	Code *int64 `json:"code,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The ICMP traffic type to match.
@@ -111203,7 +115048,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolIcmpPrototype.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolIcmpPrototypeProtocolIcmpConst = "icmp"
 )
@@ -111308,7 +115153,7 @@ type NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpudpPrototy
 	// The inclusive lower bound of TCP/UDP destination port range.
 	DestinationPortMin *int64 `json:"destination_port_min,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The inclusive upper bound of TCP/UDP source port range.
@@ -111339,7 +115184,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpudpPrototype.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpudpPrototypeProtocolTCPConst = "tcp"
 	NetworkACLRulePrototypeNetworkACLContextNetworkACLRuleProtocolTcpudpPrototypeProtocolUDPConst = "udp"
@@ -111451,7 +115296,7 @@ type NetworkACLRulePrototypeNetworkACLRuleProtocolAllPrototype struct {
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
 	Source *string `json:"source" validate:"required"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 }
 
@@ -111476,7 +115321,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePrototypeNetworkACLRuleProtocolAllPrototype.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRulePrototypeNetworkACLRuleProtocolAllPrototypeProtocolAllConst = "all"
 )
@@ -111577,7 +115422,7 @@ type NetworkACLRulePrototypeNetworkACLRuleProtocolIcmpPrototype struct {
 	// If specified, `type` must also be specified.  If unspecified, all codes are matched.
 	Code *int64 `json:"code,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The ICMP traffic type to match.
@@ -111607,7 +115452,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePrototypeNetworkACLRuleProtocolIcmpPrototype.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRulePrototypeNetworkACLRuleProtocolIcmpPrototypeProtocolIcmpConst = "icmp"
 )
@@ -111719,7 +115564,7 @@ type NetworkACLRulePrototypeNetworkACLRuleProtocolTcpudpPrototype struct {
 	// The inclusive lower bound of TCP/UDP destination port range.
 	DestinationPortMin *int64 `json:"destination_port_min,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The inclusive upper bound of TCP/UDP source port range.
@@ -111750,7 +115595,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRulePrototypeNetworkACLRuleProtocolTcpudpPrototype.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRulePrototypeNetworkACLRuleProtocolTcpudpPrototypeProtocolTCPConst = "tcp"
 	NetworkACLRulePrototypeNetworkACLRuleProtocolTcpudpPrototypeProtocolUDPConst = "udp"
@@ -111876,7 +115721,7 @@ type NetworkACLRuleNetworkACLRuleProtocolAll struct {
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
 	Source *string `json:"source" validate:"required"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 }
 
@@ -111901,7 +115746,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRuleNetworkACLRuleProtocolAll.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRuleNetworkACLRuleProtocolAllProtocolAllConst = "all"
 )
@@ -112010,7 +115855,7 @@ type NetworkACLRuleNetworkACLRuleProtocolIcmp struct {
 	// If absent, all codes are matched.
 	Code *int64 `json:"code,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The ICMP traffic type to match.
@@ -112040,7 +115885,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRuleNetworkACLRuleProtocolIcmp.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRuleNetworkACLRuleProtocolIcmpProtocolIcmpConst = "icmp"
 )
@@ -112160,7 +116005,7 @@ type NetworkACLRuleNetworkACLRuleProtocolTcpudp struct {
 	// The inclusive lower bound of TCP/UDP destination port range.
 	DestinationPortMin *int64 `json:"destination_port_min" validate:"required"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The inclusive upper bound of TCP/UDP source port range.
@@ -112191,7 +116036,7 @@ const (
 )
 
 // Constants associated with the NetworkACLRuleNetworkACLRuleProtocolTcpudp.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	NetworkACLRuleNetworkACLRuleProtocolTcpudpProtocolTCPConst = "tcp"
 	NetworkACLRuleNetworkACLRuleProtocolTcpudpProtocolUDPConst = "udp"
@@ -112923,7 +116768,7 @@ func UnmarshalReservedIPTargetPrototypeVirtualNetworkInterfaceIdentity(m map[str
 type ReservedIPTargetBareMetalServerNetworkInterfaceReferenceTargetContext struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *BareMetalServerNetworkInterfaceReferenceTargetContextDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this bare metal server network interface.
 	//
@@ -112960,7 +116805,7 @@ func (*ReservedIPTargetBareMetalServerNetworkInterfaceReferenceTargetContext) is
 // UnmarshalReservedIPTargetBareMetalServerNetworkInterfaceReferenceTargetContext unmarshals an instance of ReservedIPTargetBareMetalServerNetworkInterfaceReferenceTargetContext from the specified map of raw messages.
 func UnmarshalReservedIPTargetBareMetalServerNetworkInterfaceReferenceTargetContext(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(ReservedIPTargetBareMetalServerNetworkInterfaceReferenceTargetContext)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalBareMetalServerNetworkInterfaceReferenceTargetContextDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -112997,7 +116842,7 @@ type ReservedIPTargetEndpointGatewayReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *EndpointGatewayReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this endpoint gateway.
 	Href *string `json:"href" validate:"required"`
@@ -113030,7 +116875,7 @@ func UnmarshalReservedIPTargetEndpointGatewayReference(m map[string]json.RawMess
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalEndpointGatewayReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -113067,7 +116912,7 @@ type ReservedIPTargetGenericResourceReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *GenericResourceReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The resource type.
 	ResourceType *string `json:"resource_type" validate:"required"`
@@ -113091,7 +116936,7 @@ func UnmarshalReservedIPTargetGenericResourceReference(m map[string]json.RawMess
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalGenericResourceReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -113108,14 +116953,14 @@ func UnmarshalReservedIPTargetGenericResourceReference(m map[string]json.RawMess
 // ReservedIPTargetLoadBalancerReference : ReservedIPTargetLoadBalancerReference struct
 // This model "extends" ReservedIPTarget
 type ReservedIPTargetLoadBalancerReference struct {
-	// The load balancer's CRN.
+	// The CRN for this load balancer.
 	CRN *string `json:"crn" validate:"required"`
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *LoadBalancerReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
-	// The load balancer's canonical URL.
+	// The URL for this load balancer.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this load balancer.
@@ -113146,7 +116991,7 @@ func UnmarshalReservedIPTargetLoadBalancerReference(m map[string]json.RawMessage
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalLoadBalancerReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -113180,7 +117025,7 @@ func UnmarshalReservedIPTargetLoadBalancerReference(m map[string]json.RawMessage
 type ReservedIPTargetNetworkInterfaceReferenceTargetContext struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *NetworkInterfaceReferenceTargetContextDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this instance network interface.
 	//
@@ -113217,7 +117062,7 @@ func (*ReservedIPTargetNetworkInterfaceReferenceTargetContext) isaReservedIPTarg
 // UnmarshalReservedIPTargetNetworkInterfaceReferenceTargetContext unmarshals an instance of ReservedIPTargetNetworkInterfaceReferenceTargetContext from the specified map of raw messages.
 func UnmarshalReservedIPTargetNetworkInterfaceReferenceTargetContext(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(ReservedIPTargetNetworkInterfaceReferenceTargetContext)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalNetworkInterfaceReferenceTargetContextDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -113249,14 +117094,14 @@ func UnmarshalReservedIPTargetNetworkInterfaceReferenceTargetContext(m map[strin
 // ReservedIPTargetVPNGatewayReference : ReservedIPTargetVPNGatewayReference struct
 // This model "extends" ReservedIPTarget
 type ReservedIPTargetVPNGatewayReference struct {
-	// The VPN gateway's CRN.
+	// The CRN for this VPN gateway.
 	CRN *string `json:"crn" validate:"required"`
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *VPNGatewayReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
-	// The VPN gateway's canonical URL.
+	// The URL for this VPN gateway.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this VPN gateway.
@@ -113287,7 +117132,7 @@ func UnmarshalReservedIPTargetVPNGatewayReference(m map[string]json.RawMessage, 
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalVPNGatewayReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -113324,7 +117169,7 @@ type ReservedIPTargetVPNServerReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *VPNServerReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this VPN server.
 	Href *string `json:"href" validate:"required"`
@@ -113357,7 +117202,7 @@ func UnmarshalReservedIPTargetVPNServerReference(m map[string]json.RawMessage, r
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalVPNServerReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -113485,14 +117330,14 @@ func UnmarshalResourceGroupIdentityByID(m map[string]json.RawMessage, result int
 // RouteCreatorVPNGatewayReference : RouteCreatorVPNGatewayReference struct
 // This model "extends" RouteCreator
 type RouteCreatorVPNGatewayReference struct {
-	// The VPN gateway's CRN.
+	// The CRN for this VPN gateway.
 	CRN *string `json:"crn" validate:"required"`
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *VPNGatewayReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
-	// The VPN gateway's canonical URL.
+	// The URL for this VPN gateway.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this VPN gateway.
@@ -113523,7 +117368,7 @@ func UnmarshalRouteCreatorVPNGatewayReference(m map[string]json.RawMessage, resu
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalVPNGatewayReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -113560,7 +117405,7 @@ type RouteCreatorVPNServerReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *VPNServerReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this VPN server.
 	Href *string `json:"href" validate:"required"`
@@ -113593,7 +117438,7 @@ func UnmarshalRouteCreatorVPNServerReference(m map[string]json.RawMessage, resul
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalVPNServerReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -113695,7 +117540,7 @@ type RouteNextHopPatchVPNGatewayConnectionIdentity struct {
 	// The unique identifier for this VPN gateway connection.
 	ID *string `json:"id,omitempty"`
 
-	// The VPN connection's canonical URL.
+	// The URL for this VPN gateway connection.
 	Href *string `json:"href,omitempty"`
 }
 
@@ -113729,14 +117574,95 @@ func UnmarshalRouteNextHopPatchVPNGatewayConnectionIdentity(m map[string]json.Ra
 	return
 }
 
+// RouteNextHopPrototypeRouteNextHopIP : RouteNextHopPrototypeRouteNextHopIP struct
+// Models which "extend" this model:
+// - RouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP
+// - RouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP
+// This model "extends" RouteNextHopPrototype
+type RouteNextHopPrototypeRouteNextHopIP struct {
+	// The sentinel IP address (`0.0.0.0`).
+	//
+	// This property may [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) to support IPv6 addresses in
+	// the future.
+	Address *string `json:"address,omitempty"`
+}
+
+func (*RouteNextHopPrototypeRouteNextHopIP) isaRouteNextHopPrototypeRouteNextHopIP() bool {
+	return true
+}
+
+type RouteNextHopPrototypeRouteNextHopIPIntf interface {
+	RouteNextHopPrototypeIntf
+	isaRouteNextHopPrototypeRouteNextHopIP() bool
+}
+
+func (*RouteNextHopPrototypeRouteNextHopIP) isaRouteNextHopPrototype() bool {
+	return true
+}
+
+// UnmarshalRouteNextHopPrototypeRouteNextHopIP unmarshals an instance of RouteNextHopPrototypeRouteNextHopIP from the specified map of raw messages.
+func UnmarshalRouteNextHopPrototypeRouteNextHopIP(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RouteNextHopPrototypeRouteNextHopIP)
+	err = core.UnmarshalPrimitive(m, "address", &obj.Address)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "address-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RouteNextHopPrototypeVPNGatewayConnectionIdentity : Identifies a VPN gateway connection by a unique property.
+// Models which "extend" this model:
+// - RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID
+// - RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref
+// This model "extends" RouteNextHopPrototype
+type RouteNextHopPrototypeVPNGatewayConnectionIdentity struct {
+	// The unique identifier for this VPN gateway connection.
+	ID *string `json:"id,omitempty"`
+
+	// The URL for this VPN gateway connection.
+	Href *string `json:"href,omitempty"`
+}
+
+func (*RouteNextHopPrototypeVPNGatewayConnectionIdentity) isaRouteNextHopPrototypeVPNGatewayConnectionIdentity() bool {
+	return true
+}
+
+type RouteNextHopPrototypeVPNGatewayConnectionIdentityIntf interface {
+	RouteNextHopPrototypeIntf
+	isaRouteNextHopPrototypeVPNGatewayConnectionIdentity() bool
+}
+
+func (*RouteNextHopPrototypeVPNGatewayConnectionIdentity) isaRouteNextHopPrototype() bool {
+	return true
+}
+
+// UnmarshalRouteNextHopPrototypeVPNGatewayConnectionIdentity unmarshals an instance of RouteNextHopPrototypeVPNGatewayConnectionIdentity from the specified map of raw messages.
+func UnmarshalRouteNextHopPrototypeVPNGatewayConnectionIdentity(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RouteNextHopPrototypeVPNGatewayConnectionIdentity)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // RouteNextHopVPNGatewayConnectionReference : RouteNextHopVPNGatewayConnectionReference struct
 // This model "extends" RouteNextHop
 type RouteNextHopVPNGatewayConnectionReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *VPNGatewayConnectionReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
-	// The VPN connection's canonical URL.
+	// The URL for this VPN gateway connection.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this VPN gateway connection.
@@ -113762,7 +117688,7 @@ func (*RouteNextHopVPNGatewayConnectionReference) isaRouteNextHop() bool {
 // UnmarshalRouteNextHopVPNGatewayConnectionReference unmarshals an instance of RouteNextHopVPNGatewayConnectionReference from the specified map of raw messages.
 func UnmarshalRouteNextHopVPNGatewayConnectionReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(RouteNextHopVPNGatewayConnectionReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalVPNGatewayConnectionReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -113791,81 +117717,35 @@ func UnmarshalRouteNextHopVPNGatewayConnectionReference(m map[string]json.RawMes
 	return
 }
 
-// RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIP : RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIP struct
-// Models which "extend" this model:
-// - RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP
-// - RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP
-// This model "extends" RoutePrototypeNextHop
-type RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIP struct {
-	// The sentinel IP address (`0.0.0.0`).
-	//
-	// This property may [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) to support IPv6 addresses in
-	// the future.
-	Address *string `json:"address,omitempty"`
+// RoutingTableIdentityByCRN : RoutingTableIdentityByCRN struct
+// This model "extends" RoutingTableIdentity
+type RoutingTableIdentityByCRN struct {
+	// The CRN for this VPC routing table.
+	CRN *string `json:"crn" validate:"required"`
 }
 
-func (*RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIP) isaRoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIP() bool {
-	return true
-}
-
-type RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPIntf interface {
-	RoutePrototypeNextHopIntf
-	isaRoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIP() bool
-}
-
-func (*RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIP) isaRoutePrototypeNextHop() bool {
-	return true
-}
-
-// UnmarshalRoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIP unmarshals an instance of RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIP from the specified map of raw messages.
-func UnmarshalRoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIP(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIP)
-	err = core.UnmarshalPrimitive(m, "address", &obj.Address)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "address-error", common.GetComponentInfo())
-		return
+// NewRoutingTableIdentityByCRN : Instantiate RoutingTableIdentityByCRN (Generic Model Constructor)
+func (*VpcV1) NewRoutingTableIdentityByCRN(crn string) (_model *RoutingTableIdentityByCRN, err error) {
+	_model = &RoutingTableIdentityByCRN{
+		CRN: core.StringPtr(crn),
 	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
 	return
 }
 
-// RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentity : Identifies a VPN gateway connection by a unique property.
-// Models which "extend" this model:
-// - RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID
-// - RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref
-// This model "extends" RoutePrototypeNextHop
-type RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentity struct {
-	// The unique identifier for this VPN gateway connection.
-	ID *string `json:"id,omitempty"`
-
-	// The VPN connection's canonical URL.
-	Href *string `json:"href,omitempty"`
-}
-
-func (*RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentity) isaRoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentity() bool {
+func (*RoutingTableIdentityByCRN) isaRoutingTableIdentity() bool {
 	return true
 }
 
-type RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityIntf interface {
-	RoutePrototypeNextHopIntf
-	isaRoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentity() bool
-}
-
-func (*RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentity) isaRoutePrototypeNextHop() bool {
-	return true
-}
-
-// UnmarshalRoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentity unmarshals an instance of RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentity from the specified map of raw messages.
-func UnmarshalRoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentity(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentity)
-	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+// UnmarshalRoutingTableIdentityByCRN unmarshals an instance of RoutingTableIdentityByCRN from the specified map of raw messages.
+func UnmarshalRoutingTableIdentityByCRN(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RoutingTableIdentityByCRN)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
 	if err != nil {
-		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -113945,7 +117825,7 @@ func UnmarshalRoutingTableIdentityByID(m map[string]json.RawMessage, result inte
 // SecurityGroupIdentityByCRN : SecurityGroupIdentityByCRN struct
 // This model "extends" SecurityGroupIdentity
 type SecurityGroupIdentityByCRN struct {
-	// The security group's CRN.
+	// The CRN for this security group.
 	CRN *string `json:"crn" validate:"required"`
 }
 
@@ -113980,7 +117860,7 @@ func UnmarshalSecurityGroupIdentityByCRN(m map[string]json.RawMessage, result in
 // SecurityGroupIdentityByHref : SecurityGroupIdentityByHref struct
 // This model "extends" SecurityGroupIdentity
 type SecurityGroupIdentityByHref struct {
-	// The security group's canonical URL.
+	// The URL for this security group.
 	Href *string `json:"href" validate:"required"`
 }
 
@@ -114254,14 +118134,14 @@ func UnmarshalSecurityGroupRuleLocalIP(m map[string]json.RawMessage, result inte
 // SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll : A rule allowing traffic for all supported protocols.
 // This model "extends" SecurityGroupRulePrototype
 type SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll struct {
-	// The direction of traffic to enforce.
+	// The direction of traffic to allow.
 	Direction *string `json:"direction" validate:"required"`
 
-	// The IP version to enforce. The format of `local.address`, `remote.address`,
+	// The IP version to allow. The format of `local.address`, `remote.address`,
 	// `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 	//
-	// If `remote` references a security group, then this rule only applies to IP addresses
-	// (network interfaces) in that group matching this IP version.
+	// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+	// version.
 	IPVersion *string `json:"ip_version,omitempty"`
 
 	// The local IP address or range of local IP addresses to which this rule will allow inbound
@@ -114271,7 +118151,7 @@ type SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll struct {
 	// addresses (or from all local IP addresses, for outbound rules).
 	Local SecurityGroupRuleLocalPrototypeIntf `json:"local,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The remote IP addresses or security groups from which this rule will allow traffic (or to
@@ -114284,24 +118164,24 @@ type SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll struct {
 }
 
 // Constants associated with the SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll.Direction property.
-// The direction of traffic to enforce.
+// The direction of traffic to allow.
 const (
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolAllDirectionInboundConst  = "inbound"
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolAllDirectionOutboundConst = "outbound"
 )
 
 // Constants associated with the SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll.IPVersion property.
-// The IP version to enforce. The format of `local.address`, `remote.address`,
+// The IP version to allow. The format of `local.address`, `remote.address`,
 // `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 //
-// If `remote` references a security group, then this rule only applies to IP addresses
-// (network interfaces) in that group matching this IP version.
+// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+// version.
 const (
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolAllIPVersionIpv4Const = "ipv4"
 )
 
 // Constants associated with the SecurityGroupRulePrototypeSecurityGroupRuleProtocolAll.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolAllProtocolAllConst = "all"
 )
@@ -114363,14 +118243,14 @@ type SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp struct {
 	// If specified, `type` must also be specified.  If unspecified, all codes are allowed.
 	Code *int64 `json:"code,omitempty"`
 
-	// The direction of traffic to enforce.
+	// The direction of traffic to allow.
 	Direction *string `json:"direction" validate:"required"`
 
-	// The IP version to enforce. The format of `local.address`, `remote.address`,
+	// The IP version to allow. The format of `local.address`, `remote.address`,
 	// `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 	//
-	// If `remote` references a security group, then this rule only applies to IP addresses
-	// (network interfaces) in that group matching this IP version.
+	// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+	// version.
 	IPVersion *string `json:"ip_version,omitempty"`
 
 	// The local IP address or range of local IP addresses to which this rule will allow inbound
@@ -114380,7 +118260,7 @@ type SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp struct {
 	// addresses (or from all local IP addresses, for outbound rules).
 	Local SecurityGroupRuleLocalPrototypeIntf `json:"local,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The remote IP addresses or security groups from which this rule will allow traffic (or to
@@ -114398,24 +118278,24 @@ type SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp struct {
 }
 
 // Constants associated with the SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp.Direction property.
-// The direction of traffic to enforce.
+// The direction of traffic to allow.
 const (
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmpDirectionInboundConst  = "inbound"
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmpDirectionOutboundConst = "outbound"
 )
 
 // Constants associated with the SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp.IPVersion property.
-// The IP version to enforce. The format of `local.address`, `remote.address`,
+// The IP version to allow. The format of `local.address`, `remote.address`,
 // `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 //
-// If `remote` references a security group, then this rule only applies to IP addresses
-// (network interfaces) in that group matching this IP version.
+// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+// version.
 const (
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmpIPVersionIpv4Const = "ipv4"
 )
 
 // Constants associated with the SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmpProtocolIcmpConst = "icmp"
 )
@@ -114485,14 +118365,14 @@ func UnmarshalSecurityGroupRulePrototypeSecurityGroupRuleProtocolIcmp(m map[stri
 // allowed for the protocol. When both have the same value, that single destination port is allowed.
 // This model "extends" SecurityGroupRulePrototype
 type SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp struct {
-	// The direction of traffic to enforce.
+	// The direction of traffic to allow.
 	Direction *string `json:"direction" validate:"required"`
 
-	// The IP version to enforce. The format of `local.address`, `remote.address`,
+	// The IP version to allow. The format of `local.address`, `remote.address`,
 	// `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 	//
-	// If `remote` references a security group, then this rule only applies to IP addresses
-	// (network interfaces) in that group matching this IP version.
+	// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+	// version.
 	IPVersion *string `json:"ip_version,omitempty"`
 
 	// The local IP address or range of local IP addresses to which this rule will allow inbound
@@ -114514,7 +118394,7 @@ type SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp struct {
 	// unspecified, allowing traffic on all destination ports.
 	PortMin *int64 `json:"port_min,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The remote IP addresses or security groups from which this rule will allow traffic (or to
@@ -114527,24 +118407,24 @@ type SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp struct {
 }
 
 // Constants associated with the SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp.Direction property.
-// The direction of traffic to enforce.
+// The direction of traffic to allow.
 const (
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudpDirectionInboundConst  = "inbound"
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudpDirectionOutboundConst = "outbound"
 )
 
 // Constants associated with the SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp.IPVersion property.
-// The IP version to enforce. The format of `local.address`, `remote.address`,
+// The IP version to allow. The format of `local.address`, `remote.address`,
 // `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 //
-// If `remote` references a security group, then this rule only applies to IP addresses
-// (network interfaces) in that group matching this IP version.
+// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+// version.
 const (
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudpIPVersionIpv4Const = "ipv4"
 )
 
 // Constants associated with the SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudp.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudpProtocolTCPConst = "tcp"
 	SecurityGroupRulePrototypeSecurityGroupRuleProtocolTcpudpProtocolUDPConst = "udp"
@@ -114695,10 +118575,10 @@ type SecurityGroupRuleRemotePatchSecurityGroupIdentity struct {
 	// The unique identifier for this security group.
 	ID *string `json:"id,omitempty"`
 
-	// The security group's CRN.
+	// The CRN for this security group.
 	CRN *string `json:"crn,omitempty"`
 
-	// The security group's canonical URL.
+	// The URL for this security group.
 	Href *string `json:"href,omitempty"`
 }
 
@@ -114823,10 +118703,10 @@ type SecurityGroupRuleRemotePrototypeSecurityGroupIdentity struct {
 	// The unique identifier for this security group.
 	ID *string `json:"id,omitempty"`
 
-	// The security group's CRN.
+	// The CRN for this security group.
 	CRN *string `json:"crn,omitempty"`
 
-	// The security group's canonical URL.
+	// The URL for this security group.
 	Href *string `json:"href,omitempty"`
 }
 
@@ -114920,14 +118800,14 @@ func UnmarshalSecurityGroupRuleRemoteIP(m map[string]json.RawMessage, result int
 // SecurityGroupRuleRemoteSecurityGroupReference : SecurityGroupRuleRemoteSecurityGroupReference struct
 // This model "extends" SecurityGroupRuleRemote
 type SecurityGroupRuleRemoteSecurityGroupReference struct {
-	// The security group's CRN.
+	// The CRN for this security group.
 	CRN *string `json:"crn" validate:"required"`
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *SecurityGroupReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
-	// The security group's canonical URL.
+	// The URL for this security group.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this security group.
@@ -114949,7 +118829,7 @@ func UnmarshalSecurityGroupRuleRemoteSecurityGroupReference(m map[string]json.Ra
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalSecurityGroupReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -114976,7 +118856,7 @@ func UnmarshalSecurityGroupRuleRemoteSecurityGroupReference(m map[string]json.Ra
 // SecurityGroupRuleSecurityGroupRuleProtocolAll : A rule allowing traffic for all supported protocols.
 // This model "extends" SecurityGroupRule
 type SecurityGroupRuleSecurityGroupRuleProtocolAll struct {
-	// The direction of traffic to enforce.
+	// The direction of traffic to allow.
 	Direction *string `json:"direction" validate:"required"`
 
 	// The URL for this security group rule.
@@ -114985,40 +118865,40 @@ type SecurityGroupRuleSecurityGroupRuleProtocolAll struct {
 	// The unique identifier for this security group rule.
 	ID *string `json:"id" validate:"required"`
 
-	// The IP version to enforce. The format of `local.address`, `remote.address`,
+	// The IP version to allow. The format of `local.address`, `remote.address`,
 	// `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 	//
-	// If `remote` references a security group, then this rule only applies to IP addresses
-	// (network interfaces) in that group matching this IP version.
+	// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+	// version.
 	IPVersion *string `json:"ip_version" validate:"required"`
 
 	Local SecurityGroupRuleLocalIntf `json:"local" validate:"required"`
 
 	Remote SecurityGroupRuleRemoteIntf `json:"remote" validate:"required"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 }
 
 // Constants associated with the SecurityGroupRuleSecurityGroupRuleProtocolAll.Direction property.
-// The direction of traffic to enforce.
+// The direction of traffic to allow.
 const (
 	SecurityGroupRuleSecurityGroupRuleProtocolAllDirectionInboundConst  = "inbound"
 	SecurityGroupRuleSecurityGroupRuleProtocolAllDirectionOutboundConst = "outbound"
 )
 
 // Constants associated with the SecurityGroupRuleSecurityGroupRuleProtocolAll.IPVersion property.
-// The IP version to enforce. The format of `local.address`, `remote.address`,
+// The IP version to allow. The format of `local.address`, `remote.address`,
 // `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 //
-// If `remote` references a security group, then this rule only applies to IP addresses
-// (network interfaces) in that group matching this IP version.
+// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+// version.
 const (
 	SecurityGroupRuleSecurityGroupRuleProtocolAllIPVersionIpv4Const = "ipv4"
 )
 
 // Constants associated with the SecurityGroupRuleSecurityGroupRuleProtocolAll.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	SecurityGroupRuleSecurityGroupRuleProtocolAllProtocolAllConst = "all"
 )
@@ -115072,7 +118952,7 @@ func UnmarshalSecurityGroupRuleSecurityGroupRuleProtocolAll(m map[string]json.Ra
 // SecurityGroupRuleSecurityGroupRuleProtocolIcmp : A rule specifying the ICMP traffic to allow.
 // This model "extends" SecurityGroupRule
 type SecurityGroupRuleSecurityGroupRuleProtocolIcmp struct {
-	// The direction of traffic to enforce.
+	// The direction of traffic to allow.
 	Direction *string `json:"direction" validate:"required"`
 
 	// The URL for this security group rule.
@@ -115081,11 +118961,11 @@ type SecurityGroupRuleSecurityGroupRuleProtocolIcmp struct {
 	// The unique identifier for this security group rule.
 	ID *string `json:"id" validate:"required"`
 
-	// The IP version to enforce. The format of `local.address`, `remote.address`,
+	// The IP version to allow. The format of `local.address`, `remote.address`,
 	// `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 	//
-	// If `remote` references a security group, then this rule only applies to IP addresses
-	// (network interfaces) in that group matching this IP version.
+	// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+	// version.
 	IPVersion *string `json:"ip_version" validate:"required"`
 
 	Local SecurityGroupRuleLocalIntf `json:"local" validate:"required"`
@@ -115095,7 +118975,7 @@ type SecurityGroupRuleSecurityGroupRuleProtocolIcmp struct {
 	// The ICMP traffic code to allow. If absent, all codes are allowed.
 	Code *int64 `json:"code,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 
 	// The ICMP traffic type to allow. If absent, all types are allowed.
@@ -115103,24 +118983,24 @@ type SecurityGroupRuleSecurityGroupRuleProtocolIcmp struct {
 }
 
 // Constants associated with the SecurityGroupRuleSecurityGroupRuleProtocolIcmp.Direction property.
-// The direction of traffic to enforce.
+// The direction of traffic to allow.
 const (
 	SecurityGroupRuleSecurityGroupRuleProtocolIcmpDirectionInboundConst  = "inbound"
 	SecurityGroupRuleSecurityGroupRuleProtocolIcmpDirectionOutboundConst = "outbound"
 )
 
 // Constants associated with the SecurityGroupRuleSecurityGroupRuleProtocolIcmp.IPVersion property.
-// The IP version to enforce. The format of `local.address`, `remote.address`,
+// The IP version to allow. The format of `local.address`, `remote.address`,
 // `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 //
-// If `remote` references a security group, then this rule only applies to IP addresses
-// (network interfaces) in that group matching this IP version.
+// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+// version.
 const (
 	SecurityGroupRuleSecurityGroupRuleProtocolIcmpIPVersionIpv4Const = "ipv4"
 )
 
 // Constants associated with the SecurityGroupRuleSecurityGroupRuleProtocolIcmp.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	SecurityGroupRuleSecurityGroupRuleProtocolIcmpProtocolIcmpConst = "icmp"
 )
@@ -115187,7 +119067,7 @@ func UnmarshalSecurityGroupRuleSecurityGroupRuleProtocolIcmp(m map[string]json.R
 // allowed for the protocol. When both have the same value, that single destination port is allowed.
 // This model "extends" SecurityGroupRule
 type SecurityGroupRuleSecurityGroupRuleProtocolTcpudp struct {
-	// The direction of traffic to enforce.
+	// The direction of traffic to allow.
 	Direction *string `json:"direction" validate:"required"`
 
 	// The URL for this security group rule.
@@ -115196,11 +119076,11 @@ type SecurityGroupRuleSecurityGroupRuleProtocolTcpudp struct {
 	// The unique identifier for this security group rule.
 	ID *string `json:"id" validate:"required"`
 
-	// The IP version to enforce. The format of `local.address`, `remote.address`,
+	// The IP version to allow. The format of `local.address`, `remote.address`,
 	// `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 	//
-	// If `remote` references a security group, then this rule only applies to IP addresses
-	// (network interfaces) in that group matching this IP version.
+	// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+	// version.
 	IPVersion *string `json:"ip_version" validate:"required"`
 
 	Local SecurityGroupRuleLocalIntf `json:"local" validate:"required"`
@@ -115213,29 +119093,29 @@ type SecurityGroupRuleSecurityGroupRuleProtocolTcpudp struct {
 	// The inclusive lower bound of TCP/UDP destination port range.
 	PortMin *int64 `json:"port_min,omitempty"`
 
-	// The protocol to enforce.
+	// The network protocol.
 	Protocol *string `json:"protocol" validate:"required"`
 }
 
 // Constants associated with the SecurityGroupRuleSecurityGroupRuleProtocolTcpudp.Direction property.
-// The direction of traffic to enforce.
+// The direction of traffic to allow.
 const (
 	SecurityGroupRuleSecurityGroupRuleProtocolTcpudpDirectionInboundConst  = "inbound"
 	SecurityGroupRuleSecurityGroupRuleProtocolTcpudpDirectionOutboundConst = "outbound"
 )
 
 // Constants associated with the SecurityGroupRuleSecurityGroupRuleProtocolTcpudp.IPVersion property.
-// The IP version to enforce. The format of `local.address`, `remote.address`,
+// The IP version to allow. The format of `local.address`, `remote.address`,
 // `local.cidr_block` or `remote.cidr_block` must match this property, if they are used.
 //
-// If `remote` references a security group, then this rule only applies to IP addresses
-// (network interfaces) in that group matching this IP version.
+// If `remote` references a security group, then this rule only applies to IP addresses in that group matching this IP
+// version.
 const (
 	SecurityGroupRuleSecurityGroupRuleProtocolTcpudpIPVersionIpv4Const = "ipv4"
 )
 
 // Constants associated with the SecurityGroupRuleSecurityGroupRuleProtocolTcpudp.Protocol property.
-// The protocol to enforce.
+// The network protocol.
 const (
 	SecurityGroupRuleSecurityGroupRuleProtocolTcpudpProtocolTCPConst = "tcp"
 	SecurityGroupRuleSecurityGroupRuleProtocolTcpudpProtocolUDPConst = "udp"
@@ -115302,7 +119182,7 @@ func UnmarshalSecurityGroupRuleSecurityGroupRuleProtocolTcpudp(m map[string]json
 type SecurityGroupTargetReferenceBareMetalServerNetworkInterfaceReferenceTargetContext struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *BareMetalServerNetworkInterfaceReferenceTargetContextDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this bare metal server network interface.
 	//
@@ -115339,7 +119219,7 @@ func (*SecurityGroupTargetReferenceBareMetalServerNetworkInterfaceReferenceTarge
 // UnmarshalSecurityGroupTargetReferenceBareMetalServerNetworkInterfaceReferenceTargetContext unmarshals an instance of SecurityGroupTargetReferenceBareMetalServerNetworkInterfaceReferenceTargetContext from the specified map of raw messages.
 func UnmarshalSecurityGroupTargetReferenceBareMetalServerNetworkInterfaceReferenceTargetContext(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(SecurityGroupTargetReferenceBareMetalServerNetworkInterfaceReferenceTargetContext)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalBareMetalServerNetworkInterfaceReferenceTargetContextDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -115376,7 +119256,7 @@ type SecurityGroupTargetReferenceEndpointGatewayReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *EndpointGatewayReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this endpoint gateway.
 	Href *string `json:"href" validate:"required"`
@@ -115409,7 +119289,7 @@ func UnmarshalSecurityGroupTargetReferenceEndpointGatewayReference(m map[string]
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalEndpointGatewayReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -115441,14 +119321,14 @@ func UnmarshalSecurityGroupTargetReferenceEndpointGatewayReference(m map[string]
 // SecurityGroupTargetReferenceLoadBalancerReference : SecurityGroupTargetReferenceLoadBalancerReference struct
 // This model "extends" SecurityGroupTargetReference
 type SecurityGroupTargetReferenceLoadBalancerReference struct {
-	// The load balancer's CRN.
+	// The CRN for this load balancer.
 	CRN *string `json:"crn" validate:"required"`
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *LoadBalancerReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
-	// The load balancer's canonical URL.
+	// The URL for this load balancer.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this load balancer.
@@ -115479,7 +119359,7 @@ func UnmarshalSecurityGroupTargetReferenceLoadBalancerReference(m map[string]jso
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalLoadBalancerReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -115513,7 +119393,7 @@ func UnmarshalSecurityGroupTargetReferenceLoadBalancerReference(m map[string]jso
 type SecurityGroupTargetReferenceNetworkInterfaceReferenceTargetContext struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *NetworkInterfaceReferenceTargetContextDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this instance network interface.
 	//
@@ -115550,7 +119430,7 @@ func (*SecurityGroupTargetReferenceNetworkInterfaceReferenceTargetContext) isaSe
 // UnmarshalSecurityGroupTargetReferenceNetworkInterfaceReferenceTargetContext unmarshals an instance of SecurityGroupTargetReferenceNetworkInterfaceReferenceTargetContext from the specified map of raw messages.
 func UnmarshalSecurityGroupTargetReferenceNetworkInterfaceReferenceTargetContext(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(SecurityGroupTargetReferenceNetworkInterfaceReferenceTargetContext)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalNetworkInterfaceReferenceTargetContextDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -115587,7 +119467,7 @@ type SecurityGroupTargetReferenceVPNServerReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *VPNServerReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this VPN server.
 	Href *string `json:"href" validate:"required"`
@@ -115620,7 +119500,7 @@ func UnmarshalSecurityGroupTargetReferenceVPNServerReference(m map[string]json.R
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalVPNServerReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -115657,7 +119537,7 @@ type SecurityGroupTargetReferenceVirtualNetworkInterfaceReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *VirtualNetworkInterfaceReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this virtual network interface.
 	Href *string `json:"href" validate:"required"`
@@ -115696,7 +119576,7 @@ func UnmarshalSecurityGroupTargetReferenceVirtualNetworkInterfaceReference(m map
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalVirtualNetworkInterfaceReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -115743,7 +119623,7 @@ type ShareAccessorBindingAccessorShareReference struct {
 
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *ShareReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this file share.
 	Href *string `json:"href" validate:"required"`
@@ -115780,7 +119660,7 @@ func UnmarshalShareAccessorBindingAccessorShareReference(m map[string]json.RawMe
 		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalShareReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -116336,7 +120216,6 @@ type ShareProfileCapacityDependentRange struct {
 // Constants associated with the ShareProfileCapacityDependentRange.Type property.
 // The type for this profile field.
 const (
-	ShareProfileCapacityDependentRangeTypeDependentConst      = "dependent"
 	ShareProfileCapacityDependentRangeTypeDependentRangeConst = "dependent_range"
 )
 
@@ -116375,7 +120254,7 @@ func UnmarshalShareProfileCapacityDependentRange(m map[string]json.RawMessage, r
 // This model "extends" ShareProfileCapacity
 type ShareProfileCapacityEnum struct {
 	// The default value for this profile field.
-	Default *int64 `json:"default" validate:"required"`
+	Default interface{} `json:"default" validate:"required"`
 
 	// The type for this profile field.
 	Type *string `json:"type" validate:"required"`
@@ -116533,7 +120412,6 @@ type ShareProfileIopsDependentRange struct {
 // Constants associated with the ShareProfileIopsDependentRange.Type property.
 // The type for this profile field.
 const (
-	ShareProfileIopsDependentRangeTypeDependentConst      = "dependent"
 	ShareProfileIopsDependentRangeTypeDependentRangeConst = "dependent_range"
 )
 
@@ -116936,8 +120814,8 @@ type SharePrototypeShareBySize struct {
 	// The maximum size for a share may increase in the future.
 	Size *int64 `json:"size" validate:"required"`
 
-	// The zone this file share will reside in. For a replica share, this must be a different
-	// zone in the same region as the source share.
+	// The zone this file share will reside in. For a replica share in the same region as
+	// the source share, this must be a different zone from the source share.
 	Zone ZoneIdentityIntf `json:"zone" validate:"required"`
 }
 
@@ -117098,6 +120976,9 @@ type SharePrototypeShareBySourceShare struct {
 	// The cron specification for the file share replication schedule.
 	//
 	// Replication of a share can be scheduled to occur at most once per hour.
+	//
+	// The scheduling frequency for this property may
+	// [increase](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	ReplicationCronSpec *string `json:"replication_cron_spec" validate:"required"`
 
 	// The resource group to use. If unspecified, the resource group from
@@ -117110,8 +120991,8 @@ type SharePrototypeShareBySourceShare struct {
 	// region](https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-replication).
 	SourceShare ShareIdentityIntf `json:"source_share" validate:"required"`
 
-	// The zone this file share will reside in. For a replica share, this must be a different
-	// zone in the same region as the source share.
+	// The zone this file share will reside in. For a replica share in the same region as
+	// the source share, this must be a different zone from the source share.
 	Zone ZoneIdentityIntf `json:"zone" validate:"required"`
 }
 
@@ -118263,7 +122144,7 @@ type VpcdnsResolverTypeSystem struct {
 	//
 	// - `custom_resolver`: A custom DNS resolver is configured for this VPC.
 	//
-	// - `private_resolver`: A private DNS resolver is configured for this VPC. Applicable when
+	// - `private_resolver`: A private DNS resolver is configured for this VPC. Applies when
 	//   the VPC has either or both of the following:
 	//
 	//     - at least one endpoint gateway residing in it
@@ -118287,7 +122168,7 @@ type VpcdnsResolverTypeSystem struct {
 //
 // - `custom_resolver`: A custom DNS resolver is configured for this VPC.
 //
-//   - `private_resolver`: A private DNS resolver is configured for this VPC. Applicable when
+//   - `private_resolver`: A private DNS resolver is configured for this VPC. Applies when
 //     the VPC has either or both of the following:
 //
 //   - at least one endpoint gateway residing in it
@@ -118948,7 +122829,7 @@ func UnmarshalVPNGatewayConnectionIkeIdentityVPNGatewayConnectionIkeIdentityKeyI
 // VPNGatewayConnectionIkePolicyPatchIkePolicyIdentityByHref : VPNGatewayConnectionIkePolicyPatchIkePolicyIdentityByHref struct
 // This model "extends" VPNGatewayConnectionIkePolicyPatch
 type VPNGatewayConnectionIkePolicyPatchIkePolicyIdentityByHref struct {
-	// The IKE policy's canonical URL.
+	// The URL for this IKE policy.
 	Href *string `json:"href" validate:"required"`
 }
 
@@ -119018,7 +122899,7 @@ func UnmarshalVPNGatewayConnectionIkePolicyPatchIkePolicyIdentityByID(m map[stri
 // VPNGatewayConnectionIkePolicyPrototypeIkePolicyIdentityByHref : VPNGatewayConnectionIkePolicyPrototypeIkePolicyIdentityByHref struct
 // This model "extends" VPNGatewayConnectionIkePolicyPrototype
 type VPNGatewayConnectionIkePolicyPrototypeIkePolicyIdentityByHref struct {
-	// The IKE policy's canonical URL.
+	// The URL for this IKE policy.
 	Href *string `json:"href" validate:"required"`
 }
 
@@ -119088,7 +122969,7 @@ func UnmarshalVPNGatewayConnectionIkePolicyPrototypeIkePolicyIdentityByID(m map[
 // VPNGatewayConnectionIPsecPolicyPatchIPsecPolicyIdentityByHref : VPNGatewayConnectionIPsecPolicyPatchIPsecPolicyIdentityByHref struct
 // This model "extends" VPNGatewayConnectionIPsecPolicyPatch
 type VPNGatewayConnectionIPsecPolicyPatchIPsecPolicyIdentityByHref struct {
-	// The IPsec policy's canonical URL.
+	// The URL for this IPsec policy.
 	Href *string `json:"href" validate:"required"`
 }
 
@@ -119158,7 +123039,7 @@ func UnmarshalVPNGatewayConnectionIPsecPolicyPatchIPsecPolicyIdentityByID(m map[
 // VPNGatewayConnectionIPsecPolicyPrototypeIPsecPolicyIdentityByHref : VPNGatewayConnectionIPsecPolicyPrototypeIPsecPolicyIdentityByHref struct
 // This model "extends" VPNGatewayConnectionIPsecPolicyPrototype
 type VPNGatewayConnectionIPsecPolicyPrototypeIPsecPolicyIdentityByHref struct {
-	// The IPsec policy's canonical URL.
+	// The URL for this IPsec policy.
 	Href *string `json:"href" validate:"required"`
 }
 
@@ -119319,7 +123200,10 @@ type VPNGatewayConnectionPolicyMode struct {
 	// If set to false, the VPN gateway connection is shut down.
 	AdminStateUp *bool `json:"admin_state_up" validate:"required"`
 
-	// The authentication mode. Only `psk` is currently supported.
+	// The authentication mode.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	AuthenticationMode *string `json:"authentication_mode" validate:"required"`
 
 	// The date and time that this VPN gateway connection was created.
@@ -119336,7 +123220,7 @@ type VPNGatewayConnectionPolicyMode struct {
 	//    connection will be brought down after its lifetime expires.
 	EstablishMode *string `json:"establish_mode" validate:"required"`
 
-	// The VPN connection's canonical URL.
+	// The URL for this VPN gateway connection.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this VPN gateway connection.
@@ -119351,6 +123235,9 @@ type VPNGatewayConnectionPolicyMode struct {
 	IpsecPolicy *IPsecPolicyReference `json:"ipsec_policy,omitempty"`
 
 	// The mode of the VPN gateway.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Mode *string `json:"mode" validate:"required"`
 
 	// The name for this VPN gateway connection. The name is unique across all connections for the VPN gateway.
@@ -119374,7 +123261,10 @@ type VPNGatewayConnectionPolicyMode struct {
 }
 
 // Constants associated with the VPNGatewayConnectionPolicyMode.AuthenticationMode property.
-// The authentication mode. Only `psk` is currently supported.
+// The authentication mode.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNGatewayConnectionPolicyModeAuthenticationModePskConst = "psk"
 )
@@ -119394,6 +123284,9 @@ const (
 
 // Constants associated with the VPNGatewayConnectionPolicyMode.Mode property.
 // The mode of the VPN gateway.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNGatewayConnectionPolicyModeModePolicyConst = "policy"
 	VPNGatewayConnectionPolicyModeModeRouteConst  = "route"
@@ -119872,6 +123765,13 @@ type VPNGatewayConnectionPrototypeVPNGatewayConnectionStaticRouteModePrototype s
 	// The pre-shared key.
 	Psk *string `json:"psk" validate:"required"`
 
+	// Indicates whether the traffic is distributed between the `up` tunnels of the VPN gateway connection when the VPC
+	// route's next hop is a VPN connection. If `false`, the traffic is only routed through the `up` tunnel with the lower
+	// `public_ip` address. Before enabling it on VPN connections to on-prem private networks, review
+	// [distributing traffic
+	// restrictions](https://cloud.ibm.com/docs/vpc?topic=vpc-vpn-limitations#distributing-traffic-restrictions).
+	DistributeTraffic *bool `json:"distribute_traffic,omitempty"`
+
 	Local *VPNGatewayConnectionStaticRouteModeLocalPrototype `json:"local,omitempty"`
 
 	Peer VPNGatewayConnectionStaticRouteModePeerPrototypeIntf `json:"peer" validate:"required"`
@@ -119954,6 +123854,11 @@ func UnmarshalVPNGatewayConnectionPrototypeVPNGatewayConnectionStaticRouteModePr
 		err = core.SDKErrorf(err, "", "psk-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "distribute_traffic", &obj.DistributeTraffic)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "distribute_traffic-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "local", &obj.Local, UnmarshalVPNGatewayConnectionStaticRouteModeLocalPrototype)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "local-error", common.GetComponentInfo())
@@ -119981,7 +123886,10 @@ type VPNGatewayConnectionRouteMode struct {
 	// If set to false, the VPN gateway connection is shut down.
 	AdminStateUp *bool `json:"admin_state_up" validate:"required"`
 
-	// The authentication mode. Only `psk` is currently supported.
+	// The authentication mode.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	AuthenticationMode *string `json:"authentication_mode" validate:"required"`
 
 	// The date and time that this VPN gateway connection was created.
@@ -119998,7 +123906,7 @@ type VPNGatewayConnectionRouteMode struct {
 	//    connection will be brought down after its lifetime expires.
 	EstablishMode *string `json:"establish_mode" validate:"required"`
 
-	// The VPN connection's canonical URL.
+	// The URL for this VPN gateway connection.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this VPN gateway connection.
@@ -120013,6 +123921,9 @@ type VPNGatewayConnectionRouteMode struct {
 	IpsecPolicy *IPsecPolicyReference `json:"ipsec_policy,omitempty"`
 
 	// The mode of the VPN gateway.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Mode *string `json:"mode" validate:"required"`
 
 	// The name for this VPN gateway connection. The name is unique across all connections for the VPN gateway.
@@ -120030,6 +123941,11 @@ type VPNGatewayConnectionRouteMode struct {
 	// The reasons for the current VPN gateway connection status (if any).
 	StatusReasons []VPNGatewayConnectionStatusReason `json:"status_reasons" validate:"required"`
 
+	// Indicates whether the traffic is distributed between the `up` tunnels of the VPN gateway connection when the VPC
+	// route's next hop is a VPN connection. If `false`, the traffic is only routed through the `up` tunnel with the lower
+	// `public_ip` address.
+	DistributeTraffic *bool `json:"distribute_traffic,omitempty"`
+
 	Local *VPNGatewayConnectionStaticRouteModeLocal `json:"local,omitempty"`
 
 	Peer VPNGatewayConnectionStaticRouteModePeerIntf `json:"peer,omitempty"`
@@ -120042,7 +123958,10 @@ type VPNGatewayConnectionRouteMode struct {
 }
 
 // Constants associated with the VPNGatewayConnectionRouteMode.AuthenticationMode property.
-// The authentication mode. Only `psk` is currently supported.
+// The authentication mode.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNGatewayConnectionRouteModeAuthenticationModePskConst = "psk"
 )
@@ -120062,6 +123981,9 @@ const (
 
 // Constants associated with the VPNGatewayConnectionRouteMode.Mode property.
 // The mode of the VPN gateway.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNGatewayConnectionRouteModeModePolicyConst = "policy"
 	VPNGatewayConnectionRouteModeModeRouteConst  = "route"
@@ -120320,7 +124242,7 @@ type VPNGatewayPolicyMode struct {
 	// The date and time that this VPN gateway was created.
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
-	// The VPN gateway's CRN.
+	// The CRN for this VPN gateway.
 	CRN *string `json:"crn" validate:"required"`
 
 	// The reasons for the current `health_state` (if any).
@@ -120335,7 +124257,7 @@ type VPNGatewayPolicyMode struct {
 	//    health state of `inapplicable`. A `pending` resource may also have this state.
 	HealthState *string `json:"health_state" validate:"required"`
 
-	// The VPN gateway's canonical URL.
+	// The URL for this VPN gateway.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this VPN gateway.
@@ -120347,7 +124269,7 @@ type VPNGatewayPolicyMode struct {
 	// The lifecycle state of the VPN gateway.
 	LifecycleState *string `json:"lifecycle_state" validate:"required"`
 
-	// Collection of VPN gateway members.
+	// The members for the VPN gateway.
 	Members []VPNGatewayMember `json:"members" validate:"required"`
 
 	// The name for this VPN gateway. The name is unique across all VPN gateways in the VPC.
@@ -120635,7 +124557,7 @@ type VPNGatewayRouteMode struct {
 	// The date and time that this VPN gateway was created.
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
 
-	// The VPN gateway's CRN.
+	// The CRN for this VPN gateway.
 	CRN *string `json:"crn" validate:"required"`
 
 	// The reasons for the current `health_state` (if any).
@@ -120650,7 +124572,7 @@ type VPNGatewayRouteMode struct {
 	//    health state of `inapplicable`. A `pending` resource may also have this state.
 	HealthState *string `json:"health_state" validate:"required"`
 
-	// The VPN gateway's canonical URL.
+	// The URL for this VPN gateway.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this VPN gateway.
@@ -120662,7 +124584,7 @@ type VPNGatewayRouteMode struct {
 	// The lifecycle state of the VPN gateway.
 	LifecycleState *string `json:"lifecycle_state" validate:"required"`
 
-	// Collection of VPN gateway members.
+	// The members for the VPN gateway.
 	Members []VPNGatewayMember `json:"members" validate:"required"`
 
 	// The name for this VPN gateway. The name is unique across all VPN gateways in the VPC.
@@ -120817,6 +124739,9 @@ func UnmarshalVPNGatewayRouteMode(m map[string]json.RawMessage, result interface
 // This model "extends" VPNServerAuthentication
 type VPNServerAuthenticationByCertificate struct {
 	// The type of authentication.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Method *string `json:"method" validate:"required"`
 
 	// The certificate instance used for the VPN client certificate authority (CA).
@@ -120828,6 +124753,9 @@ type VPNServerAuthenticationByCertificate struct {
 
 // Constants associated with the VPNServerAuthenticationByCertificate.Method property.
 // The type of authentication.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNServerAuthenticationByCertificateMethodCertificateConst = "certificate"
 	VPNServerAuthenticationByCertificateMethodUsernameConst    = "username"
@@ -120863,6 +124791,9 @@ func UnmarshalVPNServerAuthenticationByCertificate(m map[string]json.RawMessage,
 // This model "extends" VPNServerAuthentication
 type VPNServerAuthenticationByUsername struct {
 	// The type of authentication.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Method *string `json:"method" validate:"required"`
 
 	// The type of identity provider to be used by VPN client.
@@ -120871,6 +124802,9 @@ type VPNServerAuthenticationByUsername struct {
 
 // Constants associated with the VPNServerAuthenticationByUsername.Method property.
 // The type of authentication.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNServerAuthenticationByUsernameMethodCertificateConst = "certificate"
 	VPNServerAuthenticationByUsernameMethodUsernameConst    = "username"
@@ -121344,7 +125278,7 @@ func UnmarshalVirtualNetworkInterfaceTargetInstanceNetworkAttachmentReferenceVir
 type VirtualNetworkInterfaceTargetShareMountTargetReference struct {
 	// If present, this property indicates the referenced resource has been deleted, and provides
 	// some supplementary information.
-	Deleted *ShareMountTargetReferenceDeleted `json:"deleted,omitempty"`
+	Deleted *Deleted `json:"deleted,omitempty"`
 
 	// The URL for this share mount target.
 	Href *string `json:"href" validate:"required"`
@@ -121372,7 +125306,7 @@ func (*VirtualNetworkInterfaceTargetShareMountTargetReference) isaVirtualNetwork
 // UnmarshalVirtualNetworkInterfaceTargetShareMountTargetReference unmarshals an instance of VirtualNetworkInterfaceTargetShareMountTargetReference from the specified map of raw messages.
 func UnmarshalVirtualNetworkInterfaceTargetShareMountTargetReference(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(VirtualNetworkInterfaceTargetShareMountTargetReference)
-	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalShareMountTargetReferenceDeleted)
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
 		return
@@ -121459,8 +125393,8 @@ func UnmarshalVolumeAttachmentPrototypeVolumeVolumeIdentity(m map[string]json.Ra
 // - VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeBySourceSnapshot
 // This model "extends" VolumeAttachmentPrototypeVolume
 type VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContext struct {
-	// The maximum I/O operations per second (IOPS) to use for this volume. Applicable only to volumes using a profile
-	// `family` of `custom`.
+	// The maximum I/O operations per second (IOPS) to use for this volume. If specified, the `family` of the volume
+	// profile must be `custom` or `defined_performance`.
 	Iops *int64 `json:"iops,omitempty"`
 
 	// The name for this volume. The name must not be used by another volume in the region. If unspecified, the name will
@@ -121478,10 +125412,8 @@ type VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContext struct {
 	// The [user tags](https://cloud.ibm.com/apidocs/tagging#types-of-tags) associated with this volume.
 	UserTags []string `json:"user_tags,omitempty"`
 
-	// The capacity to use for the volume (in gigabytes).
-	//
-	// The minimum and maximum limits for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	// The capacity to use for the volume (in gigabytes). The specified value must be within the `capacity` range of the
+	// volume's profile.
 	Capacity *int64 `json:"capacity,omitempty"`
 
 	// The root key to use to wrap the data encryption key for the volume.
@@ -121489,7 +125421,9 @@ type VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContext struct {
 	// If unspecified, the `encryption` type for the volume will be `provider_managed`.
 	EncryptionKey EncryptionKeyIdentityIntf `json:"encryption_key,omitempty"`
 
-	// The snapshot from which to clone the volume.
+	// The snapshot to use as a source for the volume's data.
+	//
+	// The specified snapshot may be in a different account, subject to IAM policies.
 	SourceSnapshot SnapshotIdentityIntf `json:"source_snapshot,omitempty"`
 }
 
@@ -121658,6 +125592,594 @@ func UnmarshalVolumeIdentityByID(m map[string]json.RawMessage, result interface{
 	return
 }
 
+// VolumeProfileBootCapacityDependentRange : The permitted total capacity (in gigabytes) of a boot volume with this profile depends on its configuration.
+// This model "extends" VolumeProfileBootCapacity
+type VolumeProfileBootCapacityDependentRange struct {
+	// The maximum value for this profile field.
+	Max *int64 `json:"max" validate:"required"`
+
+	// The minimum value for this profile field.
+	Min *int64 `json:"min" validate:"required"`
+
+	// The increment step value for this profile field.
+	Step *int64 `json:"step" validate:"required"`
+
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+}
+
+// Constants associated with the VolumeProfileBootCapacityDependentRange.Type property.
+// The type for this profile field.
+const (
+	VolumeProfileBootCapacityDependentRangeTypeDependentRangeConst = "dependent_range"
+)
+
+func (*VolumeProfileBootCapacityDependentRange) isaVolumeProfileBootCapacity() bool {
+	return true
+}
+
+// UnmarshalVolumeProfileBootCapacityDependentRange unmarshals an instance of VolumeProfileBootCapacityDependentRange from the specified map of raw messages.
+func UnmarshalVolumeProfileBootCapacityDependentRange(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VolumeProfileBootCapacityDependentRange)
+	err = core.UnmarshalPrimitive(m, "max", &obj.Max)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "max-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "min", &obj.Min)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "min-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "step", &obj.Step)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "step-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VolumeProfileBootCapacityEnum : The permitted total capacities (in gigabytes) of a boot volume with this profile.
+// This model "extends" VolumeProfileBootCapacity
+type VolumeProfileBootCapacityEnum struct {
+	// The default value for this profile field.
+	Default *int64 `json:"default" validate:"required"`
+
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+
+	// The permitted values for this profile field.
+	Values []int64 `json:"values" validate:"required"`
+}
+
+// Constants associated with the VolumeProfileBootCapacityEnum.Type property.
+// The type for this profile field.
+const (
+	VolumeProfileBootCapacityEnumTypeEnumConst = "enum"
+)
+
+func (*VolumeProfileBootCapacityEnum) isaVolumeProfileBootCapacity() bool {
+	return true
+}
+
+// UnmarshalVolumeProfileBootCapacityEnum unmarshals an instance of VolumeProfileBootCapacityEnum from the specified map of raw messages.
+func UnmarshalVolumeProfileBootCapacityEnum(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VolumeProfileBootCapacityEnum)
+	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "default-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "values", &obj.Values)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "values-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VolumeProfileBootCapacityFixed : The permitted total capacity (in gigabytes) of a boot volume with this profile is fixed.
+// This model "extends" VolumeProfileBootCapacity
+type VolumeProfileBootCapacityFixed struct {
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+
+	// The value for this profile field.
+	Value *int64 `json:"value" validate:"required"`
+}
+
+// Constants associated with the VolumeProfileBootCapacityFixed.Type property.
+// The type for this profile field.
+const (
+	VolumeProfileBootCapacityFixedTypeFixedConst = "fixed"
+)
+
+func (*VolumeProfileBootCapacityFixed) isaVolumeProfileBootCapacity() bool {
+	return true
+}
+
+// UnmarshalVolumeProfileBootCapacityFixed unmarshals an instance of VolumeProfileBootCapacityFixed from the specified map of raw messages.
+func UnmarshalVolumeProfileBootCapacityFixed(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VolumeProfileBootCapacityFixed)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VolumeProfileBootCapacityRange : The permitted total capacity range (in gigabytes) of a boot volume with this profile.
+// This model "extends" VolumeProfileBootCapacity
+type VolumeProfileBootCapacityRange struct {
+	// The default value for this profile field.
+	Default *int64 `json:"default" validate:"required"`
+
+	// The maximum value for this profile field.
+	Max *int64 `json:"max" validate:"required"`
+
+	// The minimum value for this profile field.
+	Min *int64 `json:"min" validate:"required"`
+
+	// The increment step value for this profile field.
+	Step *int64 `json:"step" validate:"required"`
+
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+}
+
+// Constants associated with the VolumeProfileBootCapacityRange.Type property.
+// The type for this profile field.
+const (
+	VolumeProfileBootCapacityRangeTypeRangeConst = "range"
+)
+
+func (*VolumeProfileBootCapacityRange) isaVolumeProfileBootCapacity() bool {
+	return true
+}
+
+// UnmarshalVolumeProfileBootCapacityRange unmarshals an instance of VolumeProfileBootCapacityRange from the specified map of raw messages.
+func UnmarshalVolumeProfileBootCapacityRange(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VolumeProfileBootCapacityRange)
+	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "default-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "max", &obj.Max)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "max-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "min", &obj.Min)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "min-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "step", &obj.Step)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "step-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VolumeProfileCapacityDependentRange : The permitted total capacity (in gigabytes) of a data volume with this profile depends on its configuration.
+// This model "extends" VolumeProfileCapacity
+type VolumeProfileCapacityDependentRange struct {
+	// The maximum value for this profile field.
+	Max *int64 `json:"max" validate:"required"`
+
+	// The minimum value for this profile field.
+	Min *int64 `json:"min" validate:"required"`
+
+	// The increment step value for this profile field.
+	Step *int64 `json:"step" validate:"required"`
+
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+}
+
+// Constants associated with the VolumeProfileCapacityDependentRange.Type property.
+// The type for this profile field.
+const (
+	VolumeProfileCapacityDependentRangeTypeDependentRangeConst = "dependent_range"
+)
+
+func (*VolumeProfileCapacityDependentRange) isaVolumeProfileCapacity() bool {
+	return true
+}
+
+// UnmarshalVolumeProfileCapacityDependentRange unmarshals an instance of VolumeProfileCapacityDependentRange from the specified map of raw messages.
+func UnmarshalVolumeProfileCapacityDependentRange(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VolumeProfileCapacityDependentRange)
+	err = core.UnmarshalPrimitive(m, "max", &obj.Max)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "max-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "min", &obj.Min)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "min-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "step", &obj.Step)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "step-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VolumeProfileCapacityEnum : The permitted total capacities (in gigabytes) of a data volume with this profile.
+// This model "extends" VolumeProfileCapacity
+type VolumeProfileCapacityEnum struct {
+	// The default value for this profile field.
+	Default *int64 `json:"default" validate:"required"`
+
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+
+	// The permitted values for this profile field.
+	Values []int64 `json:"values" validate:"required"`
+}
+
+// Constants associated with the VolumeProfileCapacityEnum.Type property.
+// The type for this profile field.
+const (
+	VolumeProfileCapacityEnumTypeEnumConst = "enum"
+)
+
+func (*VolumeProfileCapacityEnum) isaVolumeProfileCapacity() bool {
+	return true
+}
+
+// UnmarshalVolumeProfileCapacityEnum unmarshals an instance of VolumeProfileCapacityEnum from the specified map of raw messages.
+func UnmarshalVolumeProfileCapacityEnum(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VolumeProfileCapacityEnum)
+	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "default-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "values", &obj.Values)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "values-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VolumeProfileCapacityFixed : The permitted total capacity (in gigabytes) of a data volume with this profile is fixed.
+// This model "extends" VolumeProfileCapacity
+type VolumeProfileCapacityFixed struct {
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+
+	// The value for this profile field.
+	Value *int64 `json:"value" validate:"required"`
+}
+
+// Constants associated with the VolumeProfileCapacityFixed.Type property.
+// The type for this profile field.
+const (
+	VolumeProfileCapacityFixedTypeFixedConst = "fixed"
+)
+
+func (*VolumeProfileCapacityFixed) isaVolumeProfileCapacity() bool {
+	return true
+}
+
+// UnmarshalVolumeProfileCapacityFixed unmarshals an instance of VolumeProfileCapacityFixed from the specified map of raw messages.
+func UnmarshalVolumeProfileCapacityFixed(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VolumeProfileCapacityFixed)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VolumeProfileCapacityRange : The permitted total capacity range (in gigabytes) of a data volume with this profile.
+// This model "extends" VolumeProfileCapacity
+type VolumeProfileCapacityRange struct {
+	// The default value for this profile field.
+	Default *int64 `json:"default" validate:"required"`
+
+	// The maximum value for this profile field.
+	Max *int64 `json:"max" validate:"required"`
+
+	// The minimum value for this profile field.
+	Min *int64 `json:"min" validate:"required"`
+
+	// The increment step value for this profile field.
+	Step *int64 `json:"step" validate:"required"`
+
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+}
+
+// Constants associated with the VolumeProfileCapacityRange.Type property.
+// The type for this profile field.
+const (
+	VolumeProfileCapacityRangeTypeRangeConst = "range"
+)
+
+func (*VolumeProfileCapacityRange) isaVolumeProfileCapacity() bool {
+	return true
+}
+
+// UnmarshalVolumeProfileCapacityRange unmarshals an instance of VolumeProfileCapacityRange from the specified map of raw messages.
+func UnmarshalVolumeProfileCapacityRange(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VolumeProfileCapacityRange)
+	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "default-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "max", &obj.Max)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "max-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "min", &obj.Min)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "min-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "step", &obj.Step)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "step-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VolumeProfileIopsDependentRange : The permitted IOPS range of a volume with this profile depends on its configuration.
+// This model "extends" VolumeProfileIops
+type VolumeProfileIopsDependentRange struct {
+	// The maximum value for this profile field.
+	Max *int64 `json:"max" validate:"required"`
+
+	// The minimum value for this profile field.
+	Min *int64 `json:"min" validate:"required"`
+
+	// The increment step value for this profile field.
+	Step *int64 `json:"step" validate:"required"`
+
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+}
+
+// Constants associated with the VolumeProfileIopsDependentRange.Type property.
+// The type for this profile field.
+const (
+	VolumeProfileIopsDependentRangeTypeDependentRangeConst = "dependent_range"
+)
+
+func (*VolumeProfileIopsDependentRange) isaVolumeProfileIops() bool {
+	return true
+}
+
+// UnmarshalVolumeProfileIopsDependentRange unmarshals an instance of VolumeProfileIopsDependentRange from the specified map of raw messages.
+func UnmarshalVolumeProfileIopsDependentRange(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VolumeProfileIopsDependentRange)
+	err = core.UnmarshalPrimitive(m, "max", &obj.Max)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "max-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "min", &obj.Min)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "min-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "step", &obj.Step)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "step-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VolumeProfileIopsEnum : The permitted IOPS values of a volume with this profile.
+// This model "extends" VolumeProfileIops
+type VolumeProfileIopsEnum struct {
+	// The default value for this profile field.
+	Default *int64 `json:"default" validate:"required"`
+
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+
+	// The permitted values for this profile field.
+	Values []int64 `json:"values" validate:"required"`
+}
+
+// Constants associated with the VolumeProfileIopsEnum.Type property.
+// The type for this profile field.
+const (
+	VolumeProfileIopsEnumTypeEnumConst = "enum"
+)
+
+func (*VolumeProfileIopsEnum) isaVolumeProfileIops() bool {
+	return true
+}
+
+// UnmarshalVolumeProfileIopsEnum unmarshals an instance of VolumeProfileIopsEnum from the specified map of raw messages.
+func UnmarshalVolumeProfileIopsEnum(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VolumeProfileIopsEnum)
+	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "default-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "values", &obj.Values)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "values-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VolumeProfileIopsFixed : The permitted IOPS of a volume with this profile is fixed.
+// This model "extends" VolumeProfileIops
+type VolumeProfileIopsFixed struct {
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+
+	// The value for this profile field.
+	Value *int64 `json:"value" validate:"required"`
+}
+
+// Constants associated with the VolumeProfileIopsFixed.Type property.
+// The type for this profile field.
+const (
+	VolumeProfileIopsFixedTypeFixedConst = "fixed"
+)
+
+func (*VolumeProfileIopsFixed) isaVolumeProfileIops() bool {
+	return true
+}
+
+// UnmarshalVolumeProfileIopsFixed unmarshals an instance of VolumeProfileIopsFixed from the specified map of raw messages.
+func UnmarshalVolumeProfileIopsFixed(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VolumeProfileIopsFixed)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "value-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// VolumeProfileIopsRange : The permitted IOPS range of a volume with this profile.
+// This model "extends" VolumeProfileIops
+type VolumeProfileIopsRange struct {
+	// The default value for this profile field.
+	Default *int64 `json:"default" validate:"required"`
+
+	// The maximum value for this profile field.
+	Max *int64 `json:"max" validate:"required"`
+
+	// The minimum value for this profile field.
+	Min *int64 `json:"min" validate:"required"`
+
+	// The increment step value for this profile field.
+	Step *int64 `json:"step" validate:"required"`
+
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+}
+
+// Constants associated with the VolumeProfileIopsRange.Type property.
+// The type for this profile field.
+const (
+	VolumeProfileIopsRangeTypeRangeConst = "range"
+)
+
+func (*VolumeProfileIopsRange) isaVolumeProfileIops() bool {
+	return true
+}
+
+// UnmarshalVolumeProfileIopsRange unmarshals an instance of VolumeProfileIopsRange from the specified map of raw messages.
+func UnmarshalVolumeProfileIopsRange(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(VolumeProfileIopsRange)
+	err = core.UnmarshalPrimitive(m, "default", &obj.Default)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "default-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "max", &obj.Max)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "max-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "min", &obj.Min)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "min-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "step", &obj.Step)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "step-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // VolumeProfileIdentityByHref : VolumeProfileIdentityByHref struct
 // This model "extends" VolumeProfileIdentity
 type VolumeProfileIdentityByHref struct {
@@ -121731,8 +126253,8 @@ func UnmarshalVolumeProfileIdentityByName(m map[string]json.RawMessage, result i
 // VolumePrototypeVolumeByCapacity : VolumePrototypeVolumeByCapacity struct
 // This model "extends" VolumePrototype
 type VolumePrototypeVolumeByCapacity struct {
-	// The maximum I/O operations per second (IOPS) to use for this volume. Applicable only to volumes using a profile
-	// `family` of `custom`.
+	// The maximum I/O operations per second (IOPS) to use for this volume. If specified, the `family` of the volume
+	// profile must be `custom` or `defined_performance`.
 	Iops *int64 `json:"iops,omitempty"`
 
 	// The name for this volume. The name must not be used by another volume in the region. If unspecified, the name will
@@ -121750,10 +126272,8 @@ type VolumePrototypeVolumeByCapacity struct {
 	// The zone this volume will reside in.
 	Zone ZoneIdentityIntf `json:"zone" validate:"required"`
 
-	// The capacity to use for the volume (in gigabytes).
-	//
-	// The minimum and maximum limits for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	// The capacity to use for the volume (in gigabytes). The specified value must be within the `capacity` range of the
+	// volume's profile.
 	Capacity *int64 `json:"capacity" validate:"required"`
 
 	// The root key to use to wrap the data encryption key for the volume.
@@ -121830,8 +126350,8 @@ func UnmarshalVolumePrototypeVolumeByCapacity(m map[string]json.RawMessage, resu
 // VolumePrototypeVolumeBySourceSnapshot : VolumePrototypeVolumeBySourceSnapshot struct
 // This model "extends" VolumePrototype
 type VolumePrototypeVolumeBySourceSnapshot struct {
-	// The maximum I/O operations per second (IOPS) to use for this volume. Applicable only to volumes using a profile
-	// `family` of `custom`.
+	// The maximum I/O operations per second (IOPS) to use for this volume. If specified, the `family` of the volume
+	// profile must be `custom` or `defined_performance`.
 	Iops *int64 `json:"iops,omitempty"`
 
 	// The name for this volume. The name must not be used by another volume in the region. If unspecified, the name will
@@ -121849,8 +126369,8 @@ type VolumePrototypeVolumeBySourceSnapshot struct {
 	// The zone this volume will reside in.
 	Zone ZoneIdentityIntf `json:"zone" validate:"required"`
 
-	// The capacity to use for the volume (in gigabytes). Must be at least the snapshot's
-	// `minimum_capacity`. The maximum value may increase in the future.
+	// The capacity to use for the volume (in gigabytes). The specified value must be at least the snapshot's
+	// `minimum_capacity`, and must be within the `capacity` range of the volume's profile.
 	//
 	// If unspecified, the capacity will be the source snapshot's `minimum_capacity`.
 	Capacity *int64 `json:"capacity,omitempty"`
@@ -121860,7 +126380,9 @@ type VolumePrototypeVolumeBySourceSnapshot struct {
 	// If unspecified, the `encryption` type for the volume will be `provider_managed`.
 	EncryptionKey EncryptionKeyIdentityIntf `json:"encryption_key,omitempty"`
 
-	// The snapshot from which to clone the volume.
+	// The snapshot to use as a source for the volume's data.
+	//
+	// The specified snapshot may be in a different account, subject to IAM policies.
 	SourceSnapshot SnapshotIdentityIntf `json:"source_snapshot" validate:"required"`
 }
 
@@ -122232,117 +126754,6 @@ func UnmarshalEndpointGatewayReservedIPReservedIPIdentityByID(m map[string]json.
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// EndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRN : EndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRN struct
-// This model "extends" EndpointGatewayTargetPrototypeProviderCloudServiceIdentity
-type EndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRN struct {
-	// The type of target for this endpoint gateway.
-	ResourceType *string `json:"resource_type" validate:"required"`
-
-	// The CRN for this provider cloud service, or the CRN for the user's instance of a provider cloud service.
-	CRN *string `json:"crn" validate:"required"`
-}
-
-// Constants associated with the EndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRN.ResourceType property.
-// The type of target for this endpoint gateway.
-const (
-	EndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRNResourceTypeProviderCloudServiceConst          = "provider_cloud_service"
-	EndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRNResourceTypeProviderInfrastructureServiceConst = "provider_infrastructure_service"
-)
-
-// NewEndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRN : Instantiate EndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRN (Generic Model Constructor)
-func (*VpcV1) NewEndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRN(resourceType string, crn string) (_model *EndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRN, err error) {
-	_model = &EndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRN{
-		ResourceType: core.StringPtr(resourceType),
-		CRN:          core.StringPtr(crn),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
-	}
-	return
-}
-
-func (*EndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRN) isaEndpointGatewayTargetPrototypeProviderCloudServiceIdentity() bool {
-	return true
-}
-
-func (*EndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRN) isaEndpointGatewayTargetPrototype() bool {
-	return true
-}
-
-// UnmarshalEndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRN unmarshals an instance of EndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRN from the specified map of raw messages.
-func UnmarshalEndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRN(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(EndpointGatewayTargetPrototypeProviderCloudServiceIdentityProviderCloudServiceIdentityByCRN)
-	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
-// EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityProviderInfrastructureServiceIdentityByName : The name of this provider infrastructure service.
-// This model "extends" EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentity
-type EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityProviderInfrastructureServiceIdentityByName struct {
-	// The type of target for this endpoint gateway.
-	ResourceType *string `json:"resource_type" validate:"required"`
-
-	// The name of a provider infrastructure service. Must be:
-	// - `ibm-ntp-server`: An NTP (Network Time Protocol) server provided by IBM.
-	Name *string `json:"name" validate:"required"`
-}
-
-// Constants associated with the EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityProviderInfrastructureServiceIdentityByName.ResourceType property.
-// The type of target for this endpoint gateway.
-const (
-	EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityProviderInfrastructureServiceIdentityByNameResourceTypeProviderCloudServiceConst          = "provider_cloud_service"
-	EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityProviderInfrastructureServiceIdentityByNameResourceTypeProviderInfrastructureServiceConst = "provider_infrastructure_service"
-)
-
-// NewEndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityProviderInfrastructureServiceIdentityByName : Instantiate EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityProviderInfrastructureServiceIdentityByName (Generic Model Constructor)
-func (*VpcV1) NewEndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityProviderInfrastructureServiceIdentityByName(resourceType string, name string) (_model *EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityProviderInfrastructureServiceIdentityByName, err error) {
-	_model = &EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityProviderInfrastructureServiceIdentityByName{
-		ResourceType: core.StringPtr(resourceType),
-		Name:         core.StringPtr(name),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
-	}
-	return
-}
-
-func (*EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityProviderInfrastructureServiceIdentityByName) isaEndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentity() bool {
-	return true
-}
-
-func (*EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityProviderInfrastructureServiceIdentityByName) isaEndpointGatewayTargetPrototype() bool {
-	return true
-}
-
-// UnmarshalEndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityProviderInfrastructureServiceIdentityByName unmarshals an instance of EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityProviderInfrastructureServiceIdentityByName from the specified map of raw messages.
-func UnmarshalEndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityProviderInfrastructureServiceIdentityByName(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(EndpointGatewayTargetPrototypeProviderInfrastructureServiceIdentityProviderInfrastructureServiceIdentityByName)
-	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -123693,13 +128104,11 @@ func UnmarshalInstanceGroupManagerActionPrototypeScheduledActionPrototypeByRunAt
 // This model "extends" InstanceGroupManagerActionScheduledAction
 type InstanceGroupManagerActionScheduledActionGroupTarget struct {
 	// Indicates whether this scheduled action will be automatically deleted after it has completed and
-	// `auto_delete_timeout` hours have passed. At present, this is always
-	// `true`, but may be modifiable in the future.
+	// `auto_delete_timeout` hours have passed.
 	AutoDelete *bool `json:"auto_delete" validate:"required"`
 
 	// If `auto_delete` is `true`, and this scheduled action has finished, the hours after which it will be automatically
-	// deleted. If the value is `0`, the action will be deleted once it has finished. This value may be modifiable in the
-	// future.
+	// deleted. If the value is `0`, the action will be deleted once it has finished.
 	AutoDeleteTimeout *int64 `json:"auto_delete_timeout" validate:"required"`
 
 	// The date and time that the instance group manager action was created.
@@ -123723,7 +128132,10 @@ type InstanceGroupManagerActionScheduledActionGroupTarget struct {
 	// - `completed`: Action was completed successfully
 	// - `failed`: Action could not be completed successfully
 	// - `incompatible`: Action parameters are not compatible with the group or manager
-	// - `omitted`: Action was not applied because this action's manager was disabled.
+	// - `omitted`: Action was not applied because this action's manager was disabled
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 
 	// The date and time that the instance group manager action was updated.
@@ -123758,7 +128170,10 @@ const (
 // - `completed`: Action was completed successfully
 // - `failed`: Action could not be completed successfully
 // - `incompatible`: Action parameters are not compatible with the group or manager
-// - `omitted`: Action was not applied because this action's manager was disabled.
+// - `omitted`: Action was not applied because this action's manager was disabled
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	InstanceGroupManagerActionScheduledActionGroupTargetStatusActiveConst       = "active"
 	InstanceGroupManagerActionScheduledActionGroupTargetStatusCompletedConst    = "completed"
@@ -123862,13 +128277,11 @@ func UnmarshalInstanceGroupManagerActionScheduledActionGroupTarget(m map[string]
 // This model "extends" InstanceGroupManagerActionScheduledAction
 type InstanceGroupManagerActionScheduledActionManagerTarget struct {
 	// Indicates whether this scheduled action will be automatically deleted after it has completed and
-	// `auto_delete_timeout` hours have passed. At present, this is always
-	// `true`, but may be modifiable in the future.
+	// `auto_delete_timeout` hours have passed.
 	AutoDelete *bool `json:"auto_delete" validate:"required"`
 
 	// If `auto_delete` is `true`, and this scheduled action has finished, the hours after which it will be automatically
-	// deleted. If the value is `0`, the action will be deleted once it has finished. This value may be modifiable in the
-	// future.
+	// deleted. If the value is `0`, the action will be deleted once it has finished.
 	AutoDeleteTimeout *int64 `json:"auto_delete_timeout" validate:"required"`
 
 	// The date and time that the instance group manager action was created.
@@ -123892,7 +128305,10 @@ type InstanceGroupManagerActionScheduledActionManagerTarget struct {
 	// - `completed`: Action was completed successfully
 	// - `failed`: Action could not be completed successfully
 	// - `incompatible`: Action parameters are not compatible with the group or manager
-	// - `omitted`: Action was not applied because this action's manager was disabled.
+	// - `omitted`: Action was not applied because this action's manager was disabled
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Status *string `json:"status" validate:"required"`
 
 	// The date and time that the instance group manager action was updated.
@@ -123927,7 +128343,10 @@ const (
 // - `completed`: Action was completed successfully
 // - `failed`: Action could not be completed successfully
 // - `incompatible`: Action parameters are not compatible with the group or manager
-// - `omitted`: Action was not applied because this action's manager was disabled.
+// - `omitted`: Action was not applied because this action's manager was disabled
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	InstanceGroupManagerActionScheduledActionManagerTargetStatusActiveConst       = "active"
 	InstanceGroupManagerActionScheduledActionManagerTargetStatusCompletedConst    = "completed"
@@ -129500,7 +133919,7 @@ func UnmarshalInstanceTemplateInstanceBySourceSnapshotInstanceTemplateContextIns
 // LoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentityLoadBalancerPoolIdentityLoadBalancerPoolIdentityByHref : LoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentityLoadBalancerPoolIdentityLoadBalancerPoolIdentityByHref struct
 // This model "extends" LoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentity
 type LoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentityLoadBalancerPoolIdentityLoadBalancerPoolIdentityByHref struct {
-	// The pool's canonical URL.
+	// The URL for this load balancer pool.
 	Href *string `json:"href" validate:"required"`
 }
 
@@ -129578,7 +133997,7 @@ func UnmarshalLoadBalancerListenerPolicyTargetPatchLoadBalancerPoolIdentityLoadB
 // LoadBalancerListenerPolicyTargetPrototypeLoadBalancerPoolIdentityLoadBalancerPoolIdentityLoadBalancerPoolIdentityByHref : LoadBalancerListenerPolicyTargetPrototypeLoadBalancerPoolIdentityLoadBalancerPoolIdentityLoadBalancerPoolIdentityByHref struct
 // This model "extends" LoadBalancerListenerPolicyTargetPrototypeLoadBalancerPoolIdentity
 type LoadBalancerListenerPolicyTargetPrototypeLoadBalancerPoolIdentityLoadBalancerPoolIdentityLoadBalancerPoolIdentityByHref struct {
-	// The pool's canonical URL.
+	// The URL for this load balancer pool.
 	Href *string `json:"href" validate:"required"`
 }
 
@@ -130329,7 +134748,7 @@ func UnmarshalRouteNextHopPatchRouteNextHopIPRouteNextHopIPUnicastIP(m map[strin
 // RouteNextHopPatchVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref : RouteNextHopPatchVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref struct
 // This model "extends" RouteNextHopPatchVPNGatewayConnectionIdentity
 type RouteNextHopPatchVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref struct {
-	// The VPN connection's canonical URL.
+	// The URL for this VPN gateway connection.
 	Href *string `json:"href" validate:"required"`
 }
 
@@ -130404,9 +134823,9 @@ func UnmarshalRouteNextHopPatchVPNGatewayConnectionIdentityVPNGatewayConnectionI
 	return
 }
 
-// RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP : RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP struct
-// This model "extends" RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIP
-type RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP struct {
+// RouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP : RouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP struct
+// This model "extends" RouteNextHopPrototypeRouteNextHopIP
+type RouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP struct {
 	// The sentinel IP address (`0.0.0.0`).
 	//
 	// This property may [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) to support IPv6 addresses in
@@ -130414,9 +134833,9 @@ type RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototy
 	Address *string `json:"address" validate:"required"`
 }
 
-// NewRoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP : Instantiate RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP (Generic Model Constructor)
-func (*VpcV1) NewRoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP(address string) (_model *RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP, err error) {
-	_model = &RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP{
+// NewRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP : Instantiate RouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP (Generic Model Constructor)
+func (*VpcV1) NewRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP(address string) (_model *RouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP, err error) {
+	_model = &RouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP{
 		Address: core.StringPtr(address),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -130426,17 +134845,17 @@ func (*VpcV1) NewRoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNe
 	return
 }
 
-func (*RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP) isaRoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIP() bool {
+func (*RouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP) isaRouteNextHopPrototypeRouteNextHopIP() bool {
 	return true
 }
 
-func (*RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP) isaRoutePrototypeNextHop() bool {
+func (*RouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP) isaRouteNextHopPrototype() bool {
 	return true
 }
 
-// UnmarshalRoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP unmarshals an instance of RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP from the specified map of raw messages.
-func UnmarshalRoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP)
+// UnmarshalRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP unmarshals an instance of RouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP from the specified map of raw messages.
+func UnmarshalRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RouteNextHopPrototypeRouteNextHopIPRouteNextHopIPSentinelIP)
 	err = core.UnmarshalPrimitive(m, "address", &obj.Address)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "address-error", common.GetComponentInfo())
@@ -130446,9 +134865,9 @@ func UnmarshalRoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextH
 	return
 }
 
-// RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP : RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP struct
-// This model "extends" RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIP
-type RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP struct {
+// RouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP : RouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP struct
+// This model "extends" RouteNextHopPrototypeRouteNextHopIP
+type RouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP struct {
 	// A unicast IP address, which must not be any of the following values:
 	//
 	// - `0.0.0.0` (the sentinel IP address)
@@ -130460,9 +134879,9 @@ type RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototy
 	Address *string `json:"address" validate:"required"`
 }
 
-// NewRoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP : Instantiate RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP (Generic Model Constructor)
-func (*VpcV1) NewRoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP(address string) (_model *RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP, err error) {
-	_model = &RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP{
+// NewRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP : Instantiate RouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP (Generic Model Constructor)
+func (*VpcV1) NewRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP(address string) (_model *RouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP, err error) {
+	_model = &RouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP{
 		Address: core.StringPtr(address),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -130472,17 +134891,17 @@ func (*VpcV1) NewRoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNe
 	return
 }
 
-func (*RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP) isaRoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIP() bool {
+func (*RouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP) isaRouteNextHopPrototypeRouteNextHopIP() bool {
 	return true
 }
 
-func (*RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP) isaRoutePrototypeNextHop() bool {
+func (*RouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP) isaRouteNextHopPrototype() bool {
 	return true
 }
 
-// UnmarshalRoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP unmarshals an instance of RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP from the specified map of raw messages.
-func UnmarshalRoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(RoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP)
+// UnmarshalRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP unmarshals an instance of RouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP from the specified map of raw messages.
+func UnmarshalRouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RouteNextHopPrototypeRouteNextHopIPRouteNextHopIPUnicastIP)
 	err = core.UnmarshalPrimitive(m, "address", &obj.Address)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "address-error", common.GetComponentInfo())
@@ -130492,16 +134911,16 @@ func UnmarshalRoutePrototypeNextHopRouteNextHopPrototypeRouteNextHopIPRouteNextH
 	return
 }
 
-// RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref : RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref struct
-// This model "extends" RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentity
-type RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref struct {
-	// The VPN connection's canonical URL.
+// RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref : RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref struct
+// This model "extends" RouteNextHopPrototypeVPNGatewayConnectionIdentity
+type RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref struct {
+	// The URL for this VPN gateway connection.
 	Href *string `json:"href" validate:"required"`
 }
 
-// NewRoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref : Instantiate RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref (Generic Model Constructor)
-func (*VpcV1) NewRoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref(href string) (_model *RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref, err error) {
-	_model = &RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref{
+// NewRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref : Instantiate RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref (Generic Model Constructor)
+func (*VpcV1) NewRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref(href string) (_model *RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref, err error) {
+	_model = &RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref{
 		Href: core.StringPtr(href),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -130511,17 +134930,17 @@ func (*VpcV1) NewRoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionI
 	return
 }
 
-func (*RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref) isaRoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentity() bool {
+func (*RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref) isaRouteNextHopPrototypeVPNGatewayConnectionIdentity() bool {
 	return true
 }
 
-func (*RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref) isaRoutePrototypeNextHop() bool {
+func (*RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref) isaRouteNextHopPrototype() bool {
 	return true
 }
 
-// UnmarshalRoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref unmarshals an instance of RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref from the specified map of raw messages.
-func UnmarshalRoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref)
+// UnmarshalRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref unmarshals an instance of RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref from the specified map of raw messages.
+func UnmarshalRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByHref)
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
@@ -130531,16 +134950,16 @@ func UnmarshalRoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIden
 	return
 }
 
-// RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID : RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID struct
-// This model "extends" RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentity
-type RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID struct {
+// RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID : RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID struct
+// This model "extends" RouteNextHopPrototypeVPNGatewayConnectionIdentity
+type RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID struct {
 	// The unique identifier for this VPN gateway connection.
 	ID *string `json:"id" validate:"required"`
 }
 
-// NewRoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID : Instantiate RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID (Generic Model Constructor)
-func (*VpcV1) NewRoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID(id string) (_model *RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID, err error) {
-	_model = &RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID{
+// NewRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID : Instantiate RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID (Generic Model Constructor)
+func (*VpcV1) NewRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID(id string) (_model *RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID, err error) {
+	_model = &RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID{
 		ID: core.StringPtr(id),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -130550,17 +134969,17 @@ func (*VpcV1) NewRoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionI
 	return
 }
 
-func (*RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID) isaRoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentity() bool {
+func (*RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID) isaRouteNextHopPrototypeVPNGatewayConnectionIdentity() bool {
 	return true
 }
 
-func (*RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID) isaRoutePrototypeNextHop() bool {
+func (*RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID) isaRouteNextHopPrototype() bool {
 	return true
 }
 
-// UnmarshalRoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID unmarshals an instance of RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID from the specified map of raw messages.
-func UnmarshalRoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(RoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIdentityRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID)
+// UnmarshalRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID unmarshals an instance of RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID from the specified map of raw messages.
+func UnmarshalRouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RouteNextHopPrototypeVPNGatewayConnectionIdentityVPNGatewayConnectionIdentityByID)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
@@ -130573,7 +134992,7 @@ func UnmarshalRoutePrototypeNextHopRouteNextHopPrototypeVPNGatewayConnectionIden
 // SecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByCRN : SecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByCRN struct
 // This model "extends" SecurityGroupRuleRemotePatchSecurityGroupIdentity
 type SecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByCRN struct {
-	// The security group's CRN.
+	// The CRN for this security group.
 	CRN *string `json:"crn" validate:"required"`
 }
 
@@ -130612,7 +135031,7 @@ func UnmarshalSecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIden
 // SecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByHref : SecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByHref struct
 // This model "extends" SecurityGroupRuleRemotePatchSecurityGroupIdentity
 type SecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIdentityByHref struct {
-	// The security group's canonical URL.
+	// The URL for this security group.
 	Href *string `json:"href" validate:"required"`
 }
 
@@ -130690,7 +135109,7 @@ func UnmarshalSecurityGroupRuleRemotePatchSecurityGroupIdentitySecurityGroupIden
 // SecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByCRN : SecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByCRN struct
 // This model "extends" SecurityGroupRuleRemotePrototypeSecurityGroupIdentity
 type SecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByCRN struct {
-	// The security group's CRN.
+	// The CRN for this security group.
 	CRN *string `json:"crn" validate:"required"`
 }
 
@@ -130729,7 +135148,7 @@ func UnmarshalSecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroup
 // SecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByHref : SecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByHref struct
 // This model "extends" SecurityGroupRuleRemotePrototypeSecurityGroupIdentity
 type SecurityGroupRuleRemotePrototypeSecurityGroupIdentitySecurityGroupIdentityByHref struct {
-	// The security group's canonical URL.
+	// The URL for this security group.
 	Href *string `json:"href" validate:"required"`
 }
 
@@ -131035,7 +135454,10 @@ type VPNGatewayConnectionRouteModeVPNGatewayConnectionStaticRouteMode struct {
 	// If set to false, the VPN gateway connection is shut down.
 	AdminStateUp *bool `json:"admin_state_up" validate:"required"`
 
-	// The authentication mode. Only `psk` is currently supported.
+	// The authentication mode.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	AuthenticationMode *string `json:"authentication_mode" validate:"required"`
 
 	// The date and time that this VPN gateway connection was created.
@@ -131052,7 +135474,7 @@ type VPNGatewayConnectionRouteModeVPNGatewayConnectionStaticRouteMode struct {
 	//    connection will be brought down after its lifetime expires.
 	EstablishMode *string `json:"establish_mode" validate:"required"`
 
-	// The VPN connection's canonical URL.
+	// The URL for this VPN gateway connection.
 	Href *string `json:"href" validate:"required"`
 
 	// The unique identifier for this VPN gateway connection.
@@ -131067,6 +135489,9 @@ type VPNGatewayConnectionRouteModeVPNGatewayConnectionStaticRouteMode struct {
 	IpsecPolicy *IPsecPolicyReference `json:"ipsec_policy,omitempty"`
 
 	// The mode of the VPN gateway.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Mode *string `json:"mode" validate:"required"`
 
 	// The name for this VPN gateway connection. The name is unique across all connections for the VPN gateway.
@@ -131084,6 +135509,11 @@ type VPNGatewayConnectionRouteModeVPNGatewayConnectionStaticRouteMode struct {
 	// The reasons for the current VPN gateway connection status (if any).
 	StatusReasons []VPNGatewayConnectionStatusReason `json:"status_reasons" validate:"required"`
 
+	// Indicates whether the traffic is distributed between the `up` tunnels of the VPN gateway connection when the VPC
+	// route's next hop is a VPN connection. If `false`, the traffic is only routed through the `up` tunnel with the lower
+	// `public_ip` address.
+	DistributeTraffic *bool `json:"distribute_traffic" validate:"required"`
+
 	Local *VPNGatewayConnectionStaticRouteModeLocal `json:"local" validate:"required"`
 
 	Peer VPNGatewayConnectionStaticRouteModePeerIntf `json:"peer" validate:"required"`
@@ -131096,7 +135526,10 @@ type VPNGatewayConnectionRouteModeVPNGatewayConnectionStaticRouteMode struct {
 }
 
 // Constants associated with the VPNGatewayConnectionRouteModeVPNGatewayConnectionStaticRouteMode.AuthenticationMode property.
-// The authentication mode. Only `psk` is currently supported.
+// The authentication mode.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNGatewayConnectionRouteModeVPNGatewayConnectionStaticRouteModeAuthenticationModePskConst = "psk"
 )
@@ -131116,6 +135549,9 @@ const (
 
 // Constants associated with the VPNGatewayConnectionRouteModeVPNGatewayConnectionStaticRouteMode.Mode property.
 // The mode of the VPN gateway.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	VPNGatewayConnectionRouteModeVPNGatewayConnectionStaticRouteModeModePolicyConst = "policy"
 	VPNGatewayConnectionRouteModeVPNGatewayConnectionStaticRouteModeModeRouteConst  = "route"
@@ -131224,6 +135660,11 @@ func UnmarshalVPNGatewayConnectionRouteModeVPNGatewayConnectionStaticRouteMode(m
 	err = core.UnmarshalModel(m, "status_reasons", &obj.StatusReasons, UnmarshalVPNGatewayConnectionStatusReason)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "status_reasons-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "distribute_traffic", &obj.DistributeTraffic)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "distribute_traffic-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "local", &obj.Local, UnmarshalVPNGatewayConnectionStaticRouteModeLocal)
@@ -131526,8 +135967,8 @@ func UnmarshalVolumeAttachmentPrototypeVolumeVolumeIdentityVolumeIdentityByID(m 
 // VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeByCapacity : VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeByCapacity struct
 // This model "extends" VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContext
 type VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeByCapacity struct {
-	// The maximum I/O operations per second (IOPS) to use for this volume. Applicable only to volumes using a profile
-	// `family` of `custom`.
+	// The maximum I/O operations per second (IOPS) to use for this volume. If specified, the `family` of the volume
+	// profile must be `custom` or `defined_performance`.
 	Iops *int64 `json:"iops,omitempty"`
 
 	// The name for this volume. The name must not be used by another volume in the region. If unspecified, the name will
@@ -131543,10 +135984,8 @@ type VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototyp
 	// The [user tags](https://cloud.ibm.com/apidocs/tagging#types-of-tags) associated with this volume.
 	UserTags []string `json:"user_tags,omitempty"`
 
-	// The capacity to use for the volume (in gigabytes).
-	//
-	// The minimum and maximum limits for this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	// The capacity to use for the volume (in gigabytes). The specified value must be within the `capacity` range of the
+	// volume's profile.
 	Capacity *int64 `json:"capacity" validate:"required"`
 
 	// The root key to use to wrap the data encryption key for the volume.
@@ -131621,8 +136060,8 @@ func UnmarshalVolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolum
 // VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeBySourceSnapshot : VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeBySourceSnapshot struct
 // This model "extends" VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContext
 type VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototypeInstanceContextVolumeBySourceSnapshot struct {
-	// The maximum I/O operations per second (IOPS) to use for this volume. Applicable only to volumes using a profile
-	// `family` of `custom`.
+	// The maximum I/O operations per second (IOPS) to use for this volume. If specified, the `family` of the volume
+	// profile must be `custom` or `defined_performance`.
 	Iops *int64 `json:"iops,omitempty"`
 
 	// The name for this volume. The name must not be used by another volume in the region. If unspecified, the name will
@@ -131638,8 +136077,8 @@ type VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototyp
 	// The [user tags](https://cloud.ibm.com/apidocs/tagging#types-of-tags) associated with this volume.
 	UserTags []string `json:"user_tags,omitempty"`
 
-	// The capacity to use for the volume (in gigabytes). Must be at least the snapshot's
-	// `minimum_capacity`. The maximum value may increase in the future.
+	// The capacity to use for the volume (in gigabytes). The specified value must be at least the snapshot's
+	// `minimum_capacity`, and must be within the `capacity` range of the volume's profile.
 	//
 	// If unspecified, the capacity will be the source snapshot's `minimum_capacity`.
 	Capacity *int64 `json:"capacity,omitempty"`
@@ -131649,7 +136088,9 @@ type VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContextVolumePrototyp
 	// If unspecified, the `encryption` type for the volume will be `provider_managed`.
 	EncryptionKey EncryptionKeyIdentityIntf `json:"encryption_key,omitempty"`
 
-	// The snapshot from which to clone the volume.
+	// The snapshot to use as a source for the volume's data.
+	//
+	// The specified snapshot may be in a different account, subject to IAM policies.
 	SourceSnapshot SnapshotIdentityIntf `json:"source_snapshot" validate:"required"`
 }
 
@@ -137474,6 +141915,282 @@ func (pager *FlowLogCollectorsPager) GetNext() (page []FlowLogCollector, err err
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *FlowLogCollectorsPager) GetAll() (allItems []FlowLogCollector, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// PrivatePathServiceGatewaysPager can be used to simplify the use of the "ListPrivatePathServiceGateways" method.
+type PrivatePathServiceGatewaysPager struct {
+	hasNext     bool
+	options     *ListPrivatePathServiceGatewaysOptions
+	client      *VpcV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewPrivatePathServiceGatewaysPager returns a new PrivatePathServiceGatewaysPager instance.
+func (vpc *VpcV1) NewPrivatePathServiceGatewaysPager(options *ListPrivatePathServiceGatewaysOptions) (pager *PrivatePathServiceGatewaysPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy ListPrivatePathServiceGatewaysOptions = *options
+	pager = &PrivatePathServiceGatewaysPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  vpc,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *PrivatePathServiceGatewaysPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *PrivatePathServiceGatewaysPager) GetNextWithContext(ctx context.Context) (page []PrivatePathServiceGateway, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListPrivatePathServiceGatewaysWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		var start *string
+		start, err = core.GetQueryParam(result.Next.Href, "start")
+		if err != nil {
+			errMsg := fmt.Sprintf("error retrieving 'start' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
+			return
+		}
+		next = start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.PrivatePathServiceGateways
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *PrivatePathServiceGatewaysPager) GetAllWithContext(ctx context.Context) (allItems []PrivatePathServiceGateway, err error) {
+	for pager.HasNext() {
+		var nextPage []PrivatePathServiceGateway
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *PrivatePathServiceGatewaysPager) GetNext() (page []PrivatePathServiceGateway, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *PrivatePathServiceGatewaysPager) GetAll() (allItems []PrivatePathServiceGateway, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// PrivatePathServiceGatewayAccountPoliciesPager can be used to simplify the use of the "ListPrivatePathServiceGatewayAccountPolicies" method.
+type PrivatePathServiceGatewayAccountPoliciesPager struct {
+	hasNext     bool
+	options     *ListPrivatePathServiceGatewayAccountPoliciesOptions
+	client      *VpcV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewPrivatePathServiceGatewayAccountPoliciesPager returns a new PrivatePathServiceGatewayAccountPoliciesPager instance.
+func (vpc *VpcV1) NewPrivatePathServiceGatewayAccountPoliciesPager(options *ListPrivatePathServiceGatewayAccountPoliciesOptions) (pager *PrivatePathServiceGatewayAccountPoliciesPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy ListPrivatePathServiceGatewayAccountPoliciesOptions = *options
+	pager = &PrivatePathServiceGatewayAccountPoliciesPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  vpc,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *PrivatePathServiceGatewayAccountPoliciesPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *PrivatePathServiceGatewayAccountPoliciesPager) GetNextWithContext(ctx context.Context) (page []PrivatePathServiceGatewayAccountPolicy, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListPrivatePathServiceGatewayAccountPoliciesWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		var start *string
+		start, err = core.GetQueryParam(result.Next.Href, "start")
+		if err != nil {
+			errMsg := fmt.Sprintf("error retrieving 'start' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
+			return
+		}
+		next = start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.AccountPolicies
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *PrivatePathServiceGatewayAccountPoliciesPager) GetAllWithContext(ctx context.Context) (allItems []PrivatePathServiceGatewayAccountPolicy, err error) {
+	for pager.HasNext() {
+		var nextPage []PrivatePathServiceGatewayAccountPolicy
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *PrivatePathServiceGatewayAccountPoliciesPager) GetNext() (page []PrivatePathServiceGatewayAccountPolicy, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *PrivatePathServiceGatewayAccountPoliciesPager) GetAll() (allItems []PrivatePathServiceGatewayAccountPolicy, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// PrivatePathServiceGatewayEndpointGatewayBindingsPager can be used to simplify the use of the "ListPrivatePathServiceGatewayEndpointGatewayBindings" method.
+type PrivatePathServiceGatewayEndpointGatewayBindingsPager struct {
+	hasNext     bool
+	options     *ListPrivatePathServiceGatewayEndpointGatewayBindingsOptions
+	client      *VpcV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewPrivatePathServiceGatewayEndpointGatewayBindingsPager returns a new PrivatePathServiceGatewayEndpointGatewayBindingsPager instance.
+func (vpc *VpcV1) NewPrivatePathServiceGatewayEndpointGatewayBindingsPager(options *ListPrivatePathServiceGatewayEndpointGatewayBindingsOptions) (pager *PrivatePathServiceGatewayEndpointGatewayBindingsPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy ListPrivatePathServiceGatewayEndpointGatewayBindingsOptions = *options
+	pager = &PrivatePathServiceGatewayEndpointGatewayBindingsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  vpc,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *PrivatePathServiceGatewayEndpointGatewayBindingsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *PrivatePathServiceGatewayEndpointGatewayBindingsPager) GetNextWithContext(ctx context.Context) (page []PrivatePathServiceGatewayEndpointGatewayBinding, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListPrivatePathServiceGatewayEndpointGatewayBindingsWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		var start *string
+		start, err = core.GetQueryParam(result.Next.Href, "start")
+		if err != nil {
+			errMsg := fmt.Sprintf("error retrieving 'start' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
+			return
+		}
+		next = start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.EndpointGatewayBindings
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *PrivatePathServiceGatewayEndpointGatewayBindingsPager) GetAllWithContext(ctx context.Context) (allItems []PrivatePathServiceGatewayEndpointGatewayBinding, err error) {
+	for pager.HasNext() {
+		var nextPage []PrivatePathServiceGatewayEndpointGatewayBinding
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *PrivatePathServiceGatewayEndpointGatewayBindingsPager) GetNext() (page []PrivatePathServiceGatewayEndpointGatewayBinding, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *PrivatePathServiceGatewayEndpointGatewayBindingsPager) GetAll() (allItems []PrivatePathServiceGatewayEndpointGatewayBinding, err error) {
 	allItems, err = pager.GetAllWithContext(context.Background())
 	err = core.RepurposeSDKProblem(err, "")
 	return

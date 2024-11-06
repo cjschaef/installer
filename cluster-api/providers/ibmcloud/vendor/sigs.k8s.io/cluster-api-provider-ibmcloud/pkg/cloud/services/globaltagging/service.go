@@ -39,29 +39,14 @@ type ServiceOptions struct {
 	*globaltaggingv1.GlobalTaggingV1Options
 }
 
-// ListTags will list all the Tags.
-func (s *Service) ListTags(options *globaltaggingv1.ListTagsOptions) (*globaltaggingv1.TagList, *core.DetailedResponse, error) {
-	return s.client.ListTags(options)
-}
-
 // CreateTag creates a new Tag.
 func (s *Service) CreateTag(options *globaltaggingv1.CreateTagOptions) (*globaltaggingv1.CreateTagResults, *core.DetailedResponse, error) {
 	return s.client.CreateTag(options)
 }
 
-// DeleteTag deletes the Tag.
-func (s *Service) DeleteTag(options *globaltaggingv1.DeleteTagOptions) (*globaltaggingv1.DeleteTagResults, *core.DetailedResponse, error) {
-	return s.client.DeleteTag(options)
-}
-
 // AttachTag will add tag(s) to resource(s).
 func (s *Service) AttachTag(options *globaltaggingv1.AttachTagOptions) (*globaltaggingv1.TagResults, *core.DetailedResponse, error) {
 	return s.client.AttachTag(options)
-}
-
-// DetachTag will remove tag(s) from resource(s).
-func (s *Service) DetachTag(options *globaltaggingv1.DetachTagOptions) (*globaltaggingv1.TagResults, *core.DetailedResponse, error) {
-	return s.client.DetachTag(options)
 }
 
 // GetTagByName returns the Tag with the provided name, if found.
@@ -75,7 +60,7 @@ func (s *Service) GetTagByName(tagName string) (*globaltaggingv1.Tag, error) {
 	listOptions.SetTagType(globaltaggingv1.AttachTagOptionsTagTypeUserConst)
 	listOptions.SetAccountID(accountID)
 
-	result, response, err := s.ListTags(listOptions)
+	result, response, err := s.client.ListTags(listOptions)
 	if err != nil {
 		return nil, fmt.Errorf("failed listing user tags: %w", err)
 	}
@@ -88,16 +73,6 @@ func (s *Service) GetTagByName(tagName string) (*globaltaggingv1.Tag, error) {
 		}
 	}
 	return nil, nil
-}
-
-// GetServiceURL will get the service URL.
-func (s *Service) GetServiceURL() string {
-	return s.client.GetServiceURL()
-}
-
-// SetServiceURL sets the service URL.
-func (s *Service) SetServiceURL(url string) error {
-	return s.client.SetServiceURL(url)
 }
 
 // NewService returns a new service for the IBM Cloud Global Tagging api client.

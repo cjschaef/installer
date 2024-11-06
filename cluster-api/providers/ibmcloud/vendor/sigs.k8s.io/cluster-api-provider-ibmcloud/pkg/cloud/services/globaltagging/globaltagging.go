@@ -21,17 +21,13 @@ import (
 	"github.com/IBM/platform-services-go-sdk/globaltaggingv1"
 )
 
+//go:generate ../../../../hack/tools/bin/mockgen -source=./globaltagging.go -destination=./mock/globaltagging_generated.go -package=mock
+//go:generate /usr/bin/env bash -c "cat ../../../../hack/boilerplate/boilerplate.generatego.txt ./mock/globaltagging_generated.go > ./mock/_globaltagging_generated.go && mv ./mock/_globaltagging_generated.go ./mock/globaltagging_generated.go"
+
 // GlobalTagging interface defines a method that a IBMCLOUD service object should implement in order to
-// use the globaltaggingv1 package for managing resource tags.
+// use the manage tags with the Global Tagging APIs.
 type GlobalTagging interface {
-	ListTags(*globaltaggingv1.ListTagsOptions) (*globaltaggingv1.TagList, *core.DetailedResponse, error)
 	CreateTag(*globaltaggingv1.CreateTagOptions) (*globaltaggingv1.CreateTagResults, *core.DetailedResponse, error)
-	DeleteTag(*globaltaggingv1.DeleteTagOptions) (*globaltaggingv1.DeleteTagResults, *core.DetailedResponse, error)
 	AttachTag(*globaltaggingv1.AttachTagOptions) (*globaltaggingv1.TagResults, *core.DetailedResponse, error)
-	DetachTag(*globaltaggingv1.DetachTagOptions) (*globaltaggingv1.TagResults, *core.DetailedResponse, error)
-
 	GetTagByName(string) (*globaltaggingv1.Tag, error)
-
-	SetServiceURL(string) error
-	GetServiceURL() string
 }

@@ -15,4 +15,5 @@ limitations under the License.
 */
 
 // Package globaltagging implements globaltagging code.
+// Manage tags for cloud resources using Global Tagging APIs.
 package globaltagging
