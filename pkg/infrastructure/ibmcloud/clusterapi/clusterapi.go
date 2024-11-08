@@ -3,18 +3,22 @@ package clusterapi
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 
+	ibmcloudbootstrap "github.com/openshift/installer/pkg/asset/ignition/bootstrap/ibmcloud"
 	ibmcloudic "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	"github.com/openshift/installer/pkg/rhcos/cache"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 )
 
+var _ clusterapi.IgnitionProvider = (*Provider)(nil)
 var _ clusterapi.PreProvider = (*Provider)(nil)
 var _ clusterapi.Provider = (*Provider)(nil)
 
@@ -31,6 +35,12 @@ func (p Provider) Name() string {
 func (p Provider) NetworkTimeout() time.Duration {
 	// IBM Cloud requires additional time for VPC Custom Image creation and Load Balancer reconciliation.
 	return 30 * time.Minute
+}
+
+// ProvisionTimeout allows platform provider to override the timeout
+// when waiting for the machines to provision.
+func (p Provider) ProvisionTimeout() time.Duration {
+	return 15 * time.Minute
 }
 
 // PublicGatherEndpoint indicates that machine ready checks should NOT wait for an ExternalIP
@@ -136,4 +146,63 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 	logrus.Debugf("created iam authorization for vpc to cos access")
 
 	return nil
+}
+
+// Ignition provisions the IBM Cloud COS Bucket and Object containing the Ignition based configuration.
+// The Bootstrap ignition data is too large to be passed as userdata to the IBM Cloud VPC VSI, so instead it is pulled from COS.
+func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]*corev1.Secret, error) {
+	_, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	defer cancel()
+
+	// Setup IBM Cloud Client.
+	metadata := ibmcloudic.NewMetadata(in.InstallConfig.Config)
+	client, err := metadata.Client()
+	if err != nil {
+		return nil, fmt.Errorf("failed creating IBM Cloud client: %w", err)
+	}
+	region := in.InstallConfig.Config.Platform.IBMCloud.Region
+
+	// Get the COS Instance, created for RHCOS image, and create new bucket for temporary Ignition (bootstrap's)
+	cosInstanceName := ibmcloudbootstrap.GetCOSInstanceName(in.InfraID)
+	cosInstance, err := client.GetCOSInstanceByName(ctx, cosInstanceName)
+	if err != nil {
+		return nil, fmt.Errorf("failed retrieving cos instance for ignition: %w", err)
+	}
+	bucketName := ibmcloudbootstrap.GetIgnitionBucketName((in.InfraID))
+	err = client.CreateCOSBucket(ctx, *cosInstance.ID, bucketName, region)
+	if err != nil {
+		return nil, fmt.Errorf("failed creating ignition COS bucket: %w", err)
+	}
+
+	// Create Ignition data and push it into COS Bucket
+	ignitionFile := ibmcloudbootstrap.GetIgnitionFileName()
+	err = client.CreateCOSObject(ctx, in.BootstrapIgnData, ignitionFile, *cosInstance.ID, bucketName, region)
+	if err != nil {
+		return nil, fmt.Errorf("failed uploading ignition data: %w", err)
+	}
+
+	ignitionURL := url.URL{
+		Scheme: "cos",
+		Host:   fmt.Sprintf("%s/%s", region, bucketName),
+		Path:   ignitionFile,
+	}
+
+	// Get IAM token for bootstrap node to access the Ignition config in COS.
+	iamToken, err := metadata.GetIAMToken(client.GetAPIKey())
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve iam token for ignition: %w", err)
+	}
+
+	// NOTE(cjschaef): Replace the reliance on using the IC_API_KEY credential with the Service ID credentials created during PreProvision, when working with the COS Instance.
+	ignShim, err := ibmcloudbootstrap.GenerateIgnitionShimWithCredentials(ignitionURL.String(), *iamToken)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create ignition shim: %w", err)
+	}
+
+	ignSecrets := []*corev1.Secret{
+		clusterapi.IgnitionSecret(ignShim, in.InfraID, "bootstrap"),
+		clusterapi.IgnitionSecret(in.MasterIgnData, in.InfraID, "master"),
+	}
+
+	return ignSecrets, nil
 }
