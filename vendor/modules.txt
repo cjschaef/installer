@@ -2402,7 +2402,7 @@ sigs.k8s.io/cluster-api-provider-azure/util/webhook
 # sigs.k8s.io/cluster-api-provider-gcp v1.7.1-0.20240724153512-c3b8b533143c
 ## explicit; go 1.21
 sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1
-# sigs.k8s.io/cluster-api-provider-ibmcloud v0.7.0 => sigs.k8s.io/cluster-api-provider-ibmcloud v0.9.0-beta.0.0.20241029051454-9b0770491a76
+# sigs.k8s.io/cluster-api-provider-ibmcloud v0.7.0 => github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20241029144401-ced6212b77f8
 ## explicit; go 1.22.0
 sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2
 sigs.k8s.io/cluster-api-provider-ibmcloud/pkg/endpoints
@@ -2582,7 +2582,7 @@ sigs.k8s.io/yaml/goyaml.v3
 # github.com/metal3-io/baremetal-operator/apis => github.com/openshift/baremetal-operator/apis v0.0.0-20231128154154-6736c9b9c6c8
 # github.com/metal3-io/baremetal-operator/pkg/hardwareutils => github.com/openshift/baremetal-operator/pkg/hardwareutils v0.0.0-20231128154154-6736c9b9c6c8
 # k8s.io/cloud-provider-vsphere => github.com/openshift/cloud-provider-vsphere v1.19.1-0.20240626105621-6464d0bb4928
-# sigs.k8s.io/cluster-api-provider-ibmcloud => sigs.k8s.io/cluster-api-provider-ibmcloud v0.9.0-beta.0.0.20241029051454-9b0770491a76
+# sigs.k8s.io/cluster-api-provider-ibmcloud => github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20241029144401-ced6212b77f8
 # github.com/openshift/assisted-service/api => github.com/openshift/assisted-service/api v0.0.0-20241001055825-63e8b0d3ad63
 # github.com/openshift/assisted-service/client => github.com/openshift/assisted-service/client v0.0.0-20241001055825-63e8b0d3ad63
 # github.com/openshift/assisted-service/models => github.com/openshift/assisted-service/models v0.0.0-20241001055825-63e8b0d3ad63

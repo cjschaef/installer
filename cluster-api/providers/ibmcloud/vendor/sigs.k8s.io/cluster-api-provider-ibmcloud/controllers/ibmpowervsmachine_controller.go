@@ -198,19 +198,6 @@ func (r *IBMPowerVSMachineReconciler) getOrCreate(scope *scope.PowerVSMachineSco
 	return instance, err
 }
 
-// handleLoadBalancerPoolMemberConfiguration handles loadbalancer pool member creation flow.
-func (r *IBMPowerVSMachineReconciler) handleLoadBalancerPoolMemberConfiguration(machineScope *scope.PowerVSMachineScope) (ctrl.Result, error) {
-	poolMember, err := machineScope.CreateVPCLoadBalancerPoolMember()
-	if err != nil {
-		return ctrl.Result{}, fmt.Errorf("failed to create loadbalancer pool member %s: %w", machineScope.IBMPowerVSMachine.Name, err)
-	}
-	if poolMember != nil && *poolMember.ProvisioningStatus != string(infrav1beta2.VPCLoadBalancerStateActive) {
-		return ctrl.Result{RequeueAfter: 1 * time.Minute}, nil
-	}
-
-	return ctrl.Result{}, nil
-}
-
 func (r *IBMPowerVSMachineReconciler) reconcileNormal(machineScope *scope.PowerVSMachineScope) (ctrl.Result, error) {
 	machineScope.Info("Reconciling IBMPowerVSMachine")
 
@@ -299,15 +286,15 @@ func (r *IBMPowerVSMachineReconciler) reconcileNormal(machineScope *scope.PowerV
 	machineScope.Info("updating loadbalancer for machine", "name", machineScope.IBMPowerVSMachine.Name)
 	internalIP := machineScope.GetMachineInternalIP()
 	if internalIP == "" {
-		machineScope.Info("Unable to update the LoadBalancer, Machine internal IP not yet set", "machineName", machineScope.IBMPowerVSMachine.Name)
+		machineScope.Info("Unable to update the LoadBalancer, Machine internal IP not yet set", "machine name", machineScope.IBMPowerVSMachine.Name)
 		return ctrl.Result{}, nil
 	}
-
-	if util.IsControlPlaneMachine(machineScope.Machine) {
-		machineScope.Info("Configuring loadbalancer configuration for control plane machine", "machineName", machineScope.IBMPowerVSMachine.Name)
-		return r.handleLoadBalancerPoolMemberConfiguration(machineScope)
+	poolMember, err := machineScope.CreateVPCLoadBalancerPoolMember()
+	if err != nil {
+		return ctrl.Result{}, fmt.Errorf("failed CreateVPCLoadBalancerPoolMember %s: %w", machineScope.IBMPowerVSMachine.Name, err)
 	}
-	machineScope.Info("skipping loadbalancer configuration for worker machine", "machineName", machineScope.IBMPowerVSMachine.Name)
-
+	if poolMember != nil && *poolMember.ProvisioningStatus != string(infrav1beta2.VPCLoadBalancerStateActive) {
+		return ctrl.Result{RequeueAfter: 1 * time.Minute}, nil
+	}
 	return ctrl.Result{}, nil
 }
