@@ -59,6 +59,7 @@ type API interface {
 	GetEncryptionKey(ctx context.Context, keyCRN string) (*responses.EncryptionKeyResponse, error)
 	GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.ResourceGroup, error)
 	GetResourceGroup(ctx context.Context, nameOrID string) (*resourcemanagerv2.ResourceGroup, error)
+	GetSSHKeyByPublicKey(ctx context.Context, publicKey string) (*vpcv1.Key, error)
 	GetSubnet(ctx context.Context, subnetID string) (*vpcv1.Subnet, error)
 	GetSubnetByName(ctx context.Context, subnetName string, region string) (*vpcv1.Subnet, error)
 	GetVSIProfiles(ctx context.Context) ([]vpcv1.InstanceProfile, error)
@@ -774,6 +775,30 @@ func (c *Client) GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.Res
 		return nil, err
 	}
 	return listResourceGroupsResponse.Resources, nil
+}
+
+// GetSSHKeyByPublicKey gets an SSH Key by its public key.
+func (c *Client) GetSSHKeyByPublicKey(ctx context.Context, publicKey string) (*vpcv1.Key, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	keysPager, err := c.vpcAPI.NewKeysPager(&vpcv1.ListKeysOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create keys pager to list keys: %w", err)
+	}
+
+	keys, err := keysPager.GetAllWithContext(localContext)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list all keys from key pager: %w", err)
+	}
+
+	for _, k := range keys {
+		if k.PublicKey != nil && *k.PublicKey == publicKey {
+			return ptr.To(k), nil
+		}
+	}
+
+	return nil, fmt.Errorf("failed to find ssh key with matching public key")
 }
 
 // GetSubnet gets a subnet by its ID.
