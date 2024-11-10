@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -262,9 +263,28 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 		resourceGroupName = in.InstallConfig.Config.Platform.IBMCloud.ResourceGroupName
 	}
 	logrus.Debugf("retrieving resource group id for: %s", resourceGroupName)
-	resourceGroup, err := client.GetResourceGroup(ctx, resourceGroupName)
+	var resourceGroup *resourcemanagerv2.ResourceGroup
+	// Use retry logic to wait for the new resource group if necessary.
+	backoff := wait.Backoff{
+		Duration: 10 * time.Second,
+		Factor:   1.1,
+		Cap:      leftInContext(ctx),
+		Steps:    math.MaxInt32,
+	}
+
+	var lastErr error
+	err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
+		resourceGroup, lastErr = client.GetResourceGroup(ctx, resourceGroupName)
+		if lastErr == nil {
+			return true, nil
+		}
+		return false, nil
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve resource group %s: %w", resourceGroupName, err)
+		if lastErr != nil {
+			err = lastErr
+		}
+		return nil, fmt.Errorf("failed retrieving resource group %s: %w", resourceGroupName, err)
 	}
 	logrus.Debugf("retrieved resource group id: %s", *resourceGroup.ID)
 
