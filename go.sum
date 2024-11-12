@@ -211,6 +211,8 @@ github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5P
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
 github.com/cjlapao/common-go v0.0.39 h1:bAAUrj2B9v0kMzbAOhzjSmiyDy+rd56r2sy7oEiQLlA=
 github.com/cjlapao/common-go v0.0.39/go.mod h1:M3dzazLjTjEtZJbbxoA5ZDiGCiHmpwqW9l4UWaddwOA=
+github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20241112095249-267381c08019 h1:fTdMT0/XeR8u3Yz5LTEMuppOtn5Un5mhnKIqUIwPtu0=
+github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20241112095249-267381c08019/go.mod h1:lvRonWivcHWnV80YDcuK+lJFWztpmMQft24z+8TtEqE=
 github.com/clarketm/json v1.14.1 h1:43bkbTTKKdDx7crs3WHzkrnH6S1EvAF1VZrdFGMmmz4=
 github.com/clarketm/json v1.14.1/go.mod h1:ynr2LRfb0fQU34l07csRNBTcivjySLLiY1YzQqKVfdo=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
@@ -1559,8 +1561,6 @@ sigs.k8s.io/cluster-api-provider-azure v1.15.1-0.20240617212811-a52056dfb88c h1:
 sigs.k8s.io/cluster-api-provider-azure v1.15.1-0.20240617212811-a52056dfb88c/go.mod h1:dqGwr0KL+jdgqnHPTCfCI5TccFtH1MgTnv1vx3wXEak=
 sigs.k8s.io/cluster-api-provider-gcp v1.7.1-0.20240724153512-c3b8b533143c h1:ynsoxyNN9W0iXJzBYflyj6KGFciLRyjwBBin8e/oeSo=
 sigs.k8s.io/cluster-api-provider-gcp v1.7.1-0.20240724153512-c3b8b533143c/go.mod h1:fCQNidlw4j6MoNbnHaogLi12eHQWH1//FHlDsZafeEc=
-sigs.k8s.io/cluster-api-provider-ibmcloud v0.9.0-beta.0.0.20241029051454-9b0770491a76 h1:/BN6XMjMkFUL+oRQZiHe4aY5VroBcHsAf64jA8hRHC0=
-sigs.k8s.io/cluster-api-provider-ibmcloud v0.9.0-beta.0.0.20241029051454-9b0770491a76/go.mod h1:QmzkdbslJ4xXbUyzw31cbH9R7H+R5PziRO+ycbEvnPU=
 sigs.k8s.io/cluster-api-provider-openstack v0.11.1 h1:j3aBJr5DozXbOT25QHmbDdCKs6OJT886woMEkzgwLLE=
 sigs.k8s.io/cluster-api-provider-openstack v0.11.1/go.mod h1:fH/eFFSgLtfyNB1OvYVPhrIdM7zhxAAkWbuJhr3ObpM=
 sigs.k8s.io/cluster-api-provider-vsphere v1.11.1 h1:hwQEMOiC0zNIRNl5qG1x+IyAAoN32WhQrXo2ANjD+CQ=
