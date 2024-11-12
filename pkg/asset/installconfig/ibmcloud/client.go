@@ -809,7 +809,8 @@ func (c *Client) GetSSHKeyByPublicKey(ctx context.Context, publicKey string) (*v
 	}
 
 	for _, k := range keys {
-		if k.PublicKey != nil && *k.PublicKey == publicKey {
+		// Golang is unable to compare RSA public keys ('=='), requiring strings.Compare.
+		if k.PublicKey != nil && strings.Compare(*k.PublicKey, publicKey) == 0 {
 			return ptr.To(k), nil
 		}
 	}

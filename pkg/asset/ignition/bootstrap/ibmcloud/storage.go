@@ -21,7 +21,7 @@ func GenerateIgnitionShimWithCredentials(url string, iamToken string) ([]byte, e
 					HTTPHeaders: igntypes.HTTPHeaders{
 						{
 							Name:  "Authorization",
-							Value: ptr.To(iamToken),
+							Value: ptr.To(fmt.Sprintf("Bearer %s", iamToken)),
 						},
 					},
 				},

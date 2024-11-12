@@ -15,6 +15,7 @@ import (
 	capibmcloud "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 
+	configv1 "github.com/openshift/api/config/v1"
 	ibmcloudbootstrap "github.com/openshift/installer/pkg/asset/ignition/bootstrap/ibmcloud"
 	ibmcloudic "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
@@ -262,10 +263,17 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 		return nil, fmt.Errorf("failed uploading ignition data: %w", err)
 	}
 
+	// Default to using the direct regional COS endpoint.
+	cosEndpoint := fmt.Sprintf("s3.direct.%s.cloud-object-storage.appdomain.cloud", region)
+	// Check whether an endpoint override was provided for COS.
+	if endpointURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceCOS, in.InstallConfig.Config.IBMCloud.ServiceEndpoints); endpointURL != "" {
+		cosEndpoint = endpointURL
+	}
+
 	ignitionURL := url.URL{
-		Scheme: "cos",
-		Host:   fmt.Sprintf("%s/%s", region, bucketName),
-		Path:   ignitionFile,
+		Scheme: "https",
+		Host:   cosEndpoint,
+		Path:   fmt.Sprintf("%s/%s", bucketName, ignitionFile),
 	}
 
 	// Get IAM token for bootstrap node to access the Ignition config in COS.
@@ -273,12 +281,14 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve iam token for ignition: %w", err)
 	}
+	logrus.Infof("iam token retrieved: %s", *iamToken)
 
 	// NOTE(cjschaef): Replace the reliance on using the IC_API_KEY credential with the Service ID credentials created during PreProvision, when working with the COS Instance.
 	ignShim, err := ibmcloudbootstrap.GenerateIgnitionShimWithCredentials(ignitionURL.String(), *iamToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ignition shim: %w", err)
 	}
+	logrus.Infof("ignition shim created: %s", ignShim)
 
 	ignSecrets := []*corev1.Secret{
 		clusterapi.IgnitionSecret(ignShim, in.InfraID, "bootstrap"),

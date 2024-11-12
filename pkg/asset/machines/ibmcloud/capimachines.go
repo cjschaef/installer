@@ -126,7 +126,8 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 			Subnet:         providerSpec.PrimaryNetworkInterface.Subnet,
 		}
 
-		// TODO(cjschaef): Test SSH Key lookup
+		// TODO(cjschaef): Test SSH Key lookup, string compare isn't sufficient (may need normalization).
+		/*
 		var sshkeys []*capibmcloud.IBMVPCResourceReference
 		sshkey, err := findSSHKey(config.SSHKey, config)
 		if err != nil {
@@ -138,6 +139,7 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 				},
 			}
 		}
+		.*/
 
 		capibmcloudMachine := &capibmcloud.IBMVPCMachine{
 			TypeMeta: metav1.TypeMeta{
@@ -159,8 +161,8 @@ func GenerateMachines(ctx context.Context, infraID string, config *types.Install
 				PlacementTarget:         placementTarget,
 				PrimaryNetworkInterface: networkInterface,
 				Profile:                 providerSpec.Profile,
-				SSHKeys:                 sshkeys,
-				Zone:                    providerSpec.Zone,
+				// SSHKeys:                 sshkeys,
+				Zone: providerSpec.Zone,
 			},
 		}
 		capibmcloudMachine.SetGroupVersionKind(capibmcloud.GroupVersion.WithKind("IBMVPCMachine"))
