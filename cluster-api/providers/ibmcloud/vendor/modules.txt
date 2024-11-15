@@ -1096,7 +1096,7 @@ sigs.k8s.io/cluster-api/util/labels
 sigs.k8s.io/cluster-api/util/labels/format
 sigs.k8s.io/cluster-api/util/patch
 sigs.k8s.io/cluster-api/util/predicates
-# sigs.k8s.io/cluster-api-provider-ibmcloud v0.9.0-beta.1.0.20241112150649-a71c64ac9c72
+# sigs.k8s.io/cluster-api-provider-ibmcloud v0.9.0-beta.1.0.20241112150649-a71c64ac9c72 => github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20241115004902-c881fe9bf1db
 ## explicit; go 1.22.0
 sigs.k8s.io/cluster-api-provider-ibmcloud
 sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta1
@@ -1176,3 +1176,4 @@ sigs.k8s.io/structured-merge-diff/v4/value
 ## explicit; go 1.12
 sigs.k8s.io/yaml
 sigs.k8s.io/yaml/goyaml.v2
+# sigs.k8s.io/cluster-api-provider-ibmcloud => github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20241115004902-c881fe9bf1db
