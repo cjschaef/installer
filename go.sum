@@ -142,8 +142,8 @@ github.com/IBM/networking-go-sdk v0.45.0 h1:tYgDhVDpgKvELNY7tcodbZ4ny9fatpEWM6Pw
 github.com/IBM/networking-go-sdk v0.45.0/go.mod h1:NnJPA1e5GWr5opJe+5Hs6e1G6RcBIFz64TrkZsdnSp8=
 github.com/IBM/platform-services-go-sdk v0.71.0 h1:8miTTzH42EO+HslEOc8YWpL+RlJjgezM88R1SxL3fWY=
 github.com/IBM/platform-services-go-sdk v0.71.0/go.mod h1:1yvG28ExlZ09gfBPH7flAQ6eZf7kYA4hbEEyYlbT97Y=
-github.com/IBM/vpc-go-sdk v0.61.0 h1:VXT8ZwOQtl15/RSInj9+Z4OQC/vhE/Owoauu128BO4M=
-github.com/IBM/vpc-go-sdk v0.61.0/go.mod h1:swmxiYLT+OfBsBYqJWGeRd6NPmBk4u/het2PZdtzIaw=
+github.com/IBM/vpc-go-sdk v0.62.0 h1:Xga74D70ziD7nzm51ue3othHz1epMLVkGP/L6/Be+/0=
+github.com/IBM/vpc-go-sdk v0.62.0/go.mod h1:VBR6bAznHsNCFA89Ue4JFQpqCcFp8F5neqbCFCyks4Q=
 github.com/MakeNowJust/heredoc v1.0.0 h1:cXCdzVdstXyiTqTvfqk9SDHpKNjxuom+DOlyEeQ4pzQ=
 github.com/MakeNowJust/heredoc v1.0.0/go.mod h1:mG5amYoWBHf8vpLOuehzbGGw0EHxpZZ6lCpQ4fNJ8LE=
 github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERoyfY=
@@ -211,8 +211,8 @@ github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5P
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
 github.com/cjlapao/common-go v0.0.39 h1:bAAUrj2B9v0kMzbAOhzjSmiyDy+rd56r2sy7oEiQLlA=
 github.com/cjlapao/common-go v0.0.39/go.mod h1:M3dzazLjTjEtZJbbxoA5ZDiGCiHmpwqW9l4UWaddwOA=
-github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20241115004902-c881fe9bf1db h1:VMaQib2SgGVV4WPb3SoZPgoQH0xY/sOWYRX4qmQBWpA=
-github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20241115004902-c881fe9bf1db/go.mod h1:K//5tM5Jt17ep8WTYKPP4TP/FZ9dgyvHIqR42YoDClo=
+github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20241115210029-465410fef1fe h1:XRg67dozbSY7d+0R3W4tcVQ11YZvNaX6vomL5N3GMPs=
+github.com/cjschaef/cluster-api-provider-ibmcloud v0.0.0-20241115210029-465410fef1fe/go.mod h1:8Z8Y4CckaQsE2ljGjpzJ3tp8UDC192TmIQOQkFocVS4=
 github.com/clarketm/json v1.14.1 h1:43bkbTTKKdDx7crs3WHzkrnH6S1EvAF1VZrdFGMmmz4=
 github.com/clarketm/json v1.14.1/go.mod h1:ynr2LRfb0fQU34l07csRNBTcivjySLLiY1YzQqKVfdo=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=

@@ -163,6 +163,7 @@ func (r *IBMVPCMachineReconciler) reconcileNormal(machineScope *scope.MachineSco
 		return ctrl.Result{}, fmt.Errorf("failed to reconcile VSI for IBMVPCMachine %s/%s: %w", machineScope.IBMVPCMachine.Namespace, machineScope.IBMVPCMachine.Name, err)
 	}
 
+	machineRunning := false
 	if instance != nil {
 		// Attempt to tag the Instance.
 		if err := machineScope.TagResource(machineScope.IBMVPCCluster.Name, *instance.CRN); err != nil {
@@ -200,8 +201,7 @@ func (r *IBMVPCMachineReconciler) reconcileNormal(machineScope *scope.MachineSco
 			capibmrecord.Warnf(machineScope.IBMVPCMachine, "FailedBuildInstance", "Failed to build the instance - %s", msg)
 			return ctrl.Result{}, nil
 		case vpcv1.InstanceStatusRunningConst:
-			machineScope.SetReady()
-			conditions.MarkTrue(machineScope.IBMVPCMachine, infrav1beta2.InstanceReadyCondition)
+			machineRunning = true
 		default:
 			machineScope.SetNotReady()
 			machineScope.V(3).Info("unexpected vpc instance status", "instanceStatus", *instance.Status, "instanceID", machineScope.GetInstanceID())
@@ -212,10 +212,10 @@ func (r *IBMVPCMachineReconciler) reconcileNormal(machineScope *scope.MachineSco
 		conditions.MarkUnknown(machineScope.IBMVPCMachine, infrav1beta2.InstanceReadyCondition, infrav1beta2.InstanceStateUnknownReason, "")
 	}
 
-	// Check if the Machine is ready.
-	if !machineScope.IsReady() {
-		// Requeue after 2 minute if machine is not ready.
-		return ctrl.Result{RequeueAfter: 2 * time.Minute}, nil
+	// Check if the Machine is running.
+	if !machineRunning {
+		// Requeue after 1 minute if machine is not running.
+		return ctrl.Result{RequeueAfter: 1 * time.Minute}, nil
 	}
 
 	// Rely on defined VPC Load Balancer Pool Members first before falling back to hardcoded defaults.
@@ -256,6 +256,9 @@ func (r *IBMVPCMachineReconciler) reconcileNormal(machineScope *scope.MachineSco
 		}
 	}
 
+	// With a running machine and all Load Balancer Pool Members reconciled, mark machine as ready.
+	machineScope.SetReady()
+	conditions.MarkTrue(machineScope.IBMVPCMachine, infrav1beta2.InstanceReadyCondition)
 	return ctrl.Result{}, nil
 }
 
