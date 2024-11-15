@@ -48,6 +48,21 @@ func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 	return m.recorder
 }
 
+// AttachFloatingIP mocks base method.
+func (m *MockAPI) AttachFloatingIP(ctx context.Context, instanceName, instanceID, region, resourceGroupName string) (*vpcv1.FloatingIP, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AttachFloatingIP", ctx, instanceName, instanceID, region, resourceGroupName)
+	ret0, _ := ret[0].(*vpcv1.FloatingIP)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AttachFloatingIP indicates an expected call of AttachFloatingIP.
+func (mr *MockAPIMockRecorder) AttachFloatingIP(ctx, instanceName, instanceID, region, resourceGroupName any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttachFloatingIP", reflect.TypeOf((*MockAPI)(nil).AttachFloatingIP), ctx, instanceName, instanceID, region, resourceGroupName)
+}
+
 // CreateCISDNSRecord mocks base method.
 func (m *MockAPI) CreateCISDNSRecord(ctx context.Context, cisInstanceCRN, zoneID, recordName, cname string) error {
 	m.ctrl.T.Helper()
@@ -489,6 +504,21 @@ func (m *MockAPI) GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, erro
 func (mr *MockAPIMockRecorder) GetVPCs(ctx, region any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVPCs", reflect.TypeOf((*MockAPI)(nil).GetVPCs), ctx, region)
+}
+
+// GetVSI mocks base method.
+func (m *MockAPI) GetVSI(ctx context.Context, instanceID, region string) (*vpcv1.Instance, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVSI", ctx, instanceID, region)
+	ret0, _ := ret[0].(*vpcv1.Instance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVSI indicates an expected call of GetVSI.
+func (mr *MockAPIMockRecorder) GetVSI(ctx, instanceID, region any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVSI", reflect.TypeOf((*MockAPI)(nil).GetVSI), ctx, instanceID, region)
 }
 
 // GetVSIProfiles mocks base method.

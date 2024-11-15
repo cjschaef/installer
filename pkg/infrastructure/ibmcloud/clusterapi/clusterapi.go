@@ -22,11 +22,13 @@ import (
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
 	"github.com/openshift/installer/pkg/infrastructure/clusterapi"
 	"github.com/openshift/installer/pkg/rhcos/cache"
+	"github.com/openshift/installer/pkg/types"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 )
 
 var _ clusterapi.IgnitionProvider = (*Provider)(nil)
 var _ clusterapi.PreProvider = (*Provider)(nil)
+var _ clusterapi.PostProvider = (*Provider)(nil)
 var _ clusterapi.Provider = (*Provider)(nil)
 var _ clusterapi.Timeouts = (*Provider)(nil)
 
@@ -233,6 +235,55 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		}
 		logrus.Debug("dns record created for load balancer", "hostName", *lbDetails.Hostname)
 	}
+
+	return nil
+}
+
+// PostProvision is called once Infrastructure provisioning is completed, including machines.
+func (p Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisionInput) error {
+	// If the cluster is Public/External, attach a floating IP to the bootstrap node for debugging purposes. It will need to be cleaned up during bootstrap destroy however.
+
+	if in.InstallConfig.Config.Publish == types.InternalPublishingStrategy {
+		logrus.Debugf("no post provisioning required for internal clusters")
+		return nil
+	}
+
+	metadata := ibmcloudic.NewMetadata(in.InstallConfig.Config)
+	client, err := metadata.Client()
+	if err != nil {
+		return fmt.Errorf("failed creating IBM Cloud client in PostProvision: %w", err)
+	}
+
+	// Collect the bootstrap machine from the provider.
+	ibmcloudMachine := &capibmcloud.IBMVPCMachine{}
+	key := crclient.ObjectKey{
+		Name:      capiutils.GenerateBoostrapMachineName(in.InfraID),
+		Namespace: capiutils.Namespace,
+	}
+	logrus.Debugf("PostProvision: machineKey = %+v", key)
+	if err = in.Client.Get(ctx, key, ibmcloudMachine); err != nil {
+		return fmt.Errorf("failed to get ibmcloud bootstrap machine in PostProvision: %w", err)
+	}
+
+	resourceGroupName := in.InfraID
+	if in.InstallConfig.Config.Platform.IBMCloud.ResourceGroupName != "" {
+		resourceGroupName = in.InstallConfig.Config.Platform.IBMCloud.ResourceGroupName
+	}
+	logrus.Debugf("collected resource group name %s for floating ip", resourceGroupName)
+
+	// Attach a new VPC Floating IP resource to the bootstrap node.
+	logrus.Debugf("creating floating ip for bootstrap node")
+	floatingIPDetails, err := client.AttachFloatingIP(ctx, ibmcloudMachine.Name, ibmcloudMachine.Status.InstanceID, in.InstallConfig.Config.Platform.IBMCloud.Region, resourceGroupName)
+	if err != nil {
+		return fmt.Errorf("failed to attaching floating ip to bootstrap machine: %w", err)
+	}
+
+	// Update the bootstrap node's external address with the new floating IP address.
+	ibmcloudMachine.Status.Addresses = append(ibmcloudMachine.Status.Addresses, corev1.NodeAddress{
+		Address: *floatingIPDetails.Address,
+		Type:    corev1.NodeExternalIP,
+	})
+	logrus.Debugf("floating ip attached to bootstrap node at %s", *floatingIPDetails.Address)
 
 	return nil
 }

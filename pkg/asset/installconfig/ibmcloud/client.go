@@ -39,6 +39,7 @@ import (
 
 // API represents the calls made to the API.
 type API interface {
+	AttachFloatingIP(ctx context.Context, instanceName string, instanceID string, region string, resourceGroupName string) (*vpcv1.FloatingIP, error)
 	CreateCOSBucket(ctx context.Context, cosInstanceID string, bucketName string, region string) error
 	CreateCOSInstance(ctx context.Context, cosName string, resourceGroupID string) (*resourcecontrollerv2.ResourceInstance, error)
 	CreateCOSObject(ctx context.Context, sourceData []byte, fileName string, cosInstanceID string, bucketName string, region string) error
@@ -65,6 +66,7 @@ type API interface {
 	GetSSHKeyByPublicKey(ctx context.Context, publicKey string) (*vpcv1.Key, error)
 	GetSubnet(ctx context.Context, subnetID string) (*vpcv1.Subnet, error)
 	GetSubnetByName(ctx context.Context, subnetName string, region string) (*vpcv1.Subnet, error)
+	GetVSI(ctx context.Context, instanceID string, region string) (*vpcv1.Instance, error)
 	GetVSIProfiles(ctx context.Context) ([]vpcv1.InstanceProfile, error)
 	GetVPC(ctx context.Context, vpcID string) (*vpcv1.VPC, error)
 	GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error)
@@ -176,6 +178,46 @@ func (c *Client) loadSDKServices() error {
 	}
 
 	return nil
+}
+
+// AttachFloatingIP will create a new VPC Floating IP resource, attaching it to the provided instance's primary network interface.
+func (c *Client) AttachFloatingIP(ctx context.Context, instanceName string, instanceID string, region string, resourceGroupName string) (*vpcv1.FloatingIP, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	err := c.SetVPCServiceURLForRegion(localContext, region)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set vpc api service url: %w", err)
+	}
+
+	// Get the Resource Group ID.
+	resourceGroup, err := c.GetResourceGroup(localContext, resourceGroupName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve resource group %s for floating ip: %w", resourceGroupName, err)
+	}
+
+	// Get the Instance, for its PrimaryNetworkInterface.
+	instance, err := c.GetVSI(localContext, instanceID, region)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve instance %s for floating ip: %w", instanceID, err)
+	}
+
+	floatingIPPrototype := &vpcv1.FloatingIPPrototype{
+		Name: ptr.To(instanceName),
+		ResourceGroup: &vpcv1.ResourceGroupIdentity{
+			ID: resourceGroup.ID,
+		},
+		Target: &vpcv1.FloatingIPTargetPrototypeNetworkInterfaceIdentity{
+			ID: instance.PrimaryNetworkInterface.ID,
+		},
+	}
+
+	options := c.vpcAPI.NewCreateFloatingIPOptions(floatingIPPrototype)
+	floatingIPDetails, _, err := c.vpcAPI.CreateFloatingIPWithContext(localContext, options)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create floating ip: %w", err)
+	}
+	return floatingIPDetails, nil
 }
 
 // CreateCOSBucket will create a new COS Bucket in the COS Instance, based on the Instance ID.
@@ -863,6 +905,24 @@ func (c *Client) GetSubnetByName(ctx context.Context, subnetName string, region 
 		}
 	}
 	return nil, &VPCResourceNotFoundError{}
+}
+
+// GetVSI gets a VPC Virtual Service Instance with provided ID.
+func (c *Client) GetVSI(ctx context.Context, instanceID string, region string) (*vpcv1.Instance, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	err := c.SetVPCServiceURLForRegion(localContext, region)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set vpc api service url: %w", err)
+	}
+
+	options := c.vpcAPI.NewGetInstanceOptions(instanceID)
+	instance, _, err := c.vpcAPI.GetInstanceWithContext(localContext, options)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve instance %s: %w", instanceID, err)
+	}
+	return instance, nil
 }
 
 // GetVSIProfiles gets a list of all VSI profiles.
