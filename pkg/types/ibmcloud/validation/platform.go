@@ -46,8 +46,6 @@ func ValidatePlatform(p *ibmcloud.Platform, fldPath *field.Path) field.ErrorList
 
 	if p.Region == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("region"), "region must be specified"))
-	} else if _, ok := Regions[p.Region]; !ok {
-		allErrs = append(allErrs, field.NotSupported(fldPath.Child("region"), p.Region, regionShortNames))
 	}
 
 	if p.VPCName != "" {
