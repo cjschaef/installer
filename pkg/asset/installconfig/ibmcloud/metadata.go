@@ -3,12 +3,16 @@ package ibmcloud
 import (
 	"context"
 	"fmt"
+	"math"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/IBM/go-sdk-core/v5/core"
+	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/ptr"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -283,6 +287,42 @@ func (m *Metadata) GetIAMToken(apiKey string) (*string, error) {
 		return nil, fmt.Errorf("failed to get iam token: %w", err)
 	}
 	return ptr.To(token), nil
+}
+
+func (m *Metadata) RetryGetResourceGroup(ctx context.Context, resourceGroupName string) (*resourcemanagerv2.ResourceGroup, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	// Use retry logic to wait for new resource group to show up, if necessary.
+	backoff := wait.Backoff{
+		Duration: 10 * time.Second,
+		Factor:   1.1,
+		Cap:      leftInContext(ctx),
+		Steps:    math.MaxInt32,
+	}
+
+	var resourceGroup *resourcemanagerv2.ResourceGroup
+	var err, lastErr error
+
+	err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
+		resourceGroup, lastErr = m.client.GetResourceGroup(ctx, resourceGroupName)
+		if lastErr == nil {
+			return true, nil
+		}
+		return false, nil
+	})
+	if err != nil && lastErr != nil {
+		err = lastErr
+	}
+	return resourceGroup, err
+}
+
+func leftInContext(ctx context.Context) time.Duration {
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		return math.MaxInt64
+	}
+	return time.Until(deadline)
 }
 
 // Client returns a client used for making API calls to IBM Cloud services.

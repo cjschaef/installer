@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 	capibmcloud "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
 	crclient "sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -79,7 +77,7 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 
 	logrus.Debugf("checking for existing resource group: %s", resourceGroupName)
 	// Check whether the Resource Group already exists.
-	resourceGroup, err := client.GetResourceGroup(ctx, resourceGroupName)
+	resourceGroup, err := metadata.RetryGetResourceGroup(ctx, resourceGroupName)
 	if err != nil {
 		// If Resource Group cannot be found, but it was provided in install-config (use existing RG), raise an error.
 		// We could create the Resource Group, defined by user, but that might make resource cleanup more difficult.
@@ -95,26 +93,8 @@ func (p Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionIn
 			return fmt.Errorf("failed creating new resource group: %w", err)
 		}
 		// Retrieve the newly created resource group.
-		// Use retry logic to wait for the new resource group if necessary.
-		backoff := wait.Backoff{
-			Duration: 10 * time.Second,
-			Factor:   1.1,
-			Cap:      leftInContext(ctx),
-			Steps:    math.MaxInt32,
-		}
-
-		var lastErr error
-		err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
-			resourceGroup, lastErr = client.GetResourceGroup(ctx, resourceGroupName)
-			if lastErr == nil {
-				return true, nil
-			}
-			return false, nil
-		})
+		resourceGroup, err = metadata.RetryGetResourceGroup(ctx, resourceGroupName)
 		if err != nil {
-			if lastErr != nil {
-				err = lastErr
-			}
 			return fmt.Errorf("failed retrieving new resource group: %w", err)
 		}
 		logrus.Debugf("created resource group: %s", resourceGroupName)
@@ -237,14 +217,6 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 	return nil
 }
 
-func leftInContext(ctx context.Context) time.Duration {
-	deadline, ok := ctx.Deadline()
-	if !ok {
-		return math.MaxInt64
-	}
-	return time.Until(deadline)
-}
-
 // Ignition provisions the IBM Cloud COS Bucket and Object containing the Ignition based configuration.
 // The Bootstrap ignition data is too large to be passed as userdata to the IBM Cloud VPC VSI, so instead it is pulled from COS.
 func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]*corev1.Secret, error) {
@@ -262,7 +234,7 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 		resourceGroupName = in.InstallConfig.Config.Platform.IBMCloud.ResourceGroupName
 	}
 	logrus.Debugf("retrieving resource group id for: %s", resourceGroupName)
-	resourceGroup, err := client.GetResourceGroup(ctx, resourceGroupName)
+	resourceGroup, err := metadata.RetryGetResourceGroup(ctx, resourceGroupName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve resource group %s: %w", resourceGroupName, err)
 	}
