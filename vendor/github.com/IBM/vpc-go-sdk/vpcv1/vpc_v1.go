@@ -38,7 +38,7 @@ import (
 // VpcV1 : The IBM Cloud Virtual Private Cloud (VPC) API can be used to programmatically provision and manage virtual
 // server instances, along with subnets, volumes, load balancers, and more.
 //
-// API Version: 2024-11-12
+// API Version: 2024-12-18
 type VpcV1 struct {
 	Service *core.BaseService
 
@@ -46,8 +46,8 @@ type VpcV1 struct {
 	// `2`.
 	Generation *int64
 
-	// The API version, in format `YYYY-MM-DD`. For the API behavior documented here, specify any date between `2024-04-30`
-	// and `2024-11-14`.
+	// The API version, in format `YYYY-MM-DD`. For the API behavior documented here, specify any date between `2024-11-19`
+	// and `2024-12-18`.
 	Version *string
 }
 
@@ -67,9 +67,9 @@ type VpcV1Options struct {
 	// `2`.
 	Generation *int64
 
-	// The API version, in format `YYYY-MM-DD`. For the API behavior documented here, specify any date between `2024-04-30`
+	// The API version, in format `YYYY-MM-DD`. For the API behavior documented here, specify any date between `2024-11-19`
+	// and `2024-12-18`.
 	Version *string
-	// and `2024-11-14`.
 }
 
 // NewVpcV1UsingExternalConfig : constructs an instance of VpcV1 with passed in options and external configuration.
@@ -133,7 +133,7 @@ func NewVpcV1(options *VpcV1Options) (service *VpcV1, err error) {
 	}
 
 	if options.Version == nil {
-		options.Version = core.StringPtr("2024-11-12")
+		options.Version = core.StringPtr("2024-12-17")
 	}
 	service = &VpcV1{
 		Service:    baseService,
@@ -6198,6 +6198,9 @@ func (vpc *VpcV1) ListInstancesWithContext(ctx context.Context, listInstancesOpt
 	if listInstancesOptions.PlacementGroupName != nil {
 		builder.AddQuery("placement_group.name", fmt.Sprint(*listInstancesOptions.PlacementGroupName))
 	}
+	if listInstancesOptions.ReservationAffinityPolicy != nil {
+		builder.AddQuery("reservation_affinity.policy", fmt.Sprint(*listInstancesOptions.ReservationAffinityPolicy))
+	}
 	if listInstancesOptions.ReservationID != nil {
 		builder.AddQuery("reservation.id", fmt.Sprint(*listInstancesOptions.ReservationID))
 	}
@@ -11042,6 +11045,12 @@ func (vpc *VpcV1) ListReservationsWithContext(ctx context.Context, listReservati
 	if listReservationsOptions.Name != nil {
 		builder.AddQuery("name", fmt.Sprint(*listReservationsOptions.Name))
 	}
+	if listReservationsOptions.ProfileResourceType != nil {
+		builder.AddQuery("profile.resource_type", fmt.Sprint(*listReservationsOptions.ProfileResourceType))
+	}
+	if listReservationsOptions.AffinityPolicy != nil {
+		builder.AddQuery("affinity_policy", fmt.Sprint(*listReservationsOptions.AffinityPolicy))
+	}
 	if listReservationsOptions.ResourceGroupID != nil {
 		builder.AddQuery("resource_group.id", fmt.Sprint(*listReservationsOptions.ResourceGroupID))
 	}
@@ -12370,7 +12379,8 @@ func (vpc *VpcV1) UpdateDedicatedHostDiskWithContext(ctx context.Context, update
 }
 
 // DeleteDedicatedHost : Delete a dedicated host
-// This request deletes a dedicated host.
+// This request deletes a dedicated host. This operation cannot be reversed. For this request to succeed, `instances`
+// must be empty and `instance_placement_enabled` must be `false`.
 func (vpc *VpcV1) DeleteDedicatedHost(deleteDedicatedHostOptions *DeleteDedicatedHostOptions) (response *core.DetailedResponse, err error) {
 	response, err = vpc.DeleteDedicatedHostWithContext(context.Background(), deleteDedicatedHostOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -13144,6 +13154,15 @@ func (vpc *VpcV1) ListBareMetalServersWithContext(ctx context.Context, listBareM
 	}
 	if listBareMetalServersOptions.Name != nil {
 		builder.AddQuery("name", fmt.Sprint(*listBareMetalServersOptions.Name))
+	}
+	if listBareMetalServersOptions.ReservationID != nil {
+		builder.AddQuery("reservation.id", fmt.Sprint(*listBareMetalServersOptions.ReservationID))
+	}
+	if listBareMetalServersOptions.ReservationCRN != nil {
+		builder.AddQuery("reservation.crn", fmt.Sprint(*listBareMetalServersOptions.ReservationCRN))
+	}
+	if listBareMetalServersOptions.ReservationName != nil {
+		builder.AddQuery("reservation.name", fmt.Sprint(*listBareMetalServersOptions.ReservationName))
 	}
 	if listBareMetalServersOptions.VPCID != nil {
 		builder.AddQuery("vpc.id", fmt.Sprint(*listBareMetalServersOptions.VPCID))
@@ -17691,7 +17710,7 @@ func (vpc *VpcV1) UpdateShareWithContext(ctx context.Context, updateShareOptions
 
 // ListShareAccessorBindings : List accessor bindings for a file share
 // This request lists accessor bindings for a share. Each accessor binding identifies a resource (possibly in another
-// account) with access to this file share's data.
+// account) with access to this file share including its snapshots.
 //
 // The share accessor bindings will be sorted by their `created_at` property values, with newest bindings first.
 func (vpc *VpcV1) ListShareAccessorBindings(listShareAccessorBindingsOptions *ListShareAccessorBindingsOptions) (result *ShareAccessorBindingCollection, response *core.DetailedResponse, err error) {
@@ -18374,6 +18393,438 @@ func (vpc *VpcV1) UpdateShareMountTargetWithContext(ctx context.Context, updateS
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalShareMountTarget)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// ListShareSnapshots : List file share snapshots
+// This request lists snapshots for the specified file share, or across all accessible file shares. A snapshot preserves
+// the data of a share at the time the snapshot was captured.
+//
+// If the file share is a replica, the list will contain snapshots corresponding to snapshots on the source.
+func (vpc *VpcV1) ListShareSnapshots(listShareSnapshotsOptions *ListShareSnapshotsOptions) (result *ShareSnapshotCollection, response *core.DetailedResponse, err error) {
+	result, response, err = vpc.ListShareSnapshotsWithContext(context.Background(), listShareSnapshotsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ListShareSnapshotsWithContext is an alternate form of the ListShareSnapshots method which supports a Context parameter
+func (vpc *VpcV1) ListShareSnapshotsWithContext(ctx context.Context, listShareSnapshotsOptions *ListShareSnapshotsOptions) (result *ShareSnapshotCollection, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listShareSnapshotsOptions, "listShareSnapshotsOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(listShareSnapshotsOptions, "listShareSnapshotsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"share_id": *listShareSnapshotsOptions.ShareID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/shares/{share_id}/snapshots`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range listShareSnapshotsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "ListShareSnapshots")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+	if listShareSnapshotsOptions.BackupPolicyPlanID != nil {
+		builder.AddQuery("backup_policy_plan.id", fmt.Sprint(*listShareSnapshotsOptions.BackupPolicyPlanID))
+	}
+	if listShareSnapshotsOptions.Name != nil {
+		builder.AddQuery("name", fmt.Sprint(*listShareSnapshotsOptions.Name))
+	}
+	if listShareSnapshotsOptions.Start != nil {
+		builder.AddQuery("start", fmt.Sprint(*listShareSnapshotsOptions.Start))
+	}
+	if listShareSnapshotsOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listShareSnapshotsOptions.Limit))
+	}
+	if listShareSnapshotsOptions.Sort != nil {
+		builder.AddQuery("sort", fmt.Sprint(*listShareSnapshotsOptions.Sort))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = vpc.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "list_share_snapshots", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalShareSnapshotCollection)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// CreateShareSnapshot : Create a snapshot for a file share
+// This request creates a new share snapshot from a share snapshot prototype object. The prototype object is structured
+// in the same way as a retrieved share snapshot, and contains the information necessary to create the new share
+// snapshot.
+//
+// The share must have the `access_control_mode` set to `security_group`.
+//
+// At present, the snapshot's `resource_group` will be inherited from its share, but may be specifiable in the future.
+//
+// The new snapshot will inherit the encryption settings from its share, , and must have a
+// `replication_role` of `source` or `none`.
+//
+// If the share has a `replication_role` of `source`, a corresponding snapshot on the replica share will be created with
+// a `status` of `pending`. It will remain in
+// `pending` until the data is synchronized per the replication schedule determined by the replica share's
+// `replication_cron_spec`.
+func (vpc *VpcV1) CreateShareSnapshot(createShareSnapshotOptions *CreateShareSnapshotOptions) (result *ShareSnapshot, response *core.DetailedResponse, err error) {
+	result, response, err = vpc.CreateShareSnapshotWithContext(context.Background(), createShareSnapshotOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// CreateShareSnapshotWithContext is an alternate form of the CreateShareSnapshot method which supports a Context parameter
+func (vpc *VpcV1) CreateShareSnapshotWithContext(ctx context.Context, createShareSnapshotOptions *CreateShareSnapshotOptions) (result *ShareSnapshot, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createShareSnapshotOptions, "createShareSnapshotOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(createShareSnapshotOptions, "createShareSnapshotOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"share_id": *createShareSnapshotOptions.ShareID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/shares/{share_id}/snapshots`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range createShareSnapshotOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "CreateShareSnapshot")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	body := make(map[string]interface{})
+	if createShareSnapshotOptions.Name != nil {
+		body["name"] = createShareSnapshotOptions.Name
+	}
+	if createShareSnapshotOptions.UserTags != nil {
+		body["user_tags"] = createShareSnapshotOptions.UserTags
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = vpc.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "create_share_snapshot", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalShareSnapshot)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeleteShareSnapshot : Delete a share snapshot
+// This request deletes a share snapshot. This operation cannot be reversed. For this request to succeed, the share must
+// have a `replication_role` of `source` or `none`.
+//
+// If the request is accepted, the share snapshot `lifecycle_state` will be set to
+// `deleting`. Once deletion processing completes, the share snapshot will no longer be retrievable.
+//
+// Deleting a share snapshot will not affect any previously-accepted requests to create a share from it.
+//
+// If the share has a `replication_role` of `source`, the corresponding snapshot on the replica share will be
+// subsequently moved to a `lifecycle_state` of `deleting`. If the data for the corresponding snapshot has already been
+// synchronized via the replication schedule determined by `replication_cron_spec`, the snapshot will remain available
+// in the replica share's `.snapshot` directory until the next replication sync.
+func (vpc *VpcV1) DeleteShareSnapshot(deleteShareSnapshotOptions *DeleteShareSnapshotOptions) (result *ShareSnapshot, response *core.DetailedResponse, err error) {
+	result, response, err = vpc.DeleteShareSnapshotWithContext(context.Background(), deleteShareSnapshotOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DeleteShareSnapshotWithContext is an alternate form of the DeleteShareSnapshot method which supports a Context parameter
+func (vpc *VpcV1) DeleteShareSnapshotWithContext(ctx context.Context, deleteShareSnapshotOptions *DeleteShareSnapshotOptions) (result *ShareSnapshot, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteShareSnapshotOptions, "deleteShareSnapshotOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deleteShareSnapshotOptions, "deleteShareSnapshotOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"share_id": *deleteShareSnapshotOptions.ShareID,
+		"id":       *deleteShareSnapshotOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/shares/{share_id}/snapshots/{id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range deleteShareSnapshotOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "DeleteShareSnapshot")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = vpc.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_share_snapshot", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalShareSnapshot)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetShareSnapshot : Retrieve a share snapshot
+// This request retrieves a single share snapshot specified by the identifier in the URL.
+func (vpc *VpcV1) GetShareSnapshot(getShareSnapshotOptions *GetShareSnapshotOptions) (result *ShareSnapshot, response *core.DetailedResponse, err error) {
+	result, response, err = vpc.GetShareSnapshotWithContext(context.Background(), getShareSnapshotOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetShareSnapshotWithContext is an alternate form of the GetShareSnapshot method which supports a Context parameter
+func (vpc *VpcV1) GetShareSnapshotWithContext(ctx context.Context, getShareSnapshotOptions *GetShareSnapshotOptions) (result *ShareSnapshot, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getShareSnapshotOptions, "getShareSnapshotOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getShareSnapshotOptions, "getShareSnapshotOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"share_id": *getShareSnapshotOptions.ShareID,
+		"id":       *getShareSnapshotOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/shares/{share_id}/snapshots/{id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range getShareSnapshotOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "GetShareSnapshot")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = vpc.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_share_snapshot", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalShareSnapshot)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// UpdateShareSnapshot : Update a share snapshot
+// This request updates a share snapshot with the information provided in a share snapshot patch object. The share
+// snapshot patch object is structured in the same way as a retrieved share snapshot and needs to contain only the
+// information to be updated.
+func (vpc *VpcV1) UpdateShareSnapshot(updateShareSnapshotOptions *UpdateShareSnapshotOptions) (result *ShareSnapshot, response *core.DetailedResponse, err error) {
+	result, response, err = vpc.UpdateShareSnapshotWithContext(context.Background(), updateShareSnapshotOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// UpdateShareSnapshotWithContext is an alternate form of the UpdateShareSnapshot method which supports a Context parameter
+func (vpc *VpcV1) UpdateShareSnapshotWithContext(ctx context.Context, updateShareSnapshotOptions *UpdateShareSnapshotOptions) (result *ShareSnapshot, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updateShareSnapshotOptions, "updateShareSnapshotOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(updateShareSnapshotOptions, "updateShareSnapshotOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"share_id": *updateShareSnapshotOptions.ShareID,
+		"id":       *updateShareSnapshotOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.PATCH)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = vpc.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(vpc.Service.Options.URL, `/shares/{share_id}/snapshots/{id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	for headerName, headerValue := range updateShareSnapshotOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("vpc", "V1", "UpdateShareSnapshot")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/merge-patch+json")
+	if updateShareSnapshotOptions.IfMatch != nil {
+		builder.AddHeader("If-Match", fmt.Sprint(*updateShareSnapshotOptions.IfMatch))
+	}
+
+	builder.AddQuery("version", fmt.Sprint(*vpc.Version))
+	builder.AddQuery("generation", fmt.Sprint(*vpc.Generation))
+
+	_, err = builder.SetBodyContentJSON(updateShareSnapshotOptions.ShareSnapshotPatch)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = vpc.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_share_snapshot", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalShareSnapshot)
 		if err != nil {
 			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
@@ -33595,7 +34046,7 @@ func (vpc *VpcV1) UnpublishPrivatePathServiceGatewayWithContext(ctx context.Cont
 	return
 }
 func getServiceComponentInfo() *core.ProblemComponent {
-	return core.NewProblemComponent(DefaultServiceName, "2024-11-12")
+	return core.NewProblemComponent(DefaultServiceName, "2024-12-17")
 }
 
 // AccountIdentity : Identifies an account by a unique property.
@@ -34179,6 +34630,7 @@ func (addressPrefixPatch *AddressPrefixPatch) AsPatch() (_patch map[string]inter
 // Models which "extend" this model:
 // - BackupPolicyMatchResourceTypeInstance
 // - BackupPolicyMatchResourceTypeVolume
+// - BackupPolicyMatchResourceTypeShare
 type BackupPolicy struct {
 	// The date and time that the backup policy was created.
 	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
@@ -34282,6 +34734,7 @@ const (
 // [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	BackupPolicyMatchResourceTypeInstanceConst = "instance"
+	BackupPolicyMatchResourceTypeShareConst    = "share"
 	BackupPolicyMatchResourceTypeVolumeConst   = "volume"
 )
 
@@ -34551,7 +35004,7 @@ type BackupPolicyJob struct {
 
 	// The snapshots operated on by this backup policy job (may be
 	// [deleted](https://cloud.ibm.com/apidocs/vpc#deleted-resources)).
-	TargetSnapshots []SnapshotReference `json:"target_snapshots" validate:"required"`
+	TargetSnapshots []BackupPolicyTargetSnapshotIntf `json:"target_snapshots" validate:"required"`
 }
 
 // Constants associated with the BackupPolicyJob.JobType property.
@@ -34644,7 +35097,7 @@ func UnmarshalBackupPolicyJob(m map[string]json.RawMessage, result interface{}) 
 		err = core.SDKErrorf(err, "", "status_reasons-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "target_snapshots", &obj.TargetSnapshots, UnmarshalSnapshotReference)
+	err = core.UnmarshalModel(m, "target_snapshots", &obj.TargetSnapshots, UnmarshalBackupPolicyTargetSnapshot)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "target_snapshots-error", common.GetComponentInfo())
 		return
@@ -34724,6 +35177,7 @@ func (resp *BackupPolicyJobCollection) GetNextStart() (*string, error) {
 // Models which "extend" this model:
 // - BackupPolicyJobSourceVolumeReference
 // - BackupPolicyJobSourceInstanceReference
+// - BackupPolicyJobSourceShareReference
 type BackupPolicyJobSource struct {
 	// The CRN for this volume.
 	CRN *string `json:"crn,omitempty"`
@@ -34811,6 +35265,13 @@ type BackupPolicyJobStatusReason struct {
 	// - `internal_error`: Internal error (contact IBM support)
 	// - `snapshot_encryption_key_invalid`: The provided encryption key is unavailable
 	// - `snapshot_pending`: Cannot delete backup (snapshot) in the `pending` lifecycle state
+	// - `snapshot_source_unsupported`: The source access control mode does not support
+	//   backups
+	// - `snapshot_rate_too_high`: The rate of backups for the resource is too high
+	// - `snapshot_share_limit`: The maximum limit for snapshots on this resource has been
+	//   reached
+	// - `snapshot_source_unavailable`: The source data is not available (for example,
+	//   because the source is still being created).
 	// - `snapshot_volume_limit`: The snapshot limit for the source volume has been reached
 	// - `source_volume_busy`: The source volume has `busy` set (after multiple retries)
 	// - `source_volume_too_large`: The source volume exceeds the [maximum supported
@@ -34833,6 +35294,13 @@ type BackupPolicyJobStatusReason struct {
 //   - `internal_error`: Internal error (contact IBM support)
 //   - `snapshot_encryption_key_invalid`: The provided encryption key is unavailable
 //   - `snapshot_pending`: Cannot delete backup (snapshot) in the `pending` lifecycle state
+//   - `snapshot_source_unsupported`: The source access control mode does not support
+//     backups
+//   - `snapshot_rate_too_high`: The rate of backups for the resource is too high
+//   - `snapshot_share_limit`: The maximum limit for snapshots on this resource has been
+//     reached
+//   - `snapshot_source_unavailable`: The source data is not available (for example,
+//     because the source is still being created).
 //   - `snapshot_volume_limit`: The snapshot limit for the source volume has been reached
 //   - `source_volume_busy`: The source volume has `busy` set (after multiple retries)
 //   - `source_volume_too_large`: The source volume exceeds the [maximum supported
@@ -34845,6 +35313,10 @@ const (
 	BackupPolicyJobStatusReasonCodeInternalErrorConst                = "internal_error"
 	BackupPolicyJobStatusReasonCodeSnapshotEncryptionKeyInvalidConst = "snapshot_encryption_key_invalid"
 	BackupPolicyJobStatusReasonCodeSnapshotPendingConst              = "snapshot_pending"
+	BackupPolicyJobStatusReasonCodeSnapshotRateTooHighConst          = "snapshot_rate_too_high"
+	BackupPolicyJobStatusReasonCodeSnapshotShareLimitConst           = "snapshot_share_limit"
+	BackupPolicyJobStatusReasonCodeSnapshotSourceUnavailableConst    = "snapshot_source_unavailable"
+	BackupPolicyJobStatusReasonCodeSnapshotSourceUnsupportedConst    = "snapshot_source_unsupported"
 	BackupPolicyJobStatusReasonCodeSnapshotVolumeLimitConst          = "snapshot_volume_limit"
 	BackupPolicyJobStatusReasonCodeSourceVolumeBusyConst             = "source_volume_busy"
 	BackupPolicyJobStatusReasonCodeSourceVolumeTooLargeConst         = "source_volume_too_large"
@@ -35707,6 +36179,7 @@ func (backupPolicyPlanRemoteRegionPolicyPrototype *BackupPolicyPlanRemoteRegionP
 // Models which "extend" this model:
 // - BackupPolicyPrototypeBackupPolicyMatchResourceTypeVolumePrototype
 // - BackupPolicyPrototypeBackupPolicyMatchResourceTypeInstancePrototype
+// - BackupPolicyPrototypeBackupPolicyMatchResourceTypeSharePrototype
 type BackupPolicyPrototype struct {
 	// The resource type this backup policy will apply to. Resources that have both a matching type and a matching user tag
 	// will be subject to the backup policy.
@@ -35743,6 +36216,7 @@ type BackupPolicyPrototype struct {
 // will be subject to the backup policy.
 const (
 	BackupPolicyPrototypeMatchResourceTypeInstanceConst = "instance"
+	BackupPolicyPrototypeMatchResourceTypeShareConst    = "share"
 	BackupPolicyPrototypeMatchResourceTypeVolumeConst   = "volume"
 )
 
@@ -35884,6 +36358,91 @@ func UnmarshalBackupPolicyScopePrototype(m map[string]json.RawMessage, result in
 	return
 }
 
+// BackupPolicyTargetSnapshot : BackupPolicyTargetSnapshot struct
+// Models which "extend" this model:
+// - BackupPolicyTargetSnapshotSnapshotReference
+// - BackupPolicyTargetSnapshotShareSnapshotReference
+type BackupPolicyTargetSnapshot struct {
+	// The CRN of this snapshot.
+	CRN *string `json:"crn,omitempty"`
+
+	// If present, this property indicates the referenced resource has been deleted, and provides
+	// some supplementary information.
+	Deleted *Deleted `json:"deleted,omitempty"`
+
+	// The URL for this snapshot.
+	Href *string `json:"href,omitempty"`
+
+	// The unique identifier for this snapshot.
+	ID *string `json:"id,omitempty"`
+
+	// The name for this snapshot. The name is unique across all snapshots in the region.
+	Name *string `json:"name,omitempty"`
+
+	// If present, this property indicates that the resource associated with this reference
+	// is remote and therefore may not be directly retrievable.
+	Remote *SnapshotRemote `json:"remote,omitempty"`
+
+	// The resource type.
+	ResourceType *string `json:"resource_type,omitempty"`
+}
+
+// Constants associated with the BackupPolicyTargetSnapshot.ResourceType property.
+// The resource type.
+const (
+	BackupPolicyTargetSnapshotResourceTypeSnapshotConst = "snapshot"
+)
+
+func (*BackupPolicyTargetSnapshot) isaBackupPolicyTargetSnapshot() bool {
+	return true
+}
+
+type BackupPolicyTargetSnapshotIntf interface {
+	isaBackupPolicyTargetSnapshot() bool
+}
+
+// UnmarshalBackupPolicyTargetSnapshot unmarshals an instance of BackupPolicyTargetSnapshot from the specified map of raw messages.
+func UnmarshalBackupPolicyTargetSnapshot(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(BackupPolicyTargetSnapshot)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "remote", &obj.Remote, UnmarshalSnapshotRemote)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "remote-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // BareMetalServer : BareMetalServer struct
 type BareMetalServer struct {
 	// The total bandwidth (in megabits per second) shared across the bare metal server network attachments or bare metal
@@ -35915,6 +36474,27 @@ type BareMetalServer struct {
 
 	// Firmware information for the bare metal server.
 	Firmware *BareMetalServerFirmware `json:"firmware" validate:"required"`
+
+	// The reasons for the current server `health_state` (if any):
+	// - `reservation_capacity_unavailable`: The reservation affinity pool has no
+	//   available capacity.
+	// - `reservation_deleted`: The reservation affinity pool has a deleted reservation.
+	// - `reservation_expired`: The reservation affinity pool has an expired reservation.
+	// - `reservation_failed`: The reservation affinity pool has a failed reservation.
+	//
+	// See [health status reasons](https://cloud.ibm.com/docs/vpc?topic=vpc-server-health-status-reasons) for details. The
+	// enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	HealthReasons []BareMetalServerHealthReason `json:"health_reasons" validate:"required"`
+
+	// The health of this resource:
+	// - `ok`: No abnormal behavior detected
+	// - `degraded`: Experiencing compromised performance, capacity, or connectivity
+	// - `faulted`: Completely unreachable, inoperative, or otherwise entirely incapacitated
+	// - `inapplicable`: The health state does not apply because of the current lifecycle
+	//    state. A resource with a lifecycle state of `failed` or `deleting` will have a
+	//    health state of `inapplicable`. A `pending` resource may also have this state.
+	HealthState *string `json:"health_state" validate:"required"`
 
 	// The URL for this bare metal server.
 	Href *string `json:"href" validate:"required"`
@@ -35959,6 +36539,12 @@ type BareMetalServer struct {
 	// for this bare metal server.
 	Profile *BareMetalServerProfileReference `json:"profile" validate:"required"`
 
+	// The reservation used by this bare metal server.
+	// If absent, no reservation is in use.
+	Reservation *ReservationReference `json:"reservation,omitempty"`
+
+	ReservationAffinity *BareMetalServerReservationAffinity `json:"reservation_affinity" validate:"required"`
+
 	// The resource group for this bare metal server.
 	ResourceGroup *ResourceGroupReference `json:"resource_group" validate:"required"`
 
@@ -35991,6 +36577,21 @@ type BareMetalServer struct {
 	// The zone this bare metal server resides in.
 	Zone *ZoneReference `json:"zone" validate:"required"`
 }
+
+// Constants associated with the BareMetalServer.HealthState property.
+// The health of this resource:
+//   - `ok`: No abnormal behavior detected
+//   - `degraded`: Experiencing compromised performance, capacity, or connectivity
+//   - `faulted`: Completely unreachable, inoperative, or otherwise entirely incapacitated
+//   - `inapplicable`: The health state does not apply because of the current lifecycle
+//     state. A resource with a lifecycle state of `failed` or `deleting` will have a
+//     health state of `inapplicable`. A `pending` resource may also have this state.
+const (
+	BareMetalServerHealthStateDegradedConst     = "degraded"
+	BareMetalServerHealthStateFaultedConst      = "faulted"
+	BareMetalServerHealthStateInapplicableConst = "inapplicable"
+	BareMetalServerHealthStateOkConst           = "ok"
+)
 
 // Constants associated with the BareMetalServer.LifecycleState property.
 // The lifecycle state of the bare metal server.
@@ -36079,6 +36680,16 @@ func UnmarshalBareMetalServer(m map[string]json.RawMessage, result interface{}) 
 		err = core.SDKErrorf(err, "", "firmware-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalModel(m, "health_reasons", &obj.HealthReasons, UnmarshalBareMetalServerHealthReason)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "health_reasons-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "health_state", &obj.HealthState)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "health_state-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
@@ -36132,6 +36743,16 @@ func UnmarshalBareMetalServer(m map[string]json.RawMessage, result interface{}) 
 	err = core.UnmarshalModel(m, "profile", &obj.Profile, UnmarshalBareMetalServerProfileReference)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "profile-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "reservation", &obj.Reservation, UnmarshalReservationReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "reservation-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "reservation_affinity", &obj.ReservationAffinity, UnmarshalBareMetalServerReservationAffinity)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "reservation_affinity-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resource_group", &obj.ResourceGroup, UnmarshalResourceGroupReference)
@@ -36581,6 +37202,49 @@ func UnmarshalBareMetalServerFirmware(m map[string]json.RawMessage, result inter
 	err = core.UnmarshalPrimitive(m, "update", &obj.Update)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "update-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// BareMetalServerHealthReason : BareMetalServerHealthReason struct
+type BareMetalServerHealthReason struct {
+	// A reason code for this health state.
+	Code *string `json:"code" validate:"required"`
+
+	// An explanation of the reason for this health state.
+	Message *string `json:"message" validate:"required"`
+
+	// Link to documentation about the reason for this health state.
+	MoreInfo *string `json:"more_info,omitempty"`
+}
+
+// Constants associated with the BareMetalServerHealthReason.Code property.
+// A reason code for this health state.
+const (
+	BareMetalServerHealthReasonCodeReservationCapacityUnavailableConst = "reservation_capacity_unavailable"
+	BareMetalServerHealthReasonCodeReservationDeletedConst             = "reservation_deleted"
+	BareMetalServerHealthReasonCodeReservationExpiredConst             = "reservation_expired"
+	BareMetalServerHealthReasonCodeReservationFailedConst              = "reservation_failed"
+)
+
+// UnmarshalBareMetalServerHealthReason unmarshals an instance of BareMetalServerHealthReason from the specified map of raw messages.
+func UnmarshalBareMetalServerHealthReason(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(BareMetalServerHealthReason)
+	err = core.UnmarshalPrimitive(m, "code", &obj.Code)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "code-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -38096,6 +38760,8 @@ type BareMetalServerPatch struct {
 	// the name will not affect the system hostname.
 	Name *string `json:"name,omitempty"`
 
+	ReservationAffinity *BareMetalServerReservationAffinityPatch `json:"reservation_affinity,omitempty"`
+
 	TrustedPlatformModule *BareMetalServerTrustedPlatformModulePatch `json:"trusted_platform_module,omitempty"`
 }
 
@@ -38115,6 +38781,11 @@ func UnmarshalBareMetalServerPatch(m map[string]json.RawMessage, result interfac
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "reservation_affinity", &obj.ReservationAffinity, UnmarshalBareMetalServerReservationAffinityPatch)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "reservation_affinity-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "trusted_platform_module", &obj.TrustedPlatformModule, UnmarshalBareMetalServerTrustedPlatformModulePatch)
@@ -38137,6 +38808,9 @@ func (bareMetalServerPatch *BareMetalServerPatch) AsPatch() (_patch map[string]i
 	}
 	if !core.IsNil(bareMetalServerPatch.Name) {
 		_patch["name"] = bareMetalServerPatch.Name
+	}
+	if !core.IsNil(bareMetalServerPatch.ReservationAffinity) {
+		_patch["reservation_affinity"] = bareMetalServerPatch.ReservationAffinity.asPatch()
 	}
 	if !core.IsNil(bareMetalServerPatch.TrustedPlatformModule) {
 		_patch["trusted_platform_module"] = bareMetalServerPatch.TrustedPlatformModule.asPatch()
@@ -38395,6 +39069,8 @@ type BareMetalServerProfile struct {
 
 	OsArchitecture *BareMetalServerProfileOsArchitecture `json:"os_architecture" validate:"required"`
 
+	ReservationTerms *BareMetalServerProfileReservationTerms `json:"reservation_terms" validate:"required"`
+
 	// The resource type.
 	ResourceType *string `json:"resource_type" validate:"required"`
 
@@ -38477,6 +39153,11 @@ func UnmarshalBareMetalServerProfile(m map[string]json.RawMessage, result interf
 	err = core.UnmarshalModel(m, "os_architecture", &obj.OsArchitecture, UnmarshalBareMetalServerProfileOsArchitecture)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "os_architecture-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "reservation_terms", &obj.ReservationTerms, UnmarshalBareMetalServerProfileReservationTerms)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "reservation_terms-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
@@ -39465,6 +40146,44 @@ func UnmarshalBareMetalServerProfileReference(m map[string]json.RawMessage, resu
 	return
 }
 
+// BareMetalServerProfileReservationTerms : BareMetalServerProfileReservationTerms struct
+type BareMetalServerProfileReservationTerms struct {
+	// The type for this profile field.
+	Type *string `json:"type" validate:"required"`
+
+	// The supported committed use terms for a reservation using this profile.
+	Values []string `json:"values" validate:"required"`
+}
+
+// Constants associated with the BareMetalServerProfileReservationTerms.Type property.
+// The type for this profile field.
+const (
+	BareMetalServerProfileReservationTermsTypeEnumConst = "enum"
+)
+
+// Constants associated with the BareMetalServerProfileReservationTerms.Values property.
+const (
+	BareMetalServerProfileReservationTermsValuesOneYearConst   = "one_year"
+	BareMetalServerProfileReservationTermsValuesThreeYearConst = "three_year"
+)
+
+// UnmarshalBareMetalServerProfileReservationTerms unmarshals an instance of BareMetalServerProfileReservationTerms from the specified map of raw messages.
+func UnmarshalBareMetalServerProfileReservationTerms(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(BareMetalServerProfileReservationTerms)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "values", &obj.Values)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "values-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // BareMetalServerProfileSupportedTrustedPlatformModuleModes : The supported trusted platform module modes for this bare metal server profile.
 type BareMetalServerProfileSupportedTrustedPlatformModuleModes struct {
 	// The default trusted platform module for a bare metal server with this profile.
@@ -39582,6 +40301,8 @@ type BareMetalServerPrototype struct {
 	// to use for this bare metal server.
 	Profile BareMetalServerProfileIdentityIntf `json:"profile" validate:"required"`
 
+	ReservationAffinity *BareMetalServerReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
+
 	// The resource group to use. If unspecified, the account's [default resource
 	// group](https://cloud.ibm.com/apidocs/resource-manager#introduction) will be used.
 	ResourceGroup ResourceGroupIdentityIntf `json:"resource_group,omitempty"`
@@ -39646,6 +40367,11 @@ func UnmarshalBareMetalServerPrototype(m map[string]json.RawMessage, result inte
 		err = core.SDKErrorf(err, "", "profile-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalModel(m, "reservation_affinity", &obj.ReservationAffinity, UnmarshalBareMetalServerReservationAffinityPrototype)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "reservation_affinity-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "resource_group", &obj.ResourceGroup, UnmarshalResourceGroupIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "resource_group-error", common.GetComponentInfo())
@@ -39690,15 +40416,183 @@ func UnmarshalBareMetalServerPrototype(m map[string]json.RawMessage, result inte
 	return
 }
 
+// BareMetalServerReservationAffinity : BareMetalServerReservationAffinity struct
+type BareMetalServerReservationAffinity struct {
+	// The reservation affinity policy to use for this bare metal server:
+	// - `disabled`: Reservations will not be used
+	// - `manual`: Reservations in `pool` are available for use
+	// - `automatic`: Any reservations with an `affinity_policy` of `automatic`
+	//   that have the same `profile` and `zone` as this bare metal server
+	//   are available for use.
+	Policy *string `json:"policy" validate:"required"`
+
+	// The pool of reservations available for use by this bare metal server when the `policy` is `manual`. This must be
+	// empty if the `policy` is `automatic` or
+	// `disabled`.
+	Pool []ReservationReference `json:"pool" validate:"required"`
+}
+
+// Constants associated with the BareMetalServerReservationAffinity.Policy property.
+// The reservation affinity policy to use for this bare metal server:
+//   - `disabled`: Reservations will not be used
+//   - `manual`: Reservations in `pool` are available for use
+//   - `automatic`: Any reservations with an `affinity_policy` of `automatic`
+//     that have the same `profile` and `zone` as this bare metal server
+//     are available for use.
+const (
+	BareMetalServerReservationAffinityPolicyAutomaticConst = "automatic"
+	BareMetalServerReservationAffinityPolicyDisabledConst  = "disabled"
+	BareMetalServerReservationAffinityPolicyManualConst    = "manual"
+)
+
+// UnmarshalBareMetalServerReservationAffinity unmarshals an instance of BareMetalServerReservationAffinity from the specified map of raw messages.
+func UnmarshalBareMetalServerReservationAffinity(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(BareMetalServerReservationAffinity)
+	err = core.UnmarshalPrimitive(m, "policy", &obj.Policy)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "policy-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "pool", &obj.Pool, UnmarshalReservationReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "pool-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// BareMetalServerReservationAffinityPatch : BareMetalServerReservationAffinityPatch struct
+type BareMetalServerReservationAffinityPatch struct {
+	// The reservation affinity policy to use for this bare metal server:
+	// - `disabled`: Reservations will not be used
+	// - `manual`: Reservations in `pool` will be available for use
+	// - `automatic`: Any reservations with an `affinity_policy` of `automatic` that have the
+	//   same `profile` and `zone` as this bare metal server are available for use.
+	Policy *string `json:"policy,omitempty"`
+
+	// The pool of reservations available for use by this bare metal server, replacing the existing pool of reservations.
+	//
+	// Specified reservations must have a `status` of `active`, and have the same
+	// `profile` and `zone` as this bare metal server.
+	//
+	// If `policy` is `manual`, `pool` must have one reservation. If `policy` is `disabled` or `automatic`, `pool` must be
+	// empty. If `policy` is `manual`, the `pool` must contain a reservation with available capacity.
+	Pool []ReservationIdentityIntf `json:"pool,omitempty"`
+}
+
+// Constants associated with the BareMetalServerReservationAffinityPatch.Policy property.
+// The reservation affinity policy to use for this bare metal server:
+//   - `disabled`: Reservations will not be used
+//   - `manual`: Reservations in `pool` will be available for use
+//   - `automatic`: Any reservations with an `affinity_policy` of `automatic` that have the
+//     same `profile` and `zone` as this bare metal server are available for use.
+const (
+	BareMetalServerReservationAffinityPatchPolicyAutomaticConst = "automatic"
+	BareMetalServerReservationAffinityPatchPolicyDisabledConst  = "disabled"
+	BareMetalServerReservationAffinityPatchPolicyManualConst    = "manual"
+)
+
+// UnmarshalBareMetalServerReservationAffinityPatch unmarshals an instance of BareMetalServerReservationAffinityPatch from the specified map of raw messages.
+func UnmarshalBareMetalServerReservationAffinityPatch(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(BareMetalServerReservationAffinityPatch)
+	err = core.UnmarshalPrimitive(m, "policy", &obj.Policy)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "policy-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "pool", &obj.Pool, UnmarshalReservationIdentity)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "pool-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// asPatch returns a generic map representation of the BareMetalServerReservationAffinityPatch
+func (bareMetalServerReservationAffinityPatch *BareMetalServerReservationAffinityPatch) asPatch() (_patch map[string]interface{}) {
+	_patch = map[string]interface{}{}
+	if !core.IsNil(bareMetalServerReservationAffinityPatch.Policy) {
+		_patch["policy"] = bareMetalServerReservationAffinityPatch.Policy
+	}
+	if !core.IsNil(bareMetalServerReservationAffinityPatch.Pool) {
+		var poolPatches []map[string]interface{}
+		for _, pool := range bareMetalServerReservationAffinityPatch.Pool {
+			poolPatches = append(poolPatches, pool.asPatch())
+		}
+		_patch["pool"] = poolPatches
+	}
+
+	return
+}
+
+// BareMetalServerReservationAffinityPrototype : BareMetalServerReservationAffinityPrototype struct
+type BareMetalServerReservationAffinityPrototype struct {
+	// The reservation affinity policy to use for this bare metal server:
+	// - `disabled`: Reservations will not be used
+	// - `manual`: Reservations in `pool` will be available for use
+	// - `automatic`: Any reservations with an `affinity_policy` of `automatic` that have the
+	//   same `profile` and `zone` as this bare metal server are available for use.
+	//
+	// The policy will default to `manual` if `pool` is not empty. Otherwise the policy will default to `automatic`.
+	Policy *string `json:"policy,omitempty"`
+
+	// The pool of reservations available for use by this bare metal server.
+	//
+	// Specified reservations must have a `status` of `active`, and have the same `profile` and `zone` as this bare metal
+	// server.
+	//
+	// If `policy` is `manual`, `pool` must have one reservation. If `policy` is `disabled` or `automatic`, `pool` must be
+	// empty. If `policy` is `manual`, the `pool` must contain a reservation with available capacity.
+	Pool []ReservationIdentityIntf `json:"pool,omitempty"`
+}
+
+// Constants associated with the BareMetalServerReservationAffinityPrototype.Policy property.
+// The reservation affinity policy to use for this bare metal server:
+//   - `disabled`: Reservations will not be used
+//   - `manual`: Reservations in `pool` will be available for use
+//   - `automatic`: Any reservations with an `affinity_policy` of `automatic` that have the
+//     same `profile` and `zone` as this bare metal server are available for use.
+//
+// The policy will default to `manual` if `pool` is not empty. Otherwise the policy will default to `automatic`.
+const (
+	BareMetalServerReservationAffinityPrototypePolicyAutomaticConst = "automatic"
+	BareMetalServerReservationAffinityPrototypePolicyDisabledConst  = "disabled"
+	BareMetalServerReservationAffinityPrototypePolicyManualConst    = "manual"
+)
+
+// UnmarshalBareMetalServerReservationAffinityPrototype unmarshals an instance of BareMetalServerReservationAffinityPrototype from the specified map of raw messages.
+func UnmarshalBareMetalServerReservationAffinityPrototype(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(BareMetalServerReservationAffinityPrototype)
+	err = core.UnmarshalPrimitive(m, "policy", &obj.Policy)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "policy-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "pool", &obj.Pool, UnmarshalReservationIdentity)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "pool-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // BareMetalServerStatusReason : BareMetalServerStatusReason struct
 type BareMetalServerStatusReason struct {
 	// The status reason code:
+	// - `cannot_reinitialize`: An error occurred while reinitializing bare metal server
 	// - `cannot_start`: Failed to start due to an internal error
 	// - `cannot_start_capacity`: Insufficient capacity within the selected zone
 	// - `cannot_start_compute`: An error occurred while allocating compute resources
 	// - `cannot_start_ip_address`: An error occurred while allocating an IP address
 	// - `cannot_start_network`: An error occurred while allocating network resources
 	// - `cannot_update_firmware`: An error occurred while updating bare metal server firmware
+	// - `cannot_start_reservation_capacity`: Failed to start because the reservation has
+	//   insufficient capacity
+	// - `cannot_start_reservation_expired`: Failed to start because the reservation has
+	//   expired
 	//
 	// The enumerated values for this property may
 	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
@@ -39713,23 +40607,30 @@ type BareMetalServerStatusReason struct {
 
 // Constants associated with the BareMetalServerStatusReason.Code property.
 // The status reason code:
-// - `cannot_start`: Failed to start due to an internal error
-// - `cannot_start_capacity`: Insufficient capacity within the selected zone
-// - `cannot_start_compute`: An error occurred while allocating compute resources
-// - `cannot_start_ip_address`: An error occurred while allocating an IP address
-// - `cannot_start_network`: An error occurred while allocating network resources
-// - `cannot_update_firmware`: An error occurred while updating bare metal server firmware
+//   - `cannot_reinitialize`: An error occurred while reinitializing bare metal server
+//   - `cannot_start`: Failed to start due to an internal error
+//   - `cannot_start_capacity`: Insufficient capacity within the selected zone
+//   - `cannot_start_compute`: An error occurred while allocating compute resources
+//   - `cannot_start_ip_address`: An error occurred while allocating an IP address
+//   - `cannot_start_network`: An error occurred while allocating network resources
+//   - `cannot_update_firmware`: An error occurred while updating bare metal server firmware
+//   - `cannot_start_reservation_capacity`: Failed to start because the reservation has
+//     insufficient capacity
+//   - `cannot_start_reservation_expired`: Failed to start because the reservation has
+//     expired
 //
 // The enumerated values for this property may
 // [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
-	BareMetalServerStatusReasonCodeCannotReinitializeConst   = "cannot_reinitialize"
-	BareMetalServerStatusReasonCodeCannotStartConst          = "cannot_start"
-	BareMetalServerStatusReasonCodeCannotStartCapacityConst  = "cannot_start_capacity"
-	BareMetalServerStatusReasonCodeCannotStartComputeConst   = "cannot_start_compute"
-	BareMetalServerStatusReasonCodeCannotStartIPAddressConst = "cannot_start_ip_address"
-	BareMetalServerStatusReasonCodeCannotStartNetworkConst   = "cannot_start_network"
-	BareMetalServerStatusReasonCodeCannotUpdateFirmwareConst = "cannot_update_firmware"
+	BareMetalServerStatusReasonCodeCannotReinitializeConst             = "cannot_reinitialize"
+	BareMetalServerStatusReasonCodeCannotStartConst                    = "cannot_start"
+	BareMetalServerStatusReasonCodeCannotStartCapacityConst            = "cannot_start_capacity"
+	BareMetalServerStatusReasonCodeCannotStartComputeConst             = "cannot_start_compute"
+	BareMetalServerStatusReasonCodeCannotStartIPAddressConst           = "cannot_start_ip_address"
+	BareMetalServerStatusReasonCodeCannotStartNetworkConst             = "cannot_start_network"
+	BareMetalServerStatusReasonCodeCannotStartReservationCapacityConst = "cannot_start_reservation_capacity"
+	BareMetalServerStatusReasonCodeCannotStartReservationExpiredConst  = "cannot_start_reservation_expired"
+	BareMetalServerStatusReasonCodeCannotUpdateFirmwareConst           = "cannot_update_firmware"
 )
 
 // UnmarshalBareMetalServerStatusReason unmarshals an instance of BareMetalServerStatusReason from the specified map of raw messages.
@@ -43965,7 +44866,8 @@ type CreateInstanceVolumeAttachmentOptions struct {
 	// The virtual server instance identifier.
 	InstanceID *string `json:"instance_id" validate:"required,ne="`
 
-	// An existing volume to attach to the instance, or a prototype object for a new volume.
+	// The volume to use for this attachment. This can be specified as an existing unattached
+	// volume, or a prototype object for a new volume.
 	Volume VolumeAttachmentPrototypeVolumeIntf `json:"volume" validate:"required"`
 
 	// Indicates whether deleting the instance will also delete the attached volume.
@@ -44158,11 +45060,13 @@ func (options *CreateIpsecPolicyOptions) SetHeaders(param map[string]string) *Cr
 
 // CreateKeyOptions : The CreateKey options.
 type CreateKeyOptions struct {
-	// A unique public SSH key to import, in OpenSSH format (consisting of three space-separated fields: the algorithm
-	// name, base64-encoded key, and a comment). The algorithm and comment fields may be omitted, as only the key field is
-	// imported.
+	// The public SSH key to use, in OpenSSH format (consisting of three space-separated fields: the algorithm name,
+	// base64-encoded key value, and a comment). The algorithm and comment fields may be omitted, as only the key field is
+	// used.
 	//
-	// Keys of type `rsa` may be 2048 or 4096 bits in length, however 4096 is recommended. Keys of type `ed25519` are 256
+	// The key field must not match another key in the region.
+	//
+	// Keys of type `rsa` must be 2048 or 4096 bits in length (4096 is recommended). Keys of type `ed25519` must be 256
 	// bits in length.
 	PublicKey *string `json:"public_key" validate:"required"`
 
@@ -44257,7 +45161,7 @@ type CreateLoadBalancerListenerOptions struct {
 
 	// The concurrent connection limit for the listener. If reached, incoming connections may be queued or rejected.
 	//
-	// This property will be present for load balancers in the `application` family.
+	// Supported for load balancers in the `application` family.
 	ConnectionLimit *int64 `json:"connection_limit,omitempty"`
 
 	// The default pool for this listener. If `https_redirect` is specified, the
@@ -44825,10 +45729,8 @@ type CreateLoadBalancerPoolMemberOptions struct {
 	// The port must be unique across all members for all pools associated with this pool's listener.
 	Port *int64 `json:"port" validate:"required"`
 
-	// The pool member target. Load balancers in the `network` family support virtual server
-	// instances. Load balancers in the `application` family support IP addresses. If the load
-	// balancer has route mode enabled, the member must be in a zone the load balancer has a
-	// subnet in.
+	// The pool member target. If the load balancer has route mode enabled, the member must be
+	// in a zone the load balancer has a subnet in.
 	Target LoadBalancerPoolMemberTargetPrototypeIntf `json:"target" validate:"required"`
 
 	// The weight of the server member.
@@ -45397,14 +46299,17 @@ type CreateReservationOptions struct {
 	// The committed use configuration to use for this reservation.
 	CommittedUse *ReservationCommittedUsePrototype `json:"committed_use" validate:"required"`
 
-	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this
-	// reservation.
+	// The [instance profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) or
+	// [bare metal server
+	// profile](https://cloud.ibm.com/docs/vpc?topic=vpc-bare-metal-servers-profile)
+	// to use for this reservation.
 	Profile *ReservationProfilePrototype `json:"profile" validate:"required"`
 
 	// The zone to use for this reservation.
 	Zone ZoneIdentityIntf `json:"zone" validate:"required"`
 
 	// The affinity policy to use for this reservation:
+	// - `automatic`: The reservation will be automatically selected
 	// - `restricted`: The reservation must be manually requested.
 	AffinityPolicy *string `json:"affinity_policy,omitempty"`
 
@@ -45422,8 +46327,10 @@ type CreateReservationOptions struct {
 
 // Constants associated with the CreateReservationOptions.AffinityPolicy property.
 // The affinity policy to use for this reservation:
+// - `automatic`: The reservation will be automatically selected
 // - `restricted`: The reservation must be manually requested.
 const (
+	CreateReservationOptionsAffinityPolicyAutomaticConst  = "automatic"
 	CreateReservationOptionsAffinityPolicyRestrictedConst = "restricted"
 )
 
@@ -45681,6 +46588,53 @@ func (_options *CreateShareOptions) SetSharePrototype(sharePrototype ShareProtot
 
 // SetHeaders : Allow user to set Headers
 func (options *CreateShareOptions) SetHeaders(param map[string]string) *CreateShareOptions {
+	options.Headers = param
+	return options
+}
+
+// CreateShareSnapshotOptions : The CreateShareSnapshot options.
+type CreateShareSnapshotOptions struct {
+	// The file share identifier.
+	ShareID *string `json:"share_id" validate:"required,ne="`
+
+	// The name for this share snapshot. The name must not be used by another snapshot for the file share. If unspecified,
+	// the name will be a hyphenated list of randomly-selected words.
+	Name *string `json:"name,omitempty"`
+
+	// The [user tags](https://cloud.ibm.com/apidocs/tagging#types-of-tags) associated with this share snapshot.
+	UserTags []string `json:"user_tags,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewCreateShareSnapshotOptions : Instantiate CreateShareSnapshotOptions
+func (*VpcV1) NewCreateShareSnapshotOptions(shareID string) *CreateShareSnapshotOptions {
+	return &CreateShareSnapshotOptions{
+		ShareID: core.StringPtr(shareID),
+	}
+}
+
+// SetShareID : Allow user to set ShareID
+func (_options *CreateShareSnapshotOptions) SetShareID(shareID string) *CreateShareSnapshotOptions {
+	_options.ShareID = core.StringPtr(shareID)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *CreateShareSnapshotOptions) SetName(name string) *CreateShareSnapshotOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetUserTags : Allow user to set UserTags
+func (_options *CreateShareSnapshotOptions) SetUserTags(userTags []string) *CreateShareSnapshotOptions {
+	_options.UserTags = userTags
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CreateShareSnapshotOptions) SetHeaders(param map[string]string) *CreateShareSnapshotOptions {
 	options.Headers = param
 	return options
 }
@@ -51255,6 +52209,44 @@ func (options *DeleteShareOptions) SetHeaders(param map[string]string) *DeleteSh
 	return options
 }
 
+// DeleteShareSnapshotOptions : The DeleteShareSnapshot options.
+type DeleteShareSnapshotOptions struct {
+	// The file share identifier.
+	ShareID *string `json:"share_id" validate:"required,ne="`
+
+	// The share snapshot identifier.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewDeleteShareSnapshotOptions : Instantiate DeleteShareSnapshotOptions
+func (*VpcV1) NewDeleteShareSnapshotOptions(shareID string, id string) *DeleteShareSnapshotOptions {
+	return &DeleteShareSnapshotOptions{
+		ShareID: core.StringPtr(shareID),
+		ID:      core.StringPtr(id),
+	}
+}
+
+// SetShareID : Allow user to set ShareID
+func (_options *DeleteShareSnapshotOptions) SetShareID(shareID string) *DeleteShareSnapshotOptions {
+	_options.ShareID = core.StringPtr(shareID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *DeleteShareSnapshotOptions) SetID(id string) *DeleteShareSnapshotOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeleteShareSnapshotOptions) SetHeaders(param map[string]string) *DeleteShareSnapshotOptions {
+	options.Headers = param
+	return options
+}
+
 // DeleteShareSourceOptions : The DeleteShareSource options.
 type DeleteShareSourceOptions struct {
 	// The file share identifier.
@@ -52221,11 +53213,11 @@ type EndpointGateway struct {
 	// The security groups targeting this endpoint gateway.
 	SecurityGroups []SecurityGroupReference `json:"security_groups" validate:"required"`
 
-	// The fully qualified domain name for the target service.
+	// The fully qualified domain name for the target service. The domain name may have a wildcard prefix.
 	// Deprecated: this field is deprecated and may be removed in a future release.
 	ServiceEndpoint *string `json:"service_endpoint,omitempty"`
 
-	// The fully qualified domain names for the target service.
+	// The fully qualified domain names for the target service. A domain name may have a wildcard prefix.
 	ServiceEndpoints []string `json:"service_endpoints" validate:"required"`
 
 	// The target for this endpoint gateway.
@@ -56531,6 +57523,44 @@ func (_options *GetShareProfileOptions) SetName(name string) *GetShareProfileOpt
 
 // SetHeaders : Allow user to set Headers
 func (options *GetShareProfileOptions) SetHeaders(param map[string]string) *GetShareProfileOptions {
+	options.Headers = param
+	return options
+}
+
+// GetShareSnapshotOptions : The GetShareSnapshot options.
+type GetShareSnapshotOptions struct {
+	// The file share identifier.
+	ShareID *string `json:"share_id" validate:"required,ne="`
+
+	// The share snapshot identifier.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewGetShareSnapshotOptions : Instantiate GetShareSnapshotOptions
+func (*VpcV1) NewGetShareSnapshotOptions(shareID string, id string) *GetShareSnapshotOptions {
+	return &GetShareSnapshotOptions{
+		ShareID: core.StringPtr(shareID),
+		ID:      core.StringPtr(id),
+	}
+}
+
+// SetShareID : Allow user to set ShareID
+func (_options *GetShareSnapshotOptions) SetShareID(shareID string) *GetShareSnapshotOptions {
+	_options.ShareID = core.StringPtr(shareID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *GetShareSnapshotOptions) SetID(id string) *GetShareSnapshotOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetShareSnapshotOptions) SetHeaders(param map[string]string) *GetShareSnapshotOptions {
 	options.Headers = param
 	return options
 }
@@ -63422,7 +64452,8 @@ type InstanceHealthReason struct {
 	// - `reservation_expired`: The reservation affinity pool has an expired reservation.
 	// - `reservation_failed`: The reservation affinity pool has a failed reservation.
 	//
-	// The enumerated values for this property may
+	// See [health status reasons](https://cloud.ibm.com/docs/vpc?topic=vpc-server-health-status-reasons) for details. The
+	// enumerated values for this property may
 	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Code *string `json:"code" validate:"required"`
 
@@ -63441,7 +64472,8 @@ type InstanceHealthReason struct {
 //   - `reservation_expired`: The reservation affinity pool has an expired reservation.
 //   - `reservation_failed`: The reservation affinity pool has a failed reservation.
 //
-// The enumerated values for this property may
+// See [health status reasons](https://cloud.ibm.com/docs/vpc?topic=vpc-server-health-status-reasons) for details. The
+// enumerated values for this property may
 // [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
 	InstanceHealthReasonCodeReservationCapacityUnavailableConst = "reservation_capacity_unavailable"
@@ -66678,21 +67710,30 @@ func UnmarshalInstanceReference(m map[string]json.RawMessage, result interface{}
 // InstanceReservationAffinity : InstanceReservationAffinity struct
 type InstanceReservationAffinity struct {
 	// The reservation affinity policy to use for this virtual server instance:
+	// - `automatic`: Any reservations with an `affinity_policy` of `automatic`
+	//   that have the same `profile` and `zone` as this virtual server instance
+	//   are available for use.
 	// - `disabled`: Reservations will not be used
 	// - `manual`: Reservations in `pool` are available for use.
 	Policy *string `json:"policy" validate:"required"`
 
-	// The pool of reservations available for use by this virtual server instance.
+	// The pool of reservations available for use by this virtual server instance when the `policy` is `manual`. This must
+	// be empty if the `policy` is `automatic` or
+	// `disabled`.
 	Pool []ReservationReference `json:"pool" validate:"required"`
 }
 
 // Constants associated with the InstanceReservationAffinity.Policy property.
 // The reservation affinity policy to use for this virtual server instance:
-// - `disabled`: Reservations will not be used
-// - `manual`: Reservations in `pool` are available for use.
+//   - `automatic`: Any reservations with an `affinity_policy` of `automatic`
+//     that have the same `profile` and `zone` as this virtual server instance
+//     are available for use.
+//   - `disabled`: Reservations will not be used
+//   - `manual`: Reservations in `pool` are available for use.
 const (
-	InstanceReservationAffinityPolicyDisabledConst = "disabled"
-	InstanceReservationAffinityPolicyManualConst   = "manual"
+	InstanceReservationAffinityPolicyAutomaticConst = "automatic"
+	InstanceReservationAffinityPolicyDisabledConst  = "disabled"
+	InstanceReservationAffinityPolicyManualConst    = "manual"
 )
 
 // UnmarshalInstanceReservationAffinity unmarshals an instance of InstanceReservationAffinity from the specified map of raw messages.
@@ -66715,6 +67756,9 @@ func UnmarshalInstanceReservationAffinity(m map[string]json.RawMessage, result i
 // InstanceReservationAffinityPatch : InstanceReservationAffinityPatch struct
 type InstanceReservationAffinityPatch struct {
 	// The reservation affinity policy to use for this virtual server instance:
+	// - `automatic`: Any reservations with an `affinity_policy` of `automatic`
+	//   that have the same `profile` and `zone` as this virtual server instance
+	//   are available for use.
 	// - `disabled`: Reservations will not be used
 	// - `manual`: Reservations in `pool` will be available for use
 	//
@@ -66724,22 +67768,27 @@ type InstanceReservationAffinityPatch struct {
 	// The pool of reservations available for use by this virtual server instance, replacing the existing pool of
 	// reservations.
 	//
-	// Specified reservations must have a `status` of `active`, and have the same
-	// `profile` and `zone` as this virtual server instance.
+	// Specified reservations must have a `status` of `active`, and have the same `profile` and `zone` as this virtual
+	// server instance.
 	//
-	// If `policy` is `manual`, `pool` must have one reservation. If `policy` is `disabled`, `pool` must be empty.
+	// If `policy` is `manual`, `pool` must have one reservation. If `policy` is `disabled` or `automatic`, `pool` must be
+	// empty. If `policy` is `manual`, the `pool` must contain a reservation with available capacity.
 	Pool []ReservationIdentityIntf `json:"pool,omitempty"`
 }
 
 // Constants associated with the InstanceReservationAffinityPatch.Policy property.
 // The reservation affinity policy to use for this virtual server instance:
-// - `disabled`: Reservations will not be used
-// - `manual`: Reservations in `pool` will be available for use
+//   - `automatic`: Any reservations with an `affinity_policy` of `automatic`
+//     that have the same `profile` and `zone` as this virtual server instance
+//     are available for use.
+//   - `disabled`: Reservations will not be used
+//   - `manual`: Reservations in `pool` will be available for use
 //
 // The policy must be `disabled` if `placement_target` is set.
 const (
-	InstanceReservationAffinityPatchPolicyDisabledConst = "disabled"
-	InstanceReservationAffinityPatchPolicyManualConst   = "manual"
+	InstanceReservationAffinityPatchPolicyAutomaticConst = "automatic"
+	InstanceReservationAffinityPatchPolicyDisabledConst  = "disabled"
+	InstanceReservationAffinityPatchPolicyManualConst    = "manual"
 )
 
 // UnmarshalInstanceReservationAffinityPatch unmarshals an instance of InstanceReservationAffinityPatch from the specified map of raw messages.
@@ -66781,29 +67830,41 @@ type InstanceReservationAffinityPrototype struct {
 	// The reservation affinity policy to use for this virtual server instance:
 	// - `disabled`: Reservations will not be used
 	// - `manual`: Reservations in `pool` will be available for use
+	// - `automatic`: Reservations with an `affinity_policy` of `automatic` that have the same
+	//   `profile` and `zone` as this virtual server instance will be available for use.
 	//
-	// The policy will default to `manual` if `pool` is not empty, and `disabled` otherwise.
+	// The policy will default to `manual` if `pool` is not empty. The policy will default to
+	// `disabled` if a `placement_target` is set. The policy will default to `automatic` in all other cases.
+	//
+	// The policy must be `disabled` if `placement_target` is specified.
 	Policy *string `json:"policy,omitempty"`
 
 	// The pool of reservations available for use by this virtual server instance.
 	//
-	// Specified reservations must have a `status` of `active`, and have the same
-	// `profile` and `zone` as this virtual server instance.
+	// Specified reservations must have a `status` of `active`, and have the same `profile` and `zone` as this virtual
+	// server instance.
 	//
-	// If `policy` is `manual`, a pool must be specified with at least one reservation. If
-	// `policy` is `disabled` and a pool is specified, it must be empty.
+	// If `policy` is `manual`, `pool` must be specified with one reservation. If `policy` is `disabled` or `automatic` and
+	// `pool` is specified, it must be empty. If `policy` is `manual`, the `pool` must contain a reservation with available
+	// capacity.
 	Pool []ReservationIdentityIntf `json:"pool,omitempty"`
 }
 
 // Constants associated with the InstanceReservationAffinityPrototype.Policy property.
 // The reservation affinity policy to use for this virtual server instance:
-// - `disabled`: Reservations will not be used
-// - `manual`: Reservations in `pool` will be available for use
+//   - `disabled`: Reservations will not be used
+//   - `manual`: Reservations in `pool` will be available for use
+//   - `automatic`: Reservations with an `affinity_policy` of `automatic` that have the same
+//     `profile` and `zone` as this virtual server instance will be available for use.
 //
-// The policy will default to `manual` if `pool` is not empty, and `disabled` otherwise.
+// The policy will default to `manual` if `pool` is not empty. The policy will default to
+// `disabled` if a `placement_target` is set. The policy will default to `automatic` in all other cases.
+//
+// The policy must be `disabled` if `placement_target` is specified.
 const (
-	InstanceReservationAffinityPrototypePolicyDisabledConst = "disabled"
-	InstanceReservationAffinityPrototypePolicyManualConst   = "manual"
+	InstanceReservationAffinityPrototypePolicyAutomaticConst = "automatic"
+	InstanceReservationAffinityPrototypePolicyDisabledConst  = "disabled"
+	InstanceReservationAffinityPrototypePolicyManualConst    = "manual"
 )
 
 // UnmarshalInstanceReservationAffinityPrototype unmarshals an instance of InstanceReservationAffinityPrototype from the specified map of raw messages.
@@ -68503,6 +69564,15 @@ type ListBareMetalServersOptions struct {
 	// Filters the collection to resources with a `name` property matching the exact specified name.
 	Name *string `json:"name,omitempty"`
 
+	// Filters the collection to resources with a `reservation.id` property matching the specified identifier.
+	ReservationID *string `json:"reservation.id,omitempty"`
+
+	// Filters the collection to resources with a `reservation.crn` property matching the specified identifier.
+	ReservationCRN *string `json:"reservation.crn,omitempty"`
+
+	// Filters the collection to resources with a `reservation.name` property matching the specified identifier.
+	ReservationName *string `json:"reservation.name,omitempty"`
+
 	// Filters the collection to resources with a `vpc.id` property matching the specified identifier.
 	VPCID *string `json:"vpc.id,omitempty"`
 
@@ -68542,6 +69612,24 @@ func (_options *ListBareMetalServersOptions) SetResourceGroupID(resourceGroupID 
 // SetName : Allow user to set Name
 func (_options *ListBareMetalServersOptions) SetName(name string) *ListBareMetalServersOptions {
 	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetReservationID : Allow user to set ReservationID
+func (_options *ListBareMetalServersOptions) SetReservationID(reservationID string) *ListBareMetalServersOptions {
+	_options.ReservationID = core.StringPtr(reservationID)
+	return _options
+}
+
+// SetReservationCRN : Allow user to set ReservationCRN
+func (_options *ListBareMetalServersOptions) SetReservationCRN(reservationCRN string) *ListBareMetalServersOptions {
+	_options.ReservationCRN = core.StringPtr(reservationCRN)
+	return _options
+}
+
+// SetReservationName : Allow user to set ReservationName
+func (_options *ListBareMetalServersOptions) SetReservationName(reservationName string) *ListBareMetalServersOptions {
+	_options.ReservationName = core.StringPtr(reservationName)
 	return _options
 }
 
@@ -70307,6 +71395,9 @@ type ListInstancesOptions struct {
 	// group name.
 	PlacementGroupName *string `json:"placement_group.name,omitempty"`
 
+	// Filters the collection to instances with a `reservation_affinity.policy` property matching the specified value.
+	ReservationAffinityPolicy *string `json:"reservation_affinity.policy,omitempty"`
+
 	// Filters the collection to resources with a `reservation.id` property matching the specified identifier.
 	ReservationID *string `json:"reservation.id,omitempty"`
 
@@ -70328,6 +71419,14 @@ type ListInstancesOptions struct {
 	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
+
+// Constants associated with the ListInstancesOptions.ReservationAffinityPolicy property.
+// Filters the collection to instances with a `reservation_affinity.policy` property matching the specified value.
+const (
+	ListInstancesOptionsReservationAffinityPolicyAutomaticConst = "automatic"
+	ListInstancesOptionsReservationAffinityPolicyDisabledConst  = "disabled"
+	ListInstancesOptionsReservationAffinityPolicyManualConst    = "manual"
+)
 
 // NewListInstancesOptions : Instantiate ListInstancesOptions
 func (*VpcV1) NewListInstancesOptions() *ListInstancesOptions {
@@ -70409,6 +71508,12 @@ func (_options *ListInstancesOptions) SetPlacementGroupCRN(placementGroupCRN str
 // SetPlacementGroupName : Allow user to set PlacementGroupName
 func (_options *ListInstancesOptions) SetPlacementGroupName(placementGroupName string) *ListInstancesOptions {
 	_options.PlacementGroupName = core.StringPtr(placementGroupName)
+	return _options
+}
+
+// SetReservationAffinityPolicy : Allow user to set ReservationAffinityPolicy
+func (_options *ListInstancesOptions) SetReservationAffinityPolicy(reservationAffinityPolicy string) *ListInstancesOptions {
+	_options.ReservationAffinityPolicy = core.StringPtr(reservationAffinityPolicy)
 	return _options
 }
 
@@ -71347,6 +72452,12 @@ type ListReservationsOptions struct {
 	// Filters the collection to resources with a `name` property matching the exact specified name.
 	Name *string `json:"name,omitempty"`
 
+	// Filters the collection of resources with a `profile.resource_type` property matching the specified value.
+	ProfileResourceType *string `json:"profile.resource_type,omitempty"`
+
+	// Filters the collection to reservations with an `affinity_policy` property matching the specified value.
+	AffinityPolicy *string `json:"affinity_policy,omitempty"`
+
 	// Filters the collection to resources with a `resource_group.id` property matching the specified identifier.
 	ResourceGroupID *string `json:"resource_group.id,omitempty"`
 
@@ -71356,6 +72467,13 @@ type ListReservationsOptions struct {
 	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
+
+// Constants associated with the ListReservationsOptions.AffinityPolicy property.
+// Filters the collection to reservations with an `affinity_policy` property matching the specified value.
+const (
+	ListReservationsOptionsAffinityPolicyAutomaticConst  = "automatic"
+	ListReservationsOptionsAffinityPolicyRestrictedConst = "restricted"
+)
 
 // NewListReservationsOptions : Instantiate ListReservationsOptions
 func (*VpcV1) NewListReservationsOptions() *ListReservationsOptions {
@@ -71377,6 +72495,18 @@ func (_options *ListReservationsOptions) SetLimit(limit int64) *ListReservations
 // SetName : Allow user to set Name
 func (_options *ListReservationsOptions) SetName(name string) *ListReservationsOptions {
 	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetProfileResourceType : Allow user to set ProfileResourceType
+func (_options *ListReservationsOptions) SetProfileResourceType(profileResourceType string) *ListReservationsOptions {
+	_options.ProfileResourceType = core.StringPtr(profileResourceType)
+	return _options
+}
+
+// SetAffinityPolicy : Allow user to set AffinityPolicy
+func (_options *ListReservationsOptions) SetAffinityPolicy(affinityPolicy string) *ListReservationsOptions {
+	_options.AffinityPolicy = core.StringPtr(affinityPolicy)
 	return _options
 }
 
@@ -71695,6 +72825,91 @@ func (_options *ListShareProfilesOptions) SetSort(sort string) *ListShareProfile
 
 // SetHeaders : Allow user to set Headers
 func (options *ListShareProfilesOptions) SetHeaders(param map[string]string) *ListShareProfilesOptions {
+	options.Headers = param
+	return options
+}
+
+// ListShareSnapshotsOptions : The ListShareSnapshots options.
+type ListShareSnapshotsOptions struct {
+	// The file share identifier, or `-` to wildcard all accessible file shares.
+	ShareID *string `json:"share_id" validate:"required,ne="`
+
+	// Filters the collection to backup policy jobs with a `backup_policy_plan.id` property matching the specified
+	// identifier.
+	BackupPolicyPlanID *string `json:"backup_policy_plan.id,omitempty"`
+
+	// Filters the collection to resources with a `name` property matching the exact specified name.
+	Name *string `json:"name,omitempty"`
+
+	// A server-provided token determining what resource to start the page on.
+	Start *string `json:"start,omitempty"`
+
+	// The number of resources to return on a page.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// Sorts the returned collection by the specified property name in ascending order. A `-` may be prepended to the name
+	// to sort in descending order. For example, the value `-created_at` sorts the collection by the `created_at` property
+	// in descending order, and the value `name` sorts it by the `name` property in ascending order.
+	Sort *string `json:"sort,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// Constants associated with the ListShareSnapshotsOptions.Sort property.
+// Sorts the returned collection by the specified property name in ascending order. A `-` may be prepended to the name
+// to sort in descending order. For example, the value `-created_at` sorts the collection by the `created_at` property
+// in descending order, and the value `name` sorts it by the `name` property in ascending order.
+const (
+	ListShareSnapshotsOptionsSortCreatedAtConst = "created_at"
+	ListShareSnapshotsOptionsSortNameConst      = "name"
+)
+
+// NewListShareSnapshotsOptions : Instantiate ListShareSnapshotsOptions
+func (*VpcV1) NewListShareSnapshotsOptions(shareID string) *ListShareSnapshotsOptions {
+	return &ListShareSnapshotsOptions{
+		ShareID: core.StringPtr(shareID),
+	}
+}
+
+// SetShareID : Allow user to set ShareID
+func (_options *ListShareSnapshotsOptions) SetShareID(shareID string) *ListShareSnapshotsOptions {
+	_options.ShareID = core.StringPtr(shareID)
+	return _options
+}
+
+// SetBackupPolicyPlanID : Allow user to set BackupPolicyPlanID
+func (_options *ListShareSnapshotsOptions) SetBackupPolicyPlanID(backupPolicyPlanID string) *ListShareSnapshotsOptions {
+	_options.BackupPolicyPlanID = core.StringPtr(backupPolicyPlanID)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *ListShareSnapshotsOptions) SetName(name string) *ListShareSnapshotsOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetStart : Allow user to set Start
+func (_options *ListShareSnapshotsOptions) SetStart(start string) *ListShareSnapshotsOptions {
+	_options.Start = core.StringPtr(start)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListShareSnapshotsOptions) SetLimit(limit int64) *ListShareSnapshotsOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetSort : Allow user to set Sort
+func (_options *ListShareSnapshotsOptions) SetSort(sort string) *ListShareSnapshotsOptions {
+	_options.Sort = core.StringPtr(sort)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListShareSnapshotsOptions) SetHeaders(param map[string]string) *ListShareSnapshotsOptions {
 	options.Headers = param
 	return options
 }
@@ -75651,7 +76866,7 @@ type LoadBalancerListenerPrototypeLoadBalancerContext struct {
 
 	// The concurrent connection limit for the listener. If reached, incoming connections may be queued or rejected.
 	//
-	// This property will be present for load balancers in the `application` family.
+	// Supported for load balancers in the `application` family.
 	ConnectionLimit *int64 `json:"connection_limit,omitempty"`
 
 	// The default pool for this listener.  If `https_redirect` is specified,
@@ -76626,10 +77841,8 @@ type LoadBalancerPoolMember struct {
 	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	ProvisioningStatus *string `json:"provisioning_status" validate:"required"`
 
-	// The pool member target. Load balancers in the `network` family support virtual server
-	// instances. Load balancers in the `application` family support IP addresses. If the load
-	// balancer has route mode enabled, the member must be in a zone the load balancer has a
-	// subnet in.
+	// The pool member target. If the load balancer has route mode enabled, the member must be
+	// in a zone the load balancer has a subnet in.
 	Target LoadBalancerPoolMemberTargetIntf `json:"target" validate:"required"`
 
 	// The weight of the server member.
@@ -76739,10 +77952,8 @@ type LoadBalancerPoolMemberPatch struct {
 	// The port must be unique across all members for all pools associated with this pool's listener.
 	Port *int64 `json:"port,omitempty"`
 
-	// The pool member target. Load balancers in the `network` family support virtual server
-	// instances. Load balancers in the `application` family support IP addresses. If the load
-	// balancer has route mode enabled, the member must be in a zone the load balancer has a
-	// subnet in.
+	// The pool member target. If the load balancer has route mode enabled, the member must be
+	// in a zone the load balancer has a subnet in.
 	Target LoadBalancerPoolMemberTargetPrototypeIntf `json:"target,omitempty"`
 
 	// The weight of the server member.
@@ -76801,10 +78012,8 @@ type LoadBalancerPoolMemberPrototype struct {
 	// The port must be unique across all members for all pools associated with this pool's listener.
 	Port *int64 `json:"port" validate:"required"`
 
-	// The pool member target. Load balancers in the `network` family support virtual server
-	// instances. Load balancers in the `application` family support IP addresses. If the load
-	// balancer has route mode enabled, the member must be in a zone the load balancer has a
-	// subnet in.
+	// The pool member target. If the load balancer has route mode enabled, the member must be
+	// in a zone the load balancer has a subnet in.
 	Target LoadBalancerPoolMemberTargetPrototypeIntf `json:"target" validate:"required"`
 
 	// The weight of the server member.
@@ -76883,9 +78092,8 @@ func UnmarshalLoadBalancerPoolMemberReference(m map[string]json.RawMessage, resu
 	return
 }
 
-// LoadBalancerPoolMemberTarget : The pool member target. Load balancers in the `network` family support virtual server instances. Load balancers in
-// the `application` family support IP addresses. If the load balancer has route mode enabled, the member must be in a
-// zone the load balancer has a subnet in.
+// LoadBalancerPoolMemberTarget : The pool member target. If the load balancer has route mode enabled, the member must be in a zone the load balancer
+// has a subnet in.
 // Models which "extend" this model:
 // - LoadBalancerPoolMemberTargetInstanceReference
 // - LoadBalancerPoolMemberTargetIP
@@ -76958,9 +78166,8 @@ func UnmarshalLoadBalancerPoolMemberTarget(m map[string]json.RawMessage, result 
 	return
 }
 
-// LoadBalancerPoolMemberTargetPrototype : The pool member target. Load balancers in the `network` family support virtual server instances. Load balancers in
-// the `application` family support IP addresses. If the load balancer has route mode enabled, the member must be in a
-// zone the load balancer has a subnet in.
+// LoadBalancerPoolMemberTargetPrototype : The pool member target. If the load balancer has route mode enabled, the member must be in a zone the load balancer
+// has a subnet in.
 // Models which "extend" this model:
 // - LoadBalancerPoolMemberTargetPrototypeInstanceIdentity
 // - LoadBalancerPoolMemberTargetPrototypeIP
@@ -79027,9 +80234,6 @@ type NetworkACLRulePatch struct {
 	// The name for this network ACL rule. The name must not be used by another rule for the network ACL.
 	Name *string `json:"name,omitempty"`
 
-	// The network protocol.
-	Protocol *string `json:"protocol,omitempty"`
-
 	// The source IP address or CIDR block to match. The CIDR block `0.0.0.0/0` matches all source addresses.
 	Source *string `json:"source,omitempty"`
 
@@ -79057,15 +80261,6 @@ const (
 const (
 	NetworkACLRulePatchDirectionInboundConst  = "inbound"
 	NetworkACLRulePatchDirectionOutboundConst = "outbound"
-)
-
-// Constants associated with the NetworkACLRulePatch.Protocol property.
-// The network protocol.
-const (
-	NetworkACLRulePatchProtocolAllConst  = "all"
-	NetworkACLRulePatchProtocolIcmpConst = "icmp"
-	NetworkACLRulePatchProtocolTCPConst  = "tcp"
-	NetworkACLRulePatchProtocolUDPConst  = "udp"
 )
 
 // UnmarshalNetworkACLRulePatch unmarshals an instance of NetworkACLRulePatch from the specified map of raw messages.
@@ -79109,11 +80304,6 @@ func UnmarshalNetworkACLRulePatch(m map[string]json.RawMessage, result interface
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "protocol", &obj.Protocol)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "protocol-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "source", &obj.Source)
@@ -79166,9 +80356,6 @@ func (networkACLRulePatch *NetworkACLRulePatch) AsPatch() (_patch map[string]int
 	}
 	if !core.IsNil(networkACLRulePatch.Name) {
 		_patch["name"] = networkACLRulePatch.Name
-	}
-	if !core.IsNil(networkACLRulePatch.Protocol) {
-		_patch["protocol"] = networkACLRulePatch.Protocol
 	}
 	if !core.IsNil(networkACLRulePatch.Source) {
 		_patch["source"] = networkACLRulePatch.Source
@@ -82453,6 +83640,7 @@ func (options *ReplaceSubnetRoutingTableOptions) SetHeaders(param map[string]str
 // Reservation : Reservation struct
 type Reservation struct {
 	// The affinity policy to use for this reservation:
+	// - `automatic`: The reservation will be automatically selected
 	// - `restricted`: The reservation must be manually requested
 	//
 	// The enumerated values for this property may
@@ -82487,8 +83675,11 @@ type Reservation struct {
 	// The name for this reservation. The name is unique across all reservations in the region.
 	Name *string `json:"name" validate:"required"`
 
-	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) for this reservation.
-	Profile *ReservationProfile `json:"profile" validate:"required"`
+	// The [instance profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) or
+	// [bare metal server
+	// profile](https://cloud.ibm.com/docs/vpc?topic=vpc-bare-metal-servers-profile)
+	// for this reservation.
+	Profile ReservationProfileIntf `json:"profile" validate:"required"`
 
 	// The resource group for this reservation.
 	ResourceGroup *ResourceGroupReference `json:"resource_group" validate:"required"`
@@ -82511,11 +83702,13 @@ type Reservation struct {
 
 // Constants associated with the Reservation.AffinityPolicy property.
 // The affinity policy to use for this reservation:
+// - `automatic`: The reservation will be automatically selected
 // - `restricted`: The reservation must be manually requested
 //
 // The enumerated values for this property may
 // [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 const (
+	ReservationAffinityPolicyAutomaticConst  = "automatic"
 	ReservationAffinityPolicyRestrictedConst = "restricted"
 )
 
@@ -83078,6 +84271,13 @@ func (reservationIdentity *ReservationIdentity) asPatch() (_patch map[string]int
 
 // ReservationPatch : ReservationPatch struct
 type ReservationPatch struct {
+	// The affinity policy to use for this reservation:
+	// - `automatic`: The reservation will be automatically selected
+	// - `restricted`: The reservation must be manually requested
+	//
+	// The affinity policy can only be changed for a reservation with a `status` of `inactive`.
+	AffinityPolicy *string `json:"affinity_policy,omitempty"`
+
 	// The capacity reservation configuration to use.
 	//
 	// The configuration can only be changed for reservations with a `status` of `inactive`.
@@ -83089,14 +84289,32 @@ type ReservationPatch struct {
 	// The name for this reservation. The name must not be used by another reservation in the region.
 	Name *string `json:"name,omitempty"`
 
-	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this
-	// reservation.
+	// The [instance profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) or
+	// [bare metal server
+	// profile](https://cloud.ibm.com/docs/vpc?topic=vpc-bare-metal-servers-profile)
+	// to use for this reservation.
 	Profile *ReservationProfilePatch `json:"profile,omitempty"`
 }
+
+// Constants associated with the ReservationPatch.AffinityPolicy property.
+// The affinity policy to use for this reservation:
+// - `automatic`: The reservation will be automatically selected
+// - `restricted`: The reservation must be manually requested
+//
+// The affinity policy can only be changed for a reservation with a `status` of `inactive`.
+const (
+	ReservationPatchAffinityPolicyAutomaticConst  = "automatic"
+	ReservationPatchAffinityPolicyRestrictedConst = "restricted"
+)
 
 // UnmarshalReservationPatch unmarshals an instance of ReservationPatch from the specified map of raw messages.
 func UnmarshalReservationPatch(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(ReservationPatch)
+	err = core.UnmarshalPrimitive(m, "affinity_policy", &obj.AffinityPolicy)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "affinity_policy-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "capacity", &obj.Capacity, UnmarshalReservationCapacityPatch)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "capacity-error", common.GetComponentInfo())
@@ -83124,6 +84342,9 @@ func UnmarshalReservationPatch(m map[string]json.RawMessage, result interface{})
 // AsPatch returns a generic map representation of the ReservationPatch
 func (reservationPatch *ReservationPatch) AsPatch() (_patch map[string]interface{}, err error) {
 	_patch = map[string]interface{}{}
+	if !core.IsNil(reservationPatch.AffinityPolicy) {
+		_patch["affinity_policy"] = reservationPatch.AffinityPolicy
+	}
 	if !core.IsNil(reservationPatch.Capacity) {
 		_patch["capacity"] = reservationPatch.Capacity.asPatch()
 	}
@@ -83140,16 +84361,21 @@ func (reservationPatch *ReservationPatch) AsPatch() (_patch map[string]interface
 	return
 }
 
-// ReservationProfile : The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) for this reservation.
+// ReservationProfile : The [instance profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) or
+// [bare metal server profile](https://cloud.ibm.com/docs/vpc?topic=vpc-bare-metal-servers-profile) for this
+// reservation.
+// Models which "extend" this model:
+// - ReservationProfileInstanceProfileReference
+// - ReservationProfileBareMetalServerProfileReference
 type ReservationProfile struct {
 	// The URL for this virtual server instance profile.
-	Href *string `json:"href" validate:"required"`
+	Href *string `json:"href,omitempty"`
 
 	// The globally unique name for this virtual server instance profile.
-	Name *string `json:"name" validate:"required"`
+	Name *string `json:"name,omitempty"`
 
 	// The resource type.
-	ResourceType *string `json:"resource_type" validate:"required"`
+	ResourceType *string `json:"resource_type,omitempty"`
 }
 
 // Constants associated with the ReservationProfile.ResourceType property.
@@ -83157,6 +84383,14 @@ type ReservationProfile struct {
 const (
 	ReservationProfileResourceTypeInstanceProfileConst = "instance_profile"
 )
+
+func (*ReservationProfile) isaReservationProfile() bool {
+	return true
+}
+
+type ReservationProfileIntf interface {
+	isaReservationProfile() bool
+}
 
 // UnmarshalReservationProfile unmarshals an instance of ReservationProfile from the specified map of raw messages.
 func UnmarshalReservationProfile(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -83180,7 +84414,9 @@ func UnmarshalReservationProfile(m map[string]json.RawMessage, result interface{
 	return
 }
 
-// ReservationProfilePatch : The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this reservation.
+// ReservationProfilePatch : The [instance profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) or
+// [bare metal server profile](https://cloud.ibm.com/docs/vpc?topic=vpc-bare-metal-servers-profile) to use for this
+// reservation.
 type ReservationProfilePatch struct {
 	// The globally unique name of the profile.
 	Name *string `json:"name,omitempty"`
@@ -83192,7 +84428,8 @@ type ReservationProfilePatch struct {
 // Constants associated with the ReservationProfilePatch.ResourceType property.
 // The resource type of the profile.
 const (
-	ReservationProfilePatchResourceTypeInstanceProfileConst = "instance_profile"
+	ReservationProfilePatchResourceTypeBareMetalServerProfileConst = "bare_metal_server_profile"
+	ReservationProfilePatchResourceTypeInstanceProfileConst        = "instance_profile"
 )
 
 // UnmarshalReservationProfilePatch unmarshals an instance of ReservationProfilePatch from the specified map of raw messages.
@@ -83225,7 +84462,9 @@ func (reservationProfilePatch *ReservationProfilePatch) asPatch() (_patch map[st
 	return
 }
 
-// ReservationProfilePrototype : The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) to use for this reservation.
+// ReservationProfilePrototype : The [instance profile](https://cloud.ibm.com/docs/vpc?topic=vpc-profiles) or
+// [bare metal server profile](https://cloud.ibm.com/docs/vpc?topic=vpc-bare-metal-servers-profile) to use for this
+// reservation.
 type ReservationProfilePrototype struct {
 	// The globally unique name of the profile.
 	Name *string `json:"name" validate:"required"`
@@ -83237,7 +84476,8 @@ type ReservationProfilePrototype struct {
 // Constants associated with the ReservationProfilePrototype.ResourceType property.
 // The resource type of the profile.
 const (
-	ReservationProfilePrototypeResourceTypeInstanceProfileConst = "instance_profile"
+	ReservationProfilePrototypeResourceTypeBareMetalServerProfileConst = "bare_metal_server_profile"
+	ReservationProfilePrototypeResourceTypeInstanceProfileConst        = "instance_profile"
 )
 
 // NewReservationProfilePrototype : Instantiate ReservationProfilePrototype (Generic Model Constructor)
@@ -86966,7 +88206,7 @@ type Share struct {
 	AccessorBindingRole *string `json:"accessor_binding_role" validate:"required"`
 
 	// The accessor bindings for this file share. Each accessor binding identifies a resource (possibly in another account)
-	// with access to this file share's data.
+	// with access to this file share's data and its snapshots.
 	AccessorBindings []ShareAccessorBindingReference `json:"accessor_bindings" validate:"required"`
 
 	// The transit encryption modes allowed for this share.
@@ -87072,15 +88312,30 @@ type Share struct {
 	// The resource type.
 	ResourceType *string `json:"resource_type" validate:"required"`
 
-	// The size of the file share rounded up to the next gigabyte.
+	// The size of the file share (in gigabytes), excluding share snapshots.
 	//
 	// The maximum size for a share may increase in the future.
 	Size *int64 `json:"size" validate:"required"`
+
+	// The total number of snapshots for this share.
+	SnapshotCount *int64 `json:"snapshot_count" validate:"required"`
+
+	// The total size (in gigabytes) of snapshots used for this file share.
+	SnapshotSize *int64 `json:"snapshot_size" validate:"required"`
 
 	// The source file share for this replica file share.
 	//
 	// This property will be present when the `replication_role` is `replica`.
 	SourceShare *ShareReference `json:"source_share,omitempty"`
+
+	// The snapshot this share was created from.
+	//
+	// This property will be present when the share was created from a snapshot.
+	//
+	// The resources supported by this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the
+	// future.
+	SourceSnapshot ShareSourceSnapshotIntf `json:"source_snapshot,omitempty"`
 
 	// Tags for this resource.
 	UserTags []string `json:"user_tags" validate:"required"`
@@ -87327,9 +88582,24 @@ func UnmarshalShare(m map[string]json.RawMessage, result interface{}) (err error
 		err = core.SDKErrorf(err, "", "size-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "snapshot_count", &obj.SnapshotCount)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "snapshot_count-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "snapshot_size", &obj.SnapshotSize)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "snapshot_size-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "source_share", &obj.SourceShare, UnmarshalShareReference)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "source_share-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "source_snapshot", &obj.SourceSnapshot, UnmarshalShareSourceSnapshot)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "source_snapshot-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "user_tags", &obj.UserTags)
@@ -87349,9 +88619,6 @@ func UnmarshalShare(m map[string]json.RawMessage, result interface{}) (err error
 // ShareAccessorBinding : ShareAccessorBinding struct
 type ShareAccessorBinding struct {
 	// The accessor for this share accessor binding.
-	//
-	// The resources supported by this property may
-	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Accessor ShareAccessorBindingAccessorIntf `json:"accessor" validate:"required"`
 
 	// The date and time that the share accessor binding was created.
@@ -87426,9 +88693,6 @@ func UnmarshalShareAccessorBinding(m map[string]json.RawMessage, result interfac
 }
 
 // ShareAccessorBindingAccessor : The accessor for this share accessor binding.
-//
-// The resources supported by this property may
-// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 // Models which "extend" this model:
 // - ShareAccessorBindingAccessorShareReference
 // - ShareAccessorBindingAccessorWatsonxMachineLearningReference
@@ -88615,8 +89879,8 @@ type SharePatch struct {
 	// For this property to be changed, the share `replication_role` must be `replica`.
 	ReplicationCronSpec *string `json:"replication_cron_spec,omitempty"`
 
-	// The size of the file share rounded up to the next gigabyte. The value must not be less than the share's current
-	// size, and must not exceed the maximum supported by the share's profile and IOPS.
+	// The size of the file share (in gigabytes), excluding share snapshots. The value must not be less than the share's
+	// current size, and must not exceed the maximum supported by the share's profile and IOPS.
 	//
 	// For this property to be changed:
 	// - The share `lifecycle_state` must be `stable`
@@ -89140,6 +90404,7 @@ func UnmarshalShareProfileReference(m map[string]json.RawMessage, result interfa
 // - SharePrototypeShareBySize
 // - SharePrototypeShareBySourceShare
 // - SharePrototypeShareByOriginShare
+// - SharePrototypeShareBySourceSnapshot
 type SharePrototype struct {
 	// The transit encryption modes to allow for this share. If unspecified:
 	// - If share mount targets are specified, and those share mount targets all specify a
@@ -89196,7 +90461,7 @@ type SharePrototype struct {
 	// group](https://cloud.ibm.com/apidocs/resource-manager#introduction) will be used.
 	ResourceGroup ResourceGroupIdentityIntf `json:"resource_group,omitempty"`
 
-	// The size of the file share rounded up to the next gigabyte.
+	// The size of the file share (in gigabytes), excluding share snapshots.
 	//
 	// The maximum size for a share may increase in the future.
 	Size *int64 `json:"size,omitempty"`
@@ -89225,6 +90490,13 @@ type SharePrototype struct {
 	//
 	// The specified share may be in a different account, subject to IAM policies.
 	OriginShare ShareIdentityIntf `json:"origin_share,omitempty"`
+
+	// The source snapshot for this file share.
+	//
+	// This file share will reside in the same zone as the specified source snapshot.
+	// The snapshot must have the `lifecycle_state` as `stable` and `status` as `available`
+	// to be able to restore a share for it.
+	SourceSnapshot ShareSourceSnapshotPrototypeIntf `json:"source_snapshot,omitempty"`
 }
 
 // Constants associated with the SharePrototype.AllowedTransitEncryptionModes property.
@@ -89341,6 +90613,11 @@ func UnmarshalSharePrototype(m map[string]json.RawMessage, result interface{}) (
 	err = core.UnmarshalModel(m, "origin_share", &obj.OriginShare, UnmarshalShareIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "origin_share-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "source_snapshot", &obj.SourceSnapshot, UnmarshalShareSourceSnapshotPrototype)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "source_snapshot-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -89616,6 +90893,536 @@ func UnmarshalShareReplicationStatusReason(m map[string]json.RawMessage, result 
 	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ShareSnapshot : ShareSnapshot struct
+type ShareSnapshot struct {
+	// If present, the backup policy plan which created this share snapshot.
+	BackupPolicyPlan *BackupPolicyPlanReference `json:"backup_policy_plan,omitempty"`
+
+	// The date and time the data capture for this share snapshot was completed.
+	//
+	// If absent, this snapshot's data has not yet been captured.
+	CapturedAt *strfmt.DateTime `json:"captured_at,omitempty"`
+
+	// The date and time that the share snapshot was created.
+	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
+
+	// The CRN for this share snapshot.
+	CRN *string `json:"crn" validate:"required"`
+
+	// The fingerprint for this share snapshot. Only snapshots with identical data will have the same fingerprint. This
+	// snapshot will also be available as a subdirectory named identically to this fingerprint in the share's `.snapshot`
+	// directory.
+	Fingerprint *string `json:"fingerprint" validate:"required"`
+
+	// The URL for this share snapshot.
+	Href *string `json:"href" validate:"required"`
+
+	// The unique identifier for this share snapshot.
+	ID *string `json:"id" validate:"required"`
+
+	// The reasons for the current `lifecycle_state` (if any).
+	LifecycleReasons []ShareSnapshotLifecycleReason `json:"lifecycle_reasons" validate:"required"`
+
+	// The lifecycle state of this share snapshot
+	// - `pending`: The share snapshot is being provisioned and is not yet usable. A
+	//   snapshot on a replica share will remain `pending` until the next replication sync
+	//   completes.
+	// - `deleting`: The share snapshot is being deleted.
+	// - `failed`: The share snapshot is irrecoverably unusable.
+	// - `stable`: The share snapshot is stable and ready for use.
+	// - `updating`: The share snapshot is being updated.
+	// - `suspended`: The share snapshot is not currently usable (see `lifecycle_reasons`).
+	LifecycleState *string `json:"lifecycle_state" validate:"required"`
+
+	// The minimum size of a share created from this snapshot. When a snapshot is created, this will be set to the size of
+	// the `source_share`.
+	MinimumSize *int64 `json:"minimum_size" validate:"required"`
+
+	// The name for this share snapshot. The name is unique across all snapshots for the file share.
+	Name *string `json:"name" validate:"required"`
+
+	// The resource group for this share snapshot.
+	ResourceGroup *ResourceGroupReference `json:"resource_group" validate:"required"`
+
+	// The resource type.
+	ResourceType *string `json:"resource_type" validate:"required"`
+
+	// The status of the share snapshot:
+	// - `available`: The share snapshot is available for use.
+	// - `failed`: The share snapshot is irrecoverably unusable.
+	// - `pending`: The share snapshot is being provisioned and is not yet usable. A
+	//   snapshot on a replica share will remain `pending` until the next replication sync
+	//   completes.
+	// - `unusable`: The share snapshot is not currently usable (see `status_reasons`)
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	Status *string `json:"status" validate:"required"`
+
+	// The reasons for the current status (if any).
+	StatusReasons []ShareSnapshotStatusReason `json:"status_reasons" validate:"required"`
+
+	// The [user tags](https://cloud.ibm.com/apidocs/tagging#types-of-tags) associated with this share snapshot.
+	UserTags []string `json:"user_tags" validate:"required"`
+
+	// The zone this share snapshot resides in.
+	Zone *ZoneReference `json:"zone" validate:"required"`
+}
+
+// Constants associated with the ShareSnapshot.LifecycleState property.
+// The lifecycle state of this share snapshot
+//   - `pending`: The share snapshot is being provisioned and is not yet usable. A
+//     snapshot on a replica share will remain `pending` until the next replication sync
+//     completes.
+//   - `deleting`: The share snapshot is being deleted.
+//   - `failed`: The share snapshot is irrecoverably unusable.
+//   - `stable`: The share snapshot is stable and ready for use.
+//   - `updating`: The share snapshot is being updated.
+//   - `suspended`: The share snapshot is not currently usable (see `lifecycle_reasons`).
+const (
+	ShareSnapshotLifecycleStateDeletingConst  = "deleting"
+	ShareSnapshotLifecycleStateFailedConst    = "failed"
+	ShareSnapshotLifecycleStatePendingConst   = "pending"
+	ShareSnapshotLifecycleStateStableConst    = "stable"
+	ShareSnapshotLifecycleStateSuspendedConst = "suspended"
+	ShareSnapshotLifecycleStateUpdatingConst  = "updating"
+	ShareSnapshotLifecycleStateWaitingConst   = "waiting"
+)
+
+// Constants associated with the ShareSnapshot.ResourceType property.
+// The resource type.
+const (
+	ShareSnapshotResourceTypeShareSnapshotConst = "share_snapshot"
+)
+
+// Constants associated with the ShareSnapshot.Status property.
+// The status of the share snapshot:
+//   - `available`: The share snapshot is available for use.
+//   - `failed`: The share snapshot is irrecoverably unusable.
+//   - `pending`: The share snapshot is being provisioned and is not yet usable. A
+//     snapshot on a replica share will remain `pending` until the next replication sync
+//     completes.
+//   - `unusable`: The share snapshot is not currently usable (see `status_reasons`)
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+const (
+	ShareSnapshotStatusAvailableConst = "available"
+	ShareSnapshotStatusFailedConst    = "failed"
+	ShareSnapshotStatusPendingConst   = "pending"
+	ShareSnapshotStatusUnusableConst  = "unusable"
+)
+
+// UnmarshalShareSnapshot unmarshals an instance of ShareSnapshot from the specified map of raw messages.
+func UnmarshalShareSnapshot(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareSnapshot)
+	err = core.UnmarshalModel(m, "backup_policy_plan", &obj.BackupPolicyPlan, UnmarshalBackupPolicyPlanReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "backup_policy_plan-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "captured_at", &obj.CapturedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "captured_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "fingerprint", &obj.Fingerprint)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "fingerprint-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "lifecycle_reasons", &obj.LifecycleReasons, UnmarshalShareSnapshotLifecycleReason)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "lifecycle_reasons-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "lifecycle_state", &obj.LifecycleState)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "lifecycle_state-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "minimum_size", &obj.MinimumSize)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "minimum_size-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "resource_group", &obj.ResourceGroup, UnmarshalResourceGroupReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_group-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "status-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "status_reasons", &obj.StatusReasons, UnmarshalShareSnapshotStatusReason)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "status_reasons-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "user_tags", &obj.UserTags)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "user_tags-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "zone", &obj.Zone, UnmarshalZoneReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "zone-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ShareSnapshotCollection : ShareSnapshotCollection struct
+type ShareSnapshotCollection struct {
+	// A link to the first page of resources.
+	First *PageLink `json:"first" validate:"required"`
+
+	// The maximum number of resources that can be returned by the request.
+	Limit *int64 `json:"limit" validate:"required"`
+
+	// A link to the next page of resources. This property is present for all pages
+	// except the last page.
+	Next *PageLink `json:"next,omitempty"`
+
+	// A page of share snapshots.
+	Snapshots []ShareSnapshot `json:"snapshots,omitempty"`
+
+	// The total number of resources across all pages.
+	TotalCount *int64 `json:"total_count" validate:"required"`
+}
+
+// UnmarshalShareSnapshotCollection unmarshals an instance of ShareSnapshotCollection from the specified map of raw messages.
+func UnmarshalShareSnapshotCollection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareSnapshotCollection)
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalPageLink)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "first-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "limit-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalPageLink)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "next-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "snapshots", &obj.Snapshots, UnmarshalShareSnapshot)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "snapshots-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "total_count-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *ShareSnapshotCollection) GetNextStart() (*string, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	start, err := core.GetQueryParam(resp.Next.Href, "start")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "read-query-param-error", common.GetComponentInfo())
+		return nil, err
+	} else if start == nil {
+		return nil, nil
+	}
+	return start, nil
+}
+
+// ShareSnapshotLifecycleReason : ShareSnapshotLifecycleReason struct
+type ShareSnapshotLifecycleReason struct {
+	// A reason code for this lifecycle state:
+	// - `internal_error`: internal error (contact IBM support)
+	// - `resource_suspended_by_provider`: The resource has been suspended (contact IBM
+	//   support)
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	Code *string `json:"code" validate:"required"`
+
+	// An explanation of the reason for this lifecycle state.
+	Message *string `json:"message" validate:"required"`
+
+	// Link to documentation about the reason for this lifecycle state.
+	MoreInfo *string `json:"more_info,omitempty"`
+}
+
+// Constants associated with the ShareSnapshotLifecycleReason.Code property.
+// A reason code for this lifecycle state:
+//   - `internal_error`: internal error (contact IBM support)
+//   - `resource_suspended_by_provider`: The resource has been suspended (contact IBM
+//     support)
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+const (
+	ShareSnapshotLifecycleReasonCodeInternalErrorConst               = "internal_error"
+	ShareSnapshotLifecycleReasonCodeResourceSuspendedByProviderConst = "resource_suspended_by_provider"
+)
+
+// UnmarshalShareSnapshotLifecycleReason unmarshals an instance of ShareSnapshotLifecycleReason from the specified map of raw messages.
+func UnmarshalShareSnapshotLifecycleReason(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareSnapshotLifecycleReason)
+	err = core.UnmarshalPrimitive(m, "code", &obj.Code)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "code-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ShareSnapshotPatch : ShareSnapshotPatch struct
+type ShareSnapshotPatch struct {
+	// The [user tags](https://cloud.ibm.com/apidocs/tagging#types-of-tags) associated with this share snapshot.
+	UserTags []string `json:"user_tags,omitempty"`
+}
+
+// UnmarshalShareSnapshotPatch unmarshals an instance of ShareSnapshotPatch from the specified map of raw messages.
+func UnmarshalShareSnapshotPatch(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareSnapshotPatch)
+	err = core.UnmarshalPrimitive(m, "user_tags", &obj.UserTags)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "user_tags-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// AsPatch returns a generic map representation of the ShareSnapshotPatch
+func (shareSnapshotPatch *ShareSnapshotPatch) AsPatch() (_patch map[string]interface{}, err error) {
+	_patch = map[string]interface{}{}
+	if !core.IsNil(shareSnapshotPatch.UserTags) {
+		_patch["user_tags"] = shareSnapshotPatch.UserTags
+	}
+
+	return
+}
+
+// ShareSnapshotStatusReason : ShareSnapshotStatusReason struct
+type ShareSnapshotStatusReason struct {
+	// A reason code for the status:
+	// - `encryption_key_deleted`: Share snapshot is unusable because its
+	//  `encryption_key` was deleted
+	// - `internal_error`: Internal error (contact IBM support)
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	Code *string `json:"code" validate:"required"`
+
+	// An explanation of the status reason.
+	Message *string `json:"message" validate:"required"`
+
+	// Link to documentation about this status reason.
+	MoreInfo *string `json:"more_info,omitempty"`
+}
+
+// Constants associated with the ShareSnapshotStatusReason.Code property.
+// A reason code for the status:
+//   - `encryption_key_deleted`: Share snapshot is unusable because its
+//     `encryption_key` was deleted
+//   - `internal_error`: Internal error (contact IBM support)
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+const (
+	ShareSnapshotStatusReasonCodeEncryptionKeyDeletedConst = "encryption_key_deleted"
+)
+
+// UnmarshalShareSnapshotStatusReason unmarshals an instance of ShareSnapshotStatusReason from the specified map of raw messages.
+func UnmarshalShareSnapshotStatusReason(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareSnapshotStatusReason)
+	err = core.UnmarshalPrimitive(m, "code", &obj.Code)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "code-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "message-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "more_info", &obj.MoreInfo)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "more_info-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ShareSourceSnapshot : ShareSourceSnapshot struct
+// Models which "extend" this model:
+// - ShareSourceSnapshotShareSnapshotReference
+type ShareSourceSnapshot struct {
+	// The CRN for this share snapshot.
+	CRN *string `json:"crn,omitempty"`
+
+	// If present, this property indicates the referenced resource has been deleted, and provides
+	// some supplementary information.
+	Deleted *Deleted `json:"deleted,omitempty"`
+
+	// The URL for this share snapshot.
+	Href *string `json:"href,omitempty"`
+
+	// The unique identifier for this share snapshot.
+	ID *string `json:"id,omitempty"`
+
+	// The name for this share snapshot. The name is unique across all snapshots for the file share.
+	Name *string `json:"name,omitempty"`
+
+	// The resource type.
+	ResourceType *string `json:"resource_type,omitempty"`
+}
+
+// Constants associated with the ShareSourceSnapshot.ResourceType property.
+// The resource type.
+const (
+	ShareSourceSnapshotResourceTypeShareSnapshotConst = "share_snapshot"
+)
+
+func (*ShareSourceSnapshot) isaShareSourceSnapshot() bool {
+	return true
+}
+
+type ShareSourceSnapshotIntf interface {
+	isaShareSourceSnapshot() bool
+}
+
+// UnmarshalShareSourceSnapshot unmarshals an instance of ShareSourceSnapshot from the specified map of raw messages.
+func UnmarshalShareSourceSnapshot(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareSourceSnapshot)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ShareSourceSnapshotPrototype : ShareSourceSnapshotPrototype struct
+// Models which "extend" this model:
+// - ShareSourceSnapshotPrototypeShareSnapshotIdentity
+type ShareSourceSnapshotPrototype struct {
+	// The unique identifier for this share snapshot.
+	ID *string `json:"id,omitempty"`
+
+	// The CRN for this share snapshot.
+	CRN *string `json:"crn,omitempty"`
+
+	// The URL for this share snapshot.
+	Href *string `json:"href,omitempty"`
+}
+
+func (*ShareSourceSnapshotPrototype) isaShareSourceSnapshotPrototype() bool {
+	return true
+}
+
+type ShareSourceSnapshotPrototypeIntf interface {
+	isaShareSourceSnapshotPrototype() bool
+}
+
+// UnmarshalShareSourceSnapshotPrototype unmarshals an instance of ShareSourceSnapshotPrototype from the specified map of raw messages.
+func UnmarshalShareSourceSnapshotPrototype(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareSourceSnapshotPrototype)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -94089,6 +95896,64 @@ func (options *UpdateShareOptions) SetHeaders(param map[string]string) *UpdateSh
 	return options
 }
 
+// UpdateShareSnapshotOptions : The UpdateShareSnapshot options.
+type UpdateShareSnapshotOptions struct {
+	// The file share identifier.
+	ShareID *string `json:"share_id" validate:"required,ne="`
+
+	// The share snapshot identifier.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// The share snapshot patch.
+	ShareSnapshotPatch map[string]interface{} `json:"ShareSnapshot_patch" validate:"required"`
+
+	// If present, the request will fail if the specified ETag value does not match the resource's current ETag value.
+	// Required if the request body includes an array.
+	IfMatch *string `json:"If-Match,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewUpdateShareSnapshotOptions : Instantiate UpdateShareSnapshotOptions
+func (*VpcV1) NewUpdateShareSnapshotOptions(shareID string, id string, shareSnapshotPatch map[string]interface{}) *UpdateShareSnapshotOptions {
+	return &UpdateShareSnapshotOptions{
+		ShareID:            core.StringPtr(shareID),
+		ID:                 core.StringPtr(id),
+		ShareSnapshotPatch: shareSnapshotPatch,
+	}
+}
+
+// SetShareID : Allow user to set ShareID
+func (_options *UpdateShareSnapshotOptions) SetShareID(shareID string) *UpdateShareSnapshotOptions {
+	_options.ShareID = core.StringPtr(shareID)
+	return _options
+}
+
+// SetID : Allow user to set ID
+func (_options *UpdateShareSnapshotOptions) SetID(id string) *UpdateShareSnapshotOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetShareSnapshotPatch : Allow user to set ShareSnapshotPatch
+func (_options *UpdateShareSnapshotOptions) SetShareSnapshotPatch(shareSnapshotPatch map[string]interface{}) *UpdateShareSnapshotOptions {
+	_options.ShareSnapshotPatch = shareSnapshotPatch
+	return _options
+}
+
+// SetIfMatch : Allow user to set IfMatch
+func (_options *UpdateShareSnapshotOptions) SetIfMatch(ifMatch string) *UpdateShareSnapshotOptions {
+	_options.IfMatch = core.StringPtr(ifMatch)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdateShareSnapshotOptions) SetHeaders(param map[string]string) *UpdateShareSnapshotOptions {
+	options.Headers = param
+	return options
+}
+
 // UpdateSnapshotConsistencyGroupOptions : The UpdateSnapshotConsistencyGroup options.
 type UpdateSnapshotConsistencyGroupOptions struct {
 	// The snapshot consistency group identifier.
@@ -94894,8 +96759,11 @@ type VPC struct {
 	// The CRN for this VPC.
 	CRN *string `json:"crn" validate:"required"`
 
-	// The CSE ([Cloud Service Endpoint](https://cloud.ibm.com/docs/resources?topic=resources-service-endpoints)) source IP
-	// addresses for the VPC. The VPC will have one CSE source IP address per zone.
+	// The CSE ([Cloud Service Endpoint](https://cloud.ibm.com/docs/account?topic=account-service-endpoints-overview))
+	// source IP addresses for the VPC. The VPC will have at least one CSE source IP address per zone.
+	//
+	// The maximum number of items for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	CseSourceIps []VpccseSourceIP `json:"cse_source_ips,omitempty"`
 
 	// The default network ACL to use for subnets created in this VPC.
@@ -95068,7 +96936,7 @@ func UnmarshalVPC(m map[string]json.RawMessage, result interface{}) (err error) 
 
 // VpccseSourceIP : VpccseSourceIP struct
 type VpccseSourceIP struct {
-	// The cloud service endpoint source IP address for this zone.
+	// A cloud service endpoint source IP address for this zone.
 	IP *IP `json:"ip" validate:"required"`
 
 	// The zone this cloud service endpoint source IP resides in.
@@ -100628,6 +102496,9 @@ type Volume struct {
 	AttachmentState *string `json:"attachment_state" validate:"required"`
 
 	// The maximum bandwidth (in megabits per second) for the volume.
+	//
+	// The minimum and maximum limits for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
 	Bandwidth *int64 `json:"bandwidth" validate:"required"`
 
 	// Indicates whether this volume is performing an operation that must be serialized. This must be `false` to perform an
@@ -101162,7 +103033,8 @@ type VolumeAttachmentPrototype struct {
 	// unspecified, the name will be a hyphenated list of randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
-	// An existing volume to attach to the instance, or a prototype object for a new volume.
+	// The volume to use for this attachment. This can be specified as an existing unattached
+	// volume, or a prototype object for a new volume.
 	Volume VolumeAttachmentPrototypeVolumeIntf `json:"volume" validate:"required"`
 }
 
@@ -101303,7 +103175,7 @@ type VolumeAttachmentPrototypeInstanceByVolumeContext struct {
 	// unspecified, the name will be a hyphenated list of randomly-selected words.
 	Name *string `json:"name,omitempty"`
 
-	// An existing volume to attach.
+	// An existing unattached volume.
 	Volume VolumeIdentityIntf `json:"volume" validate:"required"`
 }
 
@@ -101341,7 +103213,8 @@ func UnmarshalVolumeAttachmentPrototypeInstanceByVolumeContext(m map[string]json
 	return
 }
 
-// VolumeAttachmentPrototypeVolume : An existing volume to attach to the instance, or a prototype object for a new volume.
+// VolumeAttachmentPrototypeVolume : The volume to use for this attachment. This can be specified as an existing unattached volume, or a prototype object
+// for a new volume.
 // Models which "extend" this model:
 // - VolumeAttachmentPrototypeVolumeVolumeIdentity
 // - VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContext
@@ -103216,6 +105089,85 @@ func UnmarshalBackupPolicyJobSourceInstanceReference(m map[string]json.RawMessag
 	return
 }
 
+// BackupPolicyJobSourceShareReference : BackupPolicyJobSourceShareReference struct
+// This model "extends" BackupPolicyJobSource
+type BackupPolicyJobSourceShareReference struct {
+	// The CRN for this file share.
+	CRN *string `json:"crn" validate:"required"`
+
+	// If present, this property indicates the referenced resource has been deleted, and provides
+	// some supplementary information.
+	Deleted *Deleted `json:"deleted,omitempty"`
+
+	// The URL for this file share.
+	Href *string `json:"href" validate:"required"`
+
+	// The unique identifier for this file share.
+	ID *string `json:"id" validate:"required"`
+
+	// The name for this share. The name is unique across all shares in the region.
+	Name *string `json:"name" validate:"required"`
+
+	// If present, this property indicates that the resource associated with this reference
+	// is remote and therefore may not be directly retrievable.
+	Remote *ShareRemote `json:"remote,omitempty"`
+
+	// The resource type.
+	ResourceType *string `json:"resource_type" validate:"required"`
+}
+
+// Constants associated with the BackupPolicyJobSourceShareReference.ResourceType property.
+// The resource type.
+const (
+	BackupPolicyJobSourceShareReferenceResourceTypeShareConst = "share"
+)
+
+func (*BackupPolicyJobSourceShareReference) isaBackupPolicyJobSource() bool {
+	return true
+}
+
+// UnmarshalBackupPolicyJobSourceShareReference unmarshals an instance of BackupPolicyJobSourceShareReference from the specified map of raw messages.
+func UnmarshalBackupPolicyJobSourceShareReference(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(BackupPolicyJobSourceShareReference)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "remote", &obj.Remote, UnmarshalShareRemote)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "remote-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // BackupPolicyJobSourceVolumeReference : BackupPolicyJobSourceVolumeReference struct
 // This model "extends" BackupPolicyJobSource
 type BackupPolicyJobSourceVolumeReference struct {
@@ -103494,6 +105446,196 @@ func UnmarshalBackupPolicyMatchResourceTypeInstance(m map[string]json.RawMessage
 	err = core.UnmarshalPrimitive(m, "included_content", &obj.IncludedContent)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "included_content-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "match_resource_type", &obj.MatchResourceType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "match_resource_type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// BackupPolicyMatchResourceTypeShare : BackupPolicyMatchResourceTypeShare struct
+// This model "extends" BackupPolicy
+type BackupPolicyMatchResourceTypeShare struct {
+	// The date and time that the backup policy was created.
+	CreatedAt *strfmt.DateTime `json:"created_at" validate:"required"`
+
+	// The CRN for this backup policy.
+	CRN *string `json:"crn" validate:"required"`
+
+	// The reasons for the current `health_state` (if any).
+	HealthReasons []BackupPolicyHealthReason `json:"health_reasons" validate:"required"`
+
+	// The health of this resource:
+	// - `ok`: No abnormal behavior detected
+	// - `degraded`: Experiencing compromised performance, capacity, or connectivity
+	// - `faulted`: Completely unreachable, inoperative, or otherwise entirely incapacitated
+	// - `inapplicable`: The health state does not apply because of the current lifecycle
+	//    state. A resource with a lifecycle state of `failed` or `deleting` will have a
+	//    health state of `inapplicable`. A `pending` resource may also have this state.
+	HealthState *string `json:"health_state" validate:"required"`
+
+	// The URL for this backup policy.
+	Href *string `json:"href" validate:"required"`
+
+	// The unique identifier for this backup policy.
+	ID *string `json:"id" validate:"required"`
+
+	// The date and time that the most recent job for this backup policy completed.
+	//
+	// If absent, no job has yet completed for this backup policy.
+	LastJobCompletedAt *strfmt.DateTime `json:"last_job_completed_at,omitempty"`
+
+	// The lifecycle state of the backup policy.
+	LifecycleState *string `json:"lifecycle_state" validate:"required"`
+
+	// The user tags this backup policy applies to. Resources that have both a matching user tag and a matching type will
+	// be subject to the backup policy.
+	MatchUserTags []string `json:"match_user_tags" validate:"required"`
+
+	// The name for this backup policy. The name is unique across all backup policies in the region.
+	Name *string `json:"name" validate:"required"`
+
+	// The plans for the backup policy.
+	Plans []BackupPolicyPlanReference `json:"plans" validate:"required"`
+
+	// The resource group for this backup policy.
+	ResourceGroup *ResourceGroupReference `json:"resource_group" validate:"required"`
+
+	// The resource type.
+	ResourceType *string `json:"resource_type" validate:"required"`
+
+	Scope BackupPolicyScopeIntf `json:"scope" validate:"required"`
+
+	// The resource type this backup policy applies to. Resources that have both a matching type and a matching user tag
+	// will be subject to the backup policy.
+	//
+	// The enumerated values for this property may
+	// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+	MatchResourceType *string `json:"match_resource_type" validate:"required"`
+}
+
+// Constants associated with the BackupPolicyMatchResourceTypeShare.HealthState property.
+// The health of this resource:
+//   - `ok`: No abnormal behavior detected
+//   - `degraded`: Experiencing compromised performance, capacity, or connectivity
+//   - `faulted`: Completely unreachable, inoperative, or otherwise entirely incapacitated
+//   - `inapplicable`: The health state does not apply because of the current lifecycle
+//     state. A resource with a lifecycle state of `failed` or `deleting` will have a
+//     health state of `inapplicable`. A `pending` resource may also have this state.
+const (
+	BackupPolicyMatchResourceTypeShareHealthStateDegradedConst     = "degraded"
+	BackupPolicyMatchResourceTypeShareHealthStateFaultedConst      = "faulted"
+	BackupPolicyMatchResourceTypeShareHealthStateInapplicableConst = "inapplicable"
+	BackupPolicyMatchResourceTypeShareHealthStateOkConst           = "ok"
+)
+
+// Constants associated with the BackupPolicyMatchResourceTypeShare.LifecycleState property.
+// The lifecycle state of the backup policy.
+const (
+	BackupPolicyMatchResourceTypeShareLifecycleStateDeletingConst  = "deleting"
+	BackupPolicyMatchResourceTypeShareLifecycleStateFailedConst    = "failed"
+	BackupPolicyMatchResourceTypeShareLifecycleStatePendingConst   = "pending"
+	BackupPolicyMatchResourceTypeShareLifecycleStateStableConst    = "stable"
+	BackupPolicyMatchResourceTypeShareLifecycleStateSuspendedConst = "suspended"
+	BackupPolicyMatchResourceTypeShareLifecycleStateUpdatingConst  = "updating"
+	BackupPolicyMatchResourceTypeShareLifecycleStateWaitingConst   = "waiting"
+)
+
+// Constants associated with the BackupPolicyMatchResourceTypeShare.ResourceType property.
+// The resource type.
+const (
+	BackupPolicyMatchResourceTypeShareResourceTypeBackupPolicyConst = "backup_policy"
+)
+
+// Constants associated with the BackupPolicyMatchResourceTypeShare.MatchResourceType property.
+// The resource type this backup policy applies to. Resources that have both a matching type and a matching user tag
+// will be subject to the backup policy.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+const (
+	BackupPolicyMatchResourceTypeShareMatchResourceTypeShareConst = "share"
+)
+
+func (*BackupPolicyMatchResourceTypeShare) isaBackupPolicy() bool {
+	return true
+}
+
+// UnmarshalBackupPolicyMatchResourceTypeShare unmarshals an instance of BackupPolicyMatchResourceTypeShare from the specified map of raw messages.
+func UnmarshalBackupPolicyMatchResourceTypeShare(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(BackupPolicyMatchResourceTypeShare)
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "health_reasons", &obj.HealthReasons, UnmarshalBackupPolicyHealthReason)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "health_reasons-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "health_state", &obj.HealthState)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "health_state-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "last_job_completed_at", &obj.LastJobCompletedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "last_job_completed_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "lifecycle_state", &obj.LifecycleState)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "lifecycle_state-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "match_user_tags", &obj.MatchUserTags)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "match_user_tags-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "plans", &obj.Plans, UnmarshalBackupPolicyPlanReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "plans-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "resource_group", &obj.ResourceGroup, UnmarshalResourceGroupReference)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_group-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "scope", &obj.Scope, UnmarshalBackupPolicyScope)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "scope-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "match_resource_type", &obj.MatchResourceType)
@@ -103796,6 +105938,90 @@ func UnmarshalBackupPolicyPrototypeBackupPolicyMatchResourceTypeInstancePrototyp
 	return
 }
 
+// BackupPolicyPrototypeBackupPolicyMatchResourceTypeSharePrototype : BackupPolicyPrototypeBackupPolicyMatchResourceTypeSharePrototype struct
+// This model "extends" BackupPolicyPrototype
+type BackupPolicyPrototypeBackupPolicyMatchResourceTypeSharePrototype struct {
+	// The user tags this backup policy will apply to. Resources that have both a matching user tag and a matching type
+	// will be subject to the backup policy.
+	MatchUserTags []string `json:"match_user_tags" validate:"required"`
+
+	// The name for this backup policy. The name must not be used by another backup policy in the region. If unspecified,
+	// the name will be a hyphenated list of randomly-selected words.
+	Name *string `json:"name,omitempty"`
+
+	// The prototype objects for backup plans to be created for this backup policy.
+	Plans []BackupPolicyPlanPrototype `json:"plans,omitempty"`
+
+	ResourceGroup ResourceGroupIdentityIntf `json:"resource_group,omitempty"`
+
+	Scope BackupPolicyScopePrototypeIntf `json:"scope,omitempty"`
+
+	// The resource type this backup policy will apply to. Resources that have both a matching type and a matching user tag
+	// will be subject to the backup policy.
+	MatchResourceType *string `json:"match_resource_type" validate:"required"`
+}
+
+// Constants associated with the BackupPolicyPrototypeBackupPolicyMatchResourceTypeSharePrototype.MatchResourceType property.
+// The resource type this backup policy will apply to. Resources that have both a matching type and a matching user tag
+// will be subject to the backup policy.
+const (
+	BackupPolicyPrototypeBackupPolicyMatchResourceTypeSharePrototypeMatchResourceTypeShareConst = "share"
+)
+
+// NewBackupPolicyPrototypeBackupPolicyMatchResourceTypeSharePrototype : Instantiate BackupPolicyPrototypeBackupPolicyMatchResourceTypeSharePrototype (Generic Model Constructor)
+func (*VpcV1) NewBackupPolicyPrototypeBackupPolicyMatchResourceTypeSharePrototype(matchUserTags []string, matchResourceType string) (_model *BackupPolicyPrototypeBackupPolicyMatchResourceTypeSharePrototype, err error) {
+	_model = &BackupPolicyPrototypeBackupPolicyMatchResourceTypeSharePrototype{
+		MatchUserTags:     matchUserTags,
+		MatchResourceType: core.StringPtr(matchResourceType),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*BackupPolicyPrototypeBackupPolicyMatchResourceTypeSharePrototype) isaBackupPolicyPrototype() bool {
+	return true
+}
+
+// UnmarshalBackupPolicyPrototypeBackupPolicyMatchResourceTypeSharePrototype unmarshals an instance of BackupPolicyPrototypeBackupPolicyMatchResourceTypeSharePrototype from the specified map of raw messages.
+func UnmarshalBackupPolicyPrototypeBackupPolicyMatchResourceTypeSharePrototype(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(BackupPolicyPrototypeBackupPolicyMatchResourceTypeSharePrototype)
+	err = core.UnmarshalPrimitive(m, "match_user_tags", &obj.MatchUserTags)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "match_user_tags-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "plans", &obj.Plans, UnmarshalBackupPolicyPlanPrototype)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "plans-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "resource_group", &obj.ResourceGroup, UnmarshalResourceGroupIdentity)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_group-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "scope", &obj.Scope, UnmarshalBackupPolicyScopePrototype)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "scope-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "match_resource_type", &obj.MatchResourceType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "match_resource_type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // BackupPolicyPrototypeBackupPolicyMatchResourceTypeVolumePrototype : BackupPolicyPrototypeBackupPolicyMatchResourceTypeVolumePrototype struct
 // This model "extends" BackupPolicyPrototype
 type BackupPolicyPrototypeBackupPolicyMatchResourceTypeVolumePrototype struct {
@@ -103985,6 +106211,155 @@ func UnmarshalBackupPolicyScopeEnterpriseReference(m map[string]json.RawMessage,
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// BackupPolicyTargetSnapshotShareSnapshotReference : BackupPolicyTargetSnapshotShareSnapshotReference struct
+// This model "extends" BackupPolicyTargetSnapshot
+type BackupPolicyTargetSnapshotShareSnapshotReference struct {
+	// The CRN for this share snapshot.
+	CRN *string `json:"crn" validate:"required"`
+
+	// If present, this property indicates the referenced resource has been deleted, and provides
+	// some supplementary information.
+	Deleted *Deleted `json:"deleted,omitempty"`
+
+	// The URL for this share snapshot.
+	Href *string `json:"href" validate:"required"`
+
+	// The unique identifier for this share snapshot.
+	ID *string `json:"id" validate:"required"`
+
+	// The name for this share snapshot. The name is unique across all snapshots for the file share.
+	Name *string `json:"name" validate:"required"`
+
+	// The resource type.
+	ResourceType *string `json:"resource_type" validate:"required"`
+}
+
+// Constants associated with the BackupPolicyTargetSnapshotShareSnapshotReference.ResourceType property.
+// The resource type.
+const (
+	BackupPolicyTargetSnapshotShareSnapshotReferenceResourceTypeShareSnapshotConst = "share_snapshot"
+)
+
+func (*BackupPolicyTargetSnapshotShareSnapshotReference) isaBackupPolicyTargetSnapshot() bool {
+	return true
+}
+
+// UnmarshalBackupPolicyTargetSnapshotShareSnapshotReference unmarshals an instance of BackupPolicyTargetSnapshotShareSnapshotReference from the specified map of raw messages.
+func UnmarshalBackupPolicyTargetSnapshotShareSnapshotReference(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(BackupPolicyTargetSnapshotShareSnapshotReference)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// BackupPolicyTargetSnapshotSnapshotReference : BackupPolicyTargetSnapshotSnapshotReference struct
+// This model "extends" BackupPolicyTargetSnapshot
+type BackupPolicyTargetSnapshotSnapshotReference struct {
+	// The CRN of this snapshot.
+	CRN *string `json:"crn" validate:"required"`
+
+	// If present, this property indicates the referenced resource has been deleted, and provides
+	// some supplementary information.
+	Deleted *Deleted `json:"deleted,omitempty"`
+
+	// The URL for this snapshot.
+	Href *string `json:"href" validate:"required"`
+
+	// The unique identifier for this snapshot.
+	ID *string `json:"id" validate:"required"`
+
+	// The name for this snapshot. The name is unique across all snapshots in the region.
+	Name *string `json:"name" validate:"required"`
+
+	// If present, this property indicates that the resource associated with this reference
+	// is remote and therefore may not be directly retrievable.
+	Remote *SnapshotRemote `json:"remote,omitempty"`
+
+	// The resource type.
+	ResourceType *string `json:"resource_type" validate:"required"`
+}
+
+// Constants associated with the BackupPolicyTargetSnapshotSnapshotReference.ResourceType property.
+// The resource type.
+const (
+	BackupPolicyTargetSnapshotSnapshotReferenceResourceTypeSnapshotConst = "snapshot"
+)
+
+func (*BackupPolicyTargetSnapshotSnapshotReference) isaBackupPolicyTargetSnapshot() bool {
+	return true
+}
+
+// UnmarshalBackupPolicyTargetSnapshotSnapshotReference unmarshals an instance of BackupPolicyTargetSnapshotSnapshotReference from the specified map of raw messages.
+func UnmarshalBackupPolicyTargetSnapshotSnapshotReference(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(BackupPolicyTargetSnapshotSnapshotReference)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "remote", &obj.Remote, UnmarshalSnapshotRemote)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "remote-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
@@ -107399,6 +109774,8 @@ type BareMetalServerPrototypeBareMetalServerByNetworkAttachment struct {
 	// server.
 	Profile BareMetalServerProfileIdentityIntf `json:"profile" validate:"required"`
 
+	ReservationAffinity *BareMetalServerReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
+
 	ResourceGroup ResourceGroupIdentityIntf `json:"resource_group,omitempty"`
 
 	TrustedPlatformModule *BareMetalServerTrustedPlatformModulePrototype `json:"trusted_platform_module,omitempty"`
@@ -107466,6 +109843,11 @@ func UnmarshalBareMetalServerPrototypeBareMetalServerByNetworkAttachment(m map[s
 		err = core.SDKErrorf(err, "", "profile-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalModel(m, "reservation_affinity", &obj.ReservationAffinity, UnmarshalBareMetalServerReservationAffinityPrototype)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "reservation_affinity-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "resource_group", &obj.ResourceGroup, UnmarshalResourceGroupIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "resource_group-error", common.GetComponentInfo())
@@ -107523,6 +109905,8 @@ type BareMetalServerPrototypeBareMetalServerByNetworkInterface struct {
 	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-bare-metal-servers-profile) to use for this bare metal
 	// server.
 	Profile BareMetalServerProfileIdentityIntf `json:"profile" validate:"required"`
+
+	ReservationAffinity *BareMetalServerReservationAffinityPrototype `json:"reservation_affinity,omitempty"`
 
 	ResourceGroup ResourceGroupIdentityIntf `json:"resource_group,omitempty"`
 
@@ -107589,6 +109973,11 @@ func UnmarshalBareMetalServerPrototypeBareMetalServerByNetworkInterface(m map[st
 	err = core.UnmarshalModel(m, "profile", &obj.Profile, UnmarshalBareMetalServerProfileIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "profile-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "reservation_affinity", &obj.ReservationAffinity, UnmarshalBareMetalServerReservationAffinityPrototype)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "reservation_affinity-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "resource_group", &obj.ResourceGroup, UnmarshalResourceGroupIdentity)
@@ -123058,6 +125447,96 @@ func (reservationIdentityByID *ReservationIdentityByID) asPatch() (_patch map[st
 	return
 }
 
+// ReservationProfileBareMetalServerProfileReference : ReservationProfileBareMetalServerProfileReference struct
+// This model "extends" ReservationProfile
+type ReservationProfileBareMetalServerProfileReference struct {
+	// The URL for this bare metal server profile.
+	Href *string `json:"href" validate:"required"`
+
+	// The name for this bare metal server profile.
+	Name *string `json:"name" validate:"required"`
+
+	// The resource type.
+	ResourceType *string `json:"resource_type" validate:"required"`
+}
+
+// Constants associated with the ReservationProfileBareMetalServerProfileReference.ResourceType property.
+// The resource type.
+const (
+	ReservationProfileBareMetalServerProfileReferenceResourceTypeBareMetalServerProfileConst = "bare_metal_server_profile"
+)
+
+func (*ReservationProfileBareMetalServerProfileReference) isaReservationProfile() bool {
+	return true
+}
+
+// UnmarshalReservationProfileBareMetalServerProfileReference unmarshals an instance of ReservationProfileBareMetalServerProfileReference from the specified map of raw messages.
+func UnmarshalReservationProfileBareMetalServerProfileReference(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ReservationProfileBareMetalServerProfileReference)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ReservationProfileInstanceProfileReference : ReservationProfileInstanceProfileReference struct
+// This model "extends" ReservationProfile
+type ReservationProfileInstanceProfileReference struct {
+	// The URL for this virtual server instance profile.
+	Href *string `json:"href" validate:"required"`
+
+	// The globally unique name for this virtual server instance profile.
+	Name *string `json:"name" validate:"required"`
+
+	// The resource type.
+	ResourceType *string `json:"resource_type" validate:"required"`
+}
+
+// Constants associated with the ReservationProfileInstanceProfileReference.ResourceType property.
+// The resource type.
+const (
+	ReservationProfileInstanceProfileReferenceResourceTypeInstanceProfileConst = "instance_profile"
+)
+
+func (*ReservationProfileInstanceProfileReference) isaReservationProfile() bool {
+	return true
+}
+
+// UnmarshalReservationProfileInstanceProfileReference unmarshals an instance of ReservationProfileInstanceProfileReference from the specified map of raw messages.
+func UnmarshalReservationProfileInstanceProfileReference(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ReservationProfileInstanceProfileReference)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // ReservedIPTargetPrototypeEndpointGatewayIdentity : ReservedIPTargetPrototypeEndpointGatewayIdentity struct
 // Models which "extend" this model:
 // - ReservedIPTargetPrototypeEndpointGatewayIdentityEndpointGatewayIdentityByID
@@ -127328,7 +129807,7 @@ type SharePrototypeShareBySize struct {
 	// group](https://cloud.ibm.com/apidocs/resource-manager#introduction) will be used.
 	ResourceGroup ResourceGroupIdentityIntf `json:"resource_group,omitempty"`
 
-	// The size of the file share rounded up to the next gigabyte.
+	// The size of the file share (in gigabytes), excluding share snapshots.
 	//
 	// The maximum size for a share may increase in the future.
 	Size *int64 `json:"size" validate:"required"`
@@ -127607,6 +130086,285 @@ func UnmarshalSharePrototypeShareBySourceShare(m map[string]json.RawMessage, res
 	err = core.UnmarshalModel(m, "zone", &obj.Zone, UnmarshalZoneIdentity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "zone-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// SharePrototypeShareBySourceSnapshot : Create a file share from a source snapshot. The initial value for `access_control_mode`, and the zone the file share
+// resides in will be inherited from `source_snapshot`.
+// This model "extends" SharePrototype
+type SharePrototypeShareBySourceSnapshot struct {
+	// The transit encryption modes to allow for this share. If unspecified:
+	// - If share mount targets are specified, and those share mount targets all specify a
+	//   `transit_encryption` of `user_managed`, then only `user_managed` will be allowed.
+	// - Otherwise, all `transit_encryption` modes will be allowed.
+	AllowedTransitEncryptionModes []string `json:"allowed_transit_encryption_modes,omitempty"`
+
+	// The mount targets for the file share. Each mount target must be in a unique VPC.
+	MountTargets []ShareMountTargetPrototypeIntf `json:"mount_targets,omitempty"`
+
+	// The name for this share. The name must not be used by another share in the region. If unspecified, the name will be
+	// a hyphenated list of randomly-selected words.
+	Name *string `json:"name,omitempty"`
+
+	ReplicaShare *SharePrototypeShareContext `json:"replica_share,omitempty"`
+
+	// Tags for this resource.
+	UserTags []string `json:"user_tags,omitempty"`
+
+	// The root key to use to wrap the data encryption key for the share.
+	//
+	// The specified key may be in a different account, subject to IAM policies.
+	//
+	// If unspecified, the source snapshot's `encryption_key` will be used.
+	EncryptionKey EncryptionKeyIdentityIntf `json:"encryption_key,omitempty"`
+
+	// The owner assigned to the file share at creation. Subsequent changes to the owner
+	// must be performed by a client that has mounted the file share.
+	InitialOwner *ShareInitialOwner `json:"initial_owner,omitempty"`
+
+	// The maximum input/output operations per second (IOPS) for the file share. The share must be in the
+	// `defined_performance` profile family, and the value must be in the range supported by the share's specified size.
+	//
+	// In addition, each client accessing the share will be restricted to 48,000 IOPS.
+	Iops *int64 `json:"iops,omitempty"`
+
+	// The [profile](https://cloud.ibm.com/docs/vpc?topic=vpc-file-storage-profiles) to use
+	// for this file share. The profile must support the share's specified IOPS and size.
+	Profile ShareProfileIdentityIntf `json:"profile" validate:"required"`
+
+	// The resource group to use. If unspecified, the account's [default resource
+	// group](https://cloud.ibm.com/apidocs/resource-manager#introduction) will be used.
+	ResourceGroup ResourceGroupIdentityIntf `json:"resource_group,omitempty"`
+
+	// The size to use for the file share (in gigabytes). The specified value must be at least the snapshot's
+	// `minimum_size`, and must be within the `size` range of the share's profile.
+	//
+	// If unspecified, the source snapshot's `minimum_size` will be used.
+	Size *int64 `json:"size,omitempty"`
+
+	// The source snapshot for this file share.
+	//
+	// This file share will reside in the same zone as the specified source snapshot.
+	// The snapshot must have the `lifecycle_state` as `stable` and `status` as `available`
+	// to be able to restore a share for it.
+	SourceSnapshot ShareSourceSnapshotPrototypeIntf `json:"source_snapshot" validate:"required"`
+}
+
+// Constants associated with the SharePrototypeShareBySourceSnapshot.AllowedTransitEncryptionModes property.
+// An allowed transit encryption mode for this share.
+// - `none`: Not encrypted in transit.
+// - `user_managed`: Encrypted in transit using an instance identity certificate.
+//
+// The enumerated values for this property may
+// [expand](https://cloud.ibm.com/apidocs/vpc#property-value-expansion) in the future.
+const (
+	SharePrototypeShareBySourceSnapshotAllowedTransitEncryptionModesNoneConst        = "none"
+	SharePrototypeShareBySourceSnapshotAllowedTransitEncryptionModesUserManagedConst = "user_managed"
+)
+
+// NewSharePrototypeShareBySourceSnapshot : Instantiate SharePrototypeShareBySourceSnapshot (Generic Model Constructor)
+func (*VpcV1) NewSharePrototypeShareBySourceSnapshot(profile ShareProfileIdentityIntf, sourceSnapshot ShareSourceSnapshotPrototypeIntf) (_model *SharePrototypeShareBySourceSnapshot, err error) {
+	_model = &SharePrototypeShareBySourceSnapshot{
+		Profile:        profile,
+		SourceSnapshot: sourceSnapshot,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*SharePrototypeShareBySourceSnapshot) isaSharePrototype() bool {
+	return true
+}
+
+// UnmarshalSharePrototypeShareBySourceSnapshot unmarshals an instance of SharePrototypeShareBySourceSnapshot from the specified map of raw messages.
+func UnmarshalSharePrototypeShareBySourceSnapshot(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(SharePrototypeShareBySourceSnapshot)
+	err = core.UnmarshalPrimitive(m, "allowed_transit_encryption_modes", &obj.AllowedTransitEncryptionModes)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "allowed_transit_encryption_modes-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "mount_targets", &obj.MountTargets, UnmarshalShareMountTargetPrototype)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "mount_targets-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "replica_share", &obj.ReplicaShare, UnmarshalSharePrototypeShareContext)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "replica_share-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "user_tags", &obj.UserTags)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "user_tags-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "encryption_key", &obj.EncryptionKey, UnmarshalEncryptionKeyIdentity)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "encryption_key-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "initial_owner", &obj.InitialOwner, UnmarshalShareInitialOwner)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "initial_owner-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "iops", &obj.Iops)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "iops-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "profile", &obj.Profile, UnmarshalShareProfileIdentity)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "profile-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "resource_group", &obj.ResourceGroup, UnmarshalResourceGroupIdentity)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_group-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "size", &obj.Size)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "size-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "source_snapshot", &obj.SourceSnapshot, UnmarshalShareSourceSnapshotPrototype)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "source_snapshot-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ShareSourceSnapshotPrototypeShareSnapshotIdentity : Identifies a share snapshot by a unique property.
+// Models which "extend" this model:
+// - ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByID
+// - ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByCRN
+// - ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByHref
+// This model "extends" ShareSourceSnapshotPrototype
+type ShareSourceSnapshotPrototypeShareSnapshotIdentity struct {
+	// The unique identifier for this share snapshot.
+	ID *string `json:"id,omitempty"`
+
+	// The CRN for this share snapshot.
+	CRN *string `json:"crn,omitempty"`
+
+	// The URL for this share snapshot.
+	Href *string `json:"href,omitempty"`
+}
+
+func (*ShareSourceSnapshotPrototypeShareSnapshotIdentity) isaShareSourceSnapshotPrototypeShareSnapshotIdentity() bool {
+	return true
+}
+
+type ShareSourceSnapshotPrototypeShareSnapshotIdentityIntf interface {
+	ShareSourceSnapshotPrototypeIntf
+	isaShareSourceSnapshotPrototypeShareSnapshotIdentity() bool
+}
+
+func (*ShareSourceSnapshotPrototypeShareSnapshotIdentity) isaShareSourceSnapshotPrototype() bool {
+	return true
+}
+
+// UnmarshalShareSourceSnapshotPrototypeShareSnapshotIdentity unmarshals an instance of ShareSourceSnapshotPrototypeShareSnapshotIdentity from the specified map of raw messages.
+func UnmarshalShareSourceSnapshotPrototypeShareSnapshotIdentity(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareSourceSnapshotPrototypeShareSnapshotIdentity)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ShareSourceSnapshotShareSnapshotReference : ShareSourceSnapshotShareSnapshotReference struct
+// This model "extends" ShareSourceSnapshot
+type ShareSourceSnapshotShareSnapshotReference struct {
+	// The CRN for this share snapshot.
+	CRN *string `json:"crn" validate:"required"`
+
+	// If present, this property indicates the referenced resource has been deleted, and provides
+	// some supplementary information.
+	Deleted *Deleted `json:"deleted,omitempty"`
+
+	// The URL for this share snapshot.
+	Href *string `json:"href" validate:"required"`
+
+	// The unique identifier for this share snapshot.
+	ID *string `json:"id" validate:"required"`
+
+	// The name for this share snapshot. The name is unique across all snapshots for the file share.
+	Name *string `json:"name" validate:"required"`
+
+	// The resource type.
+	ResourceType *string `json:"resource_type" validate:"required"`
+}
+
+// Constants associated with the ShareSourceSnapshotShareSnapshotReference.ResourceType property.
+// The resource type.
+const (
+	ShareSourceSnapshotShareSnapshotReferenceResourceTypeShareSnapshotConst = "share_snapshot"
+)
+
+func (*ShareSourceSnapshotShareSnapshotReference) isaShareSourceSnapshot() bool {
+	return true
+}
+
+// UnmarshalShareSourceSnapshotShareSnapshotReference unmarshals an instance of ShareSourceSnapshotShareSnapshotReference from the specified map of raw messages.
+func UnmarshalShareSourceSnapshotShareSnapshotReference(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareSourceSnapshotShareSnapshotReference)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalModel(m, "deleted", &obj.Deleted, UnmarshalDeleted)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "deleted-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "resource_type", &obj.ResourceType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "resource_type-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -142700,6 +145458,123 @@ func UnmarshalShareMountTargetVirtualNetworkInterfacePrototypeVirtualNetworkInte
 	return
 }
 
+// ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByCRN : ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByCRN struct
+// This model "extends" ShareSourceSnapshotPrototypeShareSnapshotIdentity
+type ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByCRN struct {
+	// The CRN for this share snapshot.
+	CRN *string `json:"crn" validate:"required"`
+}
+
+// NewShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByCRN : Instantiate ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByCRN (Generic Model Constructor)
+func (*VpcV1) NewShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByCRN(crn string) (_model *ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByCRN, err error) {
+	_model = &ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByCRN{
+		CRN: core.StringPtr(crn),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByCRN) isaShareSourceSnapshotPrototypeShareSnapshotIdentity() bool {
+	return true
+}
+
+func (*ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByCRN) isaShareSourceSnapshotPrototype() bool {
+	return true
+}
+
+// UnmarshalShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByCRN unmarshals an instance of ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByCRN from the specified map of raw messages.
+func UnmarshalShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByCRN(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByCRN)
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByHref : ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByHref struct
+// This model "extends" ShareSourceSnapshotPrototypeShareSnapshotIdentity
+type ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByHref struct {
+	// The URL for this share snapshot.
+	Href *string `json:"href" validate:"required"`
+}
+
+// NewShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByHref : Instantiate ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByHref (Generic Model Constructor)
+func (*VpcV1) NewShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByHref(href string) (_model *ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByHref, err error) {
+	_model = &ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByHref{
+		Href: core.StringPtr(href),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByHref) isaShareSourceSnapshotPrototypeShareSnapshotIdentity() bool {
+	return true
+}
+
+func (*ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByHref) isaShareSourceSnapshotPrototype() bool {
+	return true
+}
+
+// UnmarshalShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByHref unmarshals an instance of ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByHref from the specified map of raw messages.
+func UnmarshalShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByHref(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByHref)
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "href-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByID : ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByID struct
+// This model "extends" ShareSourceSnapshotPrototypeShareSnapshotIdentity
+type ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByID struct {
+	// The unique identifier for this share snapshot.
+	ID *string `json:"id" validate:"required"`
+}
+
+// NewShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByID : Instantiate ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByID (Generic Model Constructor)
+func (*VpcV1) NewShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByID(id string) (_model *ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByID, err error) {
+	_model = &ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByID{
+		ID: core.StringPtr(id),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "model-missing-required", common.GetComponentInfo())
+	}
+	return
+}
+
+func (*ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByID) isaShareSourceSnapshotPrototypeShareSnapshotIdentity() bool {
+	return true
+}
+
+func (*ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByID) isaShareSourceSnapshotPrototype() bool {
+	return true
+}
+
+// UnmarshalShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByID unmarshals an instance of ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByID from the specified map of raw messages.
+func UnmarshalShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByID(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ShareSourceSnapshotPrototypeShareSnapshotIdentityShareSnapshotIdentityByID)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // VPNGatewayConnectionPeerPatchVPNGatewayConnectionPolicyModePeerPatchVPNGatewayConnectionPolicyModePeerPatchVPNGatewayConnectionPeerAddressPatch : VPNGatewayConnectionPeerPatchVPNGatewayConnectionPolicyModePeerPatchVPNGatewayConnectionPolicyModePeerPatchVPNGatewayConnectionPeerAddressPatch struct
 // This model "extends" VPNGatewayConnectionPeerPatchVPNGatewayConnectionPolicyModePeerPatch
 type VPNGatewayConnectionPeerPatchVPNGatewayConnectionPolicyModePeerPatchVPNGatewayConnectionPolicyModePeerPatchVPNGatewayConnectionPeerAddressPatch struct {
@@ -147107,6 +149982,98 @@ func (pager *ShareMountTargetsPager) GetNext() (page []ShareMountTarget, err err
 
 // GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
 func (pager *ShareMountTargetsPager) GetAll() (allItems []ShareMountTarget, err error) {
+	allItems, err = pager.GetAllWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ShareSnapshotsPager can be used to simplify the use of the "ListShareSnapshots" method.
+type ShareSnapshotsPager struct {
+	hasNext     bool
+	options     *ListShareSnapshotsOptions
+	client      *VpcV1
+	pageContext struct {
+		next *string
+	}
+}
+
+// NewShareSnapshotsPager returns a new ShareSnapshotsPager instance.
+func (vpc *VpcV1) NewShareSnapshotsPager(options *ListShareSnapshotsOptions) (pager *ShareSnapshotsPager, err error) {
+	if options.Start != nil && *options.Start != "" {
+		err = core.SDKErrorf(nil, "the 'options.Start' field should not be set", "no-query-setting", common.GetComponentInfo())
+		return
+	}
+
+	var optionsCopy ListShareSnapshotsOptions = *options
+	pager = &ShareSnapshotsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  vpc,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *ShareSnapshotsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *ShareSnapshotsPager) GetNextWithContext(ctx context.Context) (page []ShareSnapshot, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Start = pager.pageContext.next
+
+	result, _, err := pager.client.ListShareSnapshotsWithContext(ctx, pager.options)
+	if err != nil {
+		err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+		return
+	}
+
+	var next *string
+	if result.Next != nil {
+		var start *string
+		start, err = core.GetQueryParam(result.Next.Href, "start")
+		if err != nil {
+			errMsg := fmt.Sprintf("error retrieving 'start' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			err = core.SDKErrorf(err, errMsg, "get-query-error", common.GetComponentInfo())
+			return
+		}
+		next = start
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Snapshots
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *ShareSnapshotsPager) GetAllWithContext(ctx context.Context) (allItems []ShareSnapshot, err error) {
+	for pager.HasNext() {
+		var nextPage []ShareSnapshot
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			err = core.RepurposeSDKProblem(err, "error-getting-next-page")
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *ShareSnapshotsPager) GetNext() (page []ShareSnapshot, err error) {
+	page, err = pager.GetNextWithContext(context.Background())
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *ShareSnapshotsPager) GetAll() (allItems []ShareSnapshot, err error) {
 	allItems, err = pager.GetAllWithContext(context.Background())
 	err = core.RepurposeSDKProblem(err, "")
 	return
