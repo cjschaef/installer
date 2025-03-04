@@ -2,6 +2,7 @@ package ibmcloud
 
 import (
 	"fmt"
+	"strings"
 
 	configv1 "github.com/openshift/api/config/v1"
 )
@@ -26,8 +27,8 @@ func (m *Metadata) GetRegionAndEndpointsFlag() string {
 		return ""
 	}
 
-	flag := m.Region
-	for index, endpoint := range m.ServiceEndpoints {
+	capiEndpoints := make([]string, 0)
+	for _, endpoint := range m.ServiceEndpoints {
 		// IBM Cloud CAPI has pre-defined endpoint service names that do not follow naming scheme, use those instead.
 		// TODO(cjschaef): See about opening a CAPI GH issue to link here for this restriction.
 		var serviceName string
@@ -48,12 +49,15 @@ func (m *Metadata) GetRegionAndEndpointsFlag() string {
 			continue
 		}
 
-		// Format for first (and perhaps only) endpoint is unique, remaining are similar
-		if index == 0 {
-			flag = fmt.Sprintf("%s:%s=%s", flag, serviceName, endpoint.URL)
-		} else {
-			flag = fmt.Sprintf("%s,%s=%s", flag, serviceName, endpoint.URL)
-		}
+		capiEndpoints = append(capiEndpoints, fmt.Sprintf("%s=%s", serviceName, endpoint.URL))
 	}
-	return flag
+
+	// If no IBM Cloud CAPI endpoints exist, nothing should be returned for the flag.
+	if len(capiEndpoints) == 0 {
+		return ""
+	}
+
+	// IBM Cloud CAPI expects endpoint flag formatted as:
+	// "region":"service-name1"="url","service-name2"="url",...
+	return fmt.Sprintf("%s:%s", m.Region, strings.Join(capiEndpoints, ","))
 }
