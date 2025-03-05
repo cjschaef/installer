@@ -357,7 +357,9 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	cosEndpoint := fmt.Sprintf("s3.direct.%s.cloud-object-storage.appdomain.cloud", region)
 	// Check whether an endpoint override was provided for COS.
 	if endpointURL := ibmcloudtypes.CheckServiceEndpointOverride(configv1.IBMCloudServiceCOS, in.InstallConfig.Config.IBMCloud.ServiceEndpoints); endpointURL != "" {
-		cosEndpoint = endpointURL
+		// Since we build the ignitionURL below with 'https://' scheme, remove it if provided in override.
+		// We only expect 'https' scheme support for endpoint overrides.
+		cosEndpoint = strings.TrimPrefix(endpointURL, "https://")
 	}
 
 	// Upload Ignition Config to COS bucket.
