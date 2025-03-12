@@ -1268,6 +1268,7 @@ func autoConvert_v1beta2_IBMVPCClusterSpec_To_v1beta1_IBMVPCClusterSpec(in *v1be
 	} else {
 		out.ControlPlaneLoadBalancer = nil
 	}
+	// WARNING: in.DedicatedHosts requires manual conversion: does not exist in peer-type
 	// WARNING: in.Image requires manual conversion: does not exist in peer-type
 	// WARNING: in.Network requires manual conversion: does not exist in peer-type
 	return nil
@@ -1298,6 +1299,7 @@ func autoConvert_v1beta2_IBMVPCClusterStatus_To_v1beta1_IBMVPCClusterStatus(in *
 	if err := Convert_v1beta2_VPC_To_v1beta1_VPC(&in.VPC, &out.VPC, s); err != nil {
 		return err
 	}
+	// WARNING: in.DedicatedHosts requires manual conversion: does not exist in peer-type
 	// WARNING: in.Image requires manual conversion: does not exist in peer-type
 	// WARNING: in.Network requires manual conversion: does not exist in peer-type
 	out.Ready = in.Ready

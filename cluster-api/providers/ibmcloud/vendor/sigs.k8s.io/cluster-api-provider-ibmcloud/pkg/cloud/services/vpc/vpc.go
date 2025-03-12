@@ -30,6 +30,8 @@ type Vpc interface {
 	DeleteInstance(options *vpcv1.DeleteInstanceOptions) (*core.DetailedResponse, error)
 	GetInstance(options *vpcv1.GetInstanceOptions) (*vpcv1.Instance, *core.DetailedResponse, error)
 	ListInstances(options *vpcv1.ListInstancesOptions) (*vpcv1.InstanceCollection, *core.DetailedResponse, error)
+	CreateDedicatedHost(options *vpcv1.CreateDedicatedHostOptions) (*vpcv1.DedicatedHost, *core.DetailedResponse, error)
+	GetDedicatedHost(options *vpcv1.GetDedicatedHostOptions) (*vpcv1.DedicatedHost, *core.DetailedResponse, error)
 	GetDedicatedHostByName(dHostName string) (*vpcv1.DedicatedHost, error)
 	CreateVPC(options *vpcv1.CreateVPCOptions) (*vpcv1.VPC, *core.DetailedResponse, error)
 	DeleteVPC(options *vpcv1.DeleteVPCOptions) (response *core.DetailedResponse, err error)

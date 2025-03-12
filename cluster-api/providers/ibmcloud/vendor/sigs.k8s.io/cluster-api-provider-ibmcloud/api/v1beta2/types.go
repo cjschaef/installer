@@ -279,6 +279,8 @@ var (
 	ResourceTypePublicGateway = ResourceType("publicGateway")
 	// ResourceTypeCustomImage is a VPC Custom Image.
 	ResourceTypeCustomImage = ResourceType("customImage")
+	// ResourceTypeDedicatedHost is a VPC Dedicated Host.
+	ResourceTypeDedicatedHost = ResourceType("dedicatedHost")
 )
 
 const (
@@ -388,6 +390,31 @@ type NetworkInterface struct {
 	Subnet string `json:"subnet,omitempty"`
 }
 
+// VPCDedicatedHost represents a VPC Dedicated Host.
+// +kubebuilder:validation:XValidation:rule="has(self.id) || has(self.name)",message="an id or a name must be defined"
+// +kubebuilder:validation:XValidation:rule="(has(self.profile) && has(self.name)) || !has(self.profile)",message="a name must be defined if a profile has been defined"
+type VPCDedicatedHost struct {
+	// Group defines the VPC Dedicated Host Group the host resides in.
+	// +optional
+	Group *string `json:"group,omitempty"`
+
+	// ID defines the ID of a VPC Dedicated Host.
+	// +optional
+	ID *string `json:"id,omitempty"`
+
+	// Name defines the name of a VPC Dedicated Host.
+	// +optional
+	Name *string `json:"name,omitempty"`
+
+	// Profile defines the profile of a VPC Dedicated Host.
+	// +optional
+	Profile *string `json:"profile,omitempty"`
+
+	// Zone defines the zone of a VPC Dedicated Host.
+	// +required
+	Zone string `json:"zone"`
+}
+
 // VPCLoadBalancerBackendPoolMember represents a VPC Load Balancer Backend Pool Member.
 type VPCLoadBalancerBackendPoolMember struct {
 	// LoadBalancer defines the Load Balancer the Pool Member is for.
@@ -411,6 +438,7 @@ type VPCLoadBalancerBackendPoolMember struct {
 // +kubebuilder:validation:XValidation:rule="(has(self.dedicatedHost) && !has(self.dedicatedHostGroup) && !has(self.placementGroup)) || (!has(self.dedicatedHost) && has(self.dedicatedHostGroup) && !has(self.placementGroup)) || (!has(self.dedicatedHost) && !has(self.dedicatedHostGroup) && has(self.placementGroup))",message="only one of dedicatedHost, dedicatedHostGroup, or placementGroup must be defined for machine placement"
 type VPCMachinePlacementTarget struct {
 	// DedicatedHost defines the Dedicated Host to place a VPC Machine (Instance) on.
+	// TODO(cjschaef): Migrate to unified type with DedicatedHostProfile.
 	// +optional
 	DedicatedHost *VPCResource `json:"dedicatedHost,omitempty"`
 

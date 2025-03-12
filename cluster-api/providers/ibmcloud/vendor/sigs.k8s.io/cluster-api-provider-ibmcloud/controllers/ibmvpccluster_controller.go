@@ -261,6 +261,19 @@ func (r *IBMVPCClusterReconciler) reconcileCluster(clusterScope *scope.VPCCluste
 	clusterScope.Info("Reconciliation of VPC Custom Image complete")
 	conditions.MarkTrue(clusterScope.IBMVPCCluster, infrav1beta2.ImageReadyCondition)
 
+	// Reconcile the cluster's Dedicated Hosts, if requested.
+	clusterScope.Info("Reconciling VPC Dedicated Hosts")
+	if requeue, err := clusterScope.ReconcileDedicatedHosts(); err != nil {
+		clusterScope.Error(err, "failed to reconcile dedicated hosts")
+		conditions.MarkFalse(clusterScope.IBMVPCCluster, infrav1beta2.VPCDedicatedHostReadyCondition, infrav1beta2.VPCDedicatedHostReconciliationFailedReason, capiv1beta1.ConditionSeverityError, "%s", err.Error())
+		return reconcile.Result{}, err
+	} else if requeue {
+		clusterScope.Info("VPC Dedicated Hosts creation is pending, requeueing")
+		return reconcile.Result{RequeueAfter: 15 * time.Second}, nil
+	}
+	clusterScope.Info("Reconciliation of VPC Dedicated Hosts complete")
+	conditions.MarkTrue(clusterScope.IBMVPCCluster, infrav1beta2.VPCDedicatedHostReadyCondition)
+
 	// Reconcile the cluster's VPC Subnets.
 	clusterScope.Info("Reconciling VPC Subnets")
 	if requeue, err := clusterScope.ReconcileSubnets(); err != nil {

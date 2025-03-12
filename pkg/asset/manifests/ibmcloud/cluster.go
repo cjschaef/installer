@@ -61,6 +61,17 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		},
 	}
 
+	defaultZones, err := client.GetVPCZonesForRegion(context.TODO(), platform.Region)
+	if err != nil {
+		return nil, fmt.Errorf("failed collecting zones in region: %w", err)
+	}
+
+	// Build Dedicated Hosts requested for Control Plane and/or Compute nodes.
+	dedicatedHosts, err := generateCAPIDedicatedHosts(installConfig.Config, clusterID.InfraID, defaultZones)
+	if err != nil {
+		return nil, fmt.Errorf("failed generating dedicated hosts: %w", err)
+	}
+
 	// Build and transform Subnets into CAPI.Subnets.
 	controlPlaneSubnets, err := metadata.ControlPlaneSubnets(context.TODO())
 	if err != nil {
@@ -68,18 +79,12 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	}
 	// If no Control Plane subnets were provided in InstallConfig, we build a default set to cover all provided zones, or zones in the region.
 	if len(controlPlaneSubnets) == 0 {
-		var zones []string
+		zones := defaultZones
 		// Use provided Control Plane zones, DefaultMachinePlatform zones, or default to all zones in the Region.
 		if ibmcloudCPPlatform := installConfig.Config.ControlPlane.Platform.IBMCloud; ibmcloudCPPlatform != nil && ibmcloudCPPlatform.Zones != nil && len(ibmcloudCPPlatform.Zones) != 0 { //nolint: gocritic //checking multiple fields are set and populated
 			zones = ibmcloudCPPlatform.Zones
 		} else if platform.DefaultMachinePlatform != nil && platform.DefaultMachinePlatform.Zones != nil && len(platform.DefaultMachinePlatform.Zones) != 0 {
 			zones = platform.DefaultMachinePlatform.Zones
-		} else {
-			var err error
-			zones, err = client.GetVPCZonesForRegion(context.TODO(), platform.Region)
-			if err != nil {
-				return nil, fmt.Errorf("failed collecting zones in region: %w", err)
-			}
 		}
 		if controlPlaneSubnets == nil {
 			controlPlaneSubnets = make(map[string]ibmcloudic.Subnet, 0)
@@ -112,19 +117,13 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	}
 	// If no Compute subnets were provided in InstallConfig, we build a default set to cover all specified zones, or zones in the region.
 	if len(computeSubnets) == 0 {
-		var zones []string
+		zones := defaultZones
 		// Use provided Compute zones, DefaultMachinePlatform zones, or default to all zones in the Region.
 		// NOTE(cjschaef): We only process the first Compute definition, which may result in complications if additional Compute definitions request different Zones.
 		if ibmcloudComputePlatform := installConfig.Config.Compute[0].Platform.IBMCloud; ibmcloudComputePlatform != nil && ibmcloudComputePlatform.Zones != nil && len(ibmcloudComputePlatform.Zones) != 0 { //nolint: gocritic //checking multiple fields are set and populated
 			zones = ibmcloudComputePlatform.Zones
 		} else if platform.DefaultMachinePlatform != nil && platform.DefaultMachinePlatform.Zones != nil && len(platform.DefaultMachinePlatform.Zones) != 0 {
 			zones = platform.DefaultMachinePlatform.Zones
-		} else {
-			var err error
-			zones, err = client.GetVPCZonesForRegion(context.TODO(), platform.Region)
-			if err != nil {
-				return nil, fmt.Errorf("failed collecting zones in region: %w", err)
-			}
 		}
 		if computeSubnets == nil {
 			computeSubnets = make(map[string]ibmcloudic.Subnet, 0)
@@ -173,7 +172,8 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				Host: fmt.Sprintf("api.%s.%s", installConfig.Config.ObjectMeta.Name, installConfig.Config.BaseDomain),
 				Port: 6443,
 			},
-			Image: imageSpec,
+			DedicatedHosts: dedicatedHosts,
+			Image:          imageSpec,
 			Network: &capibmcloud.VPCNetworkSpec{
 				ControlPlaneSubnets: capiControlPlaneSubnets,
 				LoadBalancers:       loadBalancers,

@@ -60,6 +60,16 @@ func (s *Service) ListInstances(options *vpcv1.ListInstancesOptions) (*vpcv1.Ins
 	return s.vpcService.ListInstances(options)
 }
 
+// CreateDedicatedHost creates a new Dedicated Host.
+func (s *Service) CreateDedicatedHost(options *vpcv1.CreateDedicatedHostOptions) (*vpcv1.DedicatedHost, *core.DetailedResponse, error) {
+	return s.vpcService.CreateDedicatedHost(options)
+}
+
+// GetDedicatedHost returns a Dedicated Host.
+func (s *Service) GetDedicatedHost(options *vpcv1.GetDedicatedHostOptions) (*vpcv1.DedicatedHost, *core.DetailedResponse, error) {
+	return s.vpcService.GetDedicatedHost(options)
+}
+
 // GetDedicatedHostByName returns Dedicated Host with given name. If not found, returns nil.
 func (s *Service) GetDedicatedHostByName(dHostName string) (*vpcv1.DedicatedHost, error) {
 	var dHost *vpcv1.DedicatedHost

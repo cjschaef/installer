@@ -56,6 +56,9 @@ type IBMVPCClusterSpec struct {
 	// +optional
 	ControlPlaneLoadBalancer *VPCLoadBalancerSpec `json:"controlPlaneLoadBalancer,omitempty"`
 
+	// DedicatedHosts represents the Dedicated Hosts to create for the cluster.
+	DedicatedHosts []VPCDedicatedHost `json:"dedicatedHosts,omitempty"`
+
 	// image represents the Image details used for the cluster.
 	// +optional
 	Image *ImageSpec `json:"image,omitempty"`
@@ -287,6 +290,11 @@ type IBMVPCClusterStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 	// dep: rely on Network instead.
 	VPC VPC `json:"vpc,omitempty"`
+
+	// DedicatedHosts references the Dedicated Hosts of the cluster.
+	// The map simplifies lookups.
+	// +optional
+	DedicatedHosts map[string]*ResourceStatus `json:"dedicatedHosts,omitempty"`
 
 	// image is the status of the VPC Custom Image.
 	// +optional

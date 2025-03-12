@@ -4066,6 +4066,38 @@ spec:
                         rule: has(self.id) || has(self.name)
                     type: array
                 type: object
+              dedicatedHosts:
+                description: DedicatedHosts represents the Dedicated Hosts to create
+                  for the cluster.
+                items:
+                  description: VPCDedicatedHost represents a VPC Dedicated Host.
+                  properties:
+                    group:
+                      description: Group defines the VPC Dedicated Host Group the
+                        host resides in.
+                      type: string
+                    id:
+                      description: ID defines the ID of a VPC Dedicated Host.
+                      type: string
+                    name:
+                      description: Name defines the name of a VPC Dedicated Host.
+                      type: string
+                    profile:
+                      description: Profile defines the profile of a VPC Dedicated
+                        Host.
+                      type: string
+                    zone:
+                      description: Zone defines the zone of a VPC Dedicated Host.
+                      type: string
+                  required:
+                  - zone
+                  type: object
+                  x-kubernetes-validations:
+                  - message: an id or a name must be defined
+                    rule: has(self.id) || has(self.name)
+                  - message: a name must be defined if a profile has been defined
+                    rule: (has(self.profile) && has(self.name)) || !has(self.profile)
+                type: array
               image:
                 description: image represents the Image details used for the cluster.
                 properties:
@@ -4792,6 +4824,30 @@ spec:
                 description: ControlPlaneLoadBalancerState is the status of the load
                   balancer.
                 type: string
+              dedicatedHosts:
+                additionalProperties:
+                  description: ResourceStatus identifies a resource by id (and name)
+                    and whether it is ready.
+                  properties:
+                    id:
+                      description: id defines the Id of the IBM Cloud resource status.
+                      type: string
+                    name:
+                      description: name defines the name of the IBM Cloud resource
+                        status.
+                      type: string
+                    ready:
+                      description: ready defines whether the IBM Cloud resource is
+                        ready.
+                      type: boolean
+                  required:
+                  - id
+                  - ready
+                  type: object
+                description: |-
+                  DedicatedHosts references the Dedicated Hosts of the cluster.
+                  The map simplifies lookups.
+                type: object
               image:
                 description: image is the status of the VPC Custom Image.
                 properties:
@@ -5340,6 +5396,42 @@ spec:
                                 rule: has(self.id) || has(self.name)
                             type: array
                         type: object
+                      dedicatedHosts:
+                        description: DedicatedHosts represents the Dedicated Hosts
+                          to create for the cluster.
+                        items:
+                          description: VPCDedicatedHost represents a VPC Dedicated
+                            Host.
+                          properties:
+                            group:
+                              description: Group defines the VPC Dedicated Host Group
+                                the host resides in.
+                              type: string
+                            id:
+                              description: ID defines the ID of a VPC Dedicated Host.
+                              type: string
+                            name:
+                              description: Name defines the name of a VPC Dedicated
+                                Host.
+                              type: string
+                            profile:
+                              description: Profile defines the profile of a VPC Dedicated
+                                Host.
+                              type: string
+                            zone:
+                              description: Zone defines the zone of a VPC Dedicated
+                                Host.
+                              type: string
+                          required:
+                          - zone
+                          type: object
+                          x-kubernetes-validations:
+                          - message: an id or a name must be defined
+                            rule: has(self.id) || has(self.name)
+                          - message: a name must be defined if a profile has been
+                              defined
+                            rule: (has(self.profile) && has(self.name)) || !has(self.profile)
+                        type: array
                       image:
                         description: image represents the Image details used for the
                           cluster.

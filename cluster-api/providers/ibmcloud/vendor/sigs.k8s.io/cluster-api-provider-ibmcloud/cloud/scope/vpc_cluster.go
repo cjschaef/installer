@@ -562,6 +562,15 @@ func (s *VPCClusterScope) SetResourceStatus(resourceType infrav1beta2.ResourceTy
 			return
 		}
 		s.IBMVPCCluster.Status.Image.Set(*resource)
+	case infrav1beta2.ResourceTypeDedicatedHost:
+		if s.IBMVPCCluster.Status.DedicatedHosts == nil {
+			s.IBMVPCCluster.Status.DedicatedHosts = make(map[string]*infrav1beta2.ResourceStatus)
+		}
+		if dHost, ok := s.IBMVPCCluster.Status.DedicatedHosts[*resource.Name]; ok {
+			dHost.Set(*resource)
+		} else {
+			s.IBMVPCCluster.Status.DedicatedHosts[*resource.Name] = resource
+		}
 	case infrav1beta2.ResourceTypeControlPlaneSubnet:
 		if s.NetworkStatus() == nil {
 			s.IBMVPCCluster.Status.Network = &infrav1beta2.VPCNetworkStatus{}
@@ -905,6 +914,104 @@ func (s *VPCClusterScope) buildCOSObjectHRef() (*string, error) {
 	href := fmt.Sprintf("cos://%s/%s/%s", bucketRegion, *s.IBMVPCCluster.Spec.Image.COSBucket, *s.IBMVPCCluster.Spec.Image.COSObject)
 	s.V(3).Info("building image ref", "href", href)
 	return ptr.To(href), nil
+}
+
+// ReconcileDedicatedHosts reconciles the VPC Dedicated Hosts, if defined.
+func (s *VPCClusterScope) ReconcileDedicatedHosts() (bool, error) {
+	if len(s.IBMVPCCluster.Spec.DedicatedHosts) == 0 {
+		s.V(3).Info("no dedicated hosts to reconcile")
+		return false, nil
+	}
+
+	requeue := false
+	for _, dHost := range s.IBMVPCCluster.Spec.DedicatedHosts {
+		var dHostDetails *vpcv1.DedicatedHost
+		var err error
+		switch {
+		// Attempt lookup of Dedicated Host by ID, if provided. A defined ID expects the Dedicated Host to exist.
+		case dHost.ID != nil:
+			dHostDetails, _, err = s.VPCClient.GetDedicatedHost(&vpcv1.GetDedicatedHostOptions{
+				ID: dHost.ID,
+			})
+			if err != nil {
+				return false, fmt.Errorf("error looking up existing dedicated host by id %s: %w", *dHost.ID, err)
+			} else if dHostDetails == nil {
+				return false, fmt.Errorf("error unable to retrieve existing dedicated host by id %s", *dHost.ID)
+			}
+			s.V(3).Info("found dedicated host by id", "id", *dHost.ID)
+		// Attempt lookup of Dedicated Host by Name, if provided. A defined name could be for an existing Dedicated Host, or if not found and a profile provided, create a new Dedicated Host.
+		case dHost.Name != nil:
+			dHostDetails, err = s.VPCClient.GetDedicatedHostByName(*dHost.Name)
+			switch {
+			case err != nil:
+				return false, fmt.Errorf("error looking up dedicated host by name %s: %w", *dHost.Name, err)
+			case dHostDetails == nil && dHost.Profile != nil:
+				// If Dedicated Host not found by name and a profile is defined, try to create a new Dedicated Host.
+				dHostDetails, _, err = s.createDedicatedHost(dHost)
+				if err != nil {
+					return false, fmt.Errorf("error creating dedicated host %s: %w", *dHost.Name, err)
+				} else if dHostDetails == nil {
+					return false, fmt.Errorf("error failed to create dedicated host %s", *dHost.Name)
+				}
+				s.V(3).Info("created dedicated host", "name", *dHost.Name)
+				// Flag for requeue after creating a new Dedicated Host.
+				requeue = true
+				// Update Status with the new Dedicated Host now and move on to next Dedicated Host to reconcile.
+				s.SetResourceStatus(infrav1beta2.ResourceTypeDedicatedHost, &infrav1beta2.ResourceStatus{
+					ID:    *dHostDetails.ID,
+					Name:  dHost.Name,
+					Ready: false,
+				})
+				continue
+			case dHostDetails == nil:
+				return false, fmt.Errorf("error unable to retrieve existing dedicated host by name %s", *dHost.Name)
+			default:
+				s.V(3).Info("found dedicated host by name", "name", *dHost.Name)
+			}
+		default:
+			return false, fmt.Errorf("error cannot reconcile dedicated host without id and name")
+		}
+		// Determine whether the Dedicated Host is ready and available for provisioning VSI's.
+		dHostReady := *dHostDetails.State == vpcv1.DedicatedHostStateAvailableConst && *dHostDetails.Provisionable
+		// Update Dedicated Host Status.
+		s.SetResourceStatus(infrav1beta2.ResourceTypeDedicatedHost, &infrav1beta2.ResourceStatus{
+			ID:    *dHostDetails.ID,
+			Name:  dHostDetails.Name,
+			Ready: dHostReady,
+		})
+		// If the Dedicated Host is not ready, flag for requeue.
+		if !dHostReady {
+			requeue = true
+		}
+	}
+
+	return requeue, nil
+}
+
+// createDedicatedHost will create a new Dedicated Host as defined by the VPCDedicatedHost.
+func (s *VPCClusterScope) createDedicatedHost(dHost infrav1beta2.VPCDedicatedHost) (*vpcv1.DedicatedHost, *core.DetailedResponse, error) {
+	// Collect Resource Group ID for Dedicated Host creation options.
+	resourceGroupID, err := s.GetResourceGroupID()
+	if err != nil {
+		return nil, nil, fmt.Errorf("error retrieving resource group id for dedicated host creation %s: %w", *dHost.Name, err)
+	}
+	dHostOptions := &vpcv1.CreateDedicatedHostOptions{
+		// NOTE(cjschaef): Currently only support creating a new Dedicated Host by Zone, not by Dedicated Host Group.
+		DedicatedHostPrototype: &vpcv1.DedicatedHostPrototypeDedicatedHostByZone{
+			Name: dHost.Name,
+			Profile: &vpcv1.DedicatedHostProfileIdentityByName{
+				Name: dHost.Profile,
+			},
+			ResourceGroup: &vpcv1.ResourceGroupIdentityByID{
+				ID: ptr.To(resourceGroupID),
+			},
+			Zone: &vpcv1.ZoneIdentityByName{
+				Name: ptr.To(dHost.Zone),
+			},
+		},
+	}
+
+	return s.VPCClient.CreateDedicatedHost(dHostOptions)
 }
 
 // ReconcileSubnets reconciles the VPC Subnet(s).

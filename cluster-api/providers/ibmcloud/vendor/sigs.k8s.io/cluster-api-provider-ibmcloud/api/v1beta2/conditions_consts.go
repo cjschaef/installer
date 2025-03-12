@@ -88,6 +88,11 @@ const (
 	// NetworkReconciliationFailedReason used when an error occurs during network reconciliation.
 	NetworkReconciliationFailedReason = "NetworkReconciliationFailed"
 
+	// VPCDedicatedHostReadyCondition reports on the successful reconcilication of a VPC Dedicated Host.
+	VPCDedicatedHostReadyCondition capiv1beta1.ConditionType = "VPCDedicatedHostReady"
+	// VPCDedicatedHostReconciliationFailedReason used when an error occurs during VPC Dedicated Host reconciliation.
+	VPCDedicatedHostReconciliationFailedReason = "VPCDedicatedHostReconciliationFailed"
+
 	// VPCSecurityGroupReadyCondition reports on the successful reconciliation of a VPC.
 	VPCSecurityGroupReadyCondition capiv1beta1.ConditionType = "VPCSecurityGroupReady"
 	// VPCSecurityGroupReconciliationFailedReason used when an error occurs during VPC reconciliation.
