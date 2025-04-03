@@ -41,6 +41,8 @@ func Validate(client API, ic *types.InstallConfig) error {
 func validatePlatform(client API, ic *types.InstallConfig, path *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
+	allErrs = append(allErrs, validateRegion(client, ic.IBMCloud.Region, path)...)
+
 	if ic.Platform.IBMCloud.ResourceGroupName != "" {
 		allErrs = append(allErrs, validateResourceGroup(client, ic.IBMCloud.ResourceGroupName, "resourceGroupName", path)...)
 	}
@@ -209,6 +211,32 @@ func validateMachinePoolBootVolume(client API, bootVolume ibmcloud.BootVolume, p
 	}
 
 	return allErrs
+}
+
+func validateRegion(client API, region string, path *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if region == "" {
+		return append(allErrs, field.Required(path.Child("region"), "a valid vpc region is required"))
+	}
+
+	vpcRegions, err := client.GetVPCRegions(context.TODO())
+	switch {
+	case err != nil:
+		return append(allErrs, field.InternalError(path.Child("region"), err))
+	case vpcRegions == nil:
+		return append(allErrs, field.InternalError(path.Child("region"), fmt.Errorf("no vpc regions returned")))
+	}
+
+	for _, vpcRegion := range vpcRegions {
+		if vpcRegion.Name != nil && *vpcRegion.Name == region {
+			if vpcRegion.Status == nil || *vpcRegion.Status != vpcv1.RegionStatusAvailableConst {
+				allErrs = append(allErrs, field.Invalid(path.Child("region"), region, "vpc region is not available"))
+			}
+			return allErrs
+		}
+	}
+	return append(allErrs, field.NotFound(path.Child("region"), region))
 }
 
 func validateResourceGroup(client API, resourceGroupName string, platformField string, path *field.Path) field.ErrorList {

@@ -72,6 +72,7 @@ type API interface {
 	GetVPC(ctx context.Context, vpcID string) (*vpcv1.VPC, error)
 	GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error)
 	GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, error)
+	GetVPCRegions(ctx context.Context) ([]vpcv1.Region, error)
 	GetVPCZonesForRegion(ctx context.Context, region string) ([]string, error)
 	SetVPCServiceURLForRegion(ctx context.Context, region string) error
 }
@@ -1055,6 +1056,23 @@ func (c *Client) GetVPCByName(ctx context.Context, vpcName string) (*vpcv1.VPC, 
 	}
 
 	return nil, &VPCResourceNotFoundError{}
+}
+
+// GetVPCRegions gets the supported regions for VPC.
+func (c *Client) GetVPCRegions(ctx context.Context) ([]vpcv1.Region, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	options := c.vpcAPI.NewListRegionsOptions()
+	regions, _, err := c.vpcAPI.ListRegionsWithContext(localContext, options)
+	switch {
+	case err != nil:
+		return nil, fmt.Errorf("failure collecting vpc regions: %w", err)
+	case regions == nil:
+		return nil, fmt.Errorf("failure collecting vpc regions: no regions returned")
+	default:
+		return regions.Regions, nil
+	}
 }
 
 // GetVPCZonesForRegion gets the supported zones for a VPC region.

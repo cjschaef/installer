@@ -26,6 +26,8 @@ type editFunctions []func(ic *types.InstallConfig)
 
 var (
 	validRegion                  = "us-south"
+	invalidRegion                = "invalid-region"
+	unavailableRegion            = "unavailable-region"
 	validCIDR                    = "10.0.0.0/16"
 	validCISInstanceCRN          = "crn:v1:bluemix:public:internet-svcs:global:a/valid-account-id:valid-instance-id::"
 	validClusterName             = "valid-cluster-name"
@@ -69,6 +71,17 @@ var (
 	anotherValidVPCID = "another-valid-id"
 	anotherValidVPC   = "another-valid-vpc"
 	anotherValidRG    = "another-valid-resource-group"
+
+	allRegions = []vpcv1.Region{
+		{
+			Name:   ptr.To(validRegion),
+			Status: ptr.To("available"),
+		},
+		{
+			Name:   ptr.To(unavailableRegion),
+			Status: ptr.To("unavailable"),
+		},
+	}
 
 	validResourceGroups = []resourcemanagerv2.ResourceGroup{
 		{
@@ -319,6 +332,33 @@ func TestValidate(t *testing.T) {
 			name:     "valid install config",
 			edits:    editFunctions{},
 			errorMsg: "",
+		},
+		{
+			name: "missing region",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.IBMCloud.Region = ""
+				},
+			},
+			errorMsg: `platform.ibmcloud.region: Required value: a valid vpc region is required`,
+		},
+		{
+			name: "invalid vpc region",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.IBMCloud.Region = invalidRegion
+				},
+			},
+			errorMsg: `platform.ibmcloud.region: Not found: "invalid-region"`,
+		},
+		{
+			name: "unavailable vpc region",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.Platform.IBMCloud.Region = unavailableRegion
+				},
+			},
+			errorMsg: `platform.ibmcloud.region: Invalid value: "unavailable-region": vpc region is not available`,
 		},
 		{
 			name: "VPC with no network ResourceGroup supplied",
@@ -707,6 +747,7 @@ func TestValidate(t *testing.T) {
 	ibmcloudClient := mock.NewMockAPI(mockCtrl)
 
 	// Mocks: valid install config and all other tests ('AnyTimes()')
+	ibmcloudClient.EXPECT().GetVPCRegions(gomock.Any()).Return(allRegions, nil).AnyTimes()
 	ibmcloudClient.EXPECT().GetSubnet(gomock.Any(), validPublicSubnetUSSouth1ID).Return(&vpcv1.Subnet{Zone: &vpcv1.ZoneReference{Name: &validZoneUSSouth1}}, nil).AnyTimes()
 	ibmcloudClient.EXPECT().GetSubnet(gomock.Any(), validPublicSubnetUSSouth2ID).Return(&vpcv1.Subnet{Zone: &vpcv1.ZoneReference{Name: &validZoneUSSouth1}}, nil).AnyTimes()
 	ibmcloudClient.EXPECT().GetSubnet(gomock.Any(), validPrivateSubnetUSSouth1ID).Return(&vpcv1.Subnet{Zone: &vpcv1.ZoneReference{Name: &validZoneUSSouth1}}, nil).AnyTimes()
@@ -714,6 +755,15 @@ func TestValidate(t *testing.T) {
 	ibmcloudClient.EXPECT().GetSubnet(gomock.Any(), "subnet-invalid-zone").Return(&vpcv1.Subnet{Zone: &vpcv1.ZoneReference{Name: &[]string{"invalid"}[0]}}, nil).AnyTimes()
 	ibmcloudClient.EXPECT().GetVSIProfiles(gomock.Any()).Return(validInstanceProfiles, nil).AnyTimes()
 	ibmcloudClient.EXPECT().GetVPCZonesForRegion(gomock.Any(), validRegion).Return([]string{"us-south-1", "us-south-2", "us-south-3"}, nil).AnyTimes()
+
+	// Mocks: missing region
+	// No additional mocks required
+
+	// Mocks: invalid vpc region
+	// No additional mocks required
+
+	// Mocks: unavailable vpc region
+	// No additional mocks required
 
 	// Mocks: VPC with no ResourceGroup supplied
 	// No mocks required
