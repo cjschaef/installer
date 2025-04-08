@@ -7,6 +7,8 @@ import (
 
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
+	capibmcloud "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
 
 	ibmcloudic "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
@@ -49,6 +51,41 @@ func cleanupIgnitionCOSBucket(ctx context.Context, client ibmcloudic.API, instan
 	if err = client.DeleteCOSBucket(ctx, instanceID, bucketName, region); err != nil {
 		return fmt.Errorf("failed to delete ignition cos bucket: %w", err)
 	}
+	return nil
+}
+
+func cleanupBootstrapLoadBalancerPoolMembers(ctx context.Context, client ibmcloudic.API, bootstrapMachine *capibmcloud.IBMVPCMachine, region string) error {
+	// Check whether there are any LB pool members listed for the Machine in Status.
+	if len(bootstrapMachine.Status.LoadBalancerPoolMembers) < 0 {
+		logrus.Debugf("no load balancer pool members listed in status for %s", bootstrapMachine.Name)
+		return nil
+	}
+
+	bootstrapInternalIP, err := getMachineInternalIP(bootstrapMachine.Status.Addresses)
+	if err != nil {
+		return fmt.Errorf("failed trying to collect bootstrap internal ip: %w", err)
+	}
+	logrus.Debugf("collected bootstrap internal ip for load balancer pool member matching: %s", bootstrapInternalIP)
+
+	for _, poolMember := range bootstrapMachine.Status.LoadBalancerPoolMembers {
+		// Check whether a member currently exists, and if so, delete it.
+		memberDetails, err := client.GetLoadBalancerPoolMemberByIP(ctx, *poolMember.LoadBalancer.ID, *poolMember.Pool.ID, bootstrapInternalIP, region)
+		switch {
+		case err != nil:
+			return fmt.Errorf("failed to retrieve load balancer %s pool %s member targeting ip %s: %w", *poolMember.LoadBalancer.ID, *poolMember.Pool.ID, bootstrapInternalIP, err)
+		case memberDetails == nil:
+			// If a member was not found, the expectation is that is was already deleted, hopefully.
+			logrus.Debugf("no load balancer %s pool %s member found targeting ip %s", *poolMember.LoadBalancer.ID, *poolMember.Pool.ID, bootstrapInternalIP)
+		default:
+			logrus.Debugf("deleting load balancer pool member %s", *memberDetails.ID)
+			if err = client.DeleteLoadBalancerPoolMember(ctx, *poolMember.LoadBalancer.ID, *poolMember.Pool.ID, *memberDetails.ID, region); err != nil {
+				return fmt.Errorf("failed to delete load balancer %s pool %s member %s: %w", *poolMember.LoadBalancer.ID, *poolMember.Pool.ID, *memberDetails.ID, err)
+			}
+			logrus.Debugf("deleted load balancer %s pool %s member %s", *poolMember.LoadBalancer.ID, *poolMember.Pool.ID, *memberDetails.ID)
+		}
+	}
+
+	logrus.Debugf("bootstrap machine load balancer pool members cleanup completed")
 	return nil
 }
 
@@ -101,4 +138,13 @@ func cleanupBootstrapSecurityGroup(ctx context.Context, client ibmcloudic.API, v
 		logrus.Debugf("no bootstrap security group found for the cluster as %s, skipping security group cleanup", securityGroupName)
 	}
 	return nil
+}
+
+func getMachineInternalIP(addresses []corev1.NodeAddress) (string, error) {
+	for _, address := range addresses {
+		if address.Type == corev1.NodeInternalIP {
+			return address.Address, nil
+		}
+	}
+	return "", fmt.Errorf("failed to find internal ip for machine")
 }

@@ -232,6 +232,20 @@ func (mr *MockAPIMockRecorder) DeleteFloatingIP(ctx, floatingIPID, region any) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFloatingIP", reflect.TypeOf((*MockAPI)(nil).DeleteFloatingIP), ctx, floatingIPID, region)
 }
 
+// DeleteLoadBalancerPoolMember mocks base method.
+func (m *MockAPI) DeleteLoadBalancerPoolMember(ctx context.Context, loadBalancerID, poolID, memberID, region string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteLoadBalancerPoolMember", ctx, loadBalancerID, poolID, memberID, region)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteLoadBalancerPoolMember indicates an expected call of DeleteLoadBalancerPoolMember.
+func (mr *MockAPIMockRecorder) DeleteLoadBalancerPoolMember(ctx, loadBalancerID, poolID, memberID, region any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteLoadBalancerPoolMember", reflect.TypeOf((*MockAPI)(nil).DeleteLoadBalancerPoolMember), ctx, loadBalancerID, poolID, memberID, region)
+}
+
 // DeleteSecurityGroup mocks base method.
 func (m *MockAPI) DeleteSecurityGroup(ctx context.Context, securityGroupID, region string) error {
 	m.ctrl.T.Helper()
@@ -497,6 +511,21 @@ func (m *MockAPI) GetLoadBalancer(ctx context.Context, loadBalancerID string) (*
 func (mr *MockAPIMockRecorder) GetLoadBalancer(ctx, loadBalancerID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLoadBalancer", reflect.TypeOf((*MockAPI)(nil).GetLoadBalancer), ctx, loadBalancerID)
+}
+
+// GetLoadBalancerPoolMemberByIP mocks base method.
+func (m *MockAPI) GetLoadBalancerPoolMemberByIP(ctx context.Context, loadBalancerID, poolID, targetIP, region string) (*vpcv1.LoadBalancerPoolMember, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLoadBalancerPoolMemberByIP", ctx, loadBalancerID, poolID, targetIP, region)
+	ret0, _ := ret[0].(*vpcv1.LoadBalancerPoolMember)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLoadBalancerPoolMemberByIP indicates an expected call of GetLoadBalancerPoolMemberByIP.
+func (mr *MockAPIMockRecorder) GetLoadBalancerPoolMemberByIP(ctx, loadBalancerID, poolID, targetIP, region any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLoadBalancerPoolMemberByIP", reflect.TypeOf((*MockAPI)(nil).GetLoadBalancerPoolMemberByIP), ctx, loadBalancerID, poolID, targetIP, region)
 }
 
 // GetResourceGroup mocks base method.

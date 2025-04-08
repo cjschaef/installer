@@ -572,6 +572,21 @@ func (p Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapD
 		return fmt.Errorf("no bootstrap floating ip found for cleanup, skipping")
 	}
 
+	logrus.Debugf("checking for machine load balancer pool members to cleanup %s", bootstrapMachineName)
+	// Collect the bootstrap machine from the provider.
+	bootstrapMachine := &capibmcloud.IBMVPCMachine{}
+	key := crclient.ObjectKey{
+		Name:      bootstrapMachineName,
+		Namespace: capiutils.Namespace,
+	}
+	logrus.Debugf("PostProvision: machineKey = %+v", key)
+	if err = in.Client.Get(ctx, key, bootstrapMachine); err != nil {
+		return fmt.Errorf("failed to get ibmcloud bootstrap machine in bootstrap destroy: %w", err)
+	}
+	if err = cleanupBootstrapLoadBalancerPoolMembers(ctx, client, bootstrapMachine, region); err != nil {
+		return fmt.Errorf("failed cleaning up load balancer pool members: %w", err)
+	}
+
 	logrus.Infof("destroy bootstrap cleanup completed")
 	return nil
 }

@@ -53,6 +53,7 @@ type API interface {
 	DeleteCOSInstance(ctx context.Context, cosInstanceID string) error
 	DeleteCOSObject(ctx context.Context, cosInstanceID string, bucketName string, objectKey string, region string) error
 	DeleteFloatingIP(ctx context.Context, floatingIPID string, region string) error
+	DeleteLoadBalancerPoolMember(ctx context.Context, loadBalancerID string, poolID string, memberID string, region string) error
 	DeleteSecurityGroup(ctx context.Context, securityGroupID string, region string) error
 	DeleteSecurityGroupTargetBinding(ctx context.Context, securityGroupID string, targetID string, region string) error
 	GetAPIKey() string
@@ -71,6 +72,7 @@ type API interface {
 	GetIBMCloudRegions(ctx context.Context) (map[string]string, error)
 	GetFloatingIPByName(ctx context.Context, floatingIPName string, region string) (*vpcv1.FloatingIP, error)
 	GetLoadBalancer(ctx context.Context, loadBalancerID string) (*vpcv1.LoadBalancer, error)
+	GetLoadBalancerPoolMemberByIP(ctx context.Context, loadBalancerID string, poolID string, targetIP string, region string) (*vpcv1.LoadBalancerPoolMember, error)
 	GetResourceGroups(ctx context.Context) ([]resourcemanagerv2.ResourceGroup, error)
 	GetResourceGroup(ctx context.Context, nameOrID string) (*resourcemanagerv2.ResourceGroup, error)
 	GetSecurityGroupByName(ctx context.Context, sgName string, vpcID string, region string) (*vpcv1.SecurityGroup, error)
@@ -545,6 +547,23 @@ func (c *Client) DeleteFloatingIP(ctx context.Context, floatingIPID string, regi
 	options := c.vpcAPI.NewDeleteFloatingIPOptions(floatingIPID)
 	if _, err := c.vpcAPI.DeleteFloatingIPWithContext(localContext, options); err != nil {
 		return fmt.Errorf("failed to delete floating ip %s: %w", floatingIPID, err)
+	}
+	return nil
+}
+
+// DeleteLoadBalancerPoolMember deletes the specified Pool Member in the specified Load Balancer and Pool.
+// Region is required to make sure the VPC API is using the correct Region, assuming that is required.
+func (c *Client) DeleteLoadBalancerPoolMember(ctx context.Context, loadBalancerID string, poolID string, memberID string, region string) error {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	if err := c.SetVPCServiceURLForRegion(localContext, region); err != nil {
+		return fmt.Errorf("failed setting vpc service region for load balancer pool member deletion: %w", err)
+	}
+
+	options := c.vpcAPI.NewDeleteLoadBalancerPoolMemberOptions(loadBalancerID, poolID, memberID)
+	if _, err := c.vpcAPI.DeleteLoadBalancerPoolMemberWithContext(localContext, options); err != nil {
+		return fmt.Errorf("failed to delete load balancer pool member %s: %w", memberID, err)
 	}
 	return nil
 }
@@ -1038,6 +1057,36 @@ func (c *Client) GetLoadBalancer(ctx context.Context, loadBalancerID string) (*v
 		return nil, fmt.Errorf("failed to retrieve load balancer: %w", err)
 	}
 	return loadBalancer, nil
+}
+
+// GetLoadBalancerPoolMemberByIP gets a VPC Load Balancer Pool Member by specified IP target and ID's.
+func (c *Client) GetLoadBalancerPoolMemberByIP(ctx context.Context, loadBalancerID string, poolID string, targetIP string, region string) (*vpcv1.LoadBalancerPoolMember, error) {
+	localContext, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	if err := c.SetVPCServiceURLForRegion(localContext, region); err != nil {
+		return nil, fmt.Errorf("failed setting vpc service region for load balancer pool member lookup: %w", err)
+	}
+
+	listOptions := c.vpcAPI.NewListLoadBalancerPoolMembersOptions(loadBalancerID, poolID)
+	members, _, err := c.vpcAPI.ListLoadBalancerPoolMembersWithContext(localContext, listOptions)
+	switch {
+	case err != nil:
+		return nil, fmt.Errorf("failed to list load balancer %s pool %s members: %w", loadBalancerID, poolID, err)
+	case members == nil:
+		return nil, fmt.Errorf("unexpected load balancer %s pool %s contains no members", loadBalancerID, poolID)
+	default:
+		for _, member := range members.Members {
+			if memberTargetIP, ok := member.Target.(*vpcv1.LoadBalancerPoolMemberTargetIP); ok && *memberTargetIP.Address == targetIP {
+				logrus.Debugf("found matching load balancer pool member target by ip %s", *member.ID)
+				return ptr.To(member), nil
+			} else if memberTargetIP, ok := member.Target.(*vpcv1.LoadBalancerPoolMemberTarget); ok && memberTargetIP != nil && *memberTargetIP.Address == targetIP {
+				logrus.Debugf("found matching load balancer pool member target %s", *member.ID)
+				return ptr.To(member), nil
+			}
+		}
+	}
+	return nil, nil
 }
 
 // GetResourceGroup gets a resource group by its name or ID.
