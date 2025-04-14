@@ -84,7 +84,7 @@ github.com/IBM-Cloud/power-go-client/power/client/service_instances
 github.com/IBM-Cloud/power-go-client/power/client/storage_types
 github.com/IBM-Cloud/power-go-client/power/client/swagger_spec
 github.com/IBM-Cloud/power-go-client/power/models
-# github.com/IBM-Cloud/terraform-provider-ibm v1.45.0
+# github.com/IBM-Cloud/terraform-provider-ibm v1.45.0 => github.com/cjschaef/terraform-provider-ibm v0.0.0-20250414175435-85252f7559bf
 ## explicit; go 1.16
 github.com/IBM-Cloud/terraform-provider-ibm
 github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns
@@ -899,3 +899,4 @@ gopkg.in/yaml.v2
 # golang.org/x/text => golang.org/x/text v0.3.7
 # golang.org/x/net => golang.org/x/net v0.5.0
 # go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.11.2
+# github.com/IBM-Cloud/terraform-provider-ibm => github.com/cjschaef/terraform-provider-ibm v0.0.0-20250414175435-85252f7559bf

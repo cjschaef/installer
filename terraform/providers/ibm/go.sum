@@ -11,8 +11,6 @@ github.com/IBM-Cloud/power-go-client v1.1.12 h1:zL8Br83MHe1mDhFI+2YenQsHeYUtPzqw
 github.com/IBM-Cloud/power-go-client v1.1.12/go.mod h1:Qfx0fNi+9hms+xu9Z6Euhu9088ByW6C/TCMLECTRWNE=
 github.com/IBM-Cloud/softlayer-go v1.0.5-tf h1:koUAyF9b6X78lLLruGYPSOmrfY2YcGYKOj/Ug9nbKNw=
 github.com/IBM-Cloud/softlayer-go v1.0.5-tf/go.mod h1:6HepcfAXROz0Rf63krk5hPZyHT6qyx2MNvYyHof7ik4=
-github.com/IBM-Cloud/terraform-provider-ibm v1.45.0 h1:gdHePXarc4M0mcEucmkn1UQJom+juxBz3mVayMR0FnQ=
-github.com/IBM-Cloud/terraform-provider-ibm v1.45.0/go.mod h1:sDUfMbnLF6/NNCpzct4pTWenszO0xXl+9BMvlrxQ7t8=
 github.com/IBM/apigateway-go-sdk v0.0.0-20210714141226-a5d5d49caaca h1:crniVcf+YcmgF03NmmfonXwSQ73oJF+IohFYBwknMxs=
 github.com/IBM/apigateway-go-sdk v0.0.0-20210714141226-a5d5d49caaca/go.mod h1:IjXrnOcTe92Q4pEBHmui3H/GM1hw5Pd0zXA5cw5/iZU=
 github.com/IBM/appconfiguration-go-admin-sdk v0.3.0 h1:OqFxnDxro0JiRwHBKytCcseY2YKD4n87JN1UcaOD4Ss=
@@ -126,6 +124,8 @@ github.com/cespare/xxhash/v2 v2.1.1/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XL
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
 github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5PlCu98SY8svDHJxuZscDgtXS6KTTbou5AhLI=
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
+github.com/cjschaef/terraform-provider-ibm v0.0.0-20250414175435-85252f7559bf h1:EzBsKXPANj83yLY4dmvrl3/io6W7E2JAZiKYtxOpwHE=
+github.com/cjschaef/terraform-provider-ibm v0.0.0-20250414175435-85252f7559bf/go.mod h1:sDUfMbnLF6/NNCpzct4pTWenszO0xXl+9BMvlrxQ7t8=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cloudfoundry/jibber_jabber v0.0.0-20151120183258-bcc4c8345a21 h1:tuijfIjZyjZaHq9xDUh0tNitwXshJpbLkqMOJv4H3do=
 github.com/cloudfoundry/jibber_jabber v0.0.0-20151120183258-bcc4c8345a21/go.mod h1:po7NpZ/QiTKzBKyrsEAxwnTamCoh8uDk/egRpQ7siIc=

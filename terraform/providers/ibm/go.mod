@@ -151,3 +151,6 @@ replace golang.org/x/net => golang.org/x/net v0.5.0
 
 // https://issues.redhat.com/browse/OCPBUGS-8540
 replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.11.2
+
+// NOTE(cjschaef): To align with installer's golang version and since the provider has a very restrictive golang version, override to use the forked repository, which maintains unique branches based on golang version and provider release
+replace github.com/IBM-Cloud/terraform-provider-ibm => github.com/cjschaef/terraform-provider-ibm v0.0.0-20250414175435-85252f7559bf
